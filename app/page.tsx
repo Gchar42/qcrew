@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { SignInRedirect } from "./SignInRedirect";
 
 interface PageProps {
   searchParams: Promise<{ code?: string; error?: string; error_code?: string }>;
@@ -9,7 +9,7 @@ export default async function Home({ searchParams }: PageProps) {
   const params = await searchParams;
 
   if (params.code) {
-    redirect(`/auth/callback?code=${encodeURIComponent(params.code)}`);
+    return <SignInRedirect code={params.code} />;
   }
 
   const hasError = params.error ?? params.error_code;
