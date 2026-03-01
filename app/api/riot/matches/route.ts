@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   const key = process.env.RIOT_API_KEY;
   if (!key) {
     return NextResponse.json(
-      { error: "Riot API key not configured" },
+      { error: "Riot API key not configured", status: 503 },
       { status: 503 }
     );
   }
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   const count = searchParams.get("count") ?? "20";
   if (!puuid) {
     return NextResponse.json(
-      { error: "Missing puuid" },
+      { error: "Missing puuid", status: 400 },
       { status: 400 }
     );
   }
@@ -30,20 +30,16 @@ export async function GET(request: Request) {
     headers: { "X-Riot-Token": key },
   });
 
-  if (res.status === 429) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded. Try again shortly." },
-      { status: 429 }
-    );
-  }
+  const text = await res.text();
   if (!res.ok) {
-    const text = await res.text();
+    console.error("[riot/matches] Riot response:", res.status, res.statusText, text);
+    const message = text || "Match list failed";
     return NextResponse.json(
-      { error: text || "Match list failed" },
+      { error: message, status: res.status },
       { status: res.status }
     );
   }
 
-  const matchIds = (await res.json()) as string[];
+  const matchIds = JSON.parse(text) as string[];
   return NextResponse.json({ matchIds });
 }

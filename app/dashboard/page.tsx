@@ -12,7 +12,7 @@ import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
 type SearchState =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "error"; message: string }
+  | { status: "error"; message: string; statusCode?: number }
   | { status: "ready" };
 
 type AccountDto = {
@@ -200,7 +200,7 @@ export default function DashboardRiotSearchPage() {
 
       const matchDetails = await mapWithConcurrency(
         matchListJson.matchIds,
-        4,
+        3,
         async (matchId) => {
           return await fetchJsonWithRetry<MatchDto>(
             `/api/riot/match?matchId=${encodeURIComponent(matchId)}`,
@@ -215,9 +215,12 @@ export default function DashboardRiotSearchPage() {
 
       setState({ status: "ready" });
     } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      const statusCode = (err as Error & { status?: number })?.status;
       setState({
         status: "error",
-        message: err instanceof Error ? err.message : "Unknown error",
+        message,
+        statusCode,
       });
     }
   }
@@ -276,11 +279,21 @@ export default function DashboardRiotSearchPage() {
       {state.status === "error" && (
         <div className="mt-5 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
           <div className="font-semibold text-red-200">Error</div>
-          <div className="mt-1 text-sm text-red-300/90">{state.message}</div>
-          <div className="mt-2 text-xs text-zinc-400">
-            If you see 429, lower concurrency to 3. If you see 401, the Riot dev
-            key expired.
+          <div className="mt-1 text-sm text-red-300/90">
+            {state.statusCode === 401
+              ? "Riot dev key expired."
+              : state.statusCode === 429
+                ? "Rate limited. Reduce match detail concurrency."
+                : state.statusCode === 403 &&
+                    process.env.NODE_ENV === "production"
+                  ? "Dev key cannot be used on public deployment."
+                  : state.message}
           </div>
+          {state.statusCode != null && (
+            <div className="mt-2 text-xs text-zinc-400">
+              Status: {state.statusCode}
+            </div>
+          )}
         </div>
       )}
 

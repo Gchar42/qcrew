@@ -4,7 +4,7 @@ export async function GET(request: Request) {
   const key = process.env.RIOT_API_KEY;
   if (!key) {
     return NextResponse.json(
-      { error: "Riot API key not configured" },
+      { error: "Riot API key not configured", status: 503 },
       { status: 503 }
     );
   }
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   const puuid = searchParams.get("puuid");
   if (!puuid) {
     return NextResponse.json(
-      { error: "Missing puuid" },
+      { error: "Missing puuid", status: 400 },
       { status: 400 }
     );
   }
@@ -25,20 +25,16 @@ export async function GET(request: Request) {
     headers: { "X-Riot-Token": key },
   });
 
-  if (res.status === 429) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded. Try again shortly." },
-      { status: 429 }
-    );
-  }
+  const text = await res.text();
   if (!res.ok) {
-    const text = await res.text();
+    console.error("[riot/summoner] Riot response:", res.status, res.statusText, text);
+    const message = text || "Summoner lookup failed";
     return NextResponse.json(
-      { error: text || "Summoner lookup failed" },
+      { error: message, status: res.status },
       { status: res.status }
     );
   }
 
-  const data = await res.json();
+  const data = JSON.parse(text);
   return NextResponse.json(data);
 }

@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const key = process.env.RIOT_API_KEY;
   if (!key) {
     return NextResponse.json(
-      { error: "Riot API key not configured" },
+      { error: "Riot API key not configured", status: 503 },
       { status: 503 }
     );
   }
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
   }
   if (!name || !tag) {
     return NextResponse.json(
-      { error: "Missing gameName/tagLine or riotId (GameName#Tag)" },
+      { error: "Missing gameName/tagLine or riotId (GameName#Tag)", status: 400 },
       { status: 400 }
     );
   }
@@ -43,21 +43,17 @@ export async function GET(request: Request) {
     headers: { "X-Riot-Token": key },
   });
 
-  if (res.status === 429) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded. Try again shortly." },
-      { status: 429 }
-    );
-  }
+  const text = await res.text();
   if (!res.ok) {
-    const text = await res.text();
+    console.error("[riot/account] Riot response:", res.status, res.statusText, text);
+    const message = text || "Account lookup failed";
     return NextResponse.json(
-      { error: text || "Account lookup failed" },
+      { error: message, status: res.status },
       { status: res.status }
     );
   }
 
-  const data = (await res.json()) as { puuid: string; gameName: string; tagLine: string };
+  const data = JSON.parse(text) as { puuid: string; gameName: string; tagLine: string };
   await setCache(cacheKey, data);
   return NextResponse.json(data);
 }
