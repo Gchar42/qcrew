@@ -128,7 +128,8 @@ export default function DashboardRiotSearchPage() {
 
       try {
         const res = await fetch(
-          `/api/search/suggestions?q=${encodeURIComponent(trimmed)}`
+          `/api/search/suggestions?q=${encodeURIComponent(trimmed)}`,
+          { cache: "no-store" }
         );
         if (!res.ok) return;
         const json = await res.json();
@@ -153,6 +154,7 @@ export default function DashboardRiotSearchPage() {
       await fetch("/api/search/suggestions", {
         method: "POST",
         headers: { "content-type": "application/json" },
+        cache: "no-store",
         body: JSON.stringify({
           riotId: parsed.riotId,
           gameName: parsed.gameName,
@@ -165,10 +167,8 @@ export default function DashboardRiotSearchPage() {
     }
   }
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
-    const parsed = parseRiotId(riotId);
+  async function doSearch(riotIdInput: string) {
+    const parsed = parseRiotId(riotIdInput);
     if (!parsed) {
       setState({ status: "error", message: "Use format GameName#Tag" });
       return;
@@ -225,9 +225,15 @@ export default function DashboardRiotSearchPage() {
     }
   }
 
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await doSearch(riotId);
+  }
+
   function pickSuggestion(s: string) {
     setRiotId(s);
     setShowSuggestions(false);
+    void doSearch(s);
   }
 
   return (

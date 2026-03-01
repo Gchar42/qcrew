@@ -12,6 +12,10 @@ function getAdminClient() {
   });
 }
 
+function escapeLike(s: string): string {
+  return s.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = (searchParams.get("q") || "").trim();
@@ -28,22 +32,52 @@ export async function GET(req: Request) {
     );
   }
 
-  const safe = q.toLowerCase();
+  const safe = q.toLowerCase().replace(/,/g, "");
+  const escaped = escapeLike(safe);
+  const pattern = `%${escaped}%`;
 
   const { data, error } = await client
     .from("riot_searches")
-    .select("riot_id, updated_at")
-    .or(`riot_id.ilike.%${safe}%,game_name.ilike.%${safe}%,tag_line.ilike.%${safe}%`)
+    .select("game_name, tag_line, updated_at")
+    .or(`riot_id.ilike.${pattern},game_name.ilike.${pattern},tag_line.ilike.${pattern}`)
     .order("updated_at", { ascending: false })
-    .limit(8);
+    .limit(32);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({
-    suggestions: (data || []).map((x) => x.riot_id),
+  const rows = (data || []) as {
+    game_name: string;
+    tag_line: string;
+    updated_at: string;
+  }[];
+
+  const fullId = (r: (typeof rows)[0]) => `${r.game_name}#${r.tag_line}`;
+  const seen = new Set<string>();
+  const deduped: (typeof rows)[0][] = [];
+  for (const r of rows) {
+    const id = fullId(r);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    deduped.push(r);
+  }
+
+  const sorted = deduped.sort((a, b) => {
+    const aG = a.game_name.toLowerCase();
+    const bG = b.game_name.toLowerCase();
+    const aStarts = aG.startsWith(safe) ? 0 : 1;
+    const bStarts = bG.startsWith(safe) ? 0 : 1;
+    if (aStarts !== bStarts) return aStarts - bStarts;
+    const aContains = aG.includes(safe) ? 0 : 1;
+    const bContains = bG.includes(safe) ? 0 : 1;
+    if (aContains !== bContains) return aContains - bContains;
+    return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
   });
+
+  const suggestions = sorted.slice(0, 8).map(fullId);
+
+  return NextResponse.json({ suggestions });
 }
 
 export async function POST(req: Request) {

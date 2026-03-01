@@ -1,5 +1,5 @@
 export async function fetchJson<T>(url: string) {
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: "no-store" });
   const contentType = res.headers.get("content-type") || "";
 
   let payload: unknown = null;
