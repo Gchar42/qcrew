@@ -1,219 +1,417 @@
 "use client";
 
-import { useState } from "react";
+import Image from "next/image";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  getChampionSplashUrl,
+  getProfileIconUrl,
+  getItemIconUrl,
+} from "@/lib/riotAssets";
+import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
 
-type Account = { puuid: string; gameName: string; tagLine: string };
+type SearchState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready" };
 
-type MatchParticipant = {
+type AccountDto = {
   puuid: string;
+  gameName: string;
+  tagLine: string;
+};
+
+type SummonerDto = {
+  id: string;
+  accountId: string;
+  puuid: string;
+  name: string;
+  profileIconId: number;
+  summonerLevel: number;
+};
+
+type MatchListDto = {
+  matchIds: string[];
+};
+
+type ParticipantDto = {
+  puuid: string;
+  summonerName: string;
   championName: string;
   kills: number;
   deaths: number;
   assists: number;
   win: boolean;
+  teamPosition?: string;
   totalMinionsKilled?: number;
   neutralMinionsKilled?: number;
+  item0?: number;
+  item1?: number;
+  item2?: number;
+  item3?: number;
+  item4?: number;
+  item5?: number;
+  item6?: number;
 };
 
-type Match = {
+type MatchDto = {
   metadata: { matchId: string };
   info: {
     gameDuration: number;
-    participants: MatchParticipant[];
+    participants: ParticipantDto[];
   };
 };
 
-function parseRiotId(input: string): { gameName: string; tagLine: string } | null {
+function parseRiotId(input: string) {
   const trimmed = input.trim();
-  const hash = trimmed.indexOf("#");
-  if (hash === -1) return null;
-  const gameName = trimmed.slice(0, hash).trim();
-  const tagLine = trimmed.slice(hash + 1).trim();
-  return gameName && tagLine ? { gameName, tagLine } : null;
+  const parts = trimmed.split("#");
+  if (parts.length !== 2) return null;
+
+  const gameName = parts[0].trim();
+  const tagLine = parts[1].trim();
+
+  if (!gameName || !tagLine) return null;
+  return { gameName, tagLine, riotId: `${gameName}#${tagLine}` };
 }
 
 function formatDuration(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  const ss = s.toString().padStart(2, "0");
+  return `${m}:${ss}`;
 }
 
-export default function DashboardPage() {
+function getCs(p: ParticipantDto) {
+  const lane = p.totalMinionsKilled || 0;
+  const jungle = p.neutralMinionsKilled || 0;
+  return lane + jungle;
+}
+
+export default function DashboardRiotSearchPage() {
   const [riotId, setRiotId] = useState("");
-  const [region] = useState("na1");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [account, setAccount] = useState<Account | null>(null);
-  const [matches, setMatches] = useState<Match[]>([]);
+  const [state, setState] = useState<SearchState>({ status: "idle" });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setAccount(null);
-    setMatches([]);
+  const [account, setAccount] = useState<AccountDto | null>(null);
+  const [summoner, setSummoner] = useState<SummonerDto | null>(null);
+  const [matches, setMatches] = useState<MatchDto[]>([]);
 
-    const parsed = parseRiotId(riotId);
-    if (!parsed) {
-      setError("Use format GameName#Tag");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const debounceRef = useRef<number | null>(null);
+  const activeFetchRef = useRef(0);
+
+  const winStats = useMemo(() => {
+    if (!account || matches.length === 0) return null;
+
+    let wins = 0;
+    for (const m of matches) {
+      const p = m.info.participants.find((x) => x.puuid === account.puuid);
+      if (p?.win) wins += 1;
+    }
+    const total = matches.length;
+    const rate = total ? Math.round((wins / total) * 100) : 0;
+    return { wins, total, rate };
+  }, [account, matches]);
+
+  useEffect(() => {
+    const trimmed = riotId.trim();
+    if (trimmed.length < 2) {
+      setSuggestions([]);
       return;
     }
 
-    setLoading(true);
-    try {
-      const accountRes = await fetch(
-        `/api/riot/account?region=${encodeURIComponent(region)}&riotId=${encodeURIComponent(parsed.gameName + "#" + parsed.tagLine)}`
-      );
-      if (!accountRes.ok) {
-        const err = await accountRes.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error ?? "Account lookup failed");
-      }
-      const accountData = (await accountRes.json()) as Account;
-      setAccount(accountData);
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
 
-      const matchesRes = await fetch(
-        `/api/riot/matches?region=${encodeURIComponent(region)}&puuid=${encodeURIComponent(accountData.puuid)}&count=10`
-      );
-      if (!matchesRes.ok) {
-        const err = await matchesRes.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error ?? "Match list failed");
-      }
-      const { matchIds } = (await matchesRes.json()) as { matchIds: string[] };
-      if (!matchIds?.length) {
-        setMatches([]);
-        return;
-      }
+    debounceRef.current = window.setTimeout(async () => {
+      const id = activeFetchRef.current + 1;
+      activeFetchRef.current = id;
 
-      const matchDetails: Match[] = [];
-      for (const matchId of matchIds) {
-        const matchRes = await fetch(
-          `/api/riot/match?region=${encodeURIComponent(region)}&matchId=${encodeURIComponent(matchId)}`
+      try {
+        const res = await fetch(
+          `/api/search/suggestions?q=${encodeURIComponent(trimmed)}`
         );
-        if (!matchRes.ok) continue;
-        const matchData = (await matchRes.json()) as Match;
-        matchDetails.push(matchData);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (activeFetchRef.current !== id) return;
+
+        setSuggestions(json.suggestions || []);
+      } catch {
+        // ignore
       }
-      setMatches(matchDetails);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
+    }, 180);
+
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [riotId]);
+
+  async function trackSuccessfulSearch(
+    parsed: { riotId: string; gameName: string; tagLine: string },
+    puuid: string
+  ) {
+    try {
+      await fetch("/api/search/suggestions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          riotId: parsed.riotId,
+          gameName: parsed.gameName,
+          tagLine: parsed.tagLine,
+          puuid,
+        }),
+      });
+    } catch {
+      // ignore
     }
   }
 
-  const wins = matches.filter((m) => {
-    const p = m.info?.participants?.find((x) => x.puuid === account?.puuid);
-    return p?.win;
-  }).length;
-  const total = matches.length;
-  const winRate = total ? Math.round((wins / total) * 100) : 0;
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    const parsed = parseRiotId(riotId);
+    if (!parsed) {
+      setState({ status: "error", message: "Use format GameName#Tag" });
+      return;
+    }
+
+    setShowSuggestions(false);
+    setState({ status: "loading" });
+    setAccount(null);
+    setSummoner(null);
+    setMatches([]);
+
+    try {
+      const accountJson = await fetchJsonWithRetry<AccountDto>(
+        `/api/riot/account?gameName=${encodeURIComponent(parsed.gameName)}&tagLine=${encodeURIComponent(parsed.tagLine)}`,
+        2
+      );
+      setAccount(accountJson);
+
+      const summonerJson = await fetchJsonWithRetry<SummonerDto>(
+        `/api/riot/summoner?puuid=${encodeURIComponent(accountJson.puuid)}`,
+        2
+      );
+      setSummoner(summonerJson);
+
+      const matchListJson = await fetchJsonWithRetry<MatchListDto>(
+        `/api/riot/matches?puuid=${encodeURIComponent(accountJson.puuid)}&count=20`,
+        2
+      );
+
+      const matchDetails = await mapWithConcurrency(
+        matchListJson.matchIds,
+        4,
+        async (matchId) => {
+          return await fetchJsonWithRetry<MatchDto>(
+            `/api/riot/match?matchId=${encodeURIComponent(matchId)}`,
+            3
+          );
+        }
+      );
+
+      setMatches(matchDetails);
+
+      await trackSuccessfulSearch(parsed, accountJson.puuid);
+
+      setState({ status: "ready" });
+    } catch (err: unknown) {
+      setState({
+        status: "error",
+        message: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  }
+
+  function pickSuggestion(s: string) {
+    setRiotId(s);
+    setShowSuggestions(false);
+  }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-white">Match history</h1>
+    <div className="mx-auto max-w-5xl px-6 py-8">
+      <h1 className="text-3xl font-bold text-white">League Match History</h1>
+      <p className="mt-2 text-sm text-zinc-400">
+        Search Riot ID like GameName#Tag.
+      </p>
 
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-        <input
-          type="text"
-          value={riotId}
-          onChange={(e) => setRiotId(e.target.value)}
-          placeholder="GameName#Tag"
-          className="flex-1 rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          disabled={loading}
-        />
+      <form onSubmit={onSubmit} className="relative mt-5 flex gap-2">
+        <div className="relative w-full">
+          <input
+            value={riotId}
+            onChange={(e) => {
+              setRiotId(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            placeholder="GameName#Tag"
+            className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder-zinc-500 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+          />
+
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-zinc-900">
+              {suggestions.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => pickSuggestion(s)}
+                  className="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-white hover:bg-white/10"
+                >
+                  <span>{s}</span>
+                  <span className="text-zinc-500">suggestion</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         <button
           type="submit"
-          disabled={loading}
-          className="rounded-lg bg-indigo-500 px-6 py-3 font-medium text-white hover:bg-indigo-600 disabled:opacity-50 transition-colors shrink-0"
+          disabled={state.status === "loading"}
+          className="rounded-xl border border-white/10 bg-indigo-500 px-4 py-3 font-semibold text-white hover:bg-indigo-600 disabled:opacity-60"
         >
-          {loading ? "Searching…" : "Search"}
+          {state.status === "loading" ? "Searching..." : "Search"}
         </button>
       </form>
 
-      {error && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-300 text-sm">
-          {error}
+      {state.status === "error" && (
+        <div className="mt-5 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
+          <div className="font-semibold text-red-200">Error</div>
+          <div className="mt-1 text-sm text-red-300/90">{state.message}</div>
+          <div className="mt-2 text-xs text-zinc-400">
+            If you see 429, lower concurrency to 3. If you see 401, the Riot dev
+            key expired.
+          </div>
         </div>
       )}
 
-      {account && (
-        <>
-          <div className="glass rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+      {account && summoner && (
+        <div className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-white/10 glass p-5">
+          <div className="flex items-center gap-4">
+            <div className="relative h-14 w-14 overflow-hidden rounded-xl border border-white/10">
+              <Image
+                src={getProfileIconUrl(summoner.profileIconId)}
+                alt="Profile icon"
+                fill
+                className="object-cover"
+              />
+            </div>
+
             <div>
-              <div className="text-lg font-semibold text-white">
+              <div className="text-xl font-bold text-white">
                 {account.gameName}#{account.tagLine}
               </div>
-              <div className="text-zinc-400 text-sm mt-0.5">Riot ID</div>
-            </div>
-            {total > 0 && (
-              <div className="text-right">
-                <div className="text-xl font-bold text-white">{winRate}% WR</div>
-                <div className="text-zinc-400 text-sm">
-                  {wins}W {total - wins}L · Last {total}
-                </div>
+              <div className="mt-1 text-sm text-zinc-400">
+                Level {summoner.summonerLevel}
               </div>
-            )}
+            </div>
           </div>
 
-          {matches.length > 0 ? (
-            <div className="space-y-2">
-              <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">
-                Recent matches
-              </h2>
-              <ul className="space-y-2">
-                {matches.map((match) => {
-                  const p = match.info?.participants?.find(
-                    (x) => x.puuid === account.puuid
-                  );
-                  if (!p) return null;
-                  const duration = formatDuration(match.info?.gameDuration ?? 0);
-                  const kda = `${p.kills}/${p.deaths}/${p.assists}`;
-                  return (
-                    <li
-                      key={match.metadata?.matchId ?? ""}
-                      className="glass rounded-xl p-4 flex items-center gap-4 hover:border-white/20 border border-transparent transition-colors"
-                    >
-                      <div
-                        className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold ${
-                          p.win
-                            ? "bg-emerald-500/20 text-emerald-400"
-                            : "bg-red-500/20 text-red-400"
-                        }`}
-                      >
-                        {p.win ? "W" : "L"}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-semibold text-white">
-                          {p.championName}
-                        </div>
-                        <div className="text-zinc-400 text-sm">
-                          {kda} K/D/A · {duration}
-                        </div>
-                      </div>
-                      <div
-                        className={`shrink-0 text-sm font-medium ${
-                          p.win ? "text-emerald-400" : "text-red-400"
-                        }`}
-                      >
-                        {p.win ? "Victory" : "Defeat"}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ) : (
-            !loading && (
-              <div className="glass rounded-xl p-8 text-center text-zinc-400 text-sm">
-                No recent matches found.
+          {winStats && (
+            <div className="text-right">
+              <div className="text-lg font-bold text-white">
+                {winStats.rate}% win rate
               </div>
-            )
+              <div className="mt-1 text-sm text-zinc-400">
+                {winStats.wins}W {winStats.total - winStats.wins}L (last{" "}
+                {winStats.total})
+              </div>
+            </div>
           )}
-        </>
+        </div>
       )}
 
-      {loading && (
-        <div className="glass rounded-xl p-8 flex items-center justify-center gap-2 text-zinc-400">
-          <span className="animate-pulse">Loading matches…</span>
+      {matches.length > 0 && account && (
+        <div className="mt-6">
+          <div className="mb-3 text-sm font-semibold text-zinc-300">
+            Recent matches {winStats ? `• ${winStats.rate}% win rate` : ""}
+          </div>
+
+          <div className="grid gap-3">
+            {matches.map((m) => {
+              const p = m.info.participants.find(
+                (x) => x.puuid === account.puuid
+              );
+              if (!p) return null;
+
+              const splash = getChampionSplashUrl(p.championName);
+              const result = p.win ? "W" : "L";
+              const duration = formatDuration(m.info.gameDuration);
+              const cs = getCs(p);
+
+              const items = [
+                p.item0,
+                p.item1,
+                p.item2,
+                p.item3,
+                p.item4,
+                p.item5,
+                p.item6,
+              ].filter(
+                (x): x is number =>
+                  typeof x === "number" && x > 0
+              );
+
+              return (
+                <div
+                  key={m.metadata.matchId}
+                  className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/30"
+                >
+                  {splash && (
+                    <Image
+                      src={splash}
+                      alt={p.championName}
+                      fill
+                      className="object-cover opacity-25"
+                    />
+                  )}
+
+                  <div className="relative flex items-center justify-between gap-4 p-4">
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl font-bold ${
+                          p.win
+                            ? "bg-emerald-500/20 text-emerald-200"
+                            : "bg-red-500/20 text-red-200"
+                        }`}
+                      >
+                        {result}
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="text-base font-bold text-white">
+                          {p.championName}
+                        </div>
+                        <div className="mt-1 text-sm text-zinc-400">
+                          {(p.teamPosition || "UNKNOWN").toUpperCase()} · KDA{" "}
+                          {p.kills}/{p.deaths}/{p.assists} · {cs} CS · {duration}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-2">
+                      {items.slice(0, 7).map((id) => {
+                        const iconUrl = getItemIconUrl(id);
+                        if (!iconUrl) return null;
+                        return (
+                          <div
+                            key={id}
+                            className="relative h-9 w-9 overflow-hidden rounded-lg border border-white/10 bg-black/30"
+                          >
+                            <Image
+                              src={iconUrl}
+                              alt={`Item ${id}`}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
