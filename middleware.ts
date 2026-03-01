@@ -33,11 +33,17 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
+  const pathname = request.nextUrl.pathname;
+  const isAuthPage = pathname.startsWith("/auth");
+  const isAuthCallback = pathname === "/auth/callback";
   const isProtected =
-    request.nextUrl.pathname.startsWith("/dashboard") ||
-    request.nextUrl.pathname.startsWith("/crew") ||
-    request.nextUrl.pathname === "/join";
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/crew") ||
+    pathname === "/join";
+
+  if (isAuthCallback) {
+    return response;
+  }
 
   if (isProtected && !user) {
     const redirect = new URL("/auth", request.url);
@@ -54,5 +60,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/crew/:path*", "/auth", "/join"],
+  matcher: ["/dashboard/:path*", "/crew/:path*", "/auth", "/auth/callback", "/join"],
 };

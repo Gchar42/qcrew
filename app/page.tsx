@@ -1,6 +1,19 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
-export default function Home() {
+interface PageProps {
+  searchParams: Promise<{ code?: string; error?: string; error_code?: string }>;
+}
+
+export default async function Home({ searchParams }: PageProps) {
+  const params = await searchParams;
+
+  if (params.code) {
+    redirect(`/auth/callback?code=${encodeURIComponent(params.code)}`);
+  }
+
+  const hasError = params.error ?? params.error_code;
+
   return (
     <div className="min-h-screen bg-[var(--background)]">
       <div className="relative overflow-hidden">
@@ -27,6 +40,23 @@ export default function Home() {
           </nav>
         </header>
         <main className="relative max-w-6xl mx-auto px-6 pt-24 pb-32 text-center">
+          {hasError && (
+            <div className="mb-8 glass rounded-xl p-4 max-w-xl mx-auto text-left">
+              <p className="text-amber-300 text-sm mb-2">
+                Something went wrong with the sign-in link.
+              </p>
+              <p className="text-zinc-400 text-sm mb-3">
+                {params.error_code && <span>Code: {params.error_code}. </span>}
+                {params.error && <span>{params.error}</span>}
+              </p>
+              <Link
+                href="/auth"
+                className="text-indigo-400 hover:text-indigo-300 text-sm font-medium"
+              >
+                Try again on the sign-in page →
+              </Link>
+            </div>
+          )}
           <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-white mb-6">
             Your crew.
             <br />

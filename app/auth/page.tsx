@@ -26,7 +26,14 @@ function AuthForm() {
     setLoading(true);
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const origin = typeof window !== "undefined" ? window.location.origin : "";
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: origin ? `${origin}/auth/callback` : undefined,
+          },
+        });
         if (error) throw error;
         toast("Check your email to confirm your account.", "success");
       } else {
