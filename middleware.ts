@@ -29,36 +29,17 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   const pathname = request.nextUrl.pathname;
-  const isAuthPage = pathname.startsWith("/auth");
   const isAuthCallback = pathname === "/auth/callback";
-  const isProtected =
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/crew") ||
-    pathname === "/join";
 
   if (isAuthCallback) {
     return response;
   }
 
-  if (isProtected && !user) {
-    const redirect = new URL("/auth", request.url);
-    redirect.searchParams.set("next", request.nextUrl.pathname);
-    return NextResponse.redirect(redirect);
-  }
-
-  if (isAuthPage && user) {
-    const next = request.nextUrl.searchParams.get("next") ?? "/dashboard";
-    return NextResponse.redirect(new URL(next, request.url));
-  }
-
+  await supabase.auth.getUser();
   return response;
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/crew/:path*", "/auth", "/auth/callback", "/join"],
+  matcher: ["/auth", "/auth/callback"],
 };

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Qcrew – Esports Crews",
-  description: "Track matches, react, and crew up.",
+  title: "Qcrew – League of Legends stats",
+  description: "Search Riot ID and region. View match history and stats.",
 };
 
 export default function RootLayout({

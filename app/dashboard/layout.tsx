@@ -1,5 +1,4 @@
-import { Sidebar } from "@/components/Sidebar";
-import { Header } from "@/components/Header";
+import Link from "next/link";
 
 export default function DashboardLayout({
   children,
@@ -7,12 +6,24 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-[var(--background)]">
-      <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
-        <Header />
-        <main className="flex-1 p-6">{children}</main>
-      </div>
+    <div className="min-h-screen bg-[var(--background)]">
+      <header className="border-b border-white/10 px-4 sm:px-6 py-3">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <Link
+            href="/"
+            className="text-lg font-bold text-white hover:text-indigo-400 transition-colors"
+          >
+            Qcrew
+          </Link>
+          <Link
+            href="/"
+            className="text-sm text-zinc-400 hover:text-white transition-colors"
+          >
+            ← Home
+          </Link>
+        </div>
+      </header>
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6">{children}</main>
     </div>
   );
 }

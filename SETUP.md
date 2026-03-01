@@ -37,7 +37,6 @@ npm run dev
 
 Open `http://localhost:3000`. Sign up, create a crew, open it to see the mock match feed, react and comment.
 
----
+## 5. Riot Match History (optional)
 
-- **No Riot API** in this phase.
-- **No Discord** in this phase.
+For the Riot match history feature, add `RIOT_API_KEY` to `.env.local` and (on Vercel) to Environment Variables. See **[docs/RIOT_SETUP.md](docs/RIOT_SETUP.md)** for full setup, Vercel config, and production key notes.
