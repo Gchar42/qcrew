@@ -566,20 +566,12 @@ function SummonerProfileContent() {
                     )}
                     {badgeInfo && (
                       <span
-                        className={`profile-badge-chip socialBadge socialBadgeFix ${getBadgeCategoryClass(
+                        className={`profile-badge-chip socialBadge ${getBadgeCategoryClass(
                           badgeInfo.badge
                         )}`}
                         title={badgeInfo.reason}
                       >
-                        <span
-                          className="profile-badge-chip-text socialBadgeText socialBadgeFixText"
-                          style={{
-                            background: "hotpink",
-                            color: "black",
-                            paddingBottom: "20px",
-                            border: "4px solid lime",
-                          }}
-                        >
+                        <span className="profile-badge-chip-text socialBadgeText">
                           {badgeInfo.badge}
                         </span>
                       </span>

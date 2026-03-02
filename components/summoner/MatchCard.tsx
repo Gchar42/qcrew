@@ -82,20 +82,10 @@ export function MatchCard({
               <span
                 className={`inline-flex items-center justify-center overflow-visible rounded-[10px] border px-3.5 pt-2 pb-2.5 min-h-[36px] text-sm font-semibold leading-[1.4] whitespace-nowrap socialBadge ${badgeChipClass(
                   badge
-                )} socialBadgeFix`}
+                )}`}
                 title={badgeReason ?? badge}
               >
-                <span
-                  className="socialBadgeText socialBadgeFixText"
-                  style={{
-                    background: "hotpink",
-                    color: "black",
-                    paddingBottom: "20px",
-                    border: "4px solid lime",
-                  }}
-                >
-                  {badge}
-                </span>
+                <span className="socialBadgeText">{badge}</span>
               </span>
             )}
           </div>
