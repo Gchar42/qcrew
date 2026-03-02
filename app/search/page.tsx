@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { getProfileIconUrl } from "@/lib/riotAssets";
 
@@ -20,12 +20,13 @@ export type SearchResultItem = {
 const PAGE_SIZE = 25;
 const DEFAULT_ICON_ID = 29;
 
-function dashboardMatchHistoryUrl(riotId: string) {
-  return `/dashboard?riotId=${encodeURIComponent(riotId)}`;
+function summonerProfileUrl(riotId: string) {
+  return `/summoner?riotId=${encodeURIComponent(riotId)}`;
 }
 
 function SearchContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const q = (searchParams.get("q") || "").trim();
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -135,15 +136,17 @@ function SearchContent() {
         <>
           <ul className="mt-6 space-y-1">
             {results.map((r) => {
-              const href = dashboardMatchHistoryUrl(r.riotId);
               const iconId =
                 r.profileIconId != null ? r.profileIconId : DEFAULT_ICON_ID;
               const iconUrl = getProfileIconUrl(iconId);
               return (
                 <li key={r.puuid}>
-                  <Link
-                    href={href}
-                    className="flex cursor-pointer items-center gap-4 rounded-lg border border-white/10 bg-black/30 px-4 py-3 transition-colors hover:bg-white/5"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(summonerProfileUrl(r.riotId))
+                    }
+                    className="flex w-full cursor-pointer items-center gap-4 rounded-lg border border-white/10 bg-black/30 px-4 py-3 text-left transition-colors hover:bg-white/5"
                   >
                     <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
                       {iconUrl ? (
@@ -183,7 +186,7 @@ function SearchContent() {
                         />
                       </svg>
                     </span>
-                  </Link>
+                  </button>
                 </li>
               );
             })}
