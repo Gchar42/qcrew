@@ -22,73 +22,6 @@
 
 * {
   box-sizing: border-box;
-  vertical-align: baseline;
-  text-size-adjust: 100%;
-}
-
-/* Global descender clip fix. Force sane line boxes everywhere */
-html,
-body {
-  line-height: 1.5 !important;
-  overflow: visible !important;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-    Roboto, Helvetica, Arial, sans-serif !important;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Force common text containers to inherit a safe line height */
-body,
-div,
-span,
-p,
-a,
-li,
-label,
-button,
-input,
-textarea,
-select {
-  line-height: inherit !important;
-}
-
-/* Add a tiny bottom breathing room for glyph descenders */
-body,
-div,
-span,
-p,
-a,
-li,
-label,
-button {
-  padding-bottom: 0.08em;
-}
-
-/* Remove common paint clipping triggers at the page root */
-html,
-body,
-#root {
-  transform: none !important;
-  filter: none !important;
-  contain: none !important;
-  overflow: visible !important;
-}
-
-html,
-body,
-#root,
-#__next,
-main,
-.app,
-.appRoot,
-.page,
-.pageWrapper {
-  overflow: visible !important;
-  contain: none !important;
-  clip-path: none !important;
-  mask: none !important;
-  filter: none !important;
 }
 
 body {
@@ -154,11 +87,8 @@ body {
   overflow: visible;
 }
 
-.noClipText {
+.descenderSafe {
   display: inline-block;
-  position: relative;
-  top: 0.5px;
   padding-bottom: 2px;
-  transform: translateZ(0);
-  backface-visibility: hidden;
+  margin-bottom: -2px;
 }

@@ -85,7 +85,7 @@ export function MatchCard({
                 )}`}
                 title={badgeReason ?? badge}
               >
-                <span className="socialBadgeText noClipText">
+                <span className="socialBadgeText descenderSafe">
                   {badge}
                 </span>
               </span>

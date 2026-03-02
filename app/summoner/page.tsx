@@ -310,7 +310,9 @@ function SummonerProfileContent() {
     return (
       <div className="profile-loading">
         <div className="profile-loading-spinner" />
-        <p className="mt-4 noClipText">Loading profile...</p>
+        <p className="mt-4">
+          <span className="descenderSafe">Loading profile...</span>
+        </p>
       </div>
     );
   }
@@ -571,7 +573,7 @@ function SummonerProfileContent() {
                         )}`}
                         title={badgeInfo.reason}
                       >
-                        <span className="profile-badge-chip-text socialBadgeText noClipText">
+                        <span className="profile-badge-chip-text socialBadgeText descenderSafe">
                           {badgeInfo.badge}
                         </span>
                       </span>
