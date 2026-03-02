@@ -51,5 +51,19 @@ export async function GET(request: Request) {
 
   const data = JSON.parse(text) as Record<string, unknown>;
   await setCache(cacheKey, data);
+
+  // Return full Riot payload unchanged; participant fields (e.g. skin) are passed through as returned.
+  // Verify participant shape: log first participant keys and skin (server logs)
+  const info = data.info as Record<string, unknown> | undefined;
+  const participants = info?.participants as Record<string, unknown>[] | undefined;
+  if (participants?.[0]) {
+    const first = participants[0] as Record<string, unknown>;
+    console.log(
+      "[riot/match] First participant keys:",
+      Object.keys(first).sort().join(", ")
+    );
+    console.log("[riot/match] First participant.skin:", first.skin);
+  }
+
   return NextResponse.json(data, { headers: NO_CACHE });
 }

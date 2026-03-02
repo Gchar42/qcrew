@@ -366,7 +366,7 @@ function SummonerProfileContent() {
         </span>
       </div>
       <div className="profile-matches-list">
-        {matches.map((m) => {
+        {matches.map((m, matchIndex) => {
           const p = participant(m);
           if (!p) return null;
           const win = p.win;
@@ -378,16 +378,30 @@ function SummonerProfileContent() {
           const queue = queueLabel(m.info?.queueId);
           const patch = patchFromVersion(m.info?.gameVersion);
           const showLp = isRankedQueue(m.info?.queueId);
-          const portraitSkinUrl =
-            p.skin != null && p.skin > 0
-              ? getChampionSplashUrlWithSkin(p.championName, p.skin)
-              : null;
+
+          // Verify participant.skin: log once for first match (browser console)
+          if (matchIndex === 0 && typeof window !== "undefined") {
+            console.log("[profile] First match participant.skin:", p.skin);
+            console.log(
+              "[profile] First match participant keys:",
+              Object.keys(p).sort().join(", ")
+            );
+          }
+
+          const hasSkin = p.skin != null && p.skin > 0;
+          const portraitSkinUrl = hasSkin
+            ? getChampionSplashUrlWithSkin(p.championName, p.skin)
+            : null;
           const portraitBaseUrl = getChampionSplashUrl(p.championName);
           const champSquareUrl = getChampionSquareUrl(
             p.championName,
             ddragonVersion
           );
           const initialPortraitSrc = portraitSkinUrl ?? portraitBaseUrl;
+          const portraitTitle = hasSkin
+            ? `Skin ${p.skin}`
+            : "Skin data unavailable from match payload.";
+
           return (
             <button
               key={m.metadata?.matchId ?? ""}
@@ -409,6 +423,7 @@ function SummonerProfileContent() {
                       className="profile-match-portrait"
                       width={64}
                       height={64}
+                      title={portraitTitle}
                       onError={(e) => {
                         const target = e.currentTarget;
                         if (
