@@ -465,12 +465,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 14px;
-  min-height: 32px;
+  padding: 6px 14px 12px;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1.6;
   white-space: nowrap;
   overflow: visible;
   border: 1px solid;
@@ -479,6 +478,7 @@
 
 .profile-page .profile-badge-chip-text {
   white-space: nowrap;
+  display: inline-block;
 }
 
 .profile-page .profile-badge-chip-badge-gold {
