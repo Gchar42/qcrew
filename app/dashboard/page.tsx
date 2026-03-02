@@ -528,7 +528,15 @@ export default function DashboardRiotSearchPage() {
                               )} socialBadgeFix`}
                               title={badgeInfo.reason}
                             >
-                              <span className="socialBadgeText socialBadgeFixText">
+                              <span
+                                className="socialBadgeText socialBadgeFixText"
+                                style={{
+                                  background: "hotpink",
+                                  color: "black",
+                                  paddingBottom: "20px",
+                                  border: "4px solid lime",
+                                }}
+                              >
                                 {badgeInfo.badge}
                               </span>
                             </span>

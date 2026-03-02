@@ -85,7 +85,17 @@ export function MatchCard({
                 )} socialBadgeFix`}
                 title={badgeReason ?? badge}
               >
-                <span className="socialBadgeText socialBadgeFixText">{badge}</span>
+                <span
+                  className="socialBadgeText socialBadgeFixText"
+                  style={{
+                    background: "hotpink",
+                    color: "black",
+                    paddingBottom: "20px",
+                    border: "4px solid lime",
+                  }}
+                >
+                  {badge}
+                </span>
               </span>
             )}
           </div>
