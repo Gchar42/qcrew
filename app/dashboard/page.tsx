@@ -489,18 +489,20 @@ export default function DashboardRiotSearchPage() {
               return (
                 <div
                   key={m.metadata.matchId}
-                  className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/30"
+                  className="relative rounded-2xl border border-white/10 bg-black/30"
                 >
                   {splash && (
-                    <Image
-                      src={splash}
-                      alt={p.championName}
-                      fill
-                      className="object-cover opacity-25"
-                    />
+                    <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+                      <Image
+                        src={splash}
+                        alt={p.championName}
+                        fill
+                        className="object-cover opacity-25"
+                      />
+                    </div>
                   )}
 
-                  <div className="relative flex items-center justify-between gap-4 p-4">
+                  <div className="relative flex items-center justify-between gap-4 p-4 badgeArea socialBadgeWrap">
                     <div className="flex items-center gap-4">
                       <div className="flex flex-col items-center gap-0.5 shrink-0">
                         <div
@@ -512,7 +514,7 @@ export default function DashboardRiotSearchPage() {
                         >
                           {result}
                         </div>
-                        <div className="flex flex-row items-center gap-2 flex-wrap justify-center socialBadgeWrap">
+                        <div className="flex flex-row items-center gap-2 flex-wrap justify-center">
                           {impact != null && (
                             <span className="inline-flex items-baseline gap-1 rounded-md border-[1.5px] border-white/20 bg-white/5 px-2.5 py-1 shadow-sm">
                               <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">Impact</span>

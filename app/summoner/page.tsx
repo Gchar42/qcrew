@@ -557,7 +557,7 @@ function SummonerProfileContent() {
                     {" · "}
                     <span>{cs} CS ({csPerMin.toFixed(1)}/m)</span>
                   </div>
-                  <div className="profile-chips-row socialBadgeWrap">
+                  <div className="profile-chips-row badgeArea socialBadgeWrap">
                     {impact != null && (
                       <span className="profile-impact-chip">
                         <span className="profile-impact-chip-label">Impact</span>

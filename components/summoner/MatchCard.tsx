@@ -49,18 +49,20 @@ export function MatchCard({
     <button
       type="button"
       onClick={onClick}
-      className="w-full relative overflow-hidden rounded-2xl border border-white/10 bg-black/30 text-left hover:border-white/20 transition-all hover-lift"
+      className="w-full relative rounded-2xl border border-white/10 bg-black/30 text-left hover:border-white/20 transition-all hover-lift"
     >
       {splash && (
-        <Image
-          src={splash}
-          alt={champion}
-          fill
-          priority={false}
-          className="object-cover opacity-25"
-        />
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+          <Image
+            src={splash}
+            alt={champion}
+            fill
+            priority={false}
+            className="object-cover opacity-25"
+          />
+        </div>
       )}
-      <div className="relative p-4 flex items-center gap-4">
+      <div className="relative p-4 flex items-center gap-4 badgeArea socialBadgeWrap">
         <div className="shrink-0 flex flex-col items-center gap-0.5">
           <div
             className={`w-14 h-14 rounded-lg flex items-center justify-center text-lg font-bold ${
@@ -69,7 +71,7 @@ export function MatchCard({
           >
             {win ? "W" : "L"}
           </div>
-        <div className="flex flex-row items-center gap-2 flex-wrap justify-center socialBadgeWrap">
+        <div className="flex flex-row items-center gap-2 flex-wrap justify-center">
             {impactScore != null && (
               <span className="inline-flex items-baseline gap-1 rounded-md border-[1.5px] border-white/20 bg-white/5 px-2.5 py-1 shadow-sm">
                 <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">Impact</span>
