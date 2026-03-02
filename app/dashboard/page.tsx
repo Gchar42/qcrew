@@ -97,6 +97,10 @@ export default function DashboardRiotSearchPage() {
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [selectedSuggestion, setSelectedSuggestion] = useState<string | null>(
+    null
+  );
   const debounceRef = useRef<number | null>(null);
   const activeFetchRef = useRef(0);
 
@@ -175,6 +179,7 @@ export default function DashboardRiotSearchPage() {
     }
 
     setShowSuggestions(false);
+    setSelectedSuggestion(null);
     setState({ status: "loading" });
     setAccount(null);
     setSummoner(null);
@@ -227,14 +232,34 @@ export default function DashboardRiotSearchPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await doSearch(riotId);
+    setHasSubmitted(true);
+
+    if (riotId.includes("#")) {
+      await doSearch(riotId);
+      return;
+    }
+
+    if (suggestions.length > 0) {
+      const top = suggestions[0];
+      setRiotId(top);
+      setShowSuggestions(false);
+      await doSearch(top);
+      return;
+    }
   }
 
   function pickSuggestion(s: string) {
+    setSelectedSuggestion(s);
     setRiotId(s);
     setShowSuggestions(false);
     void doSearch(s);
   }
+
+  const showFormatError =
+    hasSubmitted &&
+    !riotId.includes("#") &&
+    selectedSuggestion === null &&
+    suggestions.length === 0;
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
@@ -250,6 +275,8 @@ export default function DashboardRiotSearchPage() {
             onChange={(e) => {
               setRiotId(e.target.value);
               setShowSuggestions(true);
+              setHasSubmitted(false);
+              setSelectedSuggestion(null);
             }}
             onFocus={() => setShowSuggestions(true)}
             placeholder="GameName#Tag"
@@ -282,20 +309,22 @@ export default function DashboardRiotSearchPage() {
         </button>
       </form>
 
-      {state.status === "error" && (
+      {(state.status === "error" || showFormatError) && (
         <div className="mt-5 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
           <div className="font-semibold text-red-200">Error</div>
           <div className="mt-1 text-sm text-red-300/90">
-            {state.statusCode === 401
-              ? "Riot dev key expired."
-              : state.statusCode === 429
-                ? "Rate limited. Reduce match detail concurrency."
-                : state.statusCode === 403 &&
-                    process.env.NODE_ENV === "production"
-                  ? "Dev key cannot be used on public deployment."
-                  : state.message}
+            {showFormatError
+              ? "Use format GameName#Tag"
+              : state.statusCode === 401
+                ? "Riot dev key expired."
+                : state.statusCode === 429
+                  ? "Rate limited. Reduce match detail concurrency."
+                  : state.statusCode === 403 &&
+                      process.env.NODE_ENV === "production"
+                    ? "Dev key cannot be used on public deployment."
+                    : state.message}
           </div>
-          {state.statusCode != null && (
+          {state.status === "error" && state.statusCode != null && (
             <div className="mt-2 text-xs text-zinc-400">
               Status: {state.statusCode}
             </div>
