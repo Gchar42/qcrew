@@ -255,11 +255,11 @@ export default function DashboardRiotSearchPage() {
     void doSearch(s);
   }
 
-  const showFormatError =
+  const showFormatWarning =
     hasSubmitted &&
     !riotId.includes("#") &&
-    selectedSuggestion === null &&
-    suggestions.length === 0;
+    suggestions.length === 0 &&
+    state.status !== "loading";
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
@@ -309,24 +309,29 @@ export default function DashboardRiotSearchPage() {
         </button>
       </form>
 
-      {(state.status === "error" || showFormatError) && (
+      {showFormatWarning && (
         <div className="mt-5 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
           <div className="font-semibold text-red-200">Error</div>
           <div className="mt-1 text-sm text-red-300/90">
-            {showFormatError
-              ? "Use format GameName#Tag"
-              : state.status === "error"
-                ? state.statusCode === 401
-                  ? "Riot dev key expired."
-                  : state.statusCode === 429
-                    ? "Rate limited. Reduce match detail concurrency."
-                    : state.statusCode === 403 &&
-                        process.env.NODE_ENV === "production"
-                      ? "Dev key cannot be used on public deployment."
-                      : state.message
-                : ""}
+            Use format GameName#Tag
           </div>
-          {state.status === "error" && state.statusCode != null && (
+        </div>
+      )}
+
+      {state.status === "error" && (
+        <div className="mt-5 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
+          <div className="font-semibold text-red-200">Error</div>
+          <div className="mt-1 text-sm text-red-300/90">
+            {state.statusCode === 401
+              ? "Riot dev key expired."
+              : state.statusCode === 429
+                ? "Rate limited. Reduce match detail concurrency."
+                : state.statusCode === 403 &&
+                    process.env.NODE_ENV === "production"
+                  ? "Dev key cannot be used on public deployment."
+                  : state.message}
+          </div>
+          {state.statusCode != null && (
             <div className="mt-2 text-xs text-zinc-400">
               Status: {state.statusCode}
             </div>
