@@ -315,14 +315,16 @@ export default function DashboardRiotSearchPage() {
           <div className="mt-1 text-sm text-red-300/90">
             {showFormatError
               ? "Use format GameName#Tag"
-              : state.statusCode === 401
-                ? "Riot dev key expired."
-                : state.statusCode === 429
-                  ? "Rate limited. Reduce match detail concurrency."
-                  : state.statusCode === 403 &&
-                      process.env.NODE_ENV === "production"
-                    ? "Dev key cannot be used on public deployment."
-                    : state.message}
+              : state.status === "error"
+                ? state.statusCode === 401
+                  ? "Riot dev key expired."
+                  : state.statusCode === 429
+                    ? "Rate limited. Reduce match detail concurrency."
+                    : state.statusCode === 403 &&
+                        process.env.NODE_ENV === "production"
+                      ? "Dev key cannot be used on public deployment."
+                      : state.message
+                : ""}
           </div>
           {state.status === "error" && state.statusCode != null && (
             <div className="mt-2 text-xs text-zinc-400">
