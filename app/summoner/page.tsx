@@ -310,7 +310,7 @@ function SummonerProfileContent() {
     return (
       <div className="profile-loading">
         <div className="profile-loading-spinner" />
-        <p className="mt-4" style={{ lineHeight: 1.6 }}>
+        <p className="mt-4">
           Loading profile...
         </p>
       </div>

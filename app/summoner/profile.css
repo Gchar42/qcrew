@@ -460,16 +460,16 @@
   line-height: 1.2;
 }
 
-/* Chip 2: Social badge – room for descenders (g, y, p): extra padding + line-height */
+/* Chip 2: Social badge – balanced padding, no fixed height, descenders visible */
 .profile-page .profile-badge-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 14px 12px;
+  padding: 8px 14px;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
-  line-height: 1.6;
+  line-height: 1.5;
   white-space: nowrap;
   overflow: visible;
   border: 1px solid;
@@ -479,6 +479,7 @@
 .profile-page .profile-badge-chip-text {
   white-space: nowrap;
   display: inline-block;
+  line-height: 1.5;
 }
 
 .profile-page .profile-badge-chip-badge-gold {
@@ -883,6 +884,12 @@
   padding: 60px 20px;
   color: var(--muted);
   font-family: "Syne", sans-serif;
+  overflow: visible;
+}
+
+.profile-page .profile-loading p {
+  line-height: 1.5;
+  padding-bottom: 4px;
 }
 
 .profile-page .profile-loading-spinner {

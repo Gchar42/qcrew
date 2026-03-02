@@ -58,14 +58,12 @@ body {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
-/* pill */
+/* pill – padding defines height, no min-height */
 .socialBadge {
   display: inline-flex;
   justify-content: center;
-  align-items: flex-start;
-  padding: 10px 14px 12px 14px;
-  height: auto;
-  min-height: 40px;
+  align-items: center;
+  padding: 8px 14px;
   box-sizing: border-box;
   overflow: visible;
 }
@@ -73,13 +71,9 @@ body {
 /* text */
 .socialBadgeText {
   display: inline-block;
-  line-height: normal;
-  padding-top: 2px;
+  line-height: 1.5;
   white-space: nowrap;
   overflow: visible;
-  font-smooth: auto;
-  -webkit-font-smoothing: auto;
-  -moz-osx-font-smoothing: auto;
 }
 
 .badgeArea,
