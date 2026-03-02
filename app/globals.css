@@ -88,8 +88,9 @@ select {
   overflow: visible;
 }
 
-/* text */
+/* text – Inter avoids descender clipping (g, y, p) vs Syne */
 .socialBadgeText {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   display: inline-block;
   line-height: 1.4;
   white-space: nowrap;
@@ -114,10 +115,11 @@ select {
   align-items: center !important;
 }
 
-/* Inner text inside badge pills – own padding so descenders aren't cut */
+/* Inner text inside badge pills – Inter + padding so descenders aren't cut */
 .badge span,
 .profile-badge-chip span,
 .socialBadge span {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif !important;
   display: inline-block !important;
   line-height: 1.5 !important;
   vertical-align: middle !important;

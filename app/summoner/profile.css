@@ -898,6 +898,7 @@
 }
 
 .profile-page .profile-loading-text {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   display: inline-block;
   line-height: 1.4;
   padding-bottom: 4px;
