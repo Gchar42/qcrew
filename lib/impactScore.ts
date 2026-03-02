@@ -7,6 +7,26 @@ import type { MatchDto } from "@/types/riot";
 
 type Participant = NonNullable<MatchDto["info"]>["participants"][number];
 
+const ASSASSIN_CHAMPS = new Set([
+  "Talon",
+  "Zed",
+  "Katarina",
+  "Akali",
+  "Qiyana",
+  "Khazix",
+  "Kha'Zix",
+  "Rengar",
+  "Evelynn",
+  "Nocturne",
+  "Fizz",
+  "Ekko",
+  "Diana",
+  "Shaco",
+  "Pyke",
+  "Kayn",
+  "Naafiri",
+]);
+
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -146,7 +166,15 @@ export function computeImpactScore(match: MatchDto, puuid: string): ImpactResult
   const deathsPm = deaths / minutes;
   const baseDeathPenalty = norm(deathsPm, 0.35);
   const mitigation = clamp(contributionIndex / 3, 0, 1);
-  const effectivePenalty = baseDeathPenalty * (1 - 0.7 * mitigation);
+  let effectivePenalty = baseDeathPenalty * (1 - 0.7 * mitigation);
+
+  const assassinMode =
+    ASSASSIN_CHAMPS.has(p.championName) &&
+    (killsPerMin >= 0.35 || dpm >= 650 || takedownsPerMin >= 0.9);
+  if (assassinMode) {
+    effectivePenalty *= 0.88;
+  }
+
   const efficiencyModifier = clamp(1.05 - 0.5 * effectivePenalty, 0.75, 1.05);
 
   // ---- Final score ----
