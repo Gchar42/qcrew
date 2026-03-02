@@ -363,10 +363,10 @@
   gap: 3px;
 }
 
-/* Match row */
+/* Match row – strict two zones: left (visual + meta), right (teams) */
 .profile-page .profile-match-row {
   display: grid;
-  grid-template-columns: 40px 8px 1fr auto;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 16px;
   padding: 16px 22px;
@@ -376,6 +376,7 @@
   cursor: pointer;
   animation: profileFadeUp 0.35s ease both;
   background: var(--surface);
+  line-height: 1.35;
 }
 
 .profile-page .profile-match-row:nth-child(1) {
@@ -418,11 +419,30 @@
   background: rgba(185, 28, 28, 0.17);
 }
 
+/* Left zone: visual row (L + bar + portrait + spells) + meta block */
+.profile-page .profile-match-left-zone {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.profile-page .profile-match-left-visual {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
 .profile-page .profile-outcome-col {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 /* Two chips row: Impact chip + Badge chip (overflow visible so badge descenders don't clip) */
@@ -540,8 +560,9 @@
 
 .profile-page .profile-verdict-line {
   width: 4px;
-  height: 40px;
+  height: 64px;
   border-radius: 1px;
+  flex-shrink: 0;
 }
 
 .profile-page .profile-verdict-line.win {
@@ -552,18 +573,10 @@
   background: var(--loss);
 }
 
-/* Match row: left block (portrait + meta + impact/badge + items) */
-.profile-page .profile-match-left-block {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  min-width: 0;
-  overflow: visible !important;
-}
-
 .profile-page .profile-match-portrait-spells-wrap {
   display: flex;
-  align-items: flex-start;
+  flex-direction: row;
+  align-items: center;
   gap: 8px;
   flex-shrink: 0;
 }
@@ -575,6 +588,7 @@
   border-radius: 10px;
   overflow: hidden;
   border: 2px solid var(--border);
+  line-height: 0;
 }
 
 .profile-page .profile-match-spells-runes {
@@ -674,6 +688,7 @@
   object-fit: cover;
   object-position: center;
   display: block;
+  vertical-align: middle;
 }
 
 .profile-page .profile-match-meta-col {
@@ -709,28 +724,37 @@
   font-style: italic;
 }
 
-/* Right block: two vertical team columns */
+/* Right zone: strict 2-column teams grid, fixed gap so columns never drift */
 .profile-page .profile-match-teams-block {
-  display: flex;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
+  width: 100%;
+  max-width: 240px;
+  flex-shrink: 0;
 }
 
 .profile-page .profile-match-team-col {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-rows: repeat(5, auto);
+  grid-template-columns: 24px 1fr;
+  gap: 4px 6px;
   min-width: 0;
+  align-content: start;
 }
 
 .profile-page .profile-match-team-row {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 24px 1fr;
   gap: 6px;
+  align-items: center;
   min-width: 0;
-  padding: 2px 4px;
+  padding: 2px 0;
   border-radius: 4px;
+}
+
+.profile-page .profile-match-team-row-placeholder {
+  min-height: 24px;
 }
 
 .profile-page .profile-match-team-row-highlight {
@@ -749,7 +773,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 72px;
+  min-width: 0;
 }
 
 .profile-page .profile-match-team-champ-highlight {
@@ -861,7 +885,7 @@
     border-bottom: none;
   }
   .profile-page .profile-match-row {
-    grid-template-columns: 48px 6px 1fr;
+    grid-template-columns: 1fr;
   }
   .profile-page .profile-match-teams-block {
     display: none;
