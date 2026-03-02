@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type SearchResult = { riotId: string; updatedAt: string };
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const q = (searchParams.get("q") || "").trim();
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -115,5 +116,20 @@ export default function SearchPage() {
         </ul>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-2xl px-6 py-8">
+          <h1 className="text-2xl font-bold text-white">Search</h1>
+          <p className="mt-4 text-sm text-zinc-400">Loading...</p>
+        </div>
+      }
+    >
+      <SearchContent />
+    </Suspense>
   );
 }
