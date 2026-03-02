@@ -1,13 +1,95 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
+import { getChampionLoadingUrl, getChampionSquareUrl } from "@/lib/riotAssets";
 import type { AccountDto, SummonerDto, MatchDto } from "@/types/riot";
 
 const REGION = "na1";
+
+type Participant = NonNullable<MatchDto["info"]>["participants"][number];
+
+const POSITION_ORDER: Record<string, number> = {
+  TOP: 0,
+  JUNGLE: 1,
+  MIDDLE: 2,
+  MID: 2,
+  BOTTOM: 3,
+  BOT: 3,
+  UTILITY: 4,
+  SUPPORT: 4,
+};
+
+/** Split participants into blue (100) and red (200), ordered by role */
+function getTeams(m: MatchDto): { blue: Participant[]; red: Participant[] } {
+  const participants = m.info?.participants ?? [];
+  const byPos = (a: Participant, b: Participant) =>
+    (POSITION_ORDER[a.teamPosition ?? ""] ?? 5) -
+    (POSITION_ORDER[b.teamPosition ?? ""] ?? 5);
+  const blue = participants
+    .filter((p) => p.teamId === 100)
+    .sort(byPos);
+  const red = participants
+    .filter((p) => p.teamId === 200)
+    .sort(byPos);
+  return { blue, red };
+}
+
+/** Queue ID to short label */
+function queueLabel(queueId: number | undefined): string {
+  if (queueId == null) return "Custom";
+  const map: Record<number, string> = {
+    420: "Ranked Solo",
+    440: "Ranked Flex",
+    400: "Draft Pick",
+    430: "Blind Pick",
+    450: "ARAM",
+    1020: "One for All",
+  };
+  return map[queueId] ?? `Queue ${queueId}`;
+}
+
+function isRankedQueue(queueId: number | undefined): boolean {
+  return queueId === 420 || queueId === 440;
+}
+
+/** "14.6.xxx.xxx" -> "14.6" */
+function patchFromVersion(gameVersion: string | undefined): string | null {
+  if (!gameVersion) return null;
+  const parts = gameVersion.split(".");
+  if (parts.length >= 2) return `${parts[0]}.${parts[1]}`;
+  return null;
+}
+
+function ChampIcon({
+  championName,
+  summonerName,
+  gameVersion,
+}: {
+  championName: string;
+  summonerName: string;
+  gameVersion?: string;
+}) {
+  const squareUrl = getChampionSquareUrl(championName, gameVersion);
+  return (
+    <span
+      className="profile-match-team-champ"
+      title={`${summonerName} · ${championName}`}
+    >
+      <Image
+        src={squareUrl}
+        alt=""
+        width={24}
+        height={24}
+        unoptimized={false}
+      />
+    </span>
+  );
+}
 
 function parseRiotIdFromQuery(riotIdParam: string | null) {
   if (!riotIdParam || typeof riotIdParam !== "string") return null;
@@ -265,8 +347,18 @@ function SummonerProfileContent() {
           if (!p) return null;
           const win = p.win;
           const duration = formatDuration(m.info?.gameDuration ?? 0);
+          const durationShort = `${Math.floor((m.info?.gameDuration ?? 0) / 60)}m`;
           const cs = (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
           const rolePos = roleLabel(p.teamPosition);
+          const { blue, red } = getTeams(m);
+          const queue = queueLabel(m.info?.queueId);
+          const patch = patchFromVersion(m.info?.gameVersion);
+          const showLp = isRankedQueue(m.info?.queueId);
+          const champLoadingUrl = getChampionLoadingUrl(p.championName);
+          const champSquareUrl = getChampionSquareUrl(
+            p.championName,
+            m.info?.gameVersion
+          );
           return (
             <button
               key={m.metadata?.matchId ?? ""}
@@ -278,10 +370,61 @@ function SummonerProfileContent() {
                 {win ? "W" : "L"}
               </span>
               <span className={`profile-verdict-line ${win ? "win" : "loss"}`} />
-              <div>
-                <div className="profile-match-champ-name">{p.championName}</div>
-                <div className="profile-match-meta-row">
-                  <span>{rolePos}</span> · {duration} · {cs} CS
+              <div className="profile-match-main">
+                <div className="profile-match-portrait-meta">
+                  <div className="profile-match-portrait-wrap">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={champLoadingUrl}
+                      alt=""
+                      className="profile-match-portrait"
+                      width={64}
+                      height={64}
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src !== champSquareUrl) {
+                          target.src = champSquareUrl;
+                        } else {
+                          target.style.display = "none";
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="profile-match-meta-col">
+                    <div className="profile-match-meta-row">
+                      <span>{rolePos}</span> · {duration} · {cs} CS
+                    </div>
+                    <div className="profile-match-queue-patch">
+                      {queue}, {durationShort}
+                      {patch != null && `, Patch ${patch}`}
+                    </div>
+                    {showLp && (
+                      <div className="profile-match-lp">LP data coming soon</div>
+                    )}
+                  </div>
+                </div>
+                <div className="profile-match-teams">
+                  <div className="profile-match-team" aria-label="Blue team">
+                    {blue.slice(0, 5).map((part) => (
+                      <ChampIcon
+                        key={part.puuid}
+                        championName={part.championName}
+                        summonerName={part.summonerName}
+                        gameVersion={m.info?.gameVersion}
+                      />
+                    ))}
+                  </div>
+                  <div className="profile-match-vs">vs</div>
+                  <div className="profile-match-team" aria-label="Red team">
+                    {red.slice(0, 5).map((part) => (
+                      <ChampIcon
+                        key={part.puuid}
+                        championName={part.championName}
+                        summonerName={part.summonerName}
+                        gameVersion={m.info?.gameVersion}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
               <div>

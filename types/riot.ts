@@ -22,6 +22,10 @@ export type MatchDto = {
     gameDuration: number;
     gameEndTimestamp?: number;
     gameId?: number;
+    /** e.g. 420 = Ranked Solo, 440 = Ranked Flex */
+    queueId?: number;
+    /** e.g. "14.6.xxx.xxx" */
+    gameVersion?: string;
     participants: Array<{
       puuid: string;
       summonerName: string;
@@ -30,6 +34,8 @@ export type MatchDto = {
       deaths: number;
       assists: number;
       win: boolean;
+      /** 100 = blue, 200 = red */
+      teamId?: number;
       teamPosition?: string;
       totalMinionsKilled?: number;
       neutralMinionsKilled?: number;
