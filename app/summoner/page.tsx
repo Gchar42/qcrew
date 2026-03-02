@@ -8,7 +8,6 @@ import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
 import {
   getChampionSplashUrl,
-  getChampionSplashUrlWithSkin,
   getChampionSquareUrl,
 } from "@/lib/riotAssets";
 import type { AccountDto, SummonerDto, MatchDto } from "@/types/riot";
@@ -366,8 +365,7 @@ function SummonerProfileContent() {
         </span>
       </div>
       <div className="profile-matches-list">
-        {matches.map((m, matchIndex) => {
-          // Participant for the searched player only (match by puuid)
+        {matches.map((m) => {
           const p = participant(m);
           if (!p) return null;
           const win = p.win;
@@ -380,36 +378,11 @@ function SummonerProfileContent() {
           const patch = patchFromVersion(m.info?.gameVersion);
           const showLp = isRankedQueue(m.info?.queueId);
 
-          const skin = p.skin;
-          const champ = p.championName;
-          const portraitUrl = getChampionSplashUrlWithSkin(
-            champ,
-            skin != null ? skin : 0
-          );
-          const matchId = m.metadata?.matchId ?? "";
-
-          if (matchIndex === 0 && typeof window !== "undefined") {
-            console.log("portrait", portraitUrl);
-          }
-
-          const skinNumber =
-            p.skin != null && p.skin > 0 ? p.skin : null;
-          const portraitSkinUrl =
-            skinNumber != null
-              ? getChampionSplashUrlWithSkin(p.championName, skinNumber)
-              : null;
           const portraitBaseUrl = getChampionSplashUrl(p.championName);
           const champSquareUrl = getChampionSquareUrl(
             p.championName,
             ddragonVersion
           );
-          const initialPortraitSrc = (portraitSkinUrl ?? portraitBaseUrl) + `?v=${matchId}`;
-          const portraitTitle =
-            skinNumber != null
-              ? `Skin ${skinNumber}`
-              : "Skin data unavailable from match payload.";
-
-          const debugLabel = `${champ}_${skin ?? "undefined"}`;
 
           return (
             <button
@@ -427,30 +400,20 @@ function SummonerProfileContent() {
                   <div className="profile-match-portrait-wrap">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={initialPortraitSrc}
+                      src={portraitBaseUrl}
                       alt=""
                       className="profile-match-portrait"
                       width={64}
                       height={64}
-                      title={portraitTitle}
                       onError={(e) => {
                         const target = e.currentTarget;
-                        const currentBase = target.src.split("?")[0];
-                        if (
-                          portraitSkinUrl &&
-                          currentBase === portraitSkinUrl
-                        ) {
-                          target.src = portraitBaseUrl + `?v=${matchId}`;
-                        } else if (currentBase === portraitBaseUrl) {
-                          target.src = champSquareUrl + `?v=${matchId}`;
+                        if (target.src !== champSquareUrl) {
+                          target.src = champSquareUrl;
                         } else {
                           target.style.display = "none";
                         }
                       }}
                     />
-                    <div className="profile-match-portrait-debug" title={portraitUrl}>
-                      {debugLabel}
-                    </div>
                   </div>
                   <div className="profile-match-meta-col">
                     <div className="profile-match-meta-row">
