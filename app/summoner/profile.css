@@ -54,8 +54,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 40px;
-  height: 60px;
+  padding: 12px 40px;
   background: rgba(223, 216, 204, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -204,7 +203,7 @@
   font-family: "Unbounded", sans-serif;
   font-size: 72px;
   font-weight: 900;
-  line-height: 1;
+  line-height: 1.15;
   letter-spacing: -4px;
 }
 
@@ -302,7 +301,7 @@
   font-size: 24px;
   font-weight: 600;
   letter-spacing: -1px;
-  line-height: 1;
+  line-height: 1.2;
 }
 
 .profile-page .profile-stat-value.blue {
@@ -458,7 +457,7 @@
   font-size: 15px;
   font-weight: 700;
   color: var(--ink);
-  line-height: 1;
+  line-height: 1.2;
 }
 
 /* Chip 2: Social badge – room for descenders (g, y, p): extra padding + line-height */
@@ -513,10 +512,10 @@
   font-size: 13px;
   font-weight: 700;
   width: 32px;
-  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 6px 0;
   border-radius: 4px;
 }
 
