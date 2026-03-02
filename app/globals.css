@@ -83,3 +83,23 @@ body {
 .badgeArea * {
   overflow: visible;
 }
+
+/* Force padding & overflow – override Claude-imported styles so descenders (e.g. g) aren't clipped */
+.badge,
+.profile-badge-chip,
+.socialBadge {
+  padding: 6px 10px 10px !important; /* basement room for descenders */
+  overflow: visible !important;
+  height: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+/* Inner text inside badge pills */
+.badge span,
+.profile-badge-chip span,
+.socialBadge span {
+  display: inline-block !important;
+  line-height: 1.5 !important;
+  vertical-align: middle !important;
+}
