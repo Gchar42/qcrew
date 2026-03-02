@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 function getAdminClient() {
-  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = process.env.SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  console.log("[search/suggestions] SUPABASE_URL present:", !!url);
+  console.log("[search/suggestions] SUPABASE_SERVICE_ROLE_KEY present:", !!serviceKey);
 
   if (!url || !serviceKey) return null;
 
@@ -17,6 +20,7 @@ function escapeLike(s: string): string {
 }
 
 type SearchRow = {
+  riot_id?: string;
   game_name: string;
   tag_line: string;
   puuid: string;
@@ -30,6 +34,7 @@ export async function GET(req: Request) {
   const q = (searchParams.get("q") || "").trim();
   const limitParam = searchParams.get("limit");
   const pageParam = searchParams.get("page");
+  const debug = searchParams.get("debug") === "1";
   const limit = Math.min(
     Math.max(parseInt(limitParam || "8", 10) || 8, 1),
     25
@@ -50,31 +55,36 @@ export async function GET(req: Request) {
 
   const safe = q.toLowerCase().replace(/,/g, "");
   const escaped = escapeLike(safe);
-  const pattern = `%${escaped}%`;
+  const containsPattern = `%${escaped}%`;
+  const startsPattern = `${escaped}%`;
 
   const isSearchPage = limit > 8;
   const selectFields =
-    "game_name, tag_line, puuid, updated_at, profile_icon_id, summoner_level";
+    "riot_id, game_name, tag_line, puuid, updated_at, profile_icon_id, summoner_level";
   const base = client.from("riot_searches").select(selectFields);
+
+  const filterUsed = isSearchPage
+    ? `game_name.ilike.${startsPattern},game_name.ilike.${containsPattern},riot_id.ilike.${containsPattern}`
+    : `riot_id.ilike.${containsPattern},game_name.ilike.${containsPattern},tag_line.ilike.${containsPattern}`;
 
   const { data, error } = isSearchPage
     ? await base
-        .ilike("game_name", pattern)
+        .or(filterUsed)
         .order("updated_at", { ascending: false })
         .limit(200)
     : await base
-        .or(
-          `riot_id.ilike.${pattern},game_name.ilike.${pattern},tag_line.ilike.${pattern}`
-        )
+        .or(filterUsed)
         .order("updated_at", { ascending: false })
         .limit(32);
 
   if (error) {
+    console.error("[search/suggestions] GET Supabase error:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   const rows = (data || []) as SearchRow[];
-  const fullId = (r: SearchRow) => `${r.game_name}#${r.tag_line}`;
+  const fullId = (r: SearchRow) =>
+    r.riot_id ?? `${r.game_name}#${r.tag_line}`;
   const seen = new Set<string>();
   const deduped: SearchRow[] = [];
   for (const r of rows) {
@@ -110,7 +120,22 @@ export async function GET(req: Request) {
       profileIconId: r.profile_icon_id ?? undefined,
       summonerLevel: r.summoner_level ?? undefined,
     }));
-    return NextResponse.json({ suggestions, total });
+    const payload: Record<string, unknown> = { suggestions, total };
+    if (debug) {
+      payload.debug = {
+        rowCount: total,
+        first3: sorted.slice(0, 3).map((r) => ({
+          riotId: fullId(r),
+          game_name: r.game_name,
+          tag_line: r.tag_line,
+          updated_at: r.updated_at,
+        })),
+        filterUsed: isSearchPage
+          ? "game_name ilike q% OR game_name ilike %q% OR riot_id ilike %q%"
+          : "riot_id/game_name/tag_line ilike %q%",
+      };
+    }
+    return NextResponse.json(payload);
   }
 
   const sliced = sorted.slice(0, limit);
@@ -164,7 +189,11 @@ export async function POST(req: Request) {
   });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[search/suggestions] POST upsert error:", error.message);
+    return NextResponse.json(
+      { error: error.message, ok: false },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ ok: true });

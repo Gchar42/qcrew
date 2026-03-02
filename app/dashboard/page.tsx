@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -160,7 +161,7 @@ export default function DashboardRiotSearchPage() {
     summonerLevel?: number
   ) {
     try {
-      await fetch("/api/search/suggestions", {
+      const res = await fetch("/api/search/suggestions", {
         method: "POST",
         headers: { "content-type": "application/json" },
         cache: "no-store",
@@ -173,8 +174,16 @@ export default function DashboardRiotSearchPage() {
           summonerLevel,
         }),
       });
-    } catch {
-      // ignore
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        console.error(
+          "[dashboard] Failed to save search to history:",
+          res.status,
+          body
+        );
+      }
+    } catch (err) {
+      console.error("[dashboard] Error saving search to history:", err);
     }
   }
 
@@ -269,10 +278,20 @@ export default function DashboardRiotSearchPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
-      <h1 className="text-3xl font-bold text-white">League Match History</h1>
-      <p className="mt-2 text-sm text-zinc-400">
-        Search by game name or full Riot ID (GameName#Tag).
-      </p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-white">League Match History</h1>
+          <p className="mt-2 text-sm text-zinc-400">
+            Search by game name or full Riot ID (GameName#Tag).
+          </p>
+        </div>
+        <Link
+          href="/search"
+          className="shrink-0 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-medium text-white hover:bg-white/10"
+        >
+          Search again
+        </Link>
+      </div>
 
       <form onSubmit={onSubmit} className="relative mt-5 flex gap-2">
         <div className="relative w-full">

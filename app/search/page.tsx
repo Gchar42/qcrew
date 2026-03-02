@@ -90,10 +90,18 @@ function SearchContent() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-8">
-      <h1 className="text-xl font-bold text-white">
-        This is the search result for the summoner &quot;{q}&quot; in the North
-        America region.
-      </h1>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <h1 className="text-xl font-bold text-white">
+          This is the search result for the summoner &quot;{q}&quot; in the
+          North America region.
+        </h1>
+        <Link
+          href="/dashboard"
+          className="shrink-0 rounded-lg border border-white/10 bg-black/30 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
+        >
+          Search again
+        </Link>
+      </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
