@@ -47,6 +47,8 @@ export type MatchDto = {
       item5?: number;
       item6?: number;
       championId?: number;
+      /** Skin id used in game (for splash art URL) */
+      skin?: number;
     }>;
   };
 };

@@ -6,7 +6,11 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
-import { getChampionLoadingUrl, getChampionSquareUrl } from "@/lib/riotAssets";
+import {
+  getChampionSplashUrl,
+  getChampionSplashUrlWithSkin,
+  getChampionSquareUrl,
+} from "@/lib/riotAssets";
 import type { AccountDto, SummonerDto, MatchDto } from "@/types/riot";
 
 const REGION = "na1";
@@ -68,13 +72,24 @@ function patchFromVersion(gameVersion: string | undefined): string | null {
 function ChampIcon({
   championName,
   summonerName,
-  gameVersion,
+  ddragonVersion,
 }: {
   championName: string;
   summonerName: string;
-  gameVersion?: string;
+  ddragonVersion: string | null;
 }) {
-  const squareUrl = getChampionSquareUrl(championName, gameVersion);
+  const squareUrl = getChampionSquareUrl(championName, ddragonVersion);
+  const [failed, setFailed] = useState(false);
+  if (failed || !squareUrl) {
+    return (
+      <span
+        className="profile-match-team-champ profile-match-team-champ-fallback"
+        title={`${summonerName} · ${championName}`}
+      >
+        <span className="profile-match-team-champ-placeholder" aria-hidden />
+      </span>
+    );
+  }
   return (
     <span
       className="profile-match-team-champ"
@@ -86,6 +101,7 @@ function ChampIcon({
         width={24}
         height={24}
         unoptimized={false}
+        onError={() => setFailed(true)}
       />
     </span>
   );
@@ -149,6 +165,14 @@ function SummonerProfileContent() {
   const [summoner, setSummoner] = useState<SummonerDto | null>(null);
   const [matches, setMatches] = useState<MatchDto[]>([]);
   const [detailMatch, setDetailMatch] = useState<MatchDto | null>(null);
+  const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/ddragon/version")
+      .then((r) => r.json())
+      .then((data: { version?: string }) => setDdragonVersion(data.version ?? null))
+      .catch(() => setDdragonVersion(null));
+  }, []);
 
   const fetchProfile = useCallback(async () => {
     if (!parsed) {
@@ -354,11 +378,16 @@ function SummonerProfileContent() {
           const queue = queueLabel(m.info?.queueId);
           const patch = patchFromVersion(m.info?.gameVersion);
           const showLp = isRankedQueue(m.info?.queueId);
-          const champLoadingUrl = getChampionLoadingUrl(p.championName);
+          const portraitSkinUrl =
+            p.skin != null && p.skin > 0
+              ? getChampionSplashUrlWithSkin(p.championName, p.skin)
+              : null;
+          const portraitBaseUrl = getChampionSplashUrl(p.championName);
           const champSquareUrl = getChampionSquareUrl(
             p.championName,
-            m.info?.gameVersion
+            ddragonVersion
           );
+          const initialPortraitSrc = portraitSkinUrl ?? portraitBaseUrl;
           return (
             <button
               key={m.metadata?.matchId ?? ""}
@@ -375,14 +404,19 @@ function SummonerProfileContent() {
                   <div className="profile-match-portrait-wrap">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={champLoadingUrl}
+                      src={initialPortraitSrc}
                       alt=""
                       className="profile-match-portrait"
                       width={64}
                       height={64}
                       onError={(e) => {
                         const target = e.currentTarget;
-                        if (target.src !== champSquareUrl) {
+                        if (
+                          portraitSkinUrl &&
+                          target.src === portraitSkinUrl
+                        ) {
+                          target.src = portraitBaseUrl;
+                        } else if (target.src === portraitBaseUrl) {
                           target.src = champSquareUrl;
                         } else {
                           target.style.display = "none";
@@ -410,7 +444,7 @@ function SummonerProfileContent() {
                         key={part.puuid}
                         championName={part.championName}
                         summonerName={part.summonerName}
-                        gameVersion={m.info?.gameVersion}
+                        ddragonVersion={ddragonVersion}
                       />
                     ))}
                   </div>
@@ -421,7 +455,7 @@ function SummonerProfileContent() {
                         key={part.puuid}
                         championName={part.championName}
                         summonerName={part.summonerName}
-                        gameVersion={m.info?.gameVersion}
+                        ddragonVersion={ddragonVersion}
                       />
                     ))}
                   </div>

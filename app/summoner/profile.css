@@ -480,6 +480,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   display: block;
 }
 
@@ -542,6 +543,14 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.profile-page .profile-match-team-champ-fallback .profile-match-team-champ-placeholder {
+  display: block;
+  width: 24px;
+  height: 24px;
+  background: var(--surface2);
+  border-radius: 4px;
 }
 
 .profile-page .profile-match-vs {

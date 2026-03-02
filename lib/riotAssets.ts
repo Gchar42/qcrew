@@ -39,21 +39,36 @@ export function getChampionLoadingUrl(championName: string): string {
   return `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${key}_0.jpg`;
 }
 
-/** Square icon fallback; pass gameVersion e.g. "14.6.xxx" for patch-specific URL */
+/**
+ * Champion square icon URL.
+ * Uses participant.championName (display name) converted to Data Dragon key.
+ * version: from GET /api/ddragon/version (current Data Dragon version).
+ */
 export function getChampionSquareUrl(
   championName: string,
-  gameVersion?: string
+  version?: string | null
 ): string {
   if (!championName) return "";
   const key = championDisplayNameToKey(championName);
-  const v = gameVersion?.split(".").slice(0, 2).join(".") || DDragonVersion;
+  const v = version || DDragonVersion;
   return `https://ddragon.leagueoflegends.com/cdn/${v}/img/champion/${key}.png`;
 }
 
-export function getChampionSplashUrl(championName: string) {
+const DDRAGON_SPLASH_BASE =
+  "https://ddragon.leagueoflegends.com/cdn/img/champion/splash";
+
+/** Splash art URL for a specific skin. Use participant.championName and participant.skin. */
+export function getChampionSplashUrlWithSkin(
+  championName: string,
+  skin: number
+): string {
   if (!championName) return "";
   const key = championDisplayNameToKey(championName);
-  return `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${key}_0.jpg`;
+  return `${DDRAGON_SPLASH_BASE}/${key}_${skin}.jpg`;
+}
+
+export function getChampionSplashUrl(championName: string) {
+  return getChampionSplashUrlWithSkin(championName, 0);
 }
 
 export function getProfileIconUrl(profileIconId: number) {
