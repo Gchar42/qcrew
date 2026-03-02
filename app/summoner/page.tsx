@@ -94,19 +94,16 @@ function sortByPosition(team: Participant[]): Participant[] {
 }
 
 /**
- * Per-match impact highlights. Uses selectedPuuid only (no summonerName).
- * bestAlly = purple, bestEnemy = gold. No inference if selected not found.
+ * Per-match impact highlights for the right-side player list only.
+ * Gold = highest impact on winning team; Purple = highest impact on losing team.
+ * Uses official match team win flag. Does not affect the main match header Impact chip.
  */
-function getMatchImpactHighlights(
-  m: MatchDto,
-  selectedPuuid: string
-): {
+function getMatchImpactHighlights(m: MatchDto): {
   impactByPuuid: Map<string, number>;
-  bestAllyPuuid: string | null;
-  bestEnemyPuuid: string | null;
+  bestWinningPuuid: string | null;
+  bestLosingPuuid: string | null;
 } {
   const participants = m.info?.participants ?? [];
-  const selectedParticipant = participants.find((p) => p.puuid === selectedPuuid);
 
   const impactByPuuid = new Map<string, number>();
   for (const p of participants) {
@@ -114,23 +111,14 @@ function getMatchImpactHighlights(
     impactByPuuid.set(p.puuid, result?.score ?? 0);
   }
 
-  if (!selectedParticipant) {
-    if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-      console.log("[impact] matchId:", m.metadata?.matchId, "selectedParticipant: not found");
-    }
-    return { impactByPuuid, bestAllyPuuid: null, bestEnemyPuuid: null };
+  const winner = participants.find((p) => p.win);
+  const winningTeamId = winner?.teamId;
+  if (winningTeamId == null) {
+    return { impactByPuuid, bestWinningPuuid: null, bestLosingPuuid: null };
   }
 
-  const allyTeamId = selectedParticipant.teamId;
-  if (allyTeamId == null) {
-    if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-      console.log("[impact] matchId:", m.metadata?.matchId, "allyTeamId: missing");
-    }
-    return { impactByPuuid, bestAllyPuuid: null, bestEnemyPuuid: null };
-  }
-
-  const allyTeam = sortByPosition(participants.filter((p) => p.teamId === allyTeamId));
-  const enemyTeam = sortByPosition(participants.filter((p) => p.teamId !== allyTeamId));
+  const winningTeam = sortByPosition(participants.filter((p) => p.teamId === winningTeamId));
+  const losingTeam = sortByPosition(participants.filter((p) => p.teamId !== winningTeamId));
 
   const bestIn = (team: Participant[]) => {
     if (team.length === 0) return null;
@@ -146,23 +134,13 @@ function getMatchImpactHighlights(
     return best;
   };
 
-  const bestAlly = bestIn(allyTeam);
-  const bestEnemy = bestIn(enemyTeam);
-
-  if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-    console.log("[impact]", {
-      matchId: m.metadata?.matchId,
-      selectedFound: true,
-      allyTeamId,
-      bestAlly: bestAlly ? { summonerName: bestAlly.summonerName, score: impactByPuuid.get(bestAlly.puuid) } : null,
-      bestEnemy: bestEnemy ? { summonerName: bestEnemy.summonerName, score: impactByPuuid.get(bestEnemy.puuid) } : null,
-    });
-  }
+  const bestWinning = bestIn(winningTeam);
+  const bestLosing = bestIn(losingTeam);
 
   return {
     impactByPuuid,
-    bestAllyPuuid: bestAlly?.puuid ?? null,
-    bestEnemyPuuid: bestEnemy?.puuid ?? null,
+    bestWinningPuuid: bestWinning?.puuid ?? null,
+    bestLosingPuuid: bestLosing?.puuid ?? null,
   };
 }
 
@@ -539,10 +517,7 @@ function SummonerProfileContent() {
           const redFive = red.slice(0, 5);
           const blueRows = [...blueFive, ...Array(5 - blueFive.length).fill(null)];
           const redRows = [...redFive, ...Array(5 - redFive.length).fill(null)];
-          const selectedPuuid = account?.puuid ?? "";
-          const { impactByPuuid, bestAllyPuuid, bestEnemyPuuid } = selectedPuuid
-            ? getMatchImpactHighlights(m, selectedPuuid)
-            : { impactByPuuid: new Map<string, number>(), bestAllyPuuid: null as string | null, bestEnemyPuuid: null as string | null };
+          const { impactByPuuid, bestWinningPuuid, bestLosingPuuid } = getMatchImpactHighlights(m);
 
           return (
             <button
@@ -696,10 +671,10 @@ function SummonerProfileContent() {
                       >
                         <span
                           className={`profile-match-team-impact ${
-                            part.puuid === bestAllyPuuid
-                              ? "profile-match-team-impact-purple"
-                              : part.puuid === bestEnemyPuuid
-                                ? "profile-match-team-impact-gold"
+                            part.puuid === bestWinningPuuid
+                              ? "profile-match-team-impact-gold"
+                              : part.puuid === bestLosingPuuid
+                                ? "profile-match-team-impact-purple"
                                 : ""
                           }`}
                         >
@@ -737,10 +712,10 @@ function SummonerProfileContent() {
                       >
                         <span
                           className={`profile-match-team-impact ${
-                            part.puuid === bestAllyPuuid
-                              ? "profile-match-team-impact-purple"
-                              : part.puuid === bestEnemyPuuid
-                                ? "profile-match-team-impact-gold"
+                            part.puuid === bestWinningPuuid
+                              ? "profile-match-team-impact-gold"
+                              : part.puuid === bestLosingPuuid
+                                ? "profile-match-team-impact-purple"
                                 : ""
                           }`}
                         >
