@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
@@ -20,7 +20,11 @@ import {
 } from "@/lib/runesCd";
 import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
-import type { AccountDto, SummonerDto, MatchDto } from "@/types/riot";
+import type { AccountDto, SummonerDto, MatchDto, MatchTimelineDto } from "@/types/riot";
+import {
+  getTimelineParticipantId,
+  getItemSlotPurchaseTimes,
+} from "@/lib/matchTimeline";
 
 /** Badge name -> profile CSS class for chip styling */
 function getBadgeCategoryClass(badge: string): string {
@@ -263,6 +267,10 @@ function SummonerProfileContent() {
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
+  const [timelineByMatchId, setTimelineByMatchId] = useState<
+    Record<string, MatchTimelineDto | null>
+  >({});
+  const timelineFetchedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     fetch("/api/ddragon/version")
@@ -347,6 +355,24 @@ function SummonerProfileContent() {
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  useEffect(() => {
+    for (const m of matches) {
+      const matchId = m.metadata?.matchId;
+      if (!matchId || timelineFetchedRef.current.has(matchId)) continue;
+      timelineFetchedRef.current.add(matchId);
+      fetch(
+        `/api/riot/timeline?matchId=${encodeURIComponent(matchId)}&region=${REGION}`
+      )
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: MatchTimelineDto | null) =>
+          setTimelineByMatchId((prev) => ({ ...prev, [matchId]: data }))
+        )
+        .catch(() =>
+          setTimelineByMatchId((prev) => ({ ...prev, [matchId]: null }))
+        );
+    }
+  }, [matches]);
 
   if (!riotIdParam) {
     return (
@@ -648,25 +674,37 @@ function SummonerProfileContent() {
                     )}
                   </div>
                   <div className="profile-match-items-row">
-                    {([p.item0, p.item1, p.item2, p.item3, p.item4, p.item5] as (number | undefined)[]).map((id, idx) => {
-                      const iconUrl = id != null && id > 0 ? getItemIconUrl(id) : null;
-                      const timestamp = null;
-                      return (
-                        <div key={`item-${idx}`} className="profile-match-item-tile">
-                          <span className="profile-match-item">
-                            {iconUrl ? (
-                              /* eslint-disable-next-line @next/next/no-img-element */
-                              <img src={iconUrl} alt="" width={22} height={22} />
-                            ) : (
-                              <span className="profile-match-item-empty" aria-hidden />
-                            )}
-                          </span>
-                          <span className="profile-match-item-caption">
-                            {id != null && id > 0 && timestamp != null ? formatDuration(timestamp) : null}
-                          </span>
-                        </div>
-                      );
-                    })}
+                    {(() => {
+                      const timeline = m.metadata?.matchId
+                        ? timelineByMatchId[m.metadata.matchId]
+                        : undefined;
+                      const participantId = account
+                        ? getTimelineParticipantId(m, account.puuid)
+                        : null;
+                      const slotTimestamps: (number | null)[] =
+                        timeline && participantId != null
+                          ? getItemSlotPurchaseTimes(timeline, participantId)
+                          : [];
+                      return ([p.item0, p.item1, p.item2, p.item3, p.item4, p.item5] as (number | undefined)[]).map((id, idx) => {
+                        const iconUrl = id != null && id > 0 ? getItemIconUrl(id) : null;
+                        const timestamp = slotTimestamps[idx] ?? null;
+                        return (
+                          <div key={`item-${idx}`} className="profile-match-item-tile">
+                            <span className="profile-match-item">
+                              {iconUrl ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img src={iconUrl} alt="" width={22} height={22} />
+                              ) : (
+                                <span className="profile-match-item-empty" aria-hidden />
+                              )}
+                            </span>
+                            <span className="profile-match-item-caption">
+                              {id != null && id > 0 && timestamp != null ? formatDuration(timestamp) : null}
+                            </span>
+                          </div>
+                        );
+                      });
+                    })()}
                     {p.item6 != null && p.item6 > 0 ? (
                       <span className="profile-match-item profile-match-item-trinket">
                         {/* eslint-disable-next-line @next/next/no-img-element */}

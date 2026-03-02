@@ -68,3 +68,41 @@ export type MatchDto = {
     }>;
   };
 };
+
+/** Match timeline (GET /lol/match/v5/matches/{matchId}/timeline) */
+export type MatchTimelineFrameParticipant = {
+  participantId?: number;
+  item0?: number;
+  item1?: number;
+  item2?: number;
+  item3?: number;
+  item4?: number;
+  item5?: number;
+  item6?: number;
+  [key: string]: unknown;
+};
+
+export type MatchTimelineEvent = {
+  type: string;
+  /** Game time in milliseconds from start */
+  timestamp?: number;
+  participantId?: number;
+  itemId?: number;
+  /** Item id before undo (ITEM_UNDO) */
+  beforeId?: number;
+  afterId?: number;
+  [key: string]: unknown;
+};
+
+export type MatchTimelineFrame = {
+  timestamp?: number;
+  participantFrames?: Record<string, MatchTimelineFrameParticipant>;
+  events?: MatchTimelineEvent[];
+};
+
+export type MatchTimelineDto = {
+  metadata?: { matchId?: string };
+  info?: {
+    frames?: MatchTimelineFrame[];
+  };
+};
