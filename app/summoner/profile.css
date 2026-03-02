@@ -460,12 +460,15 @@
   line-height: 1;
 }
 
-/* Chip 2: Social badge – separate pill, category-colored */
+/* Chip 2: Social badge – separate pill, category-colored (no descender clipping) */
 .profile-page .profile-badge-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  padding: 4px 8px;
+  padding: 6px 10px;
+  min-height: 28px;
+  line-height: 1.3;
   border-radius: 6px;
   font-size: 10px;
   font-weight: 600;
@@ -474,6 +477,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   border: 1px solid;
+  box-sizing: border-box;
 }
 
 .profile-page .profile-badge-chip-badge-gold {
@@ -576,8 +580,10 @@
 .profile-page .profile-match-spell,
 .profile-page .profile-match-rune {
   display: inline-flex;
-  width: 20px;
-  height: 20px;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--border);
@@ -588,7 +594,8 @@
 .profile-page .profile-match-rune img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  image-rendering: auto;
 }
 
 .profile-page .profile-match-left-meta {

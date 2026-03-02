@@ -478,7 +478,14 @@ function SummonerProfileContent() {
                         return (
                           <span key={i} className="profile-match-spell">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={src} alt="" width={20} height={20} />
+                            <img
+                              src={src}
+                              alt=""
+                              width={22}
+                              height={22}
+                              className="object-contain"
+                              style={{ imageRendering: "auto" }}
+                            />
                           </span>
                         );
                       })}
@@ -494,7 +501,14 @@ function SummonerProfileContent() {
                           nodes.push(
                             <span key="keystone" className="profile-match-rune">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={keystoneSrc} alt="" width={20} height={20} />
+                              <img
+                                src={keystoneSrc}
+                                alt=""
+                                width={22}
+                                height={22}
+                                className="object-contain"
+                                style={{ imageRendering: "auto" }}
+                              />
                             </span>
                           );
                         }
@@ -502,7 +516,14 @@ function SummonerProfileContent() {
                           nodes.push(
                             <span key="secondary" className="profile-match-rune">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={secondarySrc} alt="" width={20} height={20} />
+                              <img
+                                src={secondarySrc}
+                                alt=""
+                                width={22}
+                                height={22}
+                                className="object-contain"
+                                style={{ imageRendering: "auto" }}
+                              />
                             </span>
                           );
                         }

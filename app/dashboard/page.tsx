@@ -521,7 +521,7 @@ export default function DashboardRiotSearchPage() {
                           )}
                           {badgeInfo && (
                             <span
-                              className={`inline-flex items-center rounded-md border px-2 py-1 text-[10px] font-semibold max-w-[88px] truncate ${dashboardBadgeChipClass(badgeInfo.badge)}`}
+                              className={`inline-flex items-center justify-center rounded-md border px-2 py-1.5 text-[10px] font-semibold leading-relaxed max-w-[88px] truncate ${dashboardBadgeChipClass(badgeInfo.badge)}`}
                               title={badgeInfo.reason}
                             >
                               {badgeInfo.badge}
