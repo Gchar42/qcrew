@@ -25,40 +25,48 @@
   text-size-adjust: 100%;
 }
 
+/* Global descender clip fix. Force sane line boxes everywhere */
 html,
 body {
-  line-height: 1.4;
-  overflow: visible;
-}
-
-#root,
-#__next {
+  line-height: 1.5 !important;
   overflow: visible !important;
 }
 
+/* Force common text containers to inherit a safe line height */
 body,
-button,
-input,
-textarea,
-select {
-  line-height: 1.4;
-}
-
+div,
 span,
 p,
 a,
 li,
 label,
-div {
-  line-height: inherit;
+button,
+input,
+textarea,
+select {
+  line-height: inherit !important;
 }
 
+/* Add a tiny bottom breathing room for glyph descenders */
+body,
+div,
+span,
+p,
+a,
+li,
+label,
+button {
+  padding-bottom: 0.08em;
+}
+
+/* Remove common paint clipping triggers at the page root */
 html,
 body,
 #root {
   transform: none !important;
-  will-change: auto !important;
   filter: none !important;
+  contain: none !important;
+  overflow: visible !important;
 }
 
 html,
