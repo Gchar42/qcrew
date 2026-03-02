@@ -38,6 +38,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const region = searchParams.get("region") ?? "na1";
   const id = searchParams.get("matchId");
+  const debug = searchParams.get("debug") === "1";
+  const puuidParam = searchParams.get("puuid");
   if (!id) {
     return NextResponse.json(
       { error: "Missing matchId", status: 400 },
@@ -49,6 +51,24 @@ export async function GET(request: Request) {
   const cached = await getCached<Record<string, unknown>>(cacheKey);
   if (cached) {
     ensureParticipantSkin(cached);
+    if (debug) {
+      const info = cached.info as Record<string, unknown> | undefined;
+      const participants = (info?.participants ?? []) as Record<string, unknown>[];
+      const p = puuidParam
+        ? participants.find((x) => x.puuid === puuidParam)
+        : participants[0];
+      const payload = {
+        ...cached,
+        debugParticipant: p
+          ? {
+              championName: p.championName,
+              skin: p.skin,
+              hasSkinKey: "skin" in p,
+            }
+          : null,
+      };
+      return NextResponse.json(payload, { headers: NO_CACHE });
+    }
     return NextResponse.json(cached, { headers: NO_CACHE });
   }
 
@@ -71,6 +91,24 @@ export async function GET(request: Request) {
   }
 
   const data = JSON.parse(text) as Record<string, unknown>;
+  const rawInfo = data.info as Record<string, unknown> | undefined;
+  const rawParticipants = rawInfo?.participants as Record<string, unknown>[] | undefined;
+
+  if (rawParticipants?.length) {
+    const first = rawParticipants[0] as Record<string, unknown>;
+    console.log("participant keys", Object.keys(first));
+    const sampleP = puuidParam
+      ? (rawParticipants.find((x) => x.puuid === puuidParam) as Record<string, unknown>)
+      : first;
+    if (sampleP) {
+      console.log("participant sample", {
+        championName: sampleP.championName,
+        skin: sampleP.skin,
+        championId: sampleP.championId,
+      });
+    }
+  }
+
   ensureParticipantSkin(data);
 
   const info = data.info as Record<string, unknown> | undefined;
@@ -80,5 +118,22 @@ export async function GET(request: Request) {
   }
 
   await setCache(cacheKey, data);
+
+  if (debug) {
+    const p = puuidParam
+      ? participants?.find((x) => x.puuid === puuidParam)
+      : participants?.[0];
+    const payload = {
+      ...data,
+      debugParticipant: p
+        ? {
+            championName: p.championName,
+            skin: p.skin,
+            hasSkinKey: "skin" in (p as Record<string, unknown>),
+          }
+        : null,
+    };
+    return NextResponse.json(payload, { headers: NO_CACHE });
+  }
   return NextResponse.json(data, { headers: NO_CACHE });
 }
