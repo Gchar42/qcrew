@@ -99,6 +99,7 @@ export default function DashboardRiotSearchPage() {
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [saveHistoryError, setSaveHistoryError] = useState<string | null>(null);
   const debounceRef = useRef<number | null>(null);
   const activeFetchRef = useRef(0);
   const router = useRouter();
@@ -174,16 +175,20 @@ export default function DashboardRiotSearchPage() {
           summonerLevel,
         }),
       });
-      const body = await res.json().catch(() => ({}));
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
-        console.error(
+        console.warn(
           "[dashboard] Failed to save search to history:",
           res.status,
           body
         );
+        setSaveHistoryError(body?.error ?? `HTTP ${res.status}`);
+      } else {
+        setSaveHistoryError(null);
       }
     } catch (err) {
-      console.error("[dashboard] Error saving search to history:", err);
+      console.warn("[dashboard] Error saving search to history:", err);
+      setSaveHistoryError(err instanceof Error ? err.message : "Network error");
     }
   }
 
@@ -195,6 +200,7 @@ export default function DashboardRiotSearchPage() {
     }
 
     setShowSuggestions(false);
+    setSaveHistoryError(null);
     setState({ status: "loading" });
     setAccount(null);
     setSummoner(null);
@@ -353,6 +359,11 @@ export default function DashboardRiotSearchPage() {
         </div>
       )}
 
+      {saveHistoryError && (
+        <p className="mt-4 text-sm text-amber-400">
+          Search history could not be saved: {saveHistoryError}
+        </p>
+      )}
       {account && summoner && (
         <div className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-white/10 glass p-5">
           <div className="flex items-center gap-4">

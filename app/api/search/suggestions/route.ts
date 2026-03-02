@@ -48,7 +48,10 @@ export async function GET(req: Request) {
   const client = getAdminClient();
   if (!client) {
     return NextResponse.json(
-      { error: "Supabase server env not set" },
+      {
+        error:
+          "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set on the server (e.g. in Vercel production env).",
+      },
       { status: 500 }
     );
   }
@@ -164,10 +167,9 @@ export async function POST(req: Request) {
 
   const client = getAdminClient();
   if (!client) {
-    return NextResponse.json(
-      { error: "Supabase server env not set" },
-      { status: 500 }
-    );
+    const msg =
+      "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set on the server (e.g. in Vercel production env).";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 
   const row: Record<string, unknown> = {
