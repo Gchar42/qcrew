@@ -55,6 +55,16 @@ export type MatchDto = {
       item5?: number;
       item6?: number;
       championId?: number;
+      summoner1Id?: number;
+      summoner2Id?: number;
+      /** Riot ID in-game name (optional, from match) */
+      riotIdGameName?: string;
+      perks?: {
+        styleIds?: number[];
+        /** Primary style id is first in styles[].style */
+        styles?: Array<{ style: number }>;
+        perkIds?: number[];
+      };
     }>;
   };
 };

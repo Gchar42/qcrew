@@ -498,10 +498,10 @@ export default function DashboardRiotSearchPage() {
                         >
                           {result}
                         </div>
-                        <div className="flex flex-row items-center gap-1.5 flex-wrap justify-center">
+                        <div className="flex flex-row items-center gap-1.5 flex-wrap justify-center rounded-md border border-white/15 bg-white/5 px-2 py-1 shadow-sm">
                           {impact != null && (
                             <span className="text-xs text-zinc-400">
-                              Impact {impact.score}
+                              Impact <span className="font-semibold text-zinc-200">{impact.score}</span>
                             </span>
                           )}
                           {badgeInfo && (

@@ -79,3 +79,56 @@ export function getItemIconUrl(itemId: number) {
   if (!itemId) return "";
   return `https://ddragon.leagueoflegends.com/cdn/${DDragonVersion}/img/item/${itemId}.png`;
 }
+
+/** Summoner spell ID (from participant.summoner1Id / summoner2Id) to Data Dragon spell key */
+const SUMMONER_SPELL_ID_TO_KEY: Record<number, string> = {
+  1: "SummonerBoost",
+  3: "SummonerExhaust",
+  4: "SummonerFlash",
+  6: "SummonerHaste",
+  7: "SummonerHeal",
+  11: "SummonerSmite",
+  12: "SummonerTeleport",
+  13: "SummonerMana",
+  14: "SummonerDot",
+  21: "SummonerBarrier",
+  30: "SummonerPoroRecall",
+  31: "SummonerPoroThrow",
+  32: "SummonerSnowball",
+  39: "SummonerSnowURFSnowball_Mark",
+  54: "Summoner_UltBookPlaceholder",
+  55: "Summoner_UltBookSmitePlaceholder",
+  2201: "SummonerCherryHold",
+  2202: "SummonerCherryFlash",
+};
+
+export function getSummonerSpellIconUrl(
+  spellId: number | undefined,
+  version?: string | null
+): string {
+  if (spellId == null) return "";
+  const key = SUMMONER_SPELL_ID_TO_KEY[spellId];
+  if (!key) return "";
+  const v = version || DDragonVersion;
+  return `https://ddragon.leagueoflegends.com/cdn/${v}/img/spell/${key}.png`;
+}
+
+/** Rune style ID (8000 Precision, 8100 Domination, etc.) to Data Dragon perk style icon path */
+const RUNE_STYLE_ICON: Record<number, string> = {
+  8000: "perk-images/Styles/7201_Precision.png",
+  8100: "perk-images/Styles/7200_Domination.png",
+  8200: "perk-images/Styles/7202_Sorcery.png",
+  8300: "perk-images/Styles/7203_Whimsy.png",
+  8400: "perk-images/Styles/7204_Resolve.png",
+};
+
+export function getRuneStyleIconUrl(
+  styleId: number | undefined,
+  version?: string | null
+): string {
+  if (styleId == null) return "";
+  const path = RUNE_STYLE_ICON[styleId];
+  if (!path) return "";
+  const v = version || DDragonVersion;
+  return `https://ddragon.leagueoflegends.com/cdn/${v}/img/${path}`;
+}

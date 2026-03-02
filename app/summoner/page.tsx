@@ -10,6 +10,8 @@ import {
   getChampionSplashUrl,
   getChampionSquareUrl,
   getItemIconUrl,
+  getSummonerSpellIconUrl,
+  getRuneStyleIconUrl,
 } from "@/lib/riotAssets";
 import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges } from "@/lib/matchBadges";
@@ -426,23 +428,54 @@ function SummonerProfileContent() {
               </div>
               <span className={`profile-verdict-line ${win ? "win" : "loss"}`} />
               <div className="profile-match-left-block">
-                <div className="profile-match-portrait-wrap">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={portraitBaseUrl}
-                    alt=""
-                    className="profile-match-portrait"
-                    width={64}
-                    height={64}
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      if (target.src !== champSquareUrl) {
-                        target.src = champSquareUrl;
-                      } else {
-                        target.style.display = "none";
-                      }
-                    }}
-                  />
+                <div className="profile-match-portrait-spells-wrap">
+                  <div className="profile-match-portrait-wrap">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={portraitBaseUrl}
+                      alt=""
+                      className="profile-match-portrait"
+                      width={64}
+                      height={64}
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src !== champSquareUrl) {
+                          target.src = champSquareUrl;
+                        } else {
+                          target.style.display = "none";
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="profile-match-spells-runes">
+                    <div className="profile-match-spells-col">
+                      {[p.summoner1Id, p.summoner2Id].map((id, i) => {
+                        const src = getSummonerSpellIconUrl(id, ddragonVersion);
+                        if (!src) return null;
+                        return (
+                          <span key={i} className="profile-match-spell">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={src} alt="" width={20} height={20} />
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <div className="profile-match-runes-col">
+                      {[
+                        p.perks?.styles?.[0]?.style,
+                        p.perks?.styles?.[1]?.style,
+                      ].map((styleId, i) => {
+                        const src = getRuneStyleIconUrl(styleId, ddragonVersion);
+                        if (!src) return null;
+                        return (
+                          <span key={i} className="profile-match-rune">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={src} alt="" width={20} height={20} />
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
                 <div className="profile-match-left-meta">
                   <div className="profile-match-line1">
@@ -458,9 +491,11 @@ function SummonerProfileContent() {
                     {" · "}
                     <span>{cs} CS ({csPerMin.toFixed(1)}/m)</span>
                   </div>
-                  <div className="profile-impact-badge-wrap profile-impact-badge-inline">
+                  <div className="profile-impact-badge-wrap profile-impact-badge-inline profile-impact-badge-group">
                     {impact != null && (
-                      <span className="profile-impact-label">Impact {impact.score}</span>
+                      <span className="profile-impact-label">
+                        Impact <span className="profile-impact-score">{impact.score}</span>
+                      </span>
                     )}
                     {badgeInfo && (
                       <span
@@ -488,24 +523,38 @@ function SummonerProfileContent() {
               <div className="profile-match-teams-block">
                 <div className="profile-match-team-col" aria-label="Blue team">
                   {blue.slice(0, 5).map((part) => (
-                    <ChampIcon
+                    <div
                       key={part.puuid}
-                      championName={part.championName}
-                      summonerName={part.summonerName}
-                      ddragonVersion={ddragonVersion}
-                      highlight={part.puuid === account?.puuid}
-                    />
+                      className={`profile-match-team-row ${part.puuid === account?.puuid ? "profile-match-team-row-highlight" : ""}`}
+                    >
+                      <ChampIcon
+                        championName={part.championName}
+                        summonerName={part.summonerName}
+                        ddragonVersion={ddragonVersion}
+                        highlight={part.puuid === account?.puuid}
+                      />
+                      <span className="profile-match-team-name" title={part.riotIdGameName ?? part.summonerName}>
+                        {part.riotIdGameName ?? part.summonerName}
+                      </span>
+                    </div>
                   ))}
                 </div>
                 <div className="profile-match-team-col" aria-label="Red team">
                   {red.slice(0, 5).map((part) => (
-                    <ChampIcon
+                    <div
                       key={part.puuid}
-                      championName={part.championName}
-                      summonerName={part.summonerName}
-                      ddragonVersion={ddragonVersion}
-                      highlight={part.puuid === account?.puuid}
-                    />
+                      className={`profile-match-team-row ${part.puuid === account?.puuid ? "profile-match-team-row-highlight" : ""}`}
+                    >
+                      <ChampIcon
+                        championName={part.championName}
+                        summonerName={part.summonerName}
+                        ddragonVersion={ddragonVersion}
+                        highlight={part.puuid === account?.puuid}
+                      />
+                      <span className="profile-match-team-name" title={part.riotIdGameName ?? part.summonerName}>
+                        {part.riotIdGameName ?? part.summonerName}
+                      </span>
+                    </div>
                   ))}
                 </div>
               </div>

@@ -54,9 +54,11 @@ export function MatchCard({
           >
             {win ? "W" : "L"}
           </div>
-          <div className="flex flex-row items-center gap-1.5 flex-wrap justify-center">
+          <div className="flex flex-row items-center gap-1.5 flex-wrap justify-center rounded-md border border-white/15 bg-white/5 px-2 py-1 shadow-sm">
             {impactScore != null && (
-              <span className="text-xs text-zinc-400">Impact {impactScore}</span>
+              <span className="text-xs text-zinc-400">
+                Impact <span className="font-semibold text-zinc-200">{impactScore}</span>
+              </span>
             )}
             {badge && (
               <span
