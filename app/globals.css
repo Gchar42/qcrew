@@ -26,11 +26,29 @@
   box-sizing: border-box;
 }
 
+/* Global typography defaults – safe line-height for normal UI text so descenders never clip */
+html,
+body {
+  line-height: 1.45;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   min-height: 100vh;
+}
+
+body,
+p,
+span,
+a,
+label,
+button,
+input,
+textarea,
+select {
+  line-height: inherit;
 }
 
 /* Glassmorphism utility */
@@ -100,6 +118,6 @@ body {
 .profile-badge-chip span,
 .socialBadge span {
   display: inline-block !important;
-  line-height: 1.5 !important;
+  line-height: 1.4 !important;
   vertical-align: middle !important;
 }
