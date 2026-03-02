@@ -78,7 +78,7 @@ export function MatchCard({
             )}
             {badge && (
               <span
-                className={`inline-flex items-center justify-center overflow-visible rounded-md border px-3 py-2 text-[10px] font-semibold leading-normal max-w-[88px] outline outline-1 outline-red-500 ${badgeChipClass(badge)}`}
+                className={`inline-flex items-center justify-center overflow-visible rounded-md border px-3 py-2 text-[10px] font-semibold leading-normal max-w-[88px] ${badgeChipClass(badge)}`}
                 title={badgeReason ?? badge}
               >
                 <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap leading-normal">

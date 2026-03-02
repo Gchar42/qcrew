@@ -14,8 +14,9 @@ import {
 } from "@/lib/riotAssets";
 import {
   getPerkIconUrl,
-  getRuneStyleIconUrlCd,
+  getStyleIconUrlCd,
   type PerkEntry,
+  type PerkStyleEntry,
 } from "@/lib/runesCd";
 import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
@@ -201,6 +202,7 @@ function SummonerProfileContent() {
   const [detailMatch, setDetailMatch] = useState<MatchDto | null>(null);
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
+  const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
 
   useEffect(() => {
     fetch("/api/ddragon/version")
@@ -217,6 +219,18 @@ function SummonerProfileContent() {
         const map = new Map<number, string>();
         list.forEach((p) => map.set(p.id, p.iconPath));
         setPerksById(map);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/cd/perkstyles")
+      .then((r) => r.json())
+      .then((data: { styles?: PerkStyleEntry[] }) => {
+        const list = data.styles ?? [];
+        const map = new Map<number, string>();
+        list.forEach((s) => map.set(s.id, s.iconPath));
+        setStylesById(map);
       })
       .catch(() => {});
   }, []);
@@ -494,7 +508,7 @@ function SummonerProfileContent() {
                         const keystoneId = p.perks?.styles?.[0]?.selections?.[0]?.perk;
                         const secondaryStyleId = p.perks?.styles?.[1]?.style;
                         const keystoneSrc = getPerkIconUrl(keystoneId, perksById);
-                        const secondarySrc = getRuneStyleIconUrlCd(secondaryStyleId);
+                        const secondarySrc = getStyleIconUrlCd(secondaryStyleId, stylesById);
                         const nodes: React.ReactNode[] = [];
                         if (keystoneSrc) {
                           nodes.push(

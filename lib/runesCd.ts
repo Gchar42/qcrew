@@ -27,24 +27,24 @@ export function getPerkIconUrl(
   return perkIconPathToUrl(path);
 }
 
-/** Secondary tree style id -> CD icon path (tree icons) */
-const STYLE_ICON_PATHS: Record<number, string> = {
-  8000: "v1/perk-images/styles/7201_precision.png",
-  8100: "v1/perk-images/styles/7200_domination.png",
-  8200: "v1/perk-images/styles/7202_sorcery.png",
-  8300: "v1/perk-images/styles/7203_whimsy.png",
-  8400: "v1/perk-images/styles/7204_resolve.png",
-};
+export type PerkStyleEntry = { id: number; iconPath: string };
 
-export function getRuneStyleIconUrlCd(styleId: number | undefined): string {
+/** Build secondary tree style icon URL from cached perkstyles (id -> iconPath) */
+export function getStyleIconUrlCd(
+  styleId: number | undefined,
+  stylesById: Map<number, string>
+): string {
   if (styleId == null) return "";
-  const path = STYLE_ICON_PATHS[styleId];
+  const path = stylesById.get(styleId);
   if (!path) return "";
-  return `${CD_BASE}/${path}`;
+  return perkIconPathToUrl(path);
 }
 
 const PERKS_CD_URL =
   "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perks.json";
+
+const PERKSTYLES_CD_URL =
+  "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perkstyles.json";
 
 /** Fetch perks from CommunityDragon; returns array of { id, iconPath } or null on failure */
 export async function fetchPerksCd(): Promise<PerkEntry[] | null> {
@@ -53,6 +53,19 @@ export async function fetchPerksCd(): Promise<PerkEntry[] | null> {
     if (!res.ok) return null;
     const data = (await res.json()) as Array<{ id: number; iconPath: string }>;
     return data.map(({ id, iconPath }) => ({ id, iconPath }));
+  } catch {
+    return null;
+  }
+}
+
+/** Fetch perk styles (tree icons) from CommunityDragon; returns array of { id, iconPath } or null on failure */
+export async function fetchPerkStylesCd(): Promise<PerkStyleEntry[] | null> {
+  try {
+    const res = await fetch(PERKSTYLES_CD_URL, { next: { revalidate: 86400 } });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { styles?: Array<{ id: number; iconPath: string }> };
+    const styles = data.styles ?? [];
+    return styles.map(({ id, iconPath }) => ({ id, iconPath }));
   } catch {
     return null;
   }

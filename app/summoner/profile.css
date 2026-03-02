@@ -475,7 +475,6 @@
   overflow: visible;
   border: 1px solid;
   box-sizing: border-box;
-  outline: 1px solid red; /* debug: remove when confirmed no clipping */
 }
 
 .profile-page .profile-badge-chip-text {
