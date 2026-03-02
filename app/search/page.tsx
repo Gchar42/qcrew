@@ -1,76 +1,85 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { getProfileIconUrl } from "@/lib/riotAssets";
 
-type SearchResult = { riotId: string; updatedAt: string };
+export type SearchResultItem = {
+  riotId: string;
+  gameName: string;
+  tagLine: string;
+  puuid: string;
+  updatedAt: string;
+  profileIconId?: number;
+  summonerLevel?: number;
+};
+
+const PAGE_SIZE = 25;
+const DEFAULT_ICON_ID = 29;
+
+function toSummonerPath(riotId: string) {
+  const idx = riotId.indexOf("#");
+  if (idx === -1) return "/dashboard";
+  const name = riotId.slice(0, idx).trim();
+  const tag = riotId.slice(idx + 1).trim();
+  if (!name || !tag) return "/dashboard";
+  return `/summoner/na1/${encodeURIComponent(name)}/${encodeURIComponent(tag)}`;
+}
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const q = (searchParams.get("q") || "").trim();
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<SearchResultItem[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+
+  const fetchResults = useCallback(
+    async (query: string, pageNum: number) => {
+      if (query.length < 2) {
+        setResults([]);
+        setTotal(0);
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `/api/search/suggestions?q=${encodeURIComponent(query)}&limit=${PAGE_SIZE}&page=${pageNum}`,
+          { cache: "no-store" }
+        );
+        const data = await res.json();
+        setResults(data.suggestions || []);
+        setTotal(data.total ?? 0);
+      } catch {
+        setResults([]);
+        setTotal(0);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
-    if (q.length < 2) {
-      setResults([]);
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    fetch(
-      `/api/search/suggestions?q=${encodeURIComponent(q)}&limit=25`,
-      { cache: "no-store" }
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        if (cancelled) return;
-        setResults(data.suggestions || []);
-      })
-      .catch(() => {
-        if (!cancelled) setResults([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [q]);
+    fetchResults(q, 1);
+    setPage(1);
+  }, [q, fetchResults]);
 
-  function formatLastSearched(updatedAt: string) {
-    try {
-      const d = new Date(updatedAt);
-      const now = new Date();
-      const diffMs = now.getTime() - d.getTime();
-      const diffMins = Math.floor(diffMs / 60000);
-      if (diffMins < 1) return "Just now";
-      if (diffMins < 60) return `${diffMins}m ago`;
-      const diffHours = Math.floor(diffMins / 60);
-      if (diffHours < 24) return `${diffHours}h ago`;
-      const diffDays = Math.floor(diffHours / 24);
-      if (diffDays < 7) return `${diffDays}d ago`;
-      return d.toLocaleDateString();
-    } catch {
-      return "";
+  useEffect(() => {
+    if (q.length >= 2 && page > 1) {
+      fetchResults(q, page);
     }
-  }
+  }, [page, q, fetchResults]);
 
-  function toSummonerPath(riotId: string) {
-    const idx = riotId.indexOf("#");
-    if (idx === -1) return "/dashboard";
-    const name = riotId.slice(0, idx).trim();
-    const tag = riotId.slice(idx + 1).trim();
-    if (!name || !tag) return "/dashboard";
-    return `/summoner/na1/${encodeURIComponent(name)}/${encodeURIComponent(tag)}`;
-  }
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   if (q.length < 2) {
     return (
-      <div className="mx-auto max-w-2xl px-6 py-8">
+      <div className="mx-auto max-w-3xl px-6 py-8">
         <h1 className="text-2xl font-bold text-white">Search</h1>
         <p className="mt-2 text-sm text-amber-400">
           Enter at least 2 characters.
@@ -80,40 +89,124 @@ function SearchContent() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-8">
-      <h1 className="text-2xl font-bold text-white">
-        Results for &quot;{q}&quot;
+    <div className="mx-auto max-w-3xl px-6 py-8">
+      <h1 className="text-xl font-bold text-white">
+        This is the search result for the summoner &quot;{q}&quot; in the North
+        America region.
       </h1>
 
+      <div className="mt-3 flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-zinc-400">Region</span>
+          <select
+            defaultValue="na1"
+            disabled
+            className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-70"
+          >
+            <option value="na1" className="bg-zinc-900">
+              NA
+            </option>
+          </select>
+        </div>
+        {!loading && (
+          <p className="text-sm text-zinc-400">
+            There are a total of {total} search result{total !== 1 ? "s" : ""}.
+          </p>
+        )}
+      </div>
+
+      <div className="mt-3 rounded-lg border border-indigo-500/20 bg-indigo-500/5 px-4 py-2 text-sm text-zinc-300">
+        Results are based on previously searched Riot IDs in this app.
+      </div>
+
       {loading ? (
-        <p className="mt-4 text-sm text-zinc-400">Loading...</p>
+        <p className="mt-6 text-sm text-zinc-400">Loading...</p>
       ) : results.length === 0 ? (
-        <p className="mt-4 text-sm text-amber-400">
-          No similar Riot IDs found in our history yet. Try a full Riot ID with
-          #TAG once so it can be saved.
-        </p>
+        <div className="mt-6 rounded-xl border border-white/10 bg-black/30 p-8 text-center">
+          <p className="text-zinc-300">
+            No similar Riot IDs found in our history yet. Search a full Riot ID
+            once so it can be saved.
+          </p>
+        </div>
       ) : (
-        <ul className="mt-4 space-y-2">
-          {results.map((r) => (
-            <li
-              key={r.riotId}
-              className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-black/30 px-4 py-3"
-            >
-              <div>
-                <span className="font-medium text-white">{r.riotId}</span>
-                <span className="ml-2 text-xs text-zinc-500">
-                  {formatLastSearched(r.updatedAt)}
-                </span>
-              </div>
-              <Link
-                href={toSummonerPath(r.riotId)}
-                className="shrink-0 rounded-lg border border-white/10 bg-indigo-500 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-600"
-              >
-                View match history
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="mt-6 space-y-1">
+            {results.map((r) => {
+              const href = toSummonerPath(r.riotId);
+              const iconId =
+                r.profileIconId != null ? r.profileIconId : DEFAULT_ICON_ID;
+              const iconUrl = getProfileIconUrl(iconId);
+              return (
+                <li key={r.puuid}>
+                  <Link
+                    href={href}
+                    className="flex cursor-pointer items-center gap-4 rounded-lg border border-white/10 bg-black/30 px-4 py-3 transition-colors hover:bg-white/5"
+                  >
+                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
+                      {iconUrl ? (
+                        <Image
+                          src={iconUrl}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs text-zinc-500">
+                          ?
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="font-medium text-white">
+                        {r.gameName}#{r.tagLine}
+                      </span>
+                    </div>
+                    <span className="shrink-0 rounded bg-zinc-700/80 px-2 py-0.5 text-xs text-zinc-300">
+                      NA
+                    </span>
+                    <span className="shrink-0 text-zinc-500" aria-hidden>
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+
+          {totalPages > 1 && (
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPage(p)}
+                    className={`min-w-[2.25rem] rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                      p === page
+                        ? "border-indigo-500 bg-indigo-500 text-white"
+                        : "border-white/10 bg-black/30 text-white hover:bg-white/10"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -123,7 +216,7 @@ export default function SearchPage() {
   return (
     <Suspense
       fallback={
-        <div className="mx-auto max-w-2xl px-6 py-8">
+        <div className="mx-auto max-w-3xl px-6 py-8">
           <h1 className="text-2xl font-bold text-white">Search</h1>
           <p className="mt-4 text-sm text-zinc-400">Loading...</p>
         </div>

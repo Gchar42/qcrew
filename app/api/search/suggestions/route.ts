@@ -16,17 +16,28 @@ function escapeLike(s: string): string {
   return s.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
 }
 
+type SearchRow = {
+  game_name: string;
+  tag_line: string;
+  puuid: string;
+  updated_at: string;
+  profile_icon_id: number | null;
+  summoner_level: number | null;
+};
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = (searchParams.get("q") || "").trim();
   const limitParam = searchParams.get("limit");
+  const pageParam = searchParams.get("page");
   const limit = Math.min(
     Math.max(parseInt(limitParam || "8", 10) || 8, 1),
     25
   );
+  const page = Math.max(parseInt(pageParam || "1", 10) || 1, 1);
 
   if (q.length < 2) {
-    return NextResponse.json({ suggestions: [] });
+    return NextResponse.json({ suggestions: [], total: 0 });
   }
 
   const client = getAdminClient();
@@ -42,15 +53,15 @@ export async function GET(req: Request) {
   const pattern = `%${escaped}%`;
 
   const isSearchPage = limit > 8;
-  const base = client
-    .from("riot_searches")
-    .select("game_name, tag_line, updated_at");
+  const selectFields =
+    "game_name, tag_line, puuid, updated_at, profile_icon_id, summoner_level";
+  const base = client.from("riot_searches").select(selectFields);
 
   const { data, error } = isSearchPage
     ? await base
         .ilike("game_name", pattern)
         .order("updated_at", { ascending: false })
-        .limit(50)
+        .limit(200)
     : await base
         .or(
           `riot_id.ilike.${pattern},game_name.ilike.${pattern},tag_line.ilike.${pattern}`
@@ -62,15 +73,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const rows = (data || []) as {
-    game_name: string;
-    tag_line: string;
-    updated_at: string;
-  }[];
-
-  const fullId = (r: (typeof rows)[0]) => `${r.game_name}#${r.tag_line}`;
+  const rows = (data || []) as SearchRow[];
+  const fullId = (r: SearchRow) => `${r.game_name}#${r.tag_line}`;
   const seen = new Set<string>();
-  const deduped: (typeof rows)[0][] = [];
+  const deduped: SearchRow[] = [];
   for (const r of rows) {
     const id = fullId(r);
     if (seen.has(id)) continue;
@@ -90,12 +96,28 @@ export async function GET(req: Request) {
     return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
   });
 
+  const total = sorted.length;
+
+  if (isSearchPage) {
+    const start = (page - 1) * limit;
+    const sliced = sorted.slice(start, start + limit);
+    const suggestions = sliced.map((r) => ({
+      riotId: fullId(r),
+      gameName: r.game_name,
+      tagLine: r.tag_line,
+      puuid: r.puuid,
+      updatedAt: r.updated_at,
+      profileIconId: r.profile_icon_id ?? undefined,
+      summonerLevel: r.summoner_level ?? undefined,
+    }));
+    return NextResponse.json({ suggestions, total });
+  }
+
   const sliced = sorted.slice(0, limit);
   const suggestions = sliced.map((r) => ({
     riotId: fullId(r),
     updatedAt: r.updated_at,
   }));
-
   return NextResponse.json({ suggestions });
 }
 
@@ -106,6 +128,10 @@ export async function POST(req: Request) {
   const gameName = (body?.gameName || "").trim();
   const tagLine = (body?.tagLine || "").trim();
   const puuid = (body?.puuid || "").trim();
+  const profileIconId =
+    body?.profileIconId != null ? Number(body.profileIconId) : null;
+  const summonerLevel =
+    body?.summonerLevel != null ? Number(body.summonerLevel) : null;
 
   if (!riotId || !gameName || !tagLine || !puuid) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
@@ -119,16 +145,23 @@ export async function POST(req: Request) {
     );
   }
 
-  const { error } = await client.from("riot_searches").upsert(
-    {
-      riot_id: riotId,
-      game_name: gameName,
-      tag_line: tagLine,
-      puuid,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "puuid" }
-  );
+  const row: Record<string, unknown> = {
+    riot_id: riotId,
+    game_name: gameName,
+    tag_line: tagLine,
+    puuid,
+    updated_at: new Date().toISOString(),
+  };
+  if (profileIconId != null && !Number.isNaN(profileIconId)) {
+    row.profile_icon_id = profileIconId;
+  }
+  if (summonerLevel != null && !Number.isNaN(summonerLevel)) {
+    row.summoner_level = summonerLevel;
+  }
+
+  const { error } = await client.from("riot_searches").upsert(row, {
+    onConflict: "puuid",
+  });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

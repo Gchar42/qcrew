@@ -155,7 +155,9 @@ export default function DashboardRiotSearchPage() {
 
   async function trackSuccessfulSearch(
     parsed: { riotId: string; gameName: string; tagLine: string },
-    puuid: string
+    puuid: string,
+    profileIconId?: number,
+    summonerLevel?: number
   ) {
     try {
       await fetch("/api/search/suggestions", {
@@ -167,6 +169,8 @@ export default function DashboardRiotSearchPage() {
           gameName: parsed.gameName,
           tagLine: parsed.tagLine,
           puuid,
+          profileIconId,
+          summonerLevel,
         }),
       });
     } catch {
@@ -218,7 +222,12 @@ export default function DashboardRiotSearchPage() {
 
       setMatches(matchDetails);
 
-      await trackSuccessfulSearch(parsed, accountJson.puuid);
+      await trackSuccessfulSearch(
+        parsed,
+        accountJson.puuid,
+        summonerJson.profileIconId,
+        summonerJson.summonerLevel
+      );
 
       setState({ status: "ready" });
     } catch (err: unknown) {
