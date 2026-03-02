@@ -21,6 +21,8 @@
 
 * {
   box-sizing: border-box;
+  vertical-align: baseline;
+  text-size-adjust: 100%;
 }
 
 html,
@@ -32,6 +34,31 @@ body {
 #root,
 #__next {
   overflow: visible !important;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  line-height: 1.4;
+}
+
+span,
+p,
+a,
+li,
+label,
+div {
+  line-height: inherit;
+}
+
+html,
+body,
+#root {
+  transform: none !important;
+  will-change: auto !important;
+  filter: none !important;
 }
 
 html,
@@ -111,4 +138,9 @@ body {
 .badgeArea,
 .badgeArea * {
   overflow: visible;
+}
+
+.fixDescender {
+  display: inline-block;
+  padding-bottom: 1px;
 }
