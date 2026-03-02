@@ -506,6 +506,28 @@
   color: #b91c1c;
 }
 
+/* TEMP: hard override to prove we are styling the real badge element/text */
+.profile-page .socialBadgeFix.socialBadgeFix {
+  overflow: visible !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 8px 14px 12px 14px !important;
+  min-height: 36px !important;
+  height: auto !important;
+  line-height: normal !important;
+  box-sizing: border-box !important;
+}
+
+.profile-page .socialBadgeFix .socialBadgeFixText.socialBadgeFixText {
+  display: inline-block !important;
+  overflow: visible !important;
+  line-height: 1.4 !important;
+  padding-bottom: 6px !important;
+  transform: translateY(-2px) !important;
+  white-space: nowrap !important;
+}
+
 .profile-page .profile-outcome-pill {
   font-family: "Space Mono", monospace;
   font-size: 13px;
