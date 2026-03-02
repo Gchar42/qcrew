@@ -648,16 +648,31 @@ function SummonerProfileContent() {
                     )}
                   </div>
                   <div className="profile-match-items-row">
-                    {items.slice(0, 7).map((id) => {
-                      const iconUrl = getItemIconUrl(id);
-                      if (!iconUrl) return null;
+                    {([p.item0, p.item1, p.item2, p.item3, p.item4, p.item5] as (number | undefined)[]).map((id, idx) => {
+                      const iconUrl = id != null && id > 0 ? getItemIconUrl(id) : null;
+                      const timestamp = null;
                       return (
-                        <span key={id} className="profile-match-item">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={iconUrl} alt="" width={22} height={22} />
-                        </span>
+                        <div key={`item-${idx}`} className="profile-match-item-tile">
+                          <span className="profile-match-item">
+                            {iconUrl ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img src={iconUrl} alt="" width={22} height={22} />
+                            ) : (
+                              <span className="profile-match-item-empty" aria-hidden />
+                            )}
+                          </span>
+                          <span className="profile-match-item-caption">
+                            {id != null && id > 0 && timestamp != null ? formatDuration(timestamp) : null}
+                          </span>
+                        </div>
                       );
                     })}
+                    {p.item6 != null && p.item6 > 0 ? (
+                      <span className="profile-match-item profile-match-item-trinket">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={getItemIconUrl(p.item6)} alt="" width={22} height={22} />
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               </div>
