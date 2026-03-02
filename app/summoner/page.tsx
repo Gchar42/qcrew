@@ -4,8 +4,6 @@ import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
-import { SummonerHeader } from "@/components/summoner/SummonerHeader";
-import { MatchList } from "@/components/summoner/MatchList";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
 import type { AccountDto, SummonerDto, MatchDto } from "@/types/riot";
 
@@ -24,6 +22,38 @@ function parseRiotIdFromQuery(riotIdParam: string | null) {
   } catch {
     return null;
   }
+}
+
+function formatDuration(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+/** Map teamPosition to display label */
+function roleLabel(pos: string | undefined): string {
+  if (!pos) return "—";
+  const upper = pos.toUpperCase();
+  if (upper === "JUNGLE") return "Jungle";
+  if (upper === "TOP") return "Top";
+  if (upper === "MIDDLE" || upper === "MID") return "Mid";
+  if (upper === "BOTTOM" || upper === "BOT") return "Bot";
+  if (upper === "UTILITY" || upper === "SUPPORT") return "Support";
+  return pos;
+}
+
+/** Most frequent teamPosition in matches for the given puuid */
+function primaryRole(matches: MatchDto[], puuid: string): string {
+  const counts: Record<string, number> = {};
+  matches.forEach((m) => {
+    const p = m.info?.participants?.find((x) => x.puuid === puuid);
+    const pos = p?.teamPosition ?? "";
+    if (pos) counts[pos] = (counts[pos] ?? 0) + 1;
+  });
+  const entries = Object.entries(counts);
+  if (entries.length === 0) return "";
+  entries.sort((a, b) => b[1] - a[1]);
+  return roleLabel(entries[0][0]);
 }
 
 function SummonerProfileContent() {
@@ -93,30 +123,26 @@ function SummonerProfileContent() {
 
   if (!riotIdParam) {
     return (
-      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-6 text-center">
-        <p className="text-amber-200">Missing Riot ID. Open a profile from search results.</p>
-        <Link href="/search" className="mt-4 inline-block text-indigo-400 hover:underline">
-          Go to search
-        </Link>
+      <div className="profile-empty">
+        <p>Missing Riot ID. Open a profile from search results.</p>
+        <Link href="/search">Go to search</Link>
       </div>
     );
   }
 
   if (!parsed) {
     return (
-      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-6 text-center">
-        <p className="text-amber-200">Invalid Riot ID in URL. Use format GameName#Tag.</p>
-        <Link href="/search" className="mt-4 inline-block text-indigo-400 hover:underline">
-          Go to search
-        </Link>
+      <div className="profile-empty">
+        <p>Invalid Riot ID in URL. Use format GameName#Tag.</p>
+        <Link href="/search">Go to search</Link>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-zinc-400">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+      <div className="profile-loading">
+        <div className="profile-loading-spinner" />
         <p className="mt-4">Loading profile...</p>
       </div>
     );
@@ -124,28 +150,22 @@ function SummonerProfileContent() {
 
   if (error || !account) {
     return (
-      <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-center">
-        <p className="text-red-200">{error ?? "Failed to load summoner"}</p>
-        <button
-          type="button"
-          onClick={fetchProfile}
-          className="mt-4 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-600"
-        >
+      <div className="profile-empty">
+        <p>{error ?? "Failed to load summoner"}</p>
+        <button type="button" onClick={fetchProfile} className="mt-4 underline">
           Try again
         </button>
       </div>
     );
   }
 
-  const wins = matches.filter((m) =>
-    m.info?.participants?.find((p) => p.puuid === account.puuid)?.win
-  ).length;
+  const participant = (m: MatchDto) =>
+    m.info?.participants?.find((p) => p.puuid === account.puuid);
+  const wins = matches.filter((m) => participant(m)?.win).length;
   const total = matches.length;
   const winRate = total ? Math.round((wins / total) * 100) : 0;
 
   const last10 = matches.slice(0, 10);
-  const participant = (m: MatchDto) =>
-    m.info?.participants?.find((p) => p.puuid === account.puuid);
   let avgKills = 0,
     avgDeaths = 0,
     avgAssists = 0,
@@ -166,56 +186,120 @@ function SummonerProfileContent() {
   avgDeaths = Math.round((avgDeaths / n) * 10) / 10;
   avgAssists = Math.round((avgAssists / n) * 10) / 10;
   const avgDurationMin = totalDurationSec / 60 / n;
-  const avgCsPerMin = totalDurationSec > 0 ? (totalCs / (totalDurationSec / 60)) : 0;
+  const avgCsPerMin =
+    totalDurationSec > 0 ? totalCs / (totalDurationSec / 60) : 0;
+
+  const role = primaryRole(matches, account.puuid);
+  const level = summoner?.summonerLevel ?? 0;
 
   return (
     <>
-      <SummonerHeader
-        account={account}
-        summoner={summoner ?? undefined}
-        wins={wins}
-        total={total}
-        winRate={winRate}
-      />
-
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold text-white mb-4">Summary (last 10 games)</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-white/10 bg-black/30 p-4">
-            <div className="text-xs text-zinc-500 uppercase tracking-wide">Avg KDA</div>
-            <div className="text-lg font-semibold text-white mt-1">
-              {avgKills} / {avgDeaths} / {avgAssists}
-            </div>
+      <section className="profile-hero">
+        <div className="profile-hero-left">
+          <div className="profile-hero-eyebrow">
+            Summoner Profile · NA
           </div>
-          <div className="rounded-xl border border-white/10 bg-black/30 p-4">
-            <div className="text-xs text-zinc-500 uppercase tracking-wide">Avg CS/min</div>
-            <div className="text-lg font-semibold text-white mt-1">
-              {avgCsPerMin.toFixed(1)}
-            </div>
+          <h1 className="profile-hero-name">
+            {account.gameName}
+            <span className="tag-part"> #{account.tagLine}</span>
+          </h1>
+          <div className="profile-hero-badges">
+            <span className="profile-badge profile-badge-na">NA</span>
+            {role && (
+              <span className="profile-badge profile-badge-role">{role}</span>
+            )}
+            <span className="profile-badge profile-badge-level">
+              Lv.{level}
+            </span>
           </div>
-          <div className="rounded-xl border border-white/10 bg-black/30 p-4">
-            <div className="text-xs text-zinc-500 uppercase tracking-wide">Avg duration</div>
-            <div className="text-lg font-semibold text-white mt-1">
-              {avgDurationMin.toFixed(1)} min
-            </div>
+        </div>
+        <div className="profile-hero-right">
+          <div className="profile-winrate-number">
+            {winRate}<span className="pct">%</span>
           </div>
-          <div className="rounded-xl border border-white/10 bg-black/30 p-4">
-            <div className="text-xs text-zinc-500 uppercase tracking-wide">Rank</div>
-            <div className="text-sm text-zinc-400 mt-1">Rank data coming soon</div>
+          <div className="profile-winrate-record">
+            <span className="w">{wins}W</span> <span className="l">{total - wins}L</span>
           </div>
         </div>
       </section>
 
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold text-white mb-4">
-          Recent matches {total > 0 && `· ${winRate}% win rate`}
-        </h2>
-        <MatchList
-          matches={matches}
-          puuid={account.puuid}
-          onMatchClick={setDetailMatch}
+      <div className="profile-win-bar-wrap">
+        <div
+          className="profile-win-bar-fill"
+          style={{ width: `${winRate}%` }}
         />
-      </section>
+      </div>
+
+      <div className="profile-stats-row">
+        <div className="profile-stat-cell">
+          <div className="profile-stat-label">Avg KDA</div>
+          <div className="profile-stat-value blue">
+            {avgKills} / {avgDeaths} / {avgAssists}
+          </div>
+        </div>
+        <div className="profile-stat-cell">
+          <div className="profile-stat-label">CS / Min</div>
+          <div className="profile-stat-value">{avgCsPerMin.toFixed(1)}</div>
+        </div>
+        <div className="profile-stat-cell">
+          <div className="profile-stat-label">Avg Duration</div>
+          <div className="profile-stat-value">
+            {avgDurationMin.toFixed(1)}<span className="unit">m</span>
+          </div>
+        </div>
+        <div className="profile-stat-cell">
+          <div className="profile-stat-label">Rank</div>
+          <div className="profile-stat-value pending">Data coming soon</div>
+        </div>
+      </div>
+
+      <div className="profile-matches-header">
+        <h2 className="profile-matches-title">Recent Matches</h2>
+        <span className="profile-matches-winrate">
+          {total > 0 && `${winRate}% win rate`}
+        </span>
+      </div>
+      <div className="profile-matches-list">
+        {matches.map((m) => {
+          const p = participant(m);
+          if (!p) return null;
+          const win = p.win;
+          const duration = formatDuration(m.info?.gameDuration ?? 0);
+          const cs = (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
+          const rolePos = roleLabel(p.teamPosition);
+          return (
+            <button
+              key={m.metadata?.matchId ?? ""}
+              type="button"
+              className={`profile-match-row ${win ? "win" : "loss"}`}
+              onClick={() => setDetailMatch(m)}
+            >
+              <span className={`profile-outcome-pill ${win ? "win" : "loss"}`}>
+                {win ? "W" : "L"}
+              </span>
+              <span className={`profile-verdict-line ${win ? "win" : "loss"}`} />
+              <div>
+                <div className="profile-match-champ-name">{p.championName}</div>
+                <div className="profile-match-meta-row">
+                  <span>{rolePos}</span> · {duration} · {cs} CS
+                </div>
+              </div>
+              <div>
+                <div className="profile-kda-display">
+                  <span className="k">{p.kills}</span> /{" "}
+                  <span className="d">{p.deaths}</span> /{" "}
+                  <span className="a">{p.assists}</span>
+                </div>
+                <div className="profile-kda-label">K / D / A</div>
+              </div>
+              <div className="profile-cs-display">
+                <div className="cs-main">{cs}</div>
+                <div className="cs-sub">CS</div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
 
       {detailMatch && (
         <MatchDetailSlideOver
@@ -230,36 +314,15 @@ function SummonerProfileContent() {
 
 export default function SummonerPage() {
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      <header className="border-b border-white/10 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <Link
-            href="/"
-            className="text-xl font-bold text-white hover:text-indigo-400 transition-colors"
-          >
-            Qcrew
-          </Link>
-          <Link
-            href="/search"
-            className="text-sm text-zinc-400 hover:text-white transition-colors"
-          >
-            ← Search
-          </Link>
+    <Suspense
+      fallback={
+        <div className="profile-loading">
+          <div className="profile-loading-spinner" />
+          <p className="mt-4">Loading...</p>
         </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-4 py-6">
-        <Suspense
-          fallback={
-            <div className="flex flex-col items-center justify-center py-16 text-zinc-400">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
-              <p className="mt-4">Loading...</p>
-            </div>
-          }
-        >
-          <SummonerProfileContent />
-        </Suspense>
-      </main>
-    </div>
+      }
+    >
+      <SummonerProfileContent />
+    </Suspense>
   );
 }
