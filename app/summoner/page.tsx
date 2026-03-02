@@ -388,19 +388,22 @@ function SummonerProfileContent() {
             );
           }
 
-          const hasSkin = p.skin != null && p.skin > 0;
-          const portraitSkinUrl = hasSkin
-            ? getChampionSplashUrlWithSkin(p.championName, p.skin)
-            : null;
+          const skinNumber =
+            p.skin != null && p.skin > 0 ? p.skin : null;
+          const portraitSkinUrl =
+            skinNumber != null
+              ? getChampionSplashUrlWithSkin(p.championName, skinNumber)
+              : null;
           const portraitBaseUrl = getChampionSplashUrl(p.championName);
           const champSquareUrl = getChampionSquareUrl(
             p.championName,
             ddragonVersion
           );
           const initialPortraitSrc = portraitSkinUrl ?? portraitBaseUrl;
-          const portraitTitle = hasSkin
-            ? `Skin ${p.skin}`
-            : "Skin data unavailable from match payload.";
+          const portraitTitle =
+            skinNumber != null
+              ? `Skin ${skinNumber}`
+              : "Skin data unavailable from match payload.";
 
           return (
             <button
