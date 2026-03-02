@@ -84,26 +84,38 @@ function patchFromVersion(gameVersion: string | undefined): string | null {
   return null;
 }
 
-/** Per-match impact for all participants and which puuids are top on friendly/enemy team (first in order on tie). */
+/** Per-match impact for all participants; best ally = purple, best enemy = gold (first in render order on tie). */
 function getMatchImpactHighlights(
   m: MatchDto,
   accountPuuid: string
 ): {
   impactByPuuid: Map<string, number>;
-  friendlyTopPuuid: string | null;
-  enemyTopPuuid: string | null;
+  bestAllyPuuid: string | null;
+  bestEnemyPuuid: string | null;
 } {
+  const participants = m.info?.participants ?? [];
+  const selected = participants.find((p) => p.puuid === accountPuuid);
+  if (!selected) {
+    const empty = new Map<string, number>();
+    for (const p of participants) {
+      const result = computeImpactScore(m, p.puuid);
+      empty.set(p.puuid, result?.score ?? 0);
+    }
+    return { impactByPuuid: empty, bestAllyPuuid: null, bestEnemyPuuid: null };
+  }
+
+  const allyTeamId = selected.teamId;
   const { blue, red } = getTeams(m);
+  const allyTeam = allyTeamId === 100 ? blue : red;
+  const enemyTeam = allyTeamId === 100 ? red : blue;
+
   const impactByPuuid = new Map<string, number>();
-  const all = [...blue, ...red];
-  for (const part of all) {
+  for (const part of participants) {
     const result = computeImpactScore(m, part.puuid);
     impactByPuuid.set(part.puuid, result?.score ?? 0);
   }
-  const selected = all.find((p) => p.puuid === accountPuuid);
-  const friendlyTeam = selected?.teamId === 100 ? blue : red;
-  const enemyTeam = selected?.teamId === 100 ? red : blue;
-  const topIn = (team: Participant[]) => {
+
+  const bestIn = (team: Participant[]) => {
     if (team.length === 0) return null;
     let best = team[0];
     let bestScore = impactByPuuid.get(best.puuid) ?? 0;
@@ -116,10 +128,11 @@ function getMatchImpactHighlights(
     }
     return best.puuid;
   };
+
   return {
     impactByPuuid,
-    friendlyTopPuuid: topIn(friendlyTeam),
-    enemyTopPuuid: topIn(enemyTeam),
+    bestAllyPuuid: bestIn(allyTeam),
+    bestEnemyPuuid: bestIn(enemyTeam),
   };
 }
 
@@ -496,9 +509,9 @@ function SummonerProfileContent() {
           const redFive = red.slice(0, 5);
           const blueRows = [...blueFive, ...Array(5 - blueFive.length).fill(null)];
           const redRows = [...redFive, ...Array(5 - redFive.length).fill(null)];
-          const { impactByPuuid, friendlyTopPuuid, enemyTopPuuid } = account
+          const { impactByPuuid, bestAllyPuuid, bestEnemyPuuid } = account
             ? getMatchImpactHighlights(m, account.puuid)
-            : { impactByPuuid: new Map<string, number>(), friendlyTopPuuid: null as string | null, enemyTopPuuid: null as string | null };
+            : { impactByPuuid: new Map<string, number>(), bestAllyPuuid: null as string | null, bestEnemyPuuid: null as string | null };
 
           return (
             <button
@@ -652,10 +665,10 @@ function SummonerProfileContent() {
                       >
                         <span
                           className={`profile-match-team-impact ${
-                            part.puuid === friendlyTopPuuid
-                              ? "profile-match-team-impact-gold"
-                              : part.puuid === enemyTopPuuid
-                                ? "profile-match-team-impact-purple"
+                            part.puuid === bestAllyPuuid
+                              ? "profile-match-team-impact-purple"
+                              : part.puuid === bestEnemyPuuid
+                                ? "profile-match-team-impact-gold"
                                 : ""
                           }`}
                         >
@@ -693,10 +706,10 @@ function SummonerProfileContent() {
                       >
                         <span
                           className={`profile-match-team-impact ${
-                            part.puuid === friendlyTopPuuid
-                              ? "profile-match-team-impact-gold"
-                              : part.puuid === enemyTopPuuid
-                                ? "profile-match-team-impact-purple"
+                            part.puuid === bestAllyPuuid
+                              ? "profile-match-team-impact-purple"
+                              : part.puuid === bestEnemyPuuid
+                                ? "profile-match-team-impact-gold"
                                 : ""
                           }`}
                         >
