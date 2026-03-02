@@ -106,18 +106,21 @@ select {
 .badge,
 .profile-badge-chip,
 .socialBadge {
-  padding: 6px 10px 10px !important; /* basement room for descenders */
+  padding: 8px 12px 14px !important; /* extra bottom = basement for g, y, p, q */
   overflow: visible !important;
   height: auto !important;
+  min-height: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
 }
 
-/* Inner text inside badge pills */
+/* Inner text inside badge pills – own padding so descenders aren't cut */
 .badge span,
 .profile-badge-chip span,
 .socialBadge span {
   display: inline-block !important;
-  line-height: 1.4 !important;
+  line-height: 1.5 !important;
   vertical-align: middle !important;
+  padding-bottom: 4px !important;
+  overflow: visible !important;
 }
