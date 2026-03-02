@@ -571,7 +571,9 @@ function SummonerProfileContent() {
                         )}`}
                         title={badgeInfo.reason}
                       >
-                        <span className="profile-badge-chip-text">{badgeInfo.badge}</span>
+                        <span className="profile-badge-chip-text socialBadgeText">
+                          {badgeInfo.badge}
+                        </span>
                       </span>
                     )}
                   </div>

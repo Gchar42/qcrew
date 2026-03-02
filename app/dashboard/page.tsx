@@ -528,7 +528,9 @@ export default function DashboardRiotSearchPage() {
                               )}`}
                               title={badgeInfo.reason}
                             >
-                              {badgeInfo.badge}
+                              <span className="socialBadgeText">
+                                {badgeInfo.badge}
+                              </span>
                             </span>
                           )}
                         </div>

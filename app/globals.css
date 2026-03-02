@@ -57,30 +57,27 @@ body {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
-/* Social badge: prevent descenders (g, y, p) from clipping */
+/* Social badge: descender-safe text wrapper */
 .socialBadge {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 6px 14px;
   min-height: 32px;
+  border-radius: 12px;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.socialBadgeText {
+  display: inline-block;
   line-height: 1.2;
+  padding-bottom: 3px;
+  transform: translateY(-1px);
   white-space: nowrap;
-  overflow: visible;
 }
 
-.socialBadge::after {
-  content: "";
-  display: block;
-  height: 4px;
-  width: 0;
-}
-
-.socialBadgeWrap {
-  overflow: visible;
-}
-
-.badgeArea {
+.badgeArea,
+.badgeArea * {
   overflow: visible;
 }

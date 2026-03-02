@@ -479,9 +479,7 @@
 }
 
 .profile-page .profile-badge-chip-text {
-  line-height: 1.4;
   white-space: nowrap;
-  padding-bottom: 2px; /* room for descenders below baseline */
 }
 
 .profile-page .profile-badge-chip-badge-gold {
