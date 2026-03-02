@@ -367,6 +367,7 @@ function SummonerProfileContent() {
       </div>
       <div className="profile-matches-list">
         {matches.map((m, matchIndex) => {
+          // Participant for the searched player only (match by puuid)
           const p = participant(m);
           if (!p) return null;
           const win = p.win;
@@ -379,13 +380,16 @@ function SummonerProfileContent() {
           const patch = patchFromVersion(m.info?.gameVersion);
           const showLp = isRankedQueue(m.info?.queueId);
 
-          // Verify participant.skin: log once for first match (browser console)
+          const skin = p.skin;
+          const champ = p.championName;
+          const portraitUrl = getChampionSplashUrlWithSkin(
+            champ,
+            skin != null ? skin : 0
+          );
+          const matchId = m.metadata?.matchId ?? "";
+
           if (matchIndex === 0 && typeof window !== "undefined") {
-            console.log("[profile] First match participant.skin:", p.skin);
-            console.log(
-              "[profile] First match participant keys:",
-              Object.keys(p).sort().join(", ")
-            );
+            console.log("portrait", portraitUrl);
           }
 
           const skinNumber =
@@ -399,11 +403,13 @@ function SummonerProfileContent() {
             p.championName,
             ddragonVersion
           );
-          const initialPortraitSrc = portraitSkinUrl ?? portraitBaseUrl;
+          const initialPortraitSrc = (portraitSkinUrl ?? portraitBaseUrl) + `?v=${matchId}`;
           const portraitTitle =
             skinNumber != null
               ? `Skin ${skinNumber}`
               : "Skin data unavailable from match payload.";
+
+          const debugLabel = `${champ}_${skin ?? "undefined"}`;
 
           return (
             <button
@@ -429,18 +435,22 @@ function SummonerProfileContent() {
                       title={portraitTitle}
                       onError={(e) => {
                         const target = e.currentTarget;
+                        const currentBase = target.src.split("?")[0];
                         if (
                           portraitSkinUrl &&
-                          target.src === portraitSkinUrl
+                          currentBase === portraitSkinUrl
                         ) {
-                          target.src = portraitBaseUrl;
-                        } else if (target.src === portraitBaseUrl) {
-                          target.src = champSquareUrl;
+                          target.src = portraitBaseUrl + `?v=${matchId}`;
+                        } else if (currentBase === portraitBaseUrl) {
+                          target.src = champSquareUrl + `?v=${matchId}`;
                         } else {
                           target.style.display = "none";
                         }
                       }}
                     />
+                    <div className="profile-match-portrait-debug" title={portraitUrl}>
+                      {debugLabel}
+                    </div>
                   </div>
                   <div className="profile-match-meta-col">
                     <div className="profile-match-meta-row">
