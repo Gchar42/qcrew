@@ -764,14 +764,13 @@
   min-height: 28px;
 }
 
-/* Highlight: outline/box-shadow only — no padding, width, or border that changes layout */
+/* Selected row: row container has no visual change (no background, border, padding, or size change) */
 .profile-page .profile-match-team-row-highlight {
-  box-shadow: 0 0 0 2px var(--accent);
+  /* intentionally no background, border, padding, margin, or box-shadow on row */
 }
 
 .profile-page .profile-match-team-row-highlight .profile-match-team-name {
-  color: var(--ink);
-  font-weight: 500;
+  font-weight: 700;
 }
 
 /* Column 2: summoner name — fixed width, left aligned, single line ellipsis, vertically centered */
@@ -798,9 +797,11 @@
   box-sizing: border-box;
 }
 
+/* Selected champion icon only: outline (no layout shift) + slight glow */
 .profile-page .profile-match-team-champ-highlight {
-  box-shadow: 0 0 0 2px var(--accent);
-  border-radius: 4px;
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  box-shadow: 0 0 8px rgba(29, 78, 216, 0.35);
 }
 
 /* Legacy team row (kept for any other use) */
