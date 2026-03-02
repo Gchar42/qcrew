@@ -9,6 +9,7 @@ import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver
 import {
   getChampionSplashUrl,
   getChampionSquareUrl,
+  getItemIconUrl,
 } from "@/lib/riotAssets";
 import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges } from "@/lib/matchBadges";
@@ -74,17 +75,25 @@ function ChampIcon({
   championName,
   summonerName,
   ddragonVersion,
+  highlight,
 }: {
   championName: string;
   summonerName: string;
   ddragonVersion: string | null;
+  highlight?: boolean;
 }) {
   const squareUrl = getChampionSquareUrl(championName, ddragonVersion);
   const [failed, setFailed] = useState(false);
+  const champClass = highlight
+    ? "profile-match-team-champ profile-match-team-champ-highlight"
+    : "profile-match-team-champ";
+  const fallbackClass = highlight
+    ? "profile-match-team-champ profile-match-team-champ-fallback profile-match-team-champ-highlight"
+    : "profile-match-team-champ profile-match-team-champ-fallback";
   if (failed || !squareUrl) {
     return (
       <span
-        className="profile-match-team-champ profile-match-team-champ-fallback"
+        className={fallbackClass}
         title={`${summonerName} · ${championName}`}
       >
         <span className="profile-match-team-champ-placeholder" aria-hidden />
@@ -92,10 +101,7 @@ function ChampIcon({
     );
   }
   return (
-    <span
-      className="profile-match-team-champ"
-      title={`${summonerName} · ${championName}`}
-    >
+    <span className={champClass} title={`${summonerName} · ${championName}`}>
       <Image
         src={squareUrl}
         alt=""
@@ -127,6 +133,21 @@ function formatDuration(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+/** Relative time from game end timestamp (ms) */
+function relativeTime(gameEndTimestamp: number | undefined): string {
+  if (gameEndTimestamp == null) return "";
+  const now = Date.now();
+  const diffMs = now - gameEndTimestamp;
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffH = Math.floor(diffMin / 60);
+  const diffD = Math.floor(diffH / 24);
+  if (diffMin < 1) return "Just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffH < 24) return `${diffH}h ago`;
+  if (diffD < 7) return `${diffD}d ago`;
+  return `${Math.floor(diffD / 7)}w ago`;
 }
 
 /** Map teamPosition to display label */
@@ -372,16 +393,18 @@ function SummonerProfileContent() {
           if (!p) return null;
           const win = p.win;
           const duration = formatDuration(m.info?.gameDuration ?? 0);
-          const durationShort = `${Math.floor((m.info?.gameDuration ?? 0) / 60)}m`;
+          const minutes = Math.max(1, (m.info?.gameDuration ?? 0) / 60);
           const cs = (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
-          const rolePos = roleLabel(p.teamPosition);
+          const csPerMin = cs / minutes;
           const { blue, red } = getTeams(m);
           const queue = queueLabel(m.info?.queueId);
-          const patch = patchFromVersion(m.info?.gameVersion);
-          const showLp = isRankedQueue(m.info?.queueId);
           const impact = account ? computeImpactScore(m, account.puuid) : null;
           const badges = getMatchBadges(m);
           const badgeInfo = account ? badges.get(account.puuid) : null;
+          const relative = relativeTime(m.info?.gameEndTimestamp);
+          const items = [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6].filter(
+            (id): id is number => id != null && id > 0
+          );
 
           const portraitBaseUrl = getChampionSplashUrl(p.championName);
           const champSquareUrl = getChampionSquareUrl(
@@ -400,89 +423,91 @@ function SummonerProfileContent() {
                 <span className={`profile-outcome-pill ${win ? "win" : "loss"}`}>
                   {win ? "W" : "L"}
                 </span>
-                <div className="profile-impact-badge-wrap">
-                  {impact != null && (
-                    <span className="profile-impact-label">Impact {impact.score}</span>
-                  )}
-                  {badgeInfo && (
-                    <span
-                      className="profile-badge-pill"
-                      title={badgeInfo.reason}
-                    >
-                      {badgeInfo.badge}
-                    </span>
-                  )}
-                </div>
               </div>
               <span className={`profile-verdict-line ${win ? "win" : "loss"}`} />
-              <div className="profile-match-main">
-                <div className="profile-match-portrait-meta">
-                  <div className="profile-match-portrait-wrap">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={portraitBaseUrl}
-                      alt=""
-                      className="profile-match-portrait"
-                      width={64}
-                      height={64}
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        if (target.src !== champSquareUrl) {
-                          target.src = champSquareUrl;
-                        } else {
-                          target.style.display = "none";
-                        }
-                      }}
-                    />
+              <div className="profile-match-left-block">
+                <div className="profile-match-portrait-wrap">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={portraitBaseUrl}
+                    alt=""
+                    className="profile-match-portrait"
+                    width={64}
+                    height={64}
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (target.src !== champSquareUrl) {
+                        target.src = champSquareUrl;
+                      } else {
+                        target.style.display = "none";
+                      }
+                    }}
+                  />
+                </div>
+                <div className="profile-match-left-meta">
+                  <div className="profile-match-line1">
+                    {win ? "Victory" : "Defeat"} · {queue} · {duration}
+                    {relative && ` · ${relative}`}
                   </div>
-                  <div className="profile-match-meta-col">
-                    <div className="profile-match-meta-row">
-                      <span>{rolePos}</span> · {duration} · {cs} CS
-                    </div>
-                    <div className="profile-match-queue-patch">
-                      {queue}, {durationShort}
-                      {patch != null && `, Patch ${patch}`}
-                    </div>
-                    {showLp && (
-                      <div className="profile-match-lp">LP data coming soon</div>
+                  <div className="profile-match-line2">
+                    <span className="profile-kda-inline">
+                      <span className="k">{p.kills}</span> /{" "}
+                      <span className="d">{p.deaths}</span> /{" "}
+                      <span className="a">{p.assists}</span>
+                    </span>
+                    {" · "}
+                    <span>{cs} CS ({csPerMin.toFixed(1)}/m)</span>
+                  </div>
+                  <div className="profile-impact-badge-wrap profile-impact-badge-inline">
+                    {impact != null && (
+                      <span className="profile-impact-label">Impact {impact.score}</span>
+                    )}
+                    {badgeInfo && (
+                      <span
+                        className="profile-badge-pill"
+                        title={badgeInfo.reason}
+                      >
+                        {badgeInfo.badge}
+                      </span>
                     )}
                   </div>
-                </div>
-                <div className="profile-match-teams">
-                  <div className="profile-match-team" aria-label="Blue team">
-                    {blue.slice(0, 5).map((part) => (
-                      <ChampIcon
-                        key={part.puuid}
-                        championName={part.championName}
-                        summonerName={part.summonerName}
-                        ddragonVersion={ddragonVersion}
-                      />
-                    ))}
-                  </div>
-                  <div className="profile-match-vs">vs</div>
-                  <div className="profile-match-team" aria-label="Red team">
-                    {red.slice(0, 5).map((part) => (
-                      <ChampIcon
-                        key={part.puuid}
-                        championName={part.championName}
-                        summonerName={part.summonerName}
-                        ddragonVersion={ddragonVersion}
-                      />
-                    ))}
+                  <div className="profile-match-items-row">
+                    {items.slice(0, 7).map((id) => {
+                      const iconUrl = getItemIconUrl(id);
+                      if (!iconUrl) return null;
+                      return (
+                        <span key={id} className="profile-match-item">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={iconUrl} alt="" width={22} height={22} />
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
-              <div>
-                <div className="profile-kda-display">
-                  <span className="k">{p.kills}</span> /{" "}
-                  <span className="d">{p.deaths}</span> /{" "}
-                  <span className="a">{p.assists}</span>
+              <div className="profile-match-teams-block">
+                <div className="profile-match-team-col" aria-label="Blue team">
+                  {blue.slice(0, 5).map((part) => (
+                    <ChampIcon
+                      key={part.puuid}
+                      championName={part.championName}
+                      summonerName={part.summonerName}
+                      ddragonVersion={ddragonVersion}
+                      highlight={part.puuid === account?.puuid}
+                    />
+                  ))}
                 </div>
-                <div className="profile-kda-label">K / D / A</div>
-              </div>
-              <div className="profile-cs-display">
-                <div className="cs-main">{cs}</div>
-                <div className="cs-sub">CS</div>
+                <div className="profile-match-team-col" aria-label="Red team">
+                  {red.slice(0, 5).map((part) => (
+                    <ChampIcon
+                      key={part.puuid}
+                      championName={part.championName}
+                      summonerName={part.summonerName}
+                      ddragonVersion={ddragonVersion}
+                      highlight={part.puuid === account?.puuid}
+                    />
+                  ))}
+                </div>
               </div>
             </button>
           );

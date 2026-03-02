@@ -45,7 +45,10 @@ function assignTeamGap(
   return null;
 }
 
-function getPersonalBadge(data: ImpactResult): BadgeInfo {
+function getPersonalBadge(
+  data: ImpactResult,
+  participant?: { teamPosition?: string }
+): BadgeInfo {
   const {
     score,
     combatScore,
@@ -58,6 +61,9 @@ function getPersonalBadge(data: ImpactResult): BadgeInfo {
     killsPerMin,
     deaths,
   } = data;
+
+  const isJungle =
+    (participant?.teamPosition ?? "").toUpperCase() === "JUNGLE";
 
   // Priority order: first match wins
   if (
@@ -89,7 +95,11 @@ function getPersonalBadge(data: ImpactResult): BadgeInfo {
 
   // Fallback score bands
   if (score >= 85) return { badge: "Playmaker", reason: "Impact 85+" };
-  if (score >= 70) return { badge: "Lane Bully", reason: "Impact 70+" };
+  if (score >= 70) {
+    return isJungle
+      ? { badge: "Jungle Diff", reason: "Impact 70+" }
+      : { badge: "Lane Bully", reason: "Impact 70+" };
+  }
   if (score >= 55) return { badge: "Doing Your Job", reason: "Impact 55+" };
   if (score >= 40) return { badge: "Background Character", reason: "Impact 40+" };
   return { badge: "Learning the Champ", reason: "Impact under 40" };
@@ -107,14 +117,16 @@ export function getMatchBadges(match: MatchDto): Map<string, BadgeInfo> {
   const mainCharacterPuuid = assignMainCharacter(winners);
   const teamGapPuuid = assignTeamGap(losers);
 
+  const participants = match.info?.participants ?? [];
   const result = new Map<string, BadgeInfo>();
   for (const { puuid, data } of all) {
+    const participant = participants.find((x) => x.puuid === puuid);
     if (puuid === mainCharacterPuuid) {
       result.set(puuid, { badge: "Main Character", reason: "Top Impact on winning team" });
     } else if (puuid === teamGapPuuid) {
       result.set(puuid, { badge: "Team Gap", reason: "Top Impact on losing team" });
     } else {
-      result.set(puuid, getPersonalBadge(data));
+      result.set(puuid, getPersonalBadge(data, participant));
     }
   }
   return result;

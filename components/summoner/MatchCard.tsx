@@ -54,7 +54,7 @@ export function MatchCard({
           >
             {win ? "W" : "L"}
           </div>
-          <div className="flex flex-col items-center gap-0.5">
+          <div className="flex flex-row items-center gap-1.5 flex-wrap justify-center">
             {impactScore != null && (
               <span className="text-xs text-zinc-400">Impact {impactScore}</span>
             )}
