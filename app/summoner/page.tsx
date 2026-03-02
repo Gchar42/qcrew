@@ -11,11 +11,21 @@ import {
   getChampionSquareUrl,
   getItemIconUrl,
   getSummonerSpellIconUrl,
-  getRuneStyleIconUrl,
 } from "@/lib/riotAssets";
+import {
+  getPerkIconUrl,
+  getRuneStyleIconUrlCd,
+  type PerkEntry,
+} from "@/lib/runesCd";
 import { computeImpactScore } from "@/lib/impactScore";
-import { getMatchBadges } from "@/lib/matchBadges";
+import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
 import type { AccountDto, SummonerDto, MatchDto } from "@/types/riot";
+
+/** Badge name -> profile CSS class for chip styling */
+function getBadgeCategoryClass(badge: string): string {
+  const cat = getBadgeCategory(badge);
+  return `profile-badge-chip-badge-${cat}`;
+}
 
 const REGION = "na1";
 
@@ -190,12 +200,25 @@ function SummonerProfileContent() {
   const [matches, setMatches] = useState<MatchDto[]>([]);
   const [detailMatch, setDetailMatch] = useState<MatchDto | null>(null);
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
+  const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
 
   useEffect(() => {
     fetch("/api/ddragon/version")
       .then((r) => r.json())
       .then((data: { version?: string }) => setDdragonVersion(data.version ?? null))
       .catch(() => setDdragonVersion(null));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/cd/perks")
+      .then((r) => r.json())
+      .then((data: { perks?: PerkEntry[] }) => {
+        const list = data.perks ?? [];
+        const map = new Map<number, string>();
+        list.forEach((p) => map.set(p.id, p.iconPath));
+        setPerksById(map);
+      })
+      .catch(() => {});
   }, []);
 
   const fetchProfile = useCallback(async () => {
@@ -461,19 +484,30 @@ function SummonerProfileContent() {
                       })}
                     </div>
                     <div className="profile-match-runes-col">
-                      {[
-                        p.perks?.styles?.[0]?.style,
-                        p.perks?.styles?.[1]?.style,
-                      ].map((styleId, i) => {
-                        const src = getRuneStyleIconUrl(styleId, ddragonVersion);
-                        if (!src) return null;
-                        return (
-                          <span key={i} className="profile-match-rune">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={src} alt="" width={20} height={20} />
-                          </span>
-                        );
-                      })}
+                      {(() => {
+                        const keystoneId = p.perks?.styles?.[0]?.selections?.[0]?.perk;
+                        const secondaryStyleId = p.perks?.styles?.[1]?.style;
+                        const keystoneSrc = getPerkIconUrl(keystoneId, perksById);
+                        const secondarySrc = getRuneStyleIconUrlCd(secondaryStyleId);
+                        const nodes: React.ReactNode[] = [];
+                        if (keystoneSrc) {
+                          nodes.push(
+                            <span key="keystone" className="profile-match-rune">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={keystoneSrc} alt="" width={20} height={20} />
+                            </span>
+                          );
+                        }
+                        if (secondarySrc) {
+                          nodes.push(
+                            <span key="secondary" className="profile-match-rune">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={secondarySrc} alt="" width={20} height={20} />
+                            </span>
+                          );
+                        }
+                        return nodes;
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -491,15 +525,16 @@ function SummonerProfileContent() {
                     {" · "}
                     <span>{cs} CS ({csPerMin.toFixed(1)}/m)</span>
                   </div>
-                  <div className="profile-impact-badge-wrap profile-impact-badge-inline profile-impact-badge-group">
+                  <div className="profile-chips-row">
                     {impact != null && (
-                      <span className="profile-impact-label">
-                        Impact <span className="profile-impact-score">{impact.score}</span>
+                      <span className="profile-impact-chip">
+                        <span className="profile-impact-chip-label">Impact</span>
+                        <span className="profile-impact-chip-score">{impact.score}</span>
                       </span>
                     )}
                     {badgeInfo && (
                       <span
-                        className="profile-badge-pill"
+                        className={`profile-badge-chip ${getBadgeCategoryClass(badgeInfo.badge)}`}
                         title={badgeInfo.reason}
                       >
                         {badgeInfo.badge}

@@ -61,8 +61,8 @@ export type MatchDto = {
       riotIdGameName?: string;
       perks?: {
         styleIds?: number[];
-        /** Primary style id is first in styles[].style */
-        styles?: Array<{ style: number }>;
+        /** Primary style first, secondary second. selections[0] is keystone. */
+        styles?: Array<{ style: number; selections?: Array<{ perk: number }> }>;
         perkIds?: number[];
       };
     }>;

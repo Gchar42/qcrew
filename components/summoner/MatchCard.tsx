@@ -2,6 +2,21 @@
 
 import Image from "next/image";
 import { getChampionSplashUrl, getItemIconUrl } from "@/lib/riotAssets";
+import { getBadgeCategory } from "@/lib/matchBadges";
+
+function badgeChipClass(badge: string): string {
+  const cat = getBadgeCategory(badge);
+  switch (cat) {
+    case "gold":
+      return "border-amber-500/50 bg-amber-500/15 text-amber-700 dark:text-amber-400";
+    case "positive":
+      return "border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400";
+    case "negative":
+      return "border-red-500/40 bg-red-500/12 text-red-600 dark:text-red-400";
+    default:
+      return "border-white/15 bg-white/10 text-zinc-400";
+  }
+}
 
 export function MatchCard({
   champion,
@@ -54,15 +69,16 @@ export function MatchCard({
           >
             {win ? "W" : "L"}
           </div>
-          <div className="flex flex-row items-center gap-1.5 flex-wrap justify-center rounded-md border border-white/15 bg-white/5 px-2 py-1 shadow-sm">
+          <div className="flex flex-row items-center gap-2 flex-wrap justify-center">
             {impactScore != null && (
-              <span className="text-xs text-zinc-400">
-                Impact <span className="font-semibold text-zinc-200">{impactScore}</span>
+              <span className="inline-flex items-baseline gap-1 rounded-md border-[1.5px] border-white/20 bg-white/5 px-2.5 py-1 shadow-sm">
+                <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">Impact</span>
+                <span className="text-sm font-bold text-white">{impactScore}</span>
               </span>
             )}
             {badge && (
               <span
-                className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 max-w-[72px] truncate"
+                className={`inline-flex items-center rounded-md border px-2 py-1 text-[10px] font-semibold max-w-[88px] truncate ${badgeChipClass(badge)}`}
                 title={badgeReason ?? badge}
               >
                 {badge}

@@ -9,6 +9,17 @@ import { computeImpactScore, type ImpactResult } from "@/lib/impactScore";
 
 export type BadgeInfo = { badge: string; reason: string };
 
+/** Badge name -> Tailwind/semantic category for chip styling (gold/positive/neutral/negative) */
+export function getBadgeCategory(badge: string): "gold" | "positive" | "neutral" | "negative" {
+  const gold = ["Main Character", "Team Gap"];
+  const positive = ["Playmaker", "Jungle Diff", "Where It Counts", "Slippery"];
+  const negative = ["Limit Testing", "AFK", "Learning the Champ", "KS'er"];
+  if (gold.includes(badge)) return "gold";
+  if (positive.includes(badge)) return "positive";
+  if (negative.includes(badge)) return "negative";
+  return "neutral";
+}
+
 function getParticipantImpacts(match: MatchDto): Array<{ puuid: string; data: ImpactResult }> {
   const participants = match.info?.participants ?? [];
   const out: Array<{ puuid: string; data: ImpactResult }> = [];
