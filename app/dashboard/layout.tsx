@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
 export default function DashboardLayout({
   children,
@@ -23,7 +24,11 @@ export default function DashboardLayout({
           </Link>
         </div>
       </header>
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6">{children}</main>
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+        <Suspense fallback={<div className="text-zinc-400 py-8">Loading...</div>}>
+          {children}
+        </Suspense>
+      </main>
     </div>
   );
 }

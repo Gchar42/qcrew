@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getChampionSplashUrl,
@@ -102,7 +102,10 @@ export default function DashboardRiotSearchPage() {
   const [saveHistoryError, setSaveHistoryError] = useState<string | null>(null);
   const debounceRef = useRef<number | null>(null);
   const activeFetchRef = useRef(0);
+  const hasRunQueryRef = useRef(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [invalidQueryRiotId, setInvalidQueryRiotId] = useState(false);
 
   const winStats = useMemo(() => {
     if (!account || matches.length === 0) return null;
@@ -116,6 +119,34 @@ export default function DashboardRiotSearchPage() {
     const rate = total ? Math.round((wins / total) * 100) : 0;
     return { wins, total, rate };
   }, [account, matches]);
+
+  const riotIdFromUrl = searchParams.get("riotId");
+  useEffect(() => {
+    if (!riotIdFromUrl) {
+      hasRunQueryRef.current = false;
+      setInvalidQueryRiotId(false);
+      return;
+    }
+    if (hasRunQueryRef.current) return;
+    hasRunQueryRef.current = true;
+    setInvalidQueryRiotId(false);
+    try {
+      const decoded = decodeURIComponent(riotIdFromUrl);
+      if (!decoded.includes("#")) {
+        setInvalidQueryRiotId(true);
+        return;
+      }
+      const parsed = parseRiotId(decoded);
+      if (!parsed) {
+        setInvalidQueryRiotId(true);
+        return;
+      }
+      setRiotId(decoded);
+      void doSearch(decoded);
+    } catch {
+      setInvalidQueryRiotId(true);
+    }
+  }, [riotIdFromUrl]);
 
   useEffect(() => {
     const trimmed = riotId.trim();
@@ -359,6 +390,11 @@ export default function DashboardRiotSearchPage() {
         </div>
       )}
 
+      {invalidQueryRiotId && (
+        <p className="mt-4 text-sm text-amber-400">
+          Invalid Riot ID in URL. Use format GameName#Tag.
+        </p>
+      )}
       {saveHistoryError && (
         <p className="mt-4 text-sm text-amber-400">
           Search history could not be saved: {saveHistoryError}

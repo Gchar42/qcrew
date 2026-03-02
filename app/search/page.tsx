@@ -20,13 +20,8 @@ export type SearchResultItem = {
 const PAGE_SIZE = 25;
 const DEFAULT_ICON_ID = 29;
 
-function toSummonerPath(riotId: string) {
-  const idx = riotId.indexOf("#");
-  if (idx === -1) return "/dashboard";
-  const name = riotId.slice(0, idx).trim();
-  const tag = riotId.slice(idx + 1).trim();
-  if (!name || !tag) return "/dashboard";
-  return `/summoner/na1/${encodeURIComponent(name)}/${encodeURIComponent(tag)}`;
+function dashboardMatchHistoryUrl(riotId: string) {
+  return `/dashboard?riotId=${encodeURIComponent(riotId)}`;
 }
 
 function SearchContent() {
@@ -140,7 +135,7 @@ function SearchContent() {
         <>
           <ul className="mt-6 space-y-1">
             {results.map((r) => {
-              const href = toSummonerPath(r.riotId);
+              const href = dashboardMatchHistoryUrl(r.riotId);
               const iconId =
                 r.profileIconId != null ? r.profileIconId : DEFAULT_ICON_ID;
               const iconUrl = getProfileIconUrl(iconId);
