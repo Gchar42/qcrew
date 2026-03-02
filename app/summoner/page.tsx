@@ -557,7 +557,7 @@ function SummonerProfileContent() {
                     {" · "}
                     <span>{cs} CS ({csPerMin.toFixed(1)}/m)</span>
                   </div>
-                  <div className="profile-chips-row">
+                  <div className="profile-chips-row socialBadgeWrap">
                     {impact != null && (
                       <span className="profile-impact-chip">
                         <span className="profile-impact-chip-label">Impact</span>
@@ -566,7 +566,9 @@ function SummonerProfileContent() {
                     )}
                     {badgeInfo && (
                       <span
-                        className={`profile-badge-chip ${getBadgeCategoryClass(badgeInfo.badge)}`}
+                        className={`profile-badge-chip socialBadge ${getBadgeCategoryClass(
+                          badgeInfo.badge
+                        )}`}
                         title={badgeInfo.reason}
                       >
                         <span className="profile-badge-chip-text">{badgeInfo.badge}</span>

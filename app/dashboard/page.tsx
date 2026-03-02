@@ -512,7 +512,7 @@ export default function DashboardRiotSearchPage() {
                         >
                           {result}
                         </div>
-                        <div className="flex flex-row items-center gap-2 flex-wrap justify-center">
+                        <div className="flex flex-row items-center gap-2 flex-wrap justify-center socialBadgeWrap">
                           {impact != null && (
                             <span className="inline-flex items-baseline gap-1 rounded-md border-[1.5px] border-white/20 bg-white/5 px-2.5 py-1 shadow-sm">
                               <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">Impact</span>
@@ -521,7 +521,9 @@ export default function DashboardRiotSearchPage() {
                           )}
                           {badgeInfo && (
                             <span
-                              className={`inline-flex items-center justify-center overflow-visible rounded-[10px] border px-3.5 pt-2 pb-2.5 min-h-[36px] text-sm font-semibold leading-[1.4] whitespace-nowrap ${dashboardBadgeChipClass(badgeInfo.badge)}`}
+                              className={`inline-flex items-center justify-center overflow-visible rounded-[10px] border px-3.5 pt-2 pb-2.5 min-h-[36px] text-sm font-semibold leading-[1.4] whitespace-nowrap socialBadge ${dashboardBadgeChipClass(
+                                badgeInfo.badge
+                              )}`}
                               title={badgeInfo.reason}
                             >
                               {badgeInfo.badge}
