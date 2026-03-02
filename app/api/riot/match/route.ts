@@ -8,6 +8,24 @@ export const revalidate = 0;
 const RIOT_MATCH_BASE = "https://{region}.api.riotgames.com/lol/match/v5/matches";
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
 
+/** Ensure each participant has numeric `skin` from payload (key kept as "skin"). */
+function ensureParticipantSkin(data: Record<string, unknown>): void {
+  const info = data.info as Record<string, unknown> | undefined;
+  const rawParticipants = info?.participants as Record<string, unknown>[] | undefined;
+  if (!rawParticipants?.length) return;
+  const participants = rawParticipants.map((raw) => {
+    const p = { ...raw } as Record<string, unknown>;
+    const rawVal =
+      raw.skin ?? raw.skinId ?? raw.championSkinId ?? (raw as Record<string, unknown>).Skin;
+    const skin = rawVal != null ? Number(rawVal) : undefined;
+    if (skin !== undefined && !Number.isNaN(skin)) {
+      p.skin = skin;
+    }
+    return p;
+  });
+  (info as Record<string, unknown>).participants = participants;
+}
+
 export async function GET(request: Request) {
   const key = process.env.RIOT_API_KEY;
   if (!key) {
@@ -29,7 +47,10 @@ export async function GET(request: Request) {
 
   const cacheKey = `match:${region}:${id}`;
   const cached = await getCached<Record<string, unknown>>(cacheKey);
-  if (cached) return NextResponse.json(cached, { headers: NO_CACHE });
+  if (cached) {
+    ensureParticipantSkin(cached);
+    return NextResponse.json(cached, { headers: NO_CACHE });
+  }
 
   const routing = getRoutingRegion(region);
   const base = RIOT_MATCH_BASE.replace("{region}", routing);
@@ -50,20 +71,14 @@ export async function GET(request: Request) {
   }
 
   const data = JSON.parse(text) as Record<string, unknown>;
-  await setCache(cacheKey, data);
+  ensureParticipantSkin(data);
 
-  // Return full Riot payload unchanged; participant fields (e.g. skin) are passed through as returned.
-  // Verify participant shape: log first participant keys and skin (server logs)
   const info = data.info as Record<string, unknown> | undefined;
   const participants = info?.participants as Record<string, unknown>[] | undefined;
   if (participants?.[0]) {
-    const first = participants[0] as Record<string, unknown>;
-    console.log(
-      "[riot/match] First participant keys:",
-      Object.keys(first).sort().join(", ")
-    );
-    console.log("[riot/match] First participant.skin:", first.skin);
+    console.log("Skin value:", (participants[0] as Record<string, unknown>).skin);
   }
 
+  await setCache(cacheKey, data);
   return NextResponse.json(data, { headers: NO_CACHE });
 }
