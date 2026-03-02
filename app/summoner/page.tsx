@@ -311,7 +311,7 @@ function SummonerProfileContent() {
       <div className="profile-loading">
         <div className="profile-loading-spinner" />
         <p className="mt-4">
-          Loading profile...
+          <span className="profile-loading-text">Loading profile...</span>
         </p>
       </div>
     );

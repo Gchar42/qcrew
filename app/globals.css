@@ -65,7 +65,7 @@ body {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  padding: 8px 14px;
+  padding: 6px 10px 8px;
   box-sizing: border-box;
   overflow: visible;
 }
@@ -73,9 +73,10 @@ body {
 /* text */
 .socialBadgeText {
   display: inline-block;
-  line-height: 1.5;
+  line-height: 1.4;
   white-space: nowrap;
   overflow: visible;
+  vertical-align: middle;
 }
 
 .badgeArea,
