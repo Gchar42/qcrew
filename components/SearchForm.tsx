@@ -53,7 +53,10 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
           <input
             type="text"
             value={riotId}
-            onChange={(e) => setRiotId(e.target.value)}
+            onChange={(e) => {
+              setRiotId(e.target.value);
+              setError(null);
+            }}
             placeholder="GameName#TAG"
             className="mt-1 block w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />

@@ -174,7 +174,7 @@ export default function DashboardRiotSearchPage() {
   async function doSearch(riotIdInput: string) {
     const parsed = parseRiotId(riotIdInput);
     if (!parsed) {
-      setState({ status: "error", message: "Use format GameName#Tag" });
+      setState({ status: "error", message: "Enter both name and tag" });
       return;
     }
 
