@@ -86,15 +86,3 @@ body {
 .badgeArea * {
   overflow: visible;
 }
-
-.descenderSafe {
-  display: inline-block;
-  padding-bottom: 2px;
-  margin-bottom: -2px;
-}
-
-.descenderSafeHard {
-  display: inline-block;
-  padding-bottom: 1px;
-  transform: translateY(1px);
-}

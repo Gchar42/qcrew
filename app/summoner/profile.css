@@ -465,12 +465,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 14px 10px;
-  min-height: 36px;
+  padding: 8px 14px;
+  min-height: 32px;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.5;
   white-space: nowrap;
   overflow: visible;
   border: 1px solid;
