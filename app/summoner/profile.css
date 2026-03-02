@@ -724,7 +724,7 @@
   font-style: italic;
 }
 
-/* Right zone: strict 2-column teams grid, fixed gap so columns never drift */
+/* Right zone: strict 2-column teams grid, no wrapping, fixed structure */
 .profile-page .profile-match-teams-block {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -732,12 +732,13 @@
   width: 100%;
   max-width: 240px;
   flex-shrink: 0;
+  align-items: start;
 }
 
 .profile-page .profile-match-team-col {
   display: grid;
-  grid-template-rows: repeat(5, auto);
-  grid-template-columns: 24px 1fr;
+  grid-template-rows: repeat(5, 28px);
+  grid-template-columns: 24px minmax(0, 1fr);
   gap: 4px 6px;
   min-width: 0;
   align-content: start;
@@ -745,16 +746,20 @@
 
 .profile-page .profile-match-team-row {
   display: grid;
-  grid-template-columns: 24px 1fr;
+  grid-template-columns: 24px minmax(0, 1fr);
   gap: 6px;
   align-items: center;
   min-width: 0;
-  padding: 2px 0;
+  height: 28px;
+  padding: 0;
+  margin: 0;
   border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .profile-page .profile-match-team-row-placeholder {
-  min-height: 24px;
+  height: 28px;
+  min-height: 28px;
 }
 
 .profile-page .profile-match-team-row-highlight {
@@ -768,12 +773,14 @@
 }
 
 .profile-page .profile-match-team-name {
+  display: block;
   font-size: 9px;
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+  line-height: 28px;
 }
 
 .profile-page .profile-match-team-champ-highlight {
@@ -794,19 +801,23 @@
 }
 
 .profile-page .profile-match-team-champ {
-  display: inline-flex;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 24px;
   height: 24px;
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--border);
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .profile-page .profile-match-team-champ img {
-  width: 100%;
-  height: 100%;
+  width: 24px;
+  height: 24px;
   object-fit: cover;
+  display: block;
 }
 
 .profile-page .profile-match-team-champ-fallback .profile-match-team-champ-placeholder {
@@ -815,6 +826,7 @@
   height: 24px;
   background: var(--surface2);
   border-radius: 4px;
+  flex-shrink: 0;
 }
 
 .profile-page .profile-match-vs {
