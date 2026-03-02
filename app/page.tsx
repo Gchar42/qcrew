@@ -31,7 +31,7 @@ export default function Home() {
             League of Legends stats
           </h1>
           <p className="text-zinc-400 text-center mb-8">
-            Search by Riot ID (GameName#TAG) and region
+            Search by game name or Riot ID and region
           </p>
 
           <div className="glass rounded-2xl p-6 sm:p-8">

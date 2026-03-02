@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getChampionSplashUrl,
@@ -97,12 +98,9 @@ export default function DashboardRiotSearchPage() {
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [selectedSuggestion, setSelectedSuggestion] = useState<string | null>(
-    null
-  );
   const debounceRef = useRef<number | null>(null);
   const activeFetchRef = useRef(0);
+  const router = useRouter();
 
   const winStats = useMemo(() => {
     if (!account || matches.length === 0) return null;
@@ -139,7 +137,12 @@ export default function DashboardRiotSearchPage() {
         const json = await res.json();
         if (activeFetchRef.current !== id) return;
 
-        setSuggestions(json.suggestions || []);
+        const list = json.suggestions || [];
+        setSuggestions(
+          list.map((r: { riotId?: string }) =>
+            typeof r === "string" ? r : (r?.riotId ?? "")
+          )
+        );
       } catch {
         // ignore
       }
@@ -179,7 +182,6 @@ export default function DashboardRiotSearchPage() {
     }
 
     setShowSuggestions(false);
-    setSelectedSuggestion(null);
     setState({ status: "loading" });
     setAccount(null);
     setSummoner(null);
@@ -232,40 +234,35 @@ export default function DashboardRiotSearchPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setHasSubmitted(true);
 
     if (riotId.includes("#")) {
       await doSearch(riotId);
       return;
     }
 
-    if (suggestions.length > 0) {
-      const top = suggestions[0];
-      setRiotId(top);
-      setShowSuggestions(false);
-      await doSearch(top);
+    const trimmed = riotId.trim();
+    if (trimmed.length < 2) {
+      setState({
+        status: "error",
+        message: "Enter at least 2 characters to search.",
+      });
       return;
     }
+
+    router.push(`/search?q=${encodeURIComponent(trimmed)}`);
   }
 
   function pickSuggestion(s: string) {
-    setSelectedSuggestion(s);
     setRiotId(s);
     setShowSuggestions(false);
     void doSearch(s);
   }
 
-  const showFormatWarning =
-    hasSubmitted &&
-    !riotId.includes("#") &&
-    suggestions.length === 0 &&
-    state.status !== "loading";
-
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
       <h1 className="text-3xl font-bold text-white">League Match History</h1>
       <p className="mt-2 text-sm text-zinc-400">
-        Search Riot ID like GameName#Tag.
+        Search by game name or full Riot ID (GameName#Tag).
       </p>
 
       <form onSubmit={onSubmit} className="relative mt-5 flex gap-2">
@@ -275,8 +272,6 @@ export default function DashboardRiotSearchPage() {
             onChange={(e) => {
               setRiotId(e.target.value);
               setShowSuggestions(true);
-              setHasSubmitted(false);
-              setSelectedSuggestion(null);
             }}
             onFocus={() => setShowSuggestions(true)}
             placeholder="GameName#Tag"
@@ -308,15 +303,6 @@ export default function DashboardRiotSearchPage() {
           {state.status === "loading" ? "Searching..." : "Search"}
         </button>
       </form>
-
-      {showFormatWarning && (
-        <div className="mt-5 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
-          <div className="font-semibold text-red-200">Error</div>
-          <div className="mt-1 text-sm text-red-300/90">
-            Use format GameName#Tag
-          </div>
-        </div>
-      )}
 
       {state.status === "error" && (
         <div className="mt-5 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">

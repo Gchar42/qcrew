@@ -19,6 +19,11 @@ function escapeLike(s: string): string {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = (searchParams.get("q") || "").trim();
+  const limitParam = searchParams.get("limit");
+  const limit = Math.min(
+    Math.max(parseInt(limitParam || "8", 10) || 8, 1),
+    25
+  );
 
   if (q.length < 2) {
     return NextResponse.json({ suggestions: [] });
@@ -36,12 +41,22 @@ export async function GET(req: Request) {
   const escaped = escapeLike(safe);
   const pattern = `%${escaped}%`;
 
-  const { data, error } = await client
+  const isSearchPage = limit > 8;
+  const base = client
     .from("riot_searches")
-    .select("game_name, tag_line, updated_at")
-    .or(`riot_id.ilike.${pattern},game_name.ilike.${pattern},tag_line.ilike.${pattern}`)
-    .order("updated_at", { ascending: false })
-    .limit(32);
+    .select("game_name, tag_line, updated_at");
+
+  const { data, error } = isSearchPage
+    ? await base
+        .ilike("game_name", pattern)
+        .order("updated_at", { ascending: false })
+        .limit(50)
+    : await base
+        .or(
+          `riot_id.ilike.${pattern},game_name.ilike.${pattern},tag_line.ilike.${pattern}`
+        )
+        .order("updated_at", { ascending: false })
+        .limit(32);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -75,7 +90,11 @@ export async function GET(req: Request) {
     return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
   });
 
-  const suggestions = sorted.slice(0, 8).map(fullId);
+  const sliced = sorted.slice(0, limit);
+  const suggestions = sliced.map((r) => ({
+    riotId: fullId(r),
+    updatedAt: r.updated_at,
+  }));
 
   return NextResponse.json({ suggestions });
 }

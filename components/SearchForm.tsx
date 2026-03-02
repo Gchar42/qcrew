@@ -17,7 +17,11 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
     const trimmed = riotId.trim();
     const hash = trimmed.indexOf("#");
     if (hash === -1) {
-      setError("Use format GameName#TAG");
+      if (trimmed.length < 2) {
+        setError("Enter at least 2 characters to search.");
+        return;
+      }
+      router.push(`/search?q=${encodeURIComponent(trimmed)}`);
       return;
     }
     const name = trimmed.slice(0, hash).trim();
@@ -57,7 +61,7 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
               setRiotId(e.target.value);
               setError(null);
             }}
-            placeholder="GameName#TAG"
+            placeholder="GameName#Tag"
             className="mt-1 block w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
         </label>
