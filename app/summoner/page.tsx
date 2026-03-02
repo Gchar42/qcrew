@@ -84,6 +84,45 @@ function patchFromVersion(gameVersion: string | undefined): string | null {
   return null;
 }
 
+/** Per-match impact for all participants and which puuids are top on friendly/enemy team (first in order on tie). */
+function getMatchImpactHighlights(
+  m: MatchDto,
+  accountPuuid: string
+): {
+  impactByPuuid: Map<string, number>;
+  friendlyTopPuuid: string | null;
+  enemyTopPuuid: string | null;
+} {
+  const { blue, red } = getTeams(m);
+  const impactByPuuid = new Map<string, number>();
+  const all = [...blue, ...red];
+  for (const part of all) {
+    const result = computeImpactScore(m, part.puuid);
+    impactByPuuid.set(part.puuid, result?.score ?? 0);
+  }
+  const selected = all.find((p) => p.puuid === accountPuuid);
+  const friendlyTeam = selected?.teamId === 100 ? blue : red;
+  const enemyTeam = selected?.teamId === 100 ? red : blue;
+  const topIn = (team: Participant[]) => {
+    if (team.length === 0) return null;
+    let best = team[0];
+    let bestScore = impactByPuuid.get(best.puuid) ?? 0;
+    for (let i = 1; i < team.length; i++) {
+      const s = impactByPuuid.get(team[i].puuid) ?? 0;
+      if (s > bestScore) {
+        best = team[i];
+        bestScore = s;
+      }
+    }
+    return best.puuid;
+  };
+  return {
+    impactByPuuid,
+    friendlyTopPuuid: topIn(friendlyTeam),
+    enemyTopPuuid: topIn(enemyTeam),
+  };
+}
+
 function ChampIcon({
   championName,
   summonerName,
@@ -457,6 +496,9 @@ function SummonerProfileContent() {
           const redFive = red.slice(0, 5);
           const blueRows = [...blueFive, ...Array(5 - blueFive.length).fill(null)];
           const redRows = [...redFive, ...Array(5 - redFive.length).fill(null)];
+          const { impactByPuuid, friendlyTopPuuid, enemyTopPuuid } = account
+            ? getMatchImpactHighlights(m, account.puuid)
+            : { impactByPuuid: new Map<string, number>(), friendlyTopPuuid: null as string | null, enemyTopPuuid: null as string | null };
 
           return (
             <button
@@ -608,6 +650,17 @@ function SummonerProfileContent() {
                         key={part.puuid}
                         className={`profile-match-team-row ${part.puuid === account?.puuid ? "profile-match-team-row-highlight" : ""}`}
                       >
+                        <span
+                          className={`profile-match-team-impact ${
+                            part.puuid === friendlyTopPuuid
+                              ? "profile-match-team-impact-gold"
+                              : part.puuid === enemyTopPuuid
+                                ? "profile-match-team-impact-purple"
+                                : ""
+                          }`}
+                        >
+                          {impactByPuuid.get(part.puuid) ?? 0}
+                        </span>
                         <ChampIcon
                           championName={part.championName}
                           summonerName={part.summonerName}
@@ -621,6 +674,7 @@ function SummonerProfileContent() {
                       </div>
                     ) : (
                       <div key={`blue-placeholder-${i}`} className="profile-match-team-row profile-match-team-row-placeholder" aria-hidden>
+                        <span className="profile-match-team-impact" aria-hidden />
                         <span className="profile-match-team-champ profile-match-team-champ-fallback">
                           <span className="profile-match-team-champ-placeholder" />
                         </span>
@@ -637,6 +691,17 @@ function SummonerProfileContent() {
                         key={part.puuid}
                         className={`profile-match-team-row ${part.puuid === account?.puuid ? "profile-match-team-row-highlight" : ""}`}
                       >
+                        <span
+                          className={`profile-match-team-impact ${
+                            part.puuid === friendlyTopPuuid
+                              ? "profile-match-team-impact-gold"
+                              : part.puuid === enemyTopPuuid
+                                ? "profile-match-team-impact-purple"
+                                : ""
+                          }`}
+                        >
+                          {impactByPuuid.get(part.puuid) ?? 0}
+                        </span>
                         <ChampIcon
                           championName={part.championName}
                           summonerName={part.summonerName}
@@ -650,6 +715,7 @@ function SummonerProfileContent() {
                       </div>
                     ) : (
                       <div key={`red-placeholder-${i}`} className="profile-match-team-row profile-match-team-row-placeholder" aria-hidden>
+                        <span className="profile-match-team-impact" aria-hidden />
                         <span className="profile-match-team-champ profile-match-team-champ-fallback">
                           <span className="profile-match-team-champ-placeholder" />
                         </span>
