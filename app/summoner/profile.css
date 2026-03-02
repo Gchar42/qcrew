@@ -463,27 +463,30 @@
   line-height: 1.2;
 }
 
-/* Chip 2: Social badge – padding/line-height so descenders (g, y, p) aren't clipped */
+/* Chip 2: Social badge – same sizing as Impact chip, truncate long text with ellipsis */
 .profile-page .profile-badge-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 12px 14px;
-  border-radius: 10px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1.5px solid;
+  box-sizing: border-box;
+  max-width: 220px;
   font-size: 14px;
   font-weight: 600;
   line-height: 1.5;
-  white-space: nowrap;
-  overflow: visible;
-  border: 1px solid;
-  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .profile-page .profile-badge-chip-text {
-  white-space: nowrap;
   display: inline-block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   line-height: 1.5;
-  padding-bottom: 4px;
   vertical-align: middle;
 }
 

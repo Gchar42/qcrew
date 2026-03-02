@@ -80,9 +80,7 @@ export function MatchCard({
             )}
             {badge && (
               <span
-                className={`inline-flex items-center justify-center overflow-visible rounded-[10px] border py-2 px-3.5 text-sm font-semibold leading-[1.5] whitespace-nowrap socialBadge ${badgeChipClass(
-                  badge
-                )}`}
+                className={`socialBadge ${badgeChipClass(badge)}`}
                 title={badgeReason ?? badge}
               >
                 <span className="socialBadgeText">{badge}</span>

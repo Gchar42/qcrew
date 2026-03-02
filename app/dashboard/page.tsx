@@ -523,7 +523,7 @@ export default function DashboardRiotSearchPage() {
                           )}
                           {badgeInfo && (
                             <span
-                              className={`inline-flex items-center justify-center overflow-visible rounded-[10px] border py-2 px-3.5 text-sm font-semibold leading-[1.5] whitespace-nowrap socialBadge ${dashboardBadgeChipClass(
+                              className={`socialBadge ${dashboardBadgeChipClass(
                                 badgeInfo.badge
                               )}`}
                               title={badgeInfo.reason}

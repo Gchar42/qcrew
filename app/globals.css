@@ -78,51 +78,60 @@ select {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
-/* pill – padding defines height, no min-height */
+/* pill – same sizing as Impact chip: height, padding, radius */
 .socialBadge {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  padding: 6px 10px 8px;
+  display: inline-flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 5px 10px !important;
+  border-radius: 6px !important;
+  border-width: 1.5px !important;
   box-sizing: border-box;
-  overflow: visible;
+  max-width: 220px !important;
+  overflow: hidden !important;
 }
 
-/* text – Inter avoids descender clipping (g, y, p) vs Syne */
+/* text – Inter for descenders; truncate with ellipsis when long */
 .socialBadgeText {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-  display: inline-block;
-  line-height: 1.4;
-  white-space: nowrap;
-  overflow: visible;
-  vertical-align: middle;
+  display: inline-block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  line-height: 1.5 !important;
+  vertical-align: middle !important;
 }
 
-.badgeArea,
-.badgeArea * {
+.badgeArea {
   overflow: visible;
 }
 
-/* Force padding & overflow – override Claude-imported styles so descenders (e.g. g) aren't clipped */
+/* Badge pill base – match Impact pill height, padding, radius (badge variant sets border/background) */
 .badge,
 .profile-badge-chip,
 .socialBadge {
-  padding: 8px 12px 14px !important; /* extra bottom = basement for g, y, p, q */
-  overflow: visible !important;
+  padding: 5px 10px !important;
+  border-radius: 6px !important;
+  border-width: 1.5px !important;
+  max-width: 220px !important;
   height: auto !important;
   min-height: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
+  overflow: hidden !important;
 }
 
-/* Inner text inside badge pills – Inter + padding so descenders aren't cut */
+/* Inner text – ellipsis when over max-width; Inter so g not clipped */
 .badge span,
 .profile-badge-chip span,
 .socialBadge span {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif !important;
   display: inline-block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
   line-height: 1.5 !important;
   vertical-align: middle !important;
-  padding-bottom: 4px !important;
-  overflow: visible !important;
 }
