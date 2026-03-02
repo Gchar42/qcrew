@@ -521,12 +521,10 @@ export default function DashboardRiotSearchPage() {
                           )}
                           {badgeInfo && (
                             <span
-                              className={`inline-flex items-center justify-center overflow-visible rounded-md border px-3 py-2 text-[10px] font-semibold leading-normal max-w-[88px] ${dashboardBadgeChipClass(badgeInfo.badge)}`}
+                              className={`inline-flex items-center justify-center overflow-visible rounded-[10px] border px-3.5 py-1.5 min-h-8 text-sm font-semibold leading-[1.25] whitespace-nowrap ${dashboardBadgeChipClass(badgeInfo.badge)}`}
                               title={badgeInfo.reason}
                             >
-                              <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap leading-normal">
-                                {badgeInfo.badge}
-                              </span>
+                              {badgeInfo.badge}
                             </span>
                           )}
                         </div>
