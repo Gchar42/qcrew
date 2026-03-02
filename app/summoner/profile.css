@@ -724,33 +724,35 @@
   font-style: italic;
 }
 
-/* Right zone: strict 2-column teams grid, no wrapping, fixed structure */
+/* Right zone: fixed 2-column (blue | red) grid, each team = 5-row grid, no wrap */
 .profile-page .profile-match-teams-block {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   width: 100%;
-  max-width: 240px;
+  max-width: 280px;
   flex-shrink: 0;
   align-items: start;
 }
 
+/* Each team column: exactly 5 rows, no reflow */
 .profile-page .profile-match-team-col {
   display: grid;
   grid-template-rows: repeat(5, 28px);
-  grid-template-columns: 24px minmax(0, 1fr);
-  gap: 4px 6px;
+  grid-auto-flow: row;
+  gap: 0;
   min-width: 0;
   align-content: start;
 }
 
+/* Each player row: 3-column grid with fixed sizes. No flex, no wrap, no auto. */
 .profile-page .profile-match-team-row {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  gap: 6px;
+  grid-template-columns: 24px 72px 24px;
+  gap: 4px;
   align-items: center;
-  min-width: 0;
   height: 28px;
+  min-height: 28px;
   padding: 0;
   margin: 0;
   border-radius: 4px;
@@ -762,9 +764,9 @@
   min-height: 28px;
 }
 
+/* Highlight: outline/box-shadow only — no padding, width, or border that changes layout */
 .profile-page .profile-match-team-row-highlight {
-  background: rgba(29, 78, 216, 0.12);
-  outline: 1px solid rgba(29, 78, 216, 0.35);
+  box-shadow: 0 0 0 2px var(--accent);
 }
 
 .profile-page .profile-match-team-row-highlight .profile-match-team-name {
@@ -772,6 +774,7 @@
   font-weight: 500;
 }
 
+/* Column 2: summoner name — fixed width, left aligned, single line ellipsis, vertically centered */
 .profile-page .profile-match-team-name {
   display: block;
   font-size: 9px;
@@ -780,7 +783,19 @@
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+  width: 72px;
+  max-width: 72px;
   line-height: 28px;
+  text-align: left;
+}
+
+/* Column 3: extra icon slot — always present, empty placeholder if no icon */
+.profile-page .profile-match-team-extra {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .profile-page .profile-match-team-champ-highlight {

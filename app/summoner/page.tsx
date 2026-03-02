@@ -617,6 +617,7 @@ function SummonerProfileContent() {
                         <span className="profile-match-team-name" title={part.riotIdGameName ?? part.summonerName}>
                           {part.riotIdGameName ?? part.summonerName}
                         </span>
+                        <span className="profile-match-team-extra" aria-hidden />
                       </div>
                     ) : (
                       <div key={`blue-placeholder-${i}`} className="profile-match-team-row profile-match-team-row-placeholder" aria-hidden>
@@ -624,6 +625,7 @@ function SummonerProfileContent() {
                           <span className="profile-match-team-champ-placeholder" />
                         </span>
                         <span className="profile-match-team-name" />
+                        <span className="profile-match-team-extra" aria-hidden />
                       </div>
                     )
                   )}
@@ -644,6 +646,7 @@ function SummonerProfileContent() {
                         <span className="profile-match-team-name" title={part.riotIdGameName ?? part.summonerName}>
                           {part.riotIdGameName ?? part.summonerName}
                         </span>
+                        <span className="profile-match-team-extra" aria-hidden />
                       </div>
                     ) : (
                       <div key={`red-placeholder-${i}`} className="profile-match-team-row profile-match-team-row-placeholder" aria-hidden>
@@ -651,6 +654,7 @@ function SummonerProfileContent() {
                           <span className="profile-match-team-champ-placeholder" />
                         </span>
                         <span className="profile-match-team-name" />
+                        <span className="profile-match-team-extra" aria-hidden />
                       </div>
                     )
                   )}
