@@ -84,36 +84,53 @@ function patchFromVersion(gameVersion: string | undefined): string | null {
   return null;
 }
 
-/** Per-match impact for all participants; best ally = purple, best enemy = gold (first in render order on tie). */
+/** Sort participants by position for consistent tie-break (first in render order). */
+function sortByPosition(team: Participant[]): Participant[] {
+  return [...team].sort(
+    (a, b) =>
+      (POSITION_ORDER[a.teamPosition ?? ""] ?? 5) -
+      (POSITION_ORDER[b.teamPosition ?? ""] ?? 5)
+  );
+}
+
+/**
+ * Per-match impact highlights. Uses selectedPuuid only (no summonerName).
+ * bestAlly = purple, bestEnemy = gold. No inference if selected not found.
+ */
 function getMatchImpactHighlights(
   m: MatchDto,
-  accountPuuid: string
+  selectedPuuid: string
 ): {
   impactByPuuid: Map<string, number>;
   bestAllyPuuid: string | null;
   bestEnemyPuuid: string | null;
 } {
   const participants = m.info?.participants ?? [];
-  const selected = participants.find((p) => p.puuid === accountPuuid);
-  if (!selected) {
-    const empty = new Map<string, number>();
-    for (const p of participants) {
-      const result = computeImpactScore(m, p.puuid);
-      empty.set(p.puuid, result?.score ?? 0);
-    }
-    return { impactByPuuid: empty, bestAllyPuuid: null, bestEnemyPuuid: null };
-  }
-
-  const allyTeamId = selected.teamId;
-  const { blue, red } = getTeams(m);
-  const allyTeam = allyTeamId === 100 ? blue : red;
-  const enemyTeam = allyTeamId === 100 ? red : blue;
+  const selectedParticipant = participants.find((p) => p.puuid === selectedPuuid);
 
   const impactByPuuid = new Map<string, number>();
-  for (const part of participants) {
-    const result = computeImpactScore(m, part.puuid);
-    impactByPuuid.set(part.puuid, result?.score ?? 0);
+  for (const p of participants) {
+    const result = computeImpactScore(m, p.puuid);
+    impactByPuuid.set(p.puuid, result?.score ?? 0);
   }
+
+  if (!selectedParticipant) {
+    if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+      console.log("[impact] matchId:", m.metadata?.matchId, "selectedParticipant: not found");
+    }
+    return { impactByPuuid, bestAllyPuuid: null, bestEnemyPuuid: null };
+  }
+
+  const allyTeamId = selectedParticipant.teamId;
+  if (allyTeamId == null) {
+    if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+      console.log("[impact] matchId:", m.metadata?.matchId, "allyTeamId: missing");
+    }
+    return { impactByPuuid, bestAllyPuuid: null, bestEnemyPuuid: null };
+  }
+
+  const allyTeam = sortByPosition(participants.filter((p) => p.teamId === allyTeamId));
+  const enemyTeam = sortByPosition(participants.filter((p) => p.teamId !== allyTeamId));
 
   const bestIn = (team: Participant[]) => {
     if (team.length === 0) return null;
@@ -126,13 +143,26 @@ function getMatchImpactHighlights(
         bestScore = s;
       }
     }
-    return best.puuid;
+    return best;
   };
+
+  const bestAlly = bestIn(allyTeam);
+  const bestEnemy = bestIn(enemyTeam);
+
+  if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+    console.log("[impact]", {
+      matchId: m.metadata?.matchId,
+      selectedFound: true,
+      allyTeamId,
+      bestAlly: bestAlly ? { summonerName: bestAlly.summonerName, score: impactByPuuid.get(bestAlly.puuid) } : null,
+      bestEnemy: bestEnemy ? { summonerName: bestEnemy.summonerName, score: impactByPuuid.get(bestEnemy.puuid) } : null,
+    });
+  }
 
   return {
     impactByPuuid,
-    bestAllyPuuid: bestIn(allyTeam),
-    bestEnemyPuuid: bestIn(enemyTeam),
+    bestAllyPuuid: bestAlly?.puuid ?? null,
+    bestEnemyPuuid: bestEnemy?.puuid ?? null,
   };
 }
 
@@ -509,8 +539,9 @@ function SummonerProfileContent() {
           const redFive = red.slice(0, 5);
           const blueRows = [...blueFive, ...Array(5 - blueFive.length).fill(null)];
           const redRows = [...redFive, ...Array(5 - redFive.length).fill(null)];
-          const { impactByPuuid, bestAllyPuuid, bestEnemyPuuid } = account
-            ? getMatchImpactHighlights(m, account.puuid)
+          const selectedPuuid = account?.puuid ?? "";
+          const { impactByPuuid, bestAllyPuuid, bestEnemyPuuid } = selectedPuuid
+            ? getMatchImpactHighlights(m, selectedPuuid)
             : { impactByPuuid: new Map<string, number>(), bestAllyPuuid: null as string | null, bestEnemyPuuid: null as string | null };
 
           return (
