@@ -310,7 +310,9 @@ function SummonerProfileContent() {
     return (
       <div className="profile-loading">
         <div className="profile-loading-spinner" />
-        <p className="mt-4">Loading profile...</p>
+        <div className="loadingWrapper mt-4">
+          <span className="debugText">Loading profile...</span>
+        </div>
       </div>
     );
   }

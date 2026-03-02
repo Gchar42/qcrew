@@ -31,7 +31,23 @@ body {
 
 #root,
 #__next {
-  overflow: visible;
+  overflow: visible !important;
+}
+
+html,
+body,
+#root,
+#__next,
+main,
+.app,
+.appRoot,
+.page,
+.pageWrapper {
+  overflow: visible !important;
+  contain: none !important;
+  clip-path: none !important;
+  mask: none !important;
+  filter: none !important;
 }
 
 body {
