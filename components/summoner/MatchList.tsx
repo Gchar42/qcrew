@@ -1,6 +1,7 @@
 "use client";
 
 import { MatchCard } from "./MatchCard";
+import { computeImpactScore } from "@/lib/impactScore";
 import type { MatchDto } from "@/types/riot";
 
 function formatDuration(seconds: number) {
@@ -33,6 +34,7 @@ export function MatchList({
         if (!p) return null;
         const duration = formatDuration(m.info?.gameDuration ?? 0);
         const cs = (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
+        const impact = computeImpactScore(m, puuid);
         return (
           <MatchCard
             key={m.metadata?.matchId ?? ""}
@@ -45,6 +47,7 @@ export function MatchList({
             items={[p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6].filter(
               (i): i is number => i != null && i > 0
             )}
+            impactScore={impact?.score}
             onClick={() => onMatchClick(m)}
           />
         );

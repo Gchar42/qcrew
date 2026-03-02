@@ -10,6 +10,7 @@ import {
   getChampionSplashUrl,
   getChampionSquareUrl,
 } from "@/lib/riotAssets";
+import { computeImpactScore } from "@/lib/impactScore";
 import type { AccountDto, SummonerDto, MatchDto } from "@/types/riot";
 
 const REGION = "na1";
@@ -377,6 +378,7 @@ function SummonerProfileContent() {
           const queue = queueLabel(m.info?.queueId);
           const patch = patchFromVersion(m.info?.gameVersion);
           const showLp = isRankedQueue(m.info?.queueId);
+          const impact = account ? computeImpactScore(m, account.puuid) : null;
 
           const portraitBaseUrl = getChampionSplashUrl(p.championName);
           const champSquareUrl = getChampionSquareUrl(
@@ -391,9 +393,14 @@ function SummonerProfileContent() {
               className={`profile-match-row ${win ? "win" : "loss"}`}
               onClick={() => setDetailMatch(m)}
             >
-              <span className={`profile-outcome-pill ${win ? "win" : "loss"}`}>
-                {win ? "W" : "L"}
-              </span>
+              <div className="profile-outcome-col">
+                <span className={`profile-outcome-pill ${win ? "win" : "loss"}`}>
+                  {win ? "W" : "L"}
+                </span>
+                {impact != null && (
+                  <span className="profile-impact-label">Impact {impact.score}</span>
+                )}
+              </div>
               <span className={`profile-verdict-line ${win ? "win" : "loss"}`} />
               <div className="profile-match-main">
                 <div className="profile-match-portrait-meta">

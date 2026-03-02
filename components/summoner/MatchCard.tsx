@@ -11,6 +11,7 @@ export function MatchCard({
   duration,
   win,
   items,
+  impactScore,
   onClick,
 }: {
   champion: string;
@@ -20,6 +21,7 @@ export function MatchCard({
   duration: string;
   win: boolean;
   items: number[];
+  impactScore?: number;
   onClick: () => void;
 }) {
   const splash = getChampionSplashUrl(champion);
@@ -40,12 +42,17 @@ export function MatchCard({
         />
       )}
       <div className="relative p-4 flex items-center gap-4">
-        <div
-          className={`shrink-0 w-14 h-14 rounded-lg flex items-center justify-center text-lg font-bold ${
-            win ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"
-          }`}
-        >
-          {win ? "W" : "L"}
+        <div className="shrink-0 flex flex-col items-center gap-0.5">
+          <div
+            className={`w-14 h-14 rounded-lg flex items-center justify-center text-lg font-bold ${
+              win ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"
+            }`}
+          >
+            {win ? "W" : "L"}
+          </div>
+          {impactScore != null && (
+            <span className="text-xs text-zinc-400">Impact {impactScore}</span>
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="font-semibold text-white">{champion}</div>

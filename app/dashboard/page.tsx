@@ -10,6 +10,7 @@ import {
   getItemIconUrl,
 } from "@/lib/riotAssets";
 import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
+import { computeImpactScore } from "@/lib/impactScore";
 
 type SearchState =
   | { status: "idle" }
@@ -453,6 +454,7 @@ export default function DashboardRiotSearchPage() {
               const result = p.win ? "W" : "L";
               const duration = formatDuration(m.info.gameDuration);
               const cs = getCs(p);
+              const impact = computeImpactScore(m, account.puuid);
 
               const items = [
                 p.item0,
@@ -483,14 +485,21 @@ export default function DashboardRiotSearchPage() {
 
                   <div className="relative flex items-center justify-between gap-4 p-4">
                     <div className="flex items-center gap-4">
-                      <div
-                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl font-bold ${
-                          p.win
-                            ? "bg-emerald-500/20 text-emerald-200"
-                            : "bg-red-500/20 text-red-200"
-                        }`}
-                      >
-                        {result}
+                      <div className="flex flex-col items-center gap-0.5 shrink-0">
+                        <div
+                          className={`flex h-12 w-12 items-center justify-center rounded-xl font-bold ${
+                            p.win
+                              ? "bg-emerald-500/20 text-emerald-200"
+                              : "bg-red-500/20 text-red-200"
+                          }`}
+                        >
+                          {result}
+                        </div>
+                        {impact != null && (
+                          <span className="text-xs text-zinc-400">
+                            Impact {impact.score}
+                          </span>
+                        )}
                       </div>
 
                       <div className="min-w-0">

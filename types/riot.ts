@@ -37,8 +37,16 @@ export type MatchDto = {
       /** 100 = blue, 200 = red */
       teamId?: number;
       teamPosition?: string;
+      individualPosition?: string;
       totalMinionsKilled?: number;
       neutralMinionsKilled?: number;
+      totalDamageDealtToChampions?: number;
+      damageDealtToObjectives?: number;
+      damageDealtToTurrets?: number;
+      visionScore?: number;
+      timeCCingOthers?: number;
+      totalHealsOnTeammates?: number;
+      totalDamageShieldedOnTeammates?: number;
       item0?: number;
       item1?: number;
       item2?: number;
