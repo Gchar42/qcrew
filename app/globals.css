@@ -57,33 +57,28 @@ body {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
-/* Apply this to the element that contains the text itself */
+/* pill */
+.socialBadge {
+  display: inline-flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 10px 14px 12px 14px;
+  height: auto;
+  min-height: 40px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* text */
 .socialBadgeText {
   display: inline-block;
-  line-height: 1.25;
-  padding-bottom: 4px;
-  transform: translateY(-1px);
+  line-height: normal;
+  padding-top: 2px;
   white-space: nowrap;
+  overflow: visible;
   font-smooth: auto;
   -webkit-font-smoothing: auto;
   -moz-osx-font-smoothing: auto;
-}
-
-/* Add a guaranteed descender buffer even if font metrics are tight */
-.socialBadgeText::after {
-  content: "";
-  display: block;
-  height: 4px;
-}
-
-/* Keep the pill container normal */
-.socialBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 14px;
-  min-height: 32px;
-  overflow: visible;
 }
 
 .badgeArea,
