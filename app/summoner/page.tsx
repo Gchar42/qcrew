@@ -481,10 +481,9 @@ function SummonerProfileContent() {
                             <img
                               src={src}
                               alt=""
-                              width={22}
-                              height={22}
-                              className="object-contain"
-                              style={{ imageRendering: "auto" }}
+                              width={24}
+                              height={24}
+                              style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
                             />
                           </span>
                         );
@@ -504,10 +503,9 @@ function SummonerProfileContent() {
                               <img
                                 src={keystoneSrc}
                                 alt=""
-                                width={22}
-                                height={22}
-                                className="object-contain"
-                                style={{ imageRendering: "auto" }}
+                                width={24}
+                                height={24}
+                                style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
                               />
                             </span>
                           );
@@ -519,10 +517,9 @@ function SummonerProfileContent() {
                               <img
                                 src={secondarySrc}
                                 alt=""
-                                width={22}
-                                height={22}
-                                className="object-contain"
-                                style={{ imageRendering: "auto" }}
+                                width={24}
+                                height={24}
+                                style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
                               />
                             </span>
                           );
@@ -558,7 +555,7 @@ function SummonerProfileContent() {
                         className={`profile-badge-chip ${getBadgeCategoryClass(badgeInfo.badge)}`}
                         title={badgeInfo.reason}
                       >
-                        {badgeInfo.badge}
+                        <span className="profile-badge-chip-text">{badgeInfo.badge}</span>
                       </span>
                     )}
                   </div>
