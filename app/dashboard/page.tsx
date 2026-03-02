@@ -11,6 +11,7 @@ import {
 } from "@/lib/riotAssets";
 import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
 import { computeImpactScore } from "@/lib/impactScore";
+import { getMatchBadges } from "@/lib/matchBadges";
 
 type SearchState =
   | { status: "idle" }
@@ -455,6 +456,8 @@ export default function DashboardRiotSearchPage() {
               const duration = formatDuration(m.info.gameDuration);
               const cs = getCs(p);
               const impact = computeImpactScore(m, account.puuid);
+              const badges = getMatchBadges(m);
+              const badgeInfo = badges.get(account.puuid);
 
               const items = [
                 p.item0,
@@ -495,11 +498,21 @@ export default function DashboardRiotSearchPage() {
                         >
                           {result}
                         </div>
-                        {impact != null && (
-                          <span className="text-xs text-zinc-400">
-                            Impact {impact.score}
-                          </span>
-                        )}
+                        <div className="flex flex-col items-center gap-0.5">
+                          {impact != null && (
+                            <span className="text-xs text-zinc-400">
+                              Impact {impact.score}
+                            </span>
+                          )}
+                          {badgeInfo && (
+                            <span
+                              className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-zinc-400 max-w-[72px] truncate"
+                              title={badgeInfo.reason}
+                            >
+                              {badgeInfo.badge}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="min-w-0">

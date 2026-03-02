@@ -11,6 +11,7 @@ import {
   getChampionSquareUrl,
 } from "@/lib/riotAssets";
 import { computeImpactScore } from "@/lib/impactScore";
+import { getMatchBadges } from "@/lib/matchBadges";
 import type { AccountDto, SummonerDto, MatchDto } from "@/types/riot";
 
 const REGION = "na1";
@@ -379,6 +380,8 @@ function SummonerProfileContent() {
           const patch = patchFromVersion(m.info?.gameVersion);
           const showLp = isRankedQueue(m.info?.queueId);
           const impact = account ? computeImpactScore(m, account.puuid) : null;
+          const badges = getMatchBadges(m);
+          const badgeInfo = account ? badges.get(account.puuid) : null;
 
           const portraitBaseUrl = getChampionSplashUrl(p.championName);
           const champSquareUrl = getChampionSquareUrl(
@@ -397,9 +400,19 @@ function SummonerProfileContent() {
                 <span className={`profile-outcome-pill ${win ? "win" : "loss"}`}>
                   {win ? "W" : "L"}
                 </span>
-                {impact != null && (
-                  <span className="profile-impact-label">Impact {impact.score}</span>
-                )}
+                <div className="profile-impact-badge-wrap">
+                  {impact != null && (
+                    <span className="profile-impact-label">Impact {impact.score}</span>
+                  )}
+                  {badgeInfo && (
+                    <span
+                      className="profile-badge-pill"
+                      title={badgeInfo.reason}
+                    >
+                      {badgeInfo.badge}
+                    </span>
+                  )}
+                </div>
               </div>
               <span className={`profile-verdict-line ${win ? "win" : "loss"}`} />
               <div className="profile-match-main">

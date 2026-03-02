@@ -46,6 +46,19 @@ export type ImpactResult = {
   combatScore: number;
   macroScore: number;
   efficiencyModifier: number;
+  /** Per-minute and raw metrics for badge logic */
+  dpm: number;
+  csPerMin: number;
+  objDpm: number;
+  turretDpm: number;
+  visionPm: number;
+  takedownsPerMin: number;
+  killsPerMin: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  win: boolean;
+  teamId?: number;
 };
 
 /**
@@ -207,5 +220,17 @@ export function computeImpactScore(match: MatchDto, puuid: string): ImpactResult
     combatScore: Math.round(combatScore * 10) / 10,
     macroScore: Math.round(macroScore * 10) / 10,
     efficiencyModifier: Math.round(efficiencyModifier * 1000) / 1000,
+    dpm,
+    csPerMin,
+    objDpm,
+    turretDpm,
+    visionPm,
+    takedownsPerMin,
+    killsPerMin,
+    kills,
+    deaths,
+    assists,
+    win: p.win,
+    teamId: p.teamId,
   };
 }

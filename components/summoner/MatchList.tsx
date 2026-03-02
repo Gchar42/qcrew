@@ -2,6 +2,7 @@
 
 import { MatchCard } from "./MatchCard";
 import { computeImpactScore } from "@/lib/impactScore";
+import { getMatchBadges } from "@/lib/matchBadges";
 import type { MatchDto } from "@/types/riot";
 
 function formatDuration(seconds: number) {
@@ -35,6 +36,8 @@ export function MatchList({
         const duration = formatDuration(m.info?.gameDuration ?? 0);
         const cs = (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
         const impact = computeImpactScore(m, puuid);
+        const badges = getMatchBadges(m);
+        const badgeInfo = badges.get(puuid);
         return (
           <MatchCard
             key={m.metadata?.matchId ?? ""}
@@ -48,6 +51,8 @@ export function MatchList({
               (i): i is number => i != null && i > 0
             )}
             impactScore={impact?.score}
+            badge={badgeInfo?.badge}
+            badgeReason={badgeInfo?.reason}
             onClick={() => onMatchClick(m)}
           />
         );

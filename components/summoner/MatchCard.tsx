@@ -12,6 +12,8 @@ export function MatchCard({
   win,
   items,
   impactScore,
+  badge,
+  badgeReason,
   onClick,
 }: {
   champion: string;
@@ -22,6 +24,8 @@ export function MatchCard({
   win: boolean;
   items: number[];
   impactScore?: number;
+  badge?: string;
+  badgeReason?: string;
   onClick: () => void;
 }) {
   const splash = getChampionSplashUrl(champion);
@@ -50,9 +54,19 @@ export function MatchCard({
           >
             {win ? "W" : "L"}
           </div>
-          {impactScore != null && (
-            <span className="text-xs text-zinc-400">Impact {impactScore}</span>
-          )}
+          <div className="flex flex-col items-center gap-0.5">
+            {impactScore != null && (
+              <span className="text-xs text-zinc-400">Impact {impactScore}</span>
+            )}
+            {badge && (
+              <span
+                className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 max-w-[72px] truncate"
+                title={badgeReason ?? badge}
+              >
+                {badge}
+              </span>
+            )}
+          </div>
         </div>
         <div className="min-w-0 flex-1">
           <div className="font-semibold text-white">{champion}</div>
