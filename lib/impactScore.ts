@@ -53,7 +53,9 @@ export function computeImpactScore(match: MatchDto, puuid: string): ImpactResult
   const totalDamageShieldedOnTeammates = p.totalDamageShieldedOnTeammates ?? 0;
 
   const kda = (kills + assists) / Math.max(1, deaths);
-  const kpProxy = (kills + assists) / minutes;
+  const takedownsPerMin = (kills + assists) / minutes;
+  const killsPerMin = kills / minutes;
+  const kpProxy = takedownsPerMin; // for elite gate
   const dpm = totalDamageDealtToChampions / minutes;
   const csPerMin = (totalMinionsKilled + neutralMinionsKilled) / minutes;
   const objDpm = damageDealtToObjectives / minutes;
@@ -66,7 +68,8 @@ export function computeImpactScore(match: MatchDto, puuid: string): ImpactResult
 
   // ---- CombatScore (0–100) ----
   let combatKdaWeight = 30;
-  let combatKpWeight = 25;
+  let combatTakedownsWeight = 15;
+  let combatKillsWeight = 10;
   let combatDpmWeight = 35;
   let combatCcWeight = 10;
   let combatUtilityWeight = 0;
@@ -97,14 +100,16 @@ export function computeImpactScore(match: MatchDto, puuid: string): ImpactResult
   }
 
   const combatKda = norm(Math.min(kda, 10), 6);
-  const combatKp = norm(kpProxy, 1.1);
+  const combatTakedowns = norm(takedownsPerMin, 1.1);
+  const combatKills = norm(killsPerMin, 0.45);
   const combatDpm = norm(dpm, 900);
   const combatCc = norm(ccPm, 6);
   const combatUtility = norm(utilityPm, 800);
 
   const combatScore = clamp(
     (combatKdaWeight / 100) * combatKda +
-      (combatKpWeight / 100) * combatKp +
+      (combatTakedownsWeight / 100) * combatTakedowns +
+      (combatKillsWeight / 100) * combatKills +
       (combatDpmWeight / 100) * combatDpm +
       (combatCcWeight / 100) * combatCc +
       (combatUtilityWeight / 100) * combatUtility,
@@ -142,7 +147,7 @@ export function computeImpactScore(match: MatchDto, puuid: string): ImpactResult
   const baseDeathPenalty = norm(deathsPm, 0.35);
   const mitigation = clamp(contributionIndex / 3, 0, 1);
   const effectivePenalty = baseDeathPenalty * (1 - 0.7 * mitigation);
-  const efficiencyModifier = clamp(1.05 - 0.6 * effectivePenalty, 0.65, 1.05);
+  const efficiencyModifier = clamp(1.05 - 0.5 * effectivePenalty, 0.75, 1.05);
 
   // ---- Final score ----
   const baseImpact = Math.max(combatScore, macroScore) / 100;
