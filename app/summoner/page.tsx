@@ -343,10 +343,10 @@ function SummonerProfileContent() {
       setSummoner(summonerRes);
 
       setRankLoading(true);
-      const encryptedSummonerId = summonerRes.encryptedSummonerId ?? summonerRes.id;
+      const encryptedSummonerId = summonerRes.encryptedSummonerId;
       if (!encryptedSummonerId) {
         console.error(
-          "[riot/league] Missing encryptedSummonerId (summoner.id). Do not call League V4. Full summoner response:",
+          "[riot/league] Missing encryptedSummonerId. Do not call League V4. Full summoner response:",
           summonerRes
         );
         setRankError("Missing summoner id");

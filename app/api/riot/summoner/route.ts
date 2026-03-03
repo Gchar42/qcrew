@@ -29,6 +29,7 @@ export async function GET(request: Request) {
     );
   }
 
+  // GET https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}
   const base = `https://${region}.api.riotgames.com/lol/summoner/v4/summoners`;
   const url = `${base}/by-puuid/${encodeURIComponent(puuid)}`;
   const res = await fetch(url, {
@@ -47,19 +48,26 @@ export async function GET(request: Request) {
   }
 
   const data = JSON.parse(text);
-  console.log("[riot/summoner] Full Riot summoner-v4 response JSON:", JSON.stringify(data));
+  console.log("[riot/summoner] Riot response keys:", Object.keys(data));
 
-  const encryptedSummonerId = data?.id;
-  if (!encryptedSummonerId) {
-    console.error("[riot/summoner] encryptedSummonerId (response.id) is falsy. Full summoner response:", JSON.stringify(data));
+  if (!data?.id) {
+    console.error("[riot/summoner] data.id (encryptedSummonerId) is missing. Status:", res.status, "Full Riot response:", JSON.stringify(data));
     return NextResponse.json(
-      { error: "missing encryptedSummonerId (summoner v4 response must include field id)", status: 500 },
-      { status: 500, headers: NO_CACHE }
+      { error: "missing encryptedSummonerId (summoner v4 response must include field id)", status: 502 },
+      { status: 502, headers: NO_CACHE }
     );
   }
 
   return NextResponse.json(
-    { ...data, encryptedSummonerId },
+    {
+      puuid: data.puuid,
+      encryptedSummonerId: data.id,
+      id: data.id,
+      accountId: data.accountId,
+      name: data.name,
+      profileIconId: data.profileIconId,
+      summonerLevel: data.summonerLevel,
+    },
     { headers: NO_CACHE }
   );
 }
