@@ -244,6 +244,9 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
   transition: transform 0.2s ease, filter 0.2s ease;
   line-height: 1;
 }
@@ -253,11 +256,14 @@
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.15));
 }
 
+/* Scale image so the emblem graphic fills the frame; box stays 60px */
 .profile-page .profile-ranked-emblem {
   display: block;
   width: 60px;
   height: 60px;
   object-fit: contain;
+  object-position: center;
+  transform: scale(1.6);
 }
 
 .profile-page .profile-ranked-loading {
