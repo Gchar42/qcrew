@@ -6,12 +6,10 @@ import type {
 } from "@/types/riot";
 
 export type TimelineParticipantIdSource =
-  | "timeline.info.participants"
-  | "timeline.metadata.participants (1-based)"
   | "timeline.metadata.participants (0-based)"
-  | "match.info.participantId"
-  | "match.metadata.participants"
-  | "match.info.participants index";
+  | "match.metadata.participants (0-based)"
+  | "timeline.info.participants (1-based)"
+  | "match.participants.index+1 (fallback)";
 
 /**
  * Resolve timeline participantId and which method was used.
@@ -26,26 +24,26 @@ export function resolveTimelineParticipantIdWithSource(
     (p) => (p.puuid ?? (p as { puuid?: string }).puuid) === puuid
   );
   if (fromTimelineInfo?.participantId != null) {
-    return { pid: fromTimelineInfo.participantId, source: "timeline.info.participants" };
+    return { pid: fromTimelineInfo.participantId, source: "timeline.info.participants (1-based)" };
   }
   const timelineMetaIdx = timeline.metadata?.participants?.indexOf(puuid);
   if (typeof timelineMetaIdx === "number" && timelineMetaIdx >= 0) {
     return {
       pid: timelineMetaIdx + 1,
-      source: "timeline.metadata.participants (1-based)",
+      source: "match.participants.index+1 (fallback)",
     };
   }
   const matchParticipant = match.info?.participants?.find((p) => p.puuid === puuid);
   if (matchParticipant?.participantId != null) {
-    return { pid: matchParticipant.participantId, source: "match.info.participantId" };
+    return { pid: matchParticipant.participantId, source: "match.participants.index+1 (fallback)" };
   }
   const matchMetaIdx = match.metadata?.participants?.indexOf(puuid);
   if (typeof matchMetaIdx === "number" && matchMetaIdx >= 0) {
-    return { pid: matchMetaIdx + 1, source: "match.metadata.participants" };
+    return { pid: matchMetaIdx + 1, source: "match.participants.index+1 (fallback)" };
   }
   const infoIdx = match.info?.participants?.findIndex((p) => p.puuid === puuid);
   if (infoIdx != null && infoIdx >= 0) {
-    return { pid: infoIdx + 1, source: "match.info.participants index" };
+    return { pid: infoIdx + 1, source: "match.participants.index+1 (fallback)" };
   }
   return { pid: null, source: null };
 }
