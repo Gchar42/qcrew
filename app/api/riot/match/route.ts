@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRoutingRegion } from "@/lib/riot-regions";
 import { getCached, setCache } from "@/lib/supabase/route";
+import { cachedRiotFetch } from "@/lib/cachedRiotFetch";
 import { computeItemPurchaseTimesBySlotWithDiagnostics } from "@/lib/matchTimeline";
 import type { MatchDto, MatchTimelineDto } from "@/types/riot";
 
@@ -12,11 +13,11 @@ export const revalidate = 0;
 
 const RIOT_MATCH_BASE = "https://{region}.api.riotgames.com/lol/match/v5/matches";
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
+const CDN_CACHE = "public, s-maxage=60, stale-while-revalidate=600";
 
 async function fetchTimelineServer(
   matchId: string,
-  region: string,
-  apiKey: string
+  region: string
 ): Promise<MatchTimelineDto | null> {
   const cacheKey = `timeline:${region}:${matchId}`;
   const cached = await getCached<MatchTimelineDto>(cacheKey);
@@ -24,10 +25,7 @@ async function fetchTimelineServer(
   const routing = getRoutingRegion(region);
   const base = RIOT_MATCH_BASE.replace("{region}", routing);
   const url = `${base}/${encodeURIComponent(matchId)}/timeline`;
-  const res = await fetch(url, {
-    cache: "no-store",
-    headers: { "X-Riot-Token": apiKey },
-  });
+  const res = await cachedRiotFetch(url);
   if (!res.ok) return null;
   const data = (await res.json()) as MatchTimelineDto;
   await setCache(cacheKey, data);
@@ -86,17 +84,14 @@ export async function GET(request: Request) {
     const routing = getRoutingRegion(region);
     const base = RIOT_MATCH_BASE.replace("{region}", routing);
     const url = `${base}/${encodeURIComponent(id)}`;
-    const res = await fetch(url, {
-      cache: "no-store",
-      headers: { "X-Riot-Token": key },
-    });
-    const text = await res.text();
-    if (!res.ok) {
-      console.error("[riot/match] Riot response:", res.status, res.statusText, text);
+    const upstream = await cachedRiotFetch(url);
+    const text = await upstream.text();
+    if (!upstream.ok) {
+      console.error("[riot/match] Riot response:", upstream.status, upstream.statusText, text);
       const message = text || "Match fetch failed";
       return NextResponse.json(
-        { error: message, status: res.status },
-        { status: res.status, headers: NO_CACHE }
+        { error: message, status: upstream.status },
+        { status: upstream.status, headers: NO_CACHE }
       );
     }
     data = JSON.parse(text) as Record<string, unknown>;
@@ -106,12 +101,12 @@ export async function GET(request: Request) {
   // Compute item purchase times only when we know which summoner this profile is for.
   // selectedPuuid must come from the match participants, not from an external account API puuid.
   if (gameName && tagLine) {
-    const timeline = await fetchTimelineServer(id, region, key);
+    const timeline = await fetchTimelineServer(id, region);
     const match = data as MatchDto;
     if (!timeline) {
       return NextResponse.json(
         { ...data, itemPurchaseTimesBySlot: [null, null, null, null, null, null] },
-        { headers: NO_CACHE }
+        { headers: { "Cache-Control": CDN_CACHE } }
       );
     }
     const logFirstMatchOnly = !timelineDiagnosticsLoggedOnce;
@@ -133,7 +128,7 @@ export async function GET(request: Request) {
       }
       return NextResponse.json(
         { ...data, itemPurchaseTimesBySlot: [null, null, null, null, null, null] },
-        { headers: NO_CACHE }
+        { headers: { "Cache-Control": CDN_CACHE } }
       );
     }
 
@@ -147,9 +142,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json(
       { ...data, itemPurchaseTimesBySlot },
-      { headers: NO_CACHE }
+      { headers: { "Cache-Control": CDN_CACHE } }
     );
   }
 
-  return NextResponse.json(data, { headers: NO_CACHE });
+  return NextResponse.json(data, { headers: { "Cache-Control": CDN_CACHE } });
 }

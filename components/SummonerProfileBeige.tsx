@@ -290,6 +290,15 @@ function primaryRole(matches: MatchDto[], puuid: string): string {
   return roleLabel(entries[0][0]);
 }
 
+const PROFILE_CACHE_MAX = 10;
+type ProfileCacheEntry = {
+  account: AccountDto;
+  summoner: SummonerDto;
+  leagueEntries: LeagueEntryDto[] | null;
+  matches: MatchDto[];
+};
+const profileCache = new Map<string, ProfileCacheEntry>();
+
 export default function SummonerProfileBeige({
   riotId: riotIdProp,
   region: regionProp,
@@ -357,8 +366,22 @@ export default function SummonerProfileBeige({
       setError(null);
       return;
     }
-    setLoading(true);
-    setError(null);
+    const cacheKey = `${riotIdParam ?? ""}|${queue}`;
+    const cached = profileCache.get(cacheKey);
+    if (cached) {
+      setAccount(cached.account);
+      setSummoner(cached.summoner);
+      setLeagueEntries(cached.leagueEntries);
+      setMatches(cached.matches);
+      setRankError(null);
+      setRankLoading(false);
+      setLoading(false);
+      setError(null);
+    } else {
+      setLoading(true);
+      setError(null);
+    }
+    let leagueEntriesFromFetch: LeagueEntryDto[] | null = null;
     try {
       const accountRes = await fetchJsonWithRetry<AccountDto>(
         `/api/riot/account?gameName=${encodeURIComponent(parsed.gameName)}&tagLine=${encodeURIComponent(parsed.tagLine)}&region=${regionVal}`,
@@ -372,7 +395,7 @@ export default function SummonerProfileBeige({
           2
         ),
         fetchJsonWithRetry<{ matchIds: string[] }>(
-          `/api/riot/matches?puuid=${encodeURIComponent(accountRes.puuid)}&region=${regionVal}&count=20&queue=${queueIdForMatches}`,
+          `/api/riot/match-ids?puuid=${encodeURIComponent(accountRes.puuid)}&region=${regionVal}&count=20&queueId=${queueIdForMatches}`,
           2
         ),
       ]);
@@ -423,6 +446,7 @@ export default function SummonerProfileBeige({
         } else if (entries !== null) {
           setRankError(null);
           setLeagueEntries(entries);
+          leagueEntriesFromFetch = entries;
         }
       }
       setRankLoading(false);
@@ -441,6 +465,16 @@ export default function SummonerProfileBeige({
           )
       );
       setMatches(matchDetails);
+      profileCache.set(cacheKey, {
+        account: accountRes,
+        summoner: summonerRes,
+        leagueEntries: leagueEntriesFromFetch ?? null,
+        matches: matchDetails,
+      });
+      if (profileCache.size > PROFILE_CACHE_MAX) {
+        const firstKey = profileCache.keys().next().value;
+        if (firstKey != null) profileCache.delete(firstKey);
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load summoner"
@@ -455,7 +489,7 @@ export default function SummonerProfileBeige({
     } finally {
       setLoading(false);
     }
-  }, [parsed?.gameName, parsed?.tagLine, regionVal, queue, queueIdForMatches]);
+  }, [parsed?.gameName, parsed?.tagLine, regionVal, queue, queueIdForMatches, riotIdParam]);
 
   useEffect(() => {
     fetchProfile();
