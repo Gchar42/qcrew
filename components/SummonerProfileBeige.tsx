@@ -1185,6 +1185,8 @@ export default function SummonerProfileBeige({
                   puuidOfSearchedPlayer={account.puuid}
                   queue={queue === "flex" ? "flex" : "solo"}
                   ddragonVersion={ddragonVersion}
+                  perksById={perksById}
+                  stylesById={stylesById}
                 />
               ) : null}
             </div>

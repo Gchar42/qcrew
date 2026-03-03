@@ -1337,7 +1337,7 @@
 .profile-page .match-details-table-header.player-row,
 .profile-page .match-details-player-row.player-row {
   display: grid;
-  grid-template-columns: 28px 1fr 64px 72px 56px 44px 44px 1fr;
+  grid-template-columns: 40px 1.6fr 52px 64px 72px 56px 56px 56px 1fr;
   gap: 8px;
   align-items: center;
   min-height: 28px;
@@ -1360,8 +1360,14 @@
 }
 
 .profile-page .match-details-col-champ {
-  width: 24px;
-  height: 24px;
+  width: 40px;
+}
+
+.profile-page .match-details-champ-block {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 4px;
+  align-items: center;
 }
 
 .profile-page .match-details-champ-icon {
@@ -1379,6 +1385,27 @@
   background: var(--surface);
   border-radius: 4px;
   border: 1px solid var(--border);
+}
+
+.profile-page .match-details-spells-runes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-page .match-details-spells,
+.profile-page .match-details-runes {
+  display: flex;
+  gap: 2px;
+}
+
+.profile-page .match-details-spell-icon,
+.profile-page .match-details-rune-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  object-fit: contain;
 }
 
 .profile-page .match-details-col-name {
