@@ -7,35 +7,35 @@ type Region = { value: string; label: string };
 
 export function SearchForm({ regions }: { regions: readonly Region[] }) {
   const [region, setRegion] = useState("na1");
-  const [riotId, setRiotId] = useState("");
+  const [riotId, setRiotId] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  function handleSubmit(e: React.FormEvent) {
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-    const trimmed = riotId.trim();
-    const hash = trimmed.indexOf("#");
+    const riotIdTrimmed: string = riotId.trim();
+    const hash = riotIdTrimmed.indexOf("#");
     if (hash === -1) {
-      if (trimmed.length < 2) {
+      if (riotIdTrimmed.length < 2) {
         setError("Enter at least 2 characters to search.");
         return;
       }
-      router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+      router.push(`/search?q=${encodeURIComponent(riotIdTrimmed)}`);
       return;
     }
-    const name = trimmed.slice(0, hash).trim();
-    const tag = trimmed.slice(hash + 1).trim();
+    const name = riotIdTrimmed.slice(0, hash).trim();
+    const tag = riotIdTrimmed.slice(hash + 1).trim();
     if (!name || !tag) {
       setError("Enter both name and tag");
       return;
     }
-    const riotId = `${name}#${tag}`;
-    router.push(`/summoner?riotId=${encodeURIComponent(riotId)}`);
-  }
+    const encodedRiotId = `${name}#${tag}`;
+    router.push(`/summoner?riotId=${encodeURIComponent(encodedRiotId)}`);
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <label className="block">
           <span className="text-sm text-zinc-400">Region</span>
