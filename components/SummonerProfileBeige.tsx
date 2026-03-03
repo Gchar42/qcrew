@@ -75,6 +75,9 @@ function getRankTierColorClass(tier: string): string {
 
 const DEFAULT_REGION = "na1";
 
+// Client-side cache for participant rank badges, keyed by `${queue}:${summonerId}`.
+const clientBadgeCache = new Map<string, string | null>();
+
 /** Platform to short display label for badge/eyebrow */
 function regionDisplayLabel(region: string): string {
   const r = region.toLowerCase();
@@ -341,6 +344,7 @@ export default function SummonerProfileBeige({
   >({});
   const [rankError, setRankError] = useState<string | null>(null);
   const [rankLoading, setRankLoading] = useState(false);
+  const [badgeVersion, setBadgeVersion] = useState(0);
   const [avgRank, setAvgRank] = useState<{ label: string; rankedCount: number }>({ label: "Unranked", rankedCount: 0 });
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
@@ -555,6 +559,46 @@ export default function SummonerProfileBeige({
       })
       .catch(() => setAvgRank({ label: "Unranked", rankedCount: 0 }));
   }, [matches, regionVal]);
+
+  // Lazily fetch participant rank badges in batches, cached per queue + summonerId.
+  useEffect(() => {
+    if (matches.length === 0) return;
+    const ids = new Set<string>();
+    matches.forEach((m) =>
+      m.info?.participants?.forEach((p) => {
+        if (p.summonerId) ids.add(p.summonerId);
+      })
+    );
+    const missing: string[] = [];
+    ids.forEach((id) => {
+      const key = `${queue}:${id}`;
+      if (!clientBadgeCache.has(key)) missing.push(id);
+    });
+    if (missing.length === 0) return;
+    fetch("/api/ranks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        region: regionVal,
+        queue,
+        summonerIds: missing,
+      }),
+    })
+      .then((res) => (res.ok ? res.json() : { badges: {} }))
+      .then((data: { badges?: Record<string, string | null> }) => {
+        const badges = data.badges ?? {};
+        let changed = false;
+        Object.entries(badges).forEach(([sid, badge]) => {
+          const key = `${queue}:${sid}`;
+          if (!clientBadgeCache.has(key) || clientBadgeCache.get(key) !== badge) {
+            clientBadgeCache.set(key, badge ?? null);
+            changed = true;
+          }
+        });
+        if (changed) setBadgeVersion((v) => v + 1);
+      })
+      .catch(() => {});
+  }, [matches, queue, regionVal]);
 
   if (!riotIdParam) {
     return (
@@ -1034,14 +1078,9 @@ export default function SummonerProfileBeige({
                           {part.riotIdGameName ?? part.summonerName}
                         </span>
                         <span className="profile-match-team-extra">
-                          {(() => {
-                            const sid = part.summonerId;
-                            const entries = leagueEntriesBySummonerId[sid ?? ""] ?? [];
-                            const badge = formatRankBadge(entries, targetQueueType);
-                            if (!badge && entries?.length) console.log("No badge but entries exist", sid, entries);
-                            if (!badge && sid) console.log("No entries for sid", sid);
-                            return badge ?? null;
-                          })()}
+                          {part.summonerId
+                            ? clientBadgeCache.get(`${queue}:${part.summonerId}`) ?? null
+                            : null}
                         </span>
                       </div>
                     ) : (
@@ -1084,14 +1123,9 @@ export default function SummonerProfileBeige({
                           {part.riotIdGameName ?? part.summonerName}
                         </span>
                         <span className="profile-match-team-extra">
-                          {(() => {
-                            const sid = part.summonerId;
-                            const entries = leagueEntriesBySummonerId[sid ?? ""] ?? [];
-                            const badge = formatRankBadge(entries, targetQueueType);
-                            if (!badge && entries?.length) console.log("No badge but entries exist", sid, entries);
-                            if (!badge && sid) console.log("No entries for sid", sid);
-                            return badge ?? null;
-                          })()}
+                          {part.summonerId
+                            ? clientBadgeCache.get(`${queue}:${part.summonerId}`) ?? null
+                            : null}
                         </span>
                       </div>
                     ) : (
