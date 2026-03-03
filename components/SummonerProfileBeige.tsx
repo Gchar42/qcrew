@@ -313,7 +313,7 @@ export default function SummonerProfileBeige({
   const [leagueQueueLabel, setLeagueQueueLabel] = useState<"" | "Flex">("");
   const [rankError, setRankError] = useState<string | null>(null);
   const [rankLoading, setRankLoading] = useState(false);
-  const [avgRank, setAvgRank] = useState<{ label: string; rankedCount: number } | null>(null);
+  const [avgRank, setAvgRank] = useState<{ label: string; rankedCount: number }>({ label: "Unranked", rankedCount: 0 });
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
@@ -456,7 +456,7 @@ export default function SummonerProfileBeige({
       setLeagueQueueLabel("");
       setRankError(null);
       setRankLoading(false);
-      setAvgRank(null);
+      setAvgRank({ label: "Unranked", rankedCount: 0 });
     } finally {
       setLoading(false);
     }
@@ -468,7 +468,7 @@ export default function SummonerProfileBeige({
 
   useEffect(() => {
     if (matches.length === 0) {
-      setAvgRank(null);
+      setAvgRank({ label: "Unranked", rankedCount: 0 });
       return;
     }
     const summonerIds = new Set<string>();
@@ -479,7 +479,7 @@ export default function SummonerProfileBeige({
     );
     const idList = [...summonerIds].slice(0, 100);
     if (idList.length === 0) {
-      setAvgRank(null);
+      setAvgRank({ label: "Unranked", rankedCount: 0 });
       return;
     }
     const platform = regionVal ?? "na1";
@@ -493,13 +493,19 @@ export default function SummonerProfileBeige({
         idList.forEach((id) => {
           const e = entries[id];
           if (!e?.tier || !e?.rank) return;
-          const n = rankToNumber(e.tier, e.rank);
-          if (n != null && Number.isFinite(n)) values.push(n);
+          const numeric = rankToNumber(e.tier, e.rank);
+          if (numeric != null && Number.isFinite(numeric)) values.push(numeric);
         });
-        const avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
-        setAvgRank(avg !== null ? { label: numberToRankLabel(avg), rankedCount: values.length } : null);
+        let label: string;
+        if (values.length > 0) {
+          const avg = values.reduce((a, b) => a + b, 0) / values.length;
+          label = numberToRankLabel(avg);
+        } else {
+          label = "Unranked";
+        }
+        setAvgRank({ label, rankedCount: values.length });
       })
-      .catch(() => setAvgRank(null));
+      .catch(() => setAvgRank({ label: "Unranked", rankedCount: 0 }));
   }, [matches, regionVal]);
 
   if (!riotIdParam) {
@@ -678,14 +684,12 @@ export default function SummonerProfileBeige({
               <span className="stat-value">{avgDurationMin.toFixed(1)}m</span>
               <span className="stat-label">avg</span>
             </div>
-            {avgRank !== null && (
-              <div className="stat-chip">
-                <span className="stat-value">{avgRank.label}</span>
-                <span className="stat-label">
-                  AVG RANK{avgRank.rankedCount > 0 ? ` (${avgRank.rankedCount} ranked)` : ""}
-                </span>
-              </div>
-            )}
+            <div className="stat-chip">
+              <span className="stat-value">{avgRank.label}</span>
+              <span className="stat-label">
+                AVG RANK{avgRank.rankedCount > 0 ? ` (${avgRank.rankedCount} ranked)` : ""}
+              </span>
+            </div>
           </div>
         </div>
         <div className="profile-matches-list">
