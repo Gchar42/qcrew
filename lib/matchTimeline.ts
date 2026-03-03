@@ -1,4 +1,9 @@
-import type { MatchDto, MatchTimelineDto, MatchTimelineEvent } from "@/types/riot";
+import type {
+  MatchDto,
+  MatchTimelineDto,
+  MatchTimelineEvent,
+  MatchTimelineFrameParticipant,
+} from "@/types/riot";
 
 /**
  * Resolve timeline participantId (1–10) for the given puuid.
@@ -49,6 +54,7 @@ function formatMss(seconds: number): string {
 /**
  * Final item slots 0..6 for the participant from the last timeline frame.
  * participantFrames keys may be "1".."10", "0".."9", or we find by frame.participantId.
+ * Returns empty array when the participant frame cannot be resolved.
  */
 export function getFinalBuild(
   timeline: MatchTimelineDto,
@@ -58,14 +64,19 @@ export function getFinalBuild(
   if (!frames?.length) return [];
   const last = frames[frames.length - 1];
   const pf = last.participantFrames ?? {};
-  let frame = pf[String(participantId)] ?? pf[String(participantId - 1)];
-  if (!frame) {
+  let frame: MatchTimelineFrameParticipant | undefined =
+    pf[String(participantId)] ?? pf[String(participantId - 1)];
+  if (frame == null) {
     const entry = Object.entries(pf).find(
-      ([_, f]) => (f.participantId ?? Number((f as { participantId?: unknown }).participantId)) === participantId
+      ([_, f]) =>
+        (f.participantId ?? Number((f as { participantId?: unknown }).participantId)) ===
+        participantId
     );
-    frame = entry?.[1];
+    if (entry != null) {
+      frame = entry[1];
+    }
   }
-  if (!frame) return [];
+  if (frame == null) return [];
   return [
     frame.item0 ?? 0,
     frame.item1 ?? 0,
