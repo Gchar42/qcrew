@@ -11,7 +11,6 @@ import {
   getChampionSquareUrl,
   getItemIconUrl,
   getProfileIconUrl,
-  getRankEmblemUrl,
   getSummonerSpellIconUrl,
 } from "@/lib/riotAssets";
 import {
@@ -30,10 +29,19 @@ function getBadgeCategoryClass(badge: string): string {
   return `profile-badge-chip-badge-${cat}`;
 }
 
-/** Format tier + rank (division) e.g. "Emerald II". */
+/** Format tier + rank (division) e.g. "Platinum 3". */
 function formatRankTier(tier: string, rank: string): string {
   const t = tier.charAt(0) + tier.slice(1).toLowerCase();
   return `${t} ${rank}`;
+}
+
+/** Win rate and total games from league entry. */
+function rankStats(entry: LeagueEntryDto): { gamesPlayed: number; winRatePct: number } {
+  const wins = entry.wins;
+  const losses = entry.losses;
+  const gamesPlayed = wins + losses;
+  const winRatePct = gamesPlayed > 0 ? Math.round((wins / gamesPlayed) * 100) : 0;
+  return { gamesPlayed, winRatePct };
 }
 
 const REGION = "na1";
@@ -268,8 +276,11 @@ function SummonerProfileContent() {
   const [summoner, setSummoner] = useState<SummonerDto | null>(null);
   const [matches, setMatches] = useState<MatchDto[]>([]);
   const [detailMatch, setDetailMatch] = useState<MatchDto | null>(null);
-  const [soloLeagueEntry, setSoloLeagueEntry] = useState<LeagueEntryDto | null>(null);
+  const [leagueEntry, setLeagueEntry] = useState<LeagueEntryDto | null>(null);
+  /** Only set when showing RANKED_FLEX_SR as fallback */
+  const [leagueQueueLabel, setLeagueQueueLabel] = useState<"" | "Flex">("");
   const [rankError, setRankError] = useState<string | null>(null);
+  const [rankLoading, setRankLoading] = useState(false);
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
@@ -331,6 +342,7 @@ function SummonerProfileContent() {
       ]);
       setSummoner(summonerRes);
 
+      setRankLoading(true);
       const leagueUrl = `/api/riot/league?summonerId=${encodeURIComponent(summonerRes.id)}&region=${REGION}`;
       const leagueRes = await fetch(leagueUrl);
       const leagueBody = await leagueRes.text();
@@ -342,7 +354,8 @@ function SummonerProfileContent() {
           body: leagueBody,
         });
         setRankError(`Rank unavailable (${leagueRes.status})`);
-        setSoloLeagueEntry(null);
+        setLeagueEntry(null);
+        setLeagueQueueLabel("");
       } else {
         let entries: LeagueEntryDto[] | null = null;
         try {
@@ -354,7 +367,8 @@ function SummonerProfileContent() {
             body: leagueBody,
           });
           setRankError("Rank unavailable");
-          setSoloLeagueEntry(null);
+          setLeagueEntry(null);
+          setLeagueQueueLabel("");
         }
         if (entries !== null && !Array.isArray(entries)) {
           console.error("[riot/league] Rank response not an array", {
@@ -363,20 +377,18 @@ function SummonerProfileContent() {
             body: leagueBody,
           });
           setRankError("Rank unavailable");
-          setSoloLeagueEntry(null);
+          setLeagueEntry(null);
+          setLeagueQueueLabel("");
         } else if (entries !== null) {
           const solo = entries.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null;
-          if (solo == null) {
-            console.log("[riot/league] No RANKED_SOLO_5x5 entry (Unranked)", {
-              url: leagueUrl,
-              status: leagueRes.status,
-              body: leagueBody,
-            });
-          }
+          const flex = entries.find((e) => e.queueType === "RANKED_FLEX_SR") ?? null;
+          const chosen = solo ?? flex;
           setRankError(null);
-          setSoloLeagueEntry(solo);
+          setLeagueEntry(chosen);
+          setLeagueQueueLabel(chosen === flex && flex != null ? "Flex" : "");
         }
       }
+      setRankLoading(false);
 
       const matchDetails = await mapWithConcurrency(
         matchListRes.matchIds.slice(0, 20),
@@ -399,8 +411,10 @@ function SummonerProfileContent() {
       setAccount(null);
       setSummoner(null);
       setMatches([]);
-      setSoloLeagueEntry(null);
+      setLeagueEntry(null);
+      setLeagueQueueLabel("");
       setRankError(null);
+      setRankLoading(false);
     } finally {
       setLoading(false);
     }
@@ -520,34 +534,33 @@ function SummonerProfileContent() {
         </div>
         <div className="profile-hero-right">
           <div className="profile-ranked-summary">
-            {rankError != null ? (
+            {rankLoading ? (
+              <span className="profile-ranked-loading">Loading rank…</span>
+            ) : rankError != null ? (
               <span className="profile-ranked-error" title={rankError}>
                 Rank unavailable
               </span>
-            ) : soloLeagueEntry != null ? (
-              <>
-                <div className="profile-ranked-current">
-                  <span className="profile-ranked-emblem-wrap">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={getRankEmblemUrl(soloLeagueEntry.tier)}
-                      alt=""
-                      className="profile-ranked-emblem"
-                      width={56}
-                      height={56}
-                    />
-                  </span>
-                  <span className="profile-ranked-tier">
-                    {formatRankTier(soloLeagueEntry.tier, soloLeagueEntry.rank)}
-                  </span>
-                </div>
-                <div className="profile-ranked-lp">
-                  {soloLeagueEntry.leaguePoints} LP
-                </div>
-                <div className="profile-ranked-wl">
-                  {soloLeagueEntry.wins}W {soloLeagueEntry.losses}L
-                </div>
-              </>
+            ) : leagueEntry != null ? (
+              (() => {
+                const { gamesPlayed, winRatePct } = rankStats(leagueEntry);
+                return (
+                  <>
+                    <div className="profile-ranked-tier-line">
+                      {formatRankTier(leagueEntry.tier, leagueEntry.rank)}
+                      {leagueQueueLabel && (
+                        <span className="profile-ranked-queue-label"> · {leagueQueueLabel}</span>
+                      )}
+                    </div>
+                    <div className="profile-ranked-lp">{leagueEntry.leaguePoints} LP</div>
+                    <div className="profile-ranked-wl">
+                      {leagueEntry.wins}W {leagueEntry.losses}L
+                    </div>
+                    <div className="profile-ranked-winrate">
+                      {winRatePct}% win rate, {gamesPlayed} games
+                    </div>
+                  </>
+                );
+              })()
             ) : (
               <span className="profile-ranked-unranked">Unranked</span>
             )}
