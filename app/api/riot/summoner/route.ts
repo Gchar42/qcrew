@@ -5,7 +5,11 @@ export const revalidate = 0;
 
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
 
-/** Summoner-v4 is platform-routed (e.g. na1), not americas. */
+/**
+ * Summoner-v4 is platform-routed (e.g. na1), not americas.
+ * Response includes: id (encryptedSummonerId), accountId, puuid, name, profileIconId, summonerLevel.
+ * Use response.id for League V4 entries by-summoner. Do not use puuid or accountId for league.
+ */
 export async function GET(request: Request) {
   const key = process.env.RIOT_API_KEY;
   if (!key) {

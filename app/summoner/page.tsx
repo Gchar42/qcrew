@@ -343,7 +343,18 @@ function SummonerProfileContent() {
       setSummoner(summonerRes);
 
       setRankLoading(true);
-      const leagueUrl = `/api/riot/league?summonerId=${encodeURIComponent(summonerRes.id)}&region=${REGION}`;
+      const encryptedSummonerId = summonerRes.id;
+      if (!encryptedSummonerId) {
+        console.error(
+          "[riot/league] Missing encryptedSummonerId (summoner.id). Do not call League V4. Full summoner response:",
+          summonerRes
+        );
+        setRankError("Missing summoner id");
+        setLeagueEntry(null);
+        setLeagueQueueLabel("");
+        setRankLoading(false);
+      } else {
+      const leagueUrl = `/api/riot/league?encryptedSummonerId=${encodeURIComponent(encryptedSummonerId)}&region=${REGION}`;
       const leagueRes = await fetch(leagueUrl);
       const leagueBody = await leagueRes.text();
       if (!leagueRes.ok) {
@@ -397,6 +408,7 @@ function SummonerProfileContent() {
         }
       }
       setRankLoading(false);
+      }
 
       const matchDetails = await mapWithConcurrency(
         matchListRes.matchIds.slice(0, 20),

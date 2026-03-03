@@ -30,23 +30,30 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   // Platform only (e.g. na1 for NA). Never use americas or routing region.
   const platform = searchParams.get("region") ?? "na1";
-  const encryptedSummonerId = searchParams.get("summonerId");
-  if (!encryptedSummonerId) {
+  // Must be summoner v4 field "id" (encryptedSummonerId). Do NOT pass puuid or accountId.
+  const encryptedSummonerId =
+    searchParams.get("encryptedSummonerId") ?? searchParams.get("summonerId");
+  const trimmed = typeof encryptedSummonerId === "string" ? encryptedSummonerId.trim() : "";
+  if (!trimmed || trimmed === "undefined") {
+    console.error("[riot/league] missing encryptedSummonerId — do not call League V4. Received:", {
+      encryptedSummonerId: encryptedSummonerId ?? "(missing)",
+      type: typeof encryptedSummonerId,
+    });
     return NextResponse.json(
-      { error: "Missing summonerId", status: 400 },
-      { status: 400, headers: NO_CACHE }
+      { ok: false, error: "missing encryptedSummonerId", status: 500 },
+      { status: 500, headers: NO_CACHE }
     );
   }
 
   // League V4 requires encryptedSummonerId (summoner v4 field "id"), not puuid, not account id.
   console.log("[riot/league] Before Riot call:", {
     platform,
-    summonerIdLength: encryptedSummonerId.length,
-    summonerIdFirst6: encryptedSummonerId.slice(0, 6),
+    summonerIdLength: trimmed.length,
+    summonerIdFirst6: trimmed.slice(0, 6),
     xRiotTokenHeader: "present",
   });
 
-  const url = `https://${platform}.api.riotgames.com/lol/league/v4/entries/by-summoner/${encodeURIComponent(encryptedSummonerId)}`;
+  const url = `https://${platform}.api.riotgames.com/lol/league/v4/entries/by-summoner/${encodeURIComponent(trimmed)}`;
   console.log("[riot/league] Exact Riot URL being called:", url);
   // Riot expects "X-Riot-Token" only. Do NOT use Authorization: Bearer.
   const res = await fetch(url, {
