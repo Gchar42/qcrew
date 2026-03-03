@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
@@ -20,13 +20,7 @@ import {
 } from "@/lib/runesCd";
 import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
-import type { AccountDto, SummonerDto, MatchDto, MatchTimelineDto } from "@/types/riot";
-import {
-  getTimelineParticipantId,
-  getItemSlotPurchaseTimes,
-  getFirstPurchaseMapNoUndo,
-  getFinalBuild,
-} from "@/lib/matchTimeline";
+import type { AccountDto, SummonerDto, MatchDto } from "@/types/riot";
 
 /** Badge name -> profile CSS class for chip styling */
 function getBadgeCategoryClass(badge: string): string {
@@ -269,12 +263,6 @@ function SummonerProfileContent() {
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
-  const [timelineByMatchId, setTimelineByMatchId] = useState<
-    Record<string, MatchTimelineDto | null>
-  >({});
-  const timelineFetchedRef = useRef<Set<string>>(new Set());
-  const debugTimelineLoggedRef = useRef<Set<string>>(new Set());
-
   useEffect(() => {
     fetch("/api/ddragon/version")
       .then((r) => r.json())
@@ -338,7 +326,7 @@ function SummonerProfileContent() {
         3,
         async (matchId) =>
           fetchJsonWithRetry<MatchDto>(
-            `/api/riot/match?matchId=${encodeURIComponent(matchId)}&region=${REGION}`,
+            `/api/riot/match?matchId=${encodeURIComponent(matchId)}&region=${REGION}&puuid=${encodeURIComponent(accountRes.puuid)}`,
             3
           )
       );
@@ -358,94 +346,6 @@ function SummonerProfileContent() {
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
-
-  useEffect(() => {
-    const firstMatchId = matches[0]?.metadata?.matchId;
-    for (const m of matches) {
-      const matchId = m.metadata?.matchId;
-      if (!matchId || timelineFetchedRef.current.has(matchId)) continue;
-      timelineFetchedRef.current.add(matchId);
-      fetch(
-        `/api/riot/timeline?matchId=${encodeURIComponent(matchId)}&region=${REGION}`
-      )
-        .then(async (res) => {
-          const isFirstMatch = matchId === firstMatchId;
-          if (!res.ok) {
-            const text = await res.text();
-            if (isFirstMatch) {
-              console.log("[Timeline Step 1] fetch failed", {
-                matchId,
-                status: res.status,
-                errorMessage: text,
-              });
-            }
-            setTimelineByMatchId((prev) => ({ ...prev, [matchId]: null }));
-            return;
-          }
-          const data = (await res.json()) as MatchTimelineDto;
-          if (
-            isFirstMatch &&
-            account &&
-            !debugTimelineLoggedRef.current.has(matchId)
-          ) {
-            debugTimelineLoggedRef.current.add(matchId);
-            const match = matches.find((mm) => mm.metadata?.matchId === matchId);
-            if (match) {
-              const participantId = getTimelineParticipantId(
-                match,
-                account.puuid
-              );
-              const frames = data.info?.frames ?? [];
-              const eventsForParticipant = frames.flatMap(
-                (f) =>
-                  f.events?.filter(
-                    (e: { participantId?: number }) =>
-                      e.participantId === participantId
-                  ) ?? []
-              );
-              const eventCount = eventsForParticipant.length;
-              const firstPurchase = eventsForParticipant.find(
-                (e: { type?: string }) => e.type === "ITEM_PURCHASED"
-              ) as { timestamp?: number; itemId?: number } | undefined;
-              console.log("[Timeline Step 1]", {
-                matchId,
-                timelineFetched: true,
-                framesLength: frames.length,
-                eventCountForParticipant: eventCount,
-                firstItemPurchaseTimestampRaw: firstPurchase?.timestamp,
-                firstItemPurchaseItemId: firstPurchase?.itemId,
-              });
-              const participantIndex = match.info?.participants?.findIndex(
-                (p) => p.puuid === account.puuid
-              );
-              console.log("[Timeline Step 2]", {
-                selectedPuuid: account.puuid,
-                participantIndex: participantIndex ?? -1,
-                timelineParticipantId: participantId,
-              });
-              const lastFrame = frames[frames.length - 1];
-              const frameKeys = lastFrame
-                ? Object.keys(lastFrame.participantFrames ?? {})
-                : [];
-              console.log(
-                "[Timeline Step 1 extra] participantFrameKeys (last frame)",
-                frameKeys
-              );
-            }
-          }
-          setTimelineByMatchId((prev) => ({ ...prev, [matchId]: data }));
-        })
-        .catch(() => {
-          if (matchId === firstMatchId) {
-            console.log("[Timeline Step 1] fetch error (network)", {
-              matchId,
-              error: "request failed",
-            });
-          }
-          setTimelineByMatchId((prev) => ({ ...prev, [matchId]: null }));
-        });
-    }
-  }, [matches, account]);
 
   if (!riotIdParam) {
     return (
@@ -747,67 +647,35 @@ function SummonerProfileContent() {
                     )}
                   </div>
                   <div className="profile-match-items-row">
-                    {(() => {
-                      const matchId = m.metadata?.matchId;
-                      const timeline = matchId
-                        ? timelineByMatchId[matchId]
-                        : undefined;
-                      const participantId = account
-                        ? getTimelineParticipantId(m, account.puuid)
-                        : null;
-                      const isFirstMatchCard =
-                        matchId === matches[0]?.metadata?.matchId;
-                      const slotTimestamps: (number | null)[] =
-                        timeline && participantId != null
-                          ? getItemSlotPurchaseTimes(timeline, participantId)
-                          : [];
-                      const firstPurchaseMap =
-                        timeline && participantId != null
-                          ? getFirstPurchaseMapNoUndo(timeline, participantId)
+                    {([p.item0, p.item1, p.item2, p.item3, p.item4, p.item5] as (number | undefined)[]).map((id, idx) => {
+                      const iconUrl = id != null && id > 0 ? getItemIconUrl(id) : null;
+                      const timesBySlot = m.itemPurchaseTimesBySlot;
+                      const captionText =
+                        id != null && id > 0 && timesBySlot?.[idx]
+                          ? timesBySlot[idx]
                           : null;
-                      const finalBuild =
-                        timeline && participantId != null
-                          ? getFinalBuild(timeline, participantId)
-                          : [];
-                      return ([p.item0, p.item1, p.item2, p.item3, p.item4, p.item5] as (number | undefined)[]).map((id, idx) => {
-                        const iconUrl = id != null && id > 0 ? getItemIconUrl(id) : null;
-                        const debugSlot1Only =
-                          isFirstMatchCard &&
-                          idx === 1 &&
-                          firstPurchaseMap != null &&
-                          finalBuild.length > 0;
-                        const slot1Time =
-                          debugSlot1Only && finalBuild[1] != null
-                            ? firstPurchaseMap.get(finalBuild[1]) ?? null
-                            : null;
-                        const timestamp =
-                          debugSlot1Only
-                            ? slot1Time
-                            : (slotTimestamps[idx] ?? null);
-                        const captionText =
-                          id != null && id > 0 && timestamp != null
-                            ? formatDuration(timestamp)
-                            : null;
-                        return (
-                          <div key={`item-${idx}`} className="profile-match-item-tile">
-                            <span className="profile-match-item">
-                              {iconUrl ? (
-                                /* eslint-disable-next-line @next/next/no-img-element */
-                                <img src={iconUrl} alt="" width={22} height={22} />
-                              ) : (
-                                <span className="profile-match-item-empty" aria-hidden />
-                              )}
-                            </span>
-                            <span
-                              className="profile-match-item-caption"
-                              style={debugSlot1Only ? { fontSize: 12 } : undefined}
-                            >
-                              {captionText}
-                            </span>
-                          </div>
-                        );
-                      });
-                    })()}
+                      const isFirstMatchCard = m.metadata?.matchId === matches[0]?.metadata?.matchId;
+                      const showDebugUnderFirst = isFirstMatchCard && idx === 0;
+                      return (
+                        <div key={`item-${idx}`} className="profile-match-item-tile">
+                          <span className="profile-match-item">
+                            {iconUrl ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img src={iconUrl} alt="" width={22} height={22} />
+                            ) : (
+                              <span className="profile-match-item-empty" aria-hidden />
+                            )}
+                          </span>
+                          <span className="profile-match-item-caption" style={{ fontSize: 12 }}>
+                            {showDebugUnderFirst
+                              ? timesBySlot != null
+                                ? "DEBUG OK"
+                                : "DEBUG MISSING"
+                              : captionText}
+                          </span>
+                        </div>
+                      );
+                    })}
                     {p.item6 != null && p.item6 > 0 ? (
                       <span className="profile-match-item profile-match-item-trinket">
                         {/* eslint-disable-next-line @next/next/no-img-element */}

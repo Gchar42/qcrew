@@ -9,10 +9,17 @@ export function getTimelineParticipantId(match: MatchDto, puuid: string): number
   return idx + 1; // 1-based
 }
 
-/** Game time in timeline events is milliseconds from start; convert to seconds for m:ss. */
+/** Riot timeline event timestamp may be ms or seconds; convert to seconds for m:ss. */
 function eventTimeToSeconds(timestamp: number | undefined): number {
   if (timestamp == null || !Number.isFinite(timestamp)) return 0;
-  return Math.floor(timestamp / 1000);
+  return timestamp >= 1000 ? Math.floor(timestamp / 1000) : Math.floor(timestamp);
+}
+
+/** Format seconds as m:ss. */
+function formatMss(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
 }
 
 /**
@@ -132,6 +139,29 @@ export function getItemSlotPurchaseTimes(
     }
     const t = purchaseMap.get(itemId);
     out.push(t != null ? t : null);
+  }
+  return out;
+}
+
+/**
+ * Per-slot purchase times as formatted strings "m:ss" or null for slots 0–5 only.
+ * For server response itemPurchaseTimesBySlot.
+ */
+export function getItemPurchaseTimesFormatted(
+  timeline: MatchTimelineDto,
+  participantId: number
+): (string | null)[] {
+  const finalBuild = getFinalBuild(timeline, participantId);
+  const purchaseMap = getPurchaseTimeMap(timeline, participantId);
+  const out: (string | null)[] = [];
+  for (let i = 0; i < 6; i++) {
+    const itemId = finalBuild[i] ?? 0;
+    if (itemId <= 0) {
+      out.push(null);
+      continue;
+    }
+    const sec = purchaseMap.get(itemId);
+    out.push(sec != null ? formatMss(sec) : null);
   }
   return out;
 }
