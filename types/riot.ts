@@ -102,9 +102,17 @@ export type MatchTimelineFrame = {
   events?: MatchTimelineEvent[];
 };
 
+export type MatchTimelineParticipant = {
+  participantId?: number;
+  puuid?: string;
+  [key: string]: unknown;
+};
+
 export type MatchTimelineDto = {
-  metadata?: { matchId?: string };
+  metadata?: { matchId?: string; participants?: string[] };
   info?: {
     frames?: MatchTimelineFrame[];
+    /** When present, use to map puuid -> participantId instead of assuming match order */
+    participants?: MatchTimelineParticipant[];
   };
 };

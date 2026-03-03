@@ -1,18 +1,42 @@
 import type { MatchDto, MatchTimelineDto, MatchTimelineEvent } from "@/types/riot";
 
 /**
- * Match participants are in order: participants[0] = participantId 1, etc.
+ * Resolve timeline participantId (1–10) for the given puuid.
+ * Prefer timeline.info.participants when present; else match metadata order; else match info participants.
  */
+export function resolveTimelineParticipantId(
+  timeline: MatchTimelineDto,
+  match: MatchDto,
+  puuid: string
+): number | null {
+  const fromTimeline = timeline.info?.participants?.find(
+    (p) => (p.puuid ?? (p as { puuid?: string }).puuid) === puuid
+  );
+  if (fromTimeline?.participantId != null) {
+    return fromTimeline.participantId;
+  }
+  const metaIdx = match.metadata?.participants?.indexOf(puuid);
+  if (typeof metaIdx === "number" && metaIdx >= 0) {
+    return metaIdx + 1; // timeline uses 1–10
+  }
+  const infoIdx = match.info?.participants?.findIndex((p) => p.puuid === puuid);
+  if (infoIdx != null && infoIdx >= 0) {
+    return infoIdx + 1;
+  }
+  return null;
+}
+
+/** @deprecated Use resolveTimelineParticipantId. Match order only. */
 export function getTimelineParticipantId(match: MatchDto, puuid: string): number | null {
   const idx = match.info?.participants?.findIndex((p) => p.puuid === puuid);
   if (idx == null || idx < 0) return null;
-  return idx + 1; // 1-based
+  return idx + 1;
 }
 
-/** Riot timeline event timestamp may be ms or seconds; convert to seconds for m:ss. */
+/** Event timestamp is milliseconds from game start; convert to seconds for m:ss. */
 function eventTimeToSeconds(timestamp: number | undefined): number {
   if (timestamp == null || !Number.isFinite(timestamp)) return 0;
-  return timestamp >= 1000 ? Math.floor(timestamp / 1000) : Math.floor(timestamp);
+  return Math.floor(timestamp / 1000);
 }
 
 /** Format seconds as m:ss. */
@@ -24,7 +48,7 @@ function formatMss(seconds: number): string {
 
 /**
  * Final item slots 0..6 for the participant from the last timeline frame.
- * participantFrames keys may be "1".."10" (participantId) or "0".."9" (index); try both.
+ * participantFrames keys may be "1".."10", "0".."9", or we find by frame.participantId.
  */
 export function getFinalBuild(
   timeline: MatchTimelineDto,
@@ -34,9 +58,13 @@ export function getFinalBuild(
   if (!frames?.length) return [];
   const last = frames[frames.length - 1];
   const pf = last.participantFrames ?? {};
-  const key1 = String(participantId);
-  const key0 = String(participantId - 1);
-  const frame = pf[key1] ?? pf[key0];
+  let frame = pf[String(participantId)] ?? pf[String(participantId - 1)];
+  if (!frame) {
+    const entry = Object.entries(pf).find(
+      ([_, f]) => (f.participantId ?? Number((f as { participantId?: unknown }).participantId)) === participantId
+    );
+    frame = entry?.[1];
+  }
   if (!frame) return [];
   return [
     frame.item0 ?? 0,
@@ -72,51 +100,48 @@ export function getFirstPurchaseMapNoUndo(
 }
 
 /**
- * Build purchase time (seconds) per itemId for the given participant from timeline events.
- * - ITEM_PURCHASED: record earliest purchase time for that itemId (only set if not yet set).
- * - ITEM_UNDO: remove the purchase for the undone item (beforeId if present, else last purchased).
- * We only use this map for items that remain in the final build; sold/destroyed items are ignored
- * by only looking up slots 0-5 from the final build.
+ * Build firstPurchaseTime map: earliest (seconds) per itemId for the selected participant.
+ * Parse every frame's events in chronological order.
+ * ITEM_PURCHASED: record earliest timestamp for that itemId.
+ * ITEM_UNDO: remove the most recent purchase record for that itemId (beforeId or last).
+ * Event participantId and timestamp: normalize (number, ms -> seconds).
  */
 export function getPurchaseTimeMap(
   timeline: MatchTimelineDto,
   participantId: number
 ): Map<number, number> {
-  const purchaseTime = new Map<number, number>();
+  const firstPurchaseTime = new Map<number, number>();
   const purchaseStack: { itemId: number; timestamp: number }[] = [];
   const frames = timeline.info?.frames ?? [];
 
-  const processEvent = (e: MatchTimelineEvent) => {
-    if (e.participantId !== participantId) return;
-    const timeSec = eventTimeToSeconds(e.timestamp);
-
-    if (e.type === "ITEM_PURCHASED" && e.itemId != null && e.itemId > 0) {
-      purchaseStack.push({ itemId: e.itemId, timestamp: timeSec });
-      if (!purchaseTime.has(e.itemId)) {
-        purchaseTime.set(e.itemId, timeSec);
-      }
-      return;
-    }
-
-    if (e.type === "ITEM_UNDO") {
-      if (e.beforeId != null && e.beforeId > 0) {
-        purchaseTime.delete(e.beforeId);
-        const idx = purchaseStack.findIndex((x) => x.itemId === e.beforeId);
-        if (idx !== -1) purchaseStack.splice(idx, 1);
-      } else if (purchaseStack.length > 0) {
-        const last = purchaseStack.pop()!;
-        purchaseTime.delete(last.itemId);
-      }
-    }
-  };
-
   for (const frame of frames) {
     for (const e of frame.events ?? []) {
-      processEvent(e);
+      const evtParticipantId = e.participantId != null ? Number(e.participantId) : undefined;
+      if (evtParticipantId !== participantId) continue;
+
+      if (e.type === "ITEM_PURCHASED" && e.itemId != null && e.itemId > 0) {
+        const timeSec = eventTimeToSeconds(e.timestamp);
+        purchaseStack.push({ itemId: e.itemId, timestamp: timeSec });
+        if (!firstPurchaseTime.has(e.itemId)) {
+          firstPurchaseTime.set(e.itemId, timeSec);
+        }
+        continue;
+      }
+
+      if (e.type === "ITEM_UNDO") {
+        if (e.beforeId != null && e.beforeId > 0) {
+          firstPurchaseTime.delete(e.beforeId);
+          const idx = purchaseStack.findIndex((x) => x.itemId === e.beforeId);
+          if (idx !== -1) purchaseStack.splice(idx, 1);
+        } else if (purchaseStack.length > 0) {
+          const last = purchaseStack.pop()!;
+          firstPurchaseTime.delete(last.itemId);
+        }
+      }
     }
   }
 
-  return purchaseTime;
+  return firstPurchaseTime;
 }
 
 /**

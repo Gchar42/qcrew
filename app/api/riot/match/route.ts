@@ -2,14 +2,15 @@ import { NextResponse } from "next/server";
 import { getRoutingRegion } from "@/lib/riot-regions";
 import { getCached, setCache } from "@/lib/supabase/route";
 import {
-  getTimelineParticipantId,
+  resolveTimelineParticipantId,
   getItemPurchaseTimesFormatted,
   getFinalBuild,
   getPurchaseTimeMap,
 } from "@/lib/matchTimeline";
 import type { MatchDto, MatchTimelineDto } from "@/types/riot";
 
-const timelineDebugLogged = new Set<string>();
+/** Log timeline debug only for first match and only when all times are null. */
+let timelineDebugLoggedOnce = false;
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -84,39 +85,51 @@ export async function GET(request: Request) {
   if (puuid) {
     const timeline = await fetchTimelineServer(id, region, key);
     const match = data as MatchDto;
-    const participantId = getTimelineParticipantId(match, puuid);
+    let participantId = resolveTimelineParticipantId(timeline, match, puuid);
     if (timeline && participantId != null) {
-      const itemPurchaseTimesBySlot = getItemPurchaseTimesFormatted(
+      let itemPurchaseTimesBySlot = getItemPurchaseTimesFormatted(
         timeline,
         participantId
       );
-      if (!timelineDebugLogged.has(id)) {
-        timelineDebugLogged.add(id);
-        const frames = timeline.info?.frames ?? [];
-        const totalEvents = frames.reduce(
-          (acc, f) => acc + (f.events?.length ?? 0),
-          0
-        );
-        const purchasedCount = frames.reduce(
+      const frames = timeline.info?.frames ?? [];
+      const purchasedCountFor = (pid: number) =>
+        frames.reduce(
           (acc, f) =>
             acc +
             (f.events?.filter(
               (e) =>
-                e.participantId === participantId &&
-                e.type === "ITEM_PURCHASED"
+                Number(e.participantId) === pid && e.type === "ITEM_PURCHASED"
             ).length ?? 0),
+          0
+        );
+      if (itemPurchaseTimesBySlot.every((t) => t == null) && purchasedCountFor(participantId) === 0 && participantId >= 1) {
+        const zeroBasedId = participantId - 1;
+        if (purchasedCountFor(zeroBasedId) > 0) {
+          participantId = zeroBasedId;
+          itemPurchaseTimesBySlot = getItemPurchaseTimesFormatted(
+            timeline,
+            participantId
+          );
+        }
+      }
+      const hasRealTimes = itemPurchaseTimesBySlot.some((t) => t != null && t !== "");
+      if (!hasRealTimes && !timelineDebugLoggedOnce) {
+        timelineDebugLoggedOnce = true;
+        const totalEvents = frames.reduce(
+          (acc, f) => acc + (f.events?.length ?? 0),
           0
         );
         const finalBuild = getFinalBuild(timeline, participantId);
         const purchaseMap = getPurchaseTimeMap(timeline, participantId);
-        console.log("[riot/match] timeline debug (one per matchId)", {
+        console.log("[riot/match] timeline debug (first match, all null)", {
           matchId: id,
           selectedPuuid: puuid,
           timelineParticipantId: participantId,
-          timelineEventCount: totalEvents,
-          itemPurchasedCountForParticipant: purchasedCount,
+          totalFrames: frames.length,
+          totalEvents: totalEvents,
+          itemPurchasedCountForParticipant: purchasedCountFor(participantId),
           finalFrameItem0To5: finalBuild.slice(0, 6),
-          purchaseTimeMapSize: purchaseMap.size,
+          firstPurchaseTimeMapSize: purchaseMap.size,
         });
       }
       return NextResponse.json(
