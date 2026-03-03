@@ -85,8 +85,14 @@ export async function GET(request: Request) {
   if (puuid) {
     const timeline = await fetchTimelineServer(id, region, key);
     const match = data as MatchDto;
+    if (!timeline) {
+      return NextResponse.json(
+        { ...data, itemPurchaseTimesBySlot: [null, null, null, null, null, null] },
+        { headers: NO_CACHE }
+      );
+    }
     let participantId = resolveTimelineParticipantId(timeline, match, puuid);
-    if (timeline && participantId != null) {
+    if (participantId != null) {
       let itemPurchaseTimesBySlot = getItemPurchaseTimesFormatted(
         timeline,
         participantId
