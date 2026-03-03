@@ -17,7 +17,7 @@ function eventTimeToSeconds(timestamp: number | undefined): number {
 
 /**
  * Final item slots 0..6 for the participant from the last timeline frame.
- * participantFrames keys are "1".."10".
+ * participantFrames keys may be "1".."10" (participantId) or "0".."9" (index); try both.
  */
 export function getFinalBuild(
   timeline: MatchTimelineDto,
@@ -26,8 +26,10 @@ export function getFinalBuild(
   const frames = timeline.info?.frames;
   if (!frames?.length) return [];
   const last = frames[frames.length - 1];
-  const key = String(participantId);
-  const frame = last.participantFrames?.[key];
+  const pf = last.participantFrames ?? {};
+  const key1 = String(participantId);
+  const key0 = String(participantId - 1);
+  const frame = pf[key1] ?? pf[key0];
   if (!frame) return [];
   return [
     frame.item0 ?? 0,
@@ -38,6 +40,28 @@ export function getFinalBuild(
     frame.item5 ?? 0,
     frame.item6 ?? 0,
   ];
+}
+
+/**
+ * First purchase time (seconds) per itemId for the given participant; ignores ITEM_UNDO.
+ * For debug / Step 3 only.
+ */
+export function getFirstPurchaseMapNoUndo(
+  timeline: MatchTimelineDto,
+  participantId: number
+): Map<number, number> {
+  const map = new Map<number, number>();
+  const frames = timeline.info?.frames ?? [];
+  for (const frame of frames) {
+    for (const e of frame.events ?? []) {
+      if (e.participantId !== participantId || e.type !== "ITEM_PURCHASED") continue;
+      const itemId = e.itemId ?? 0;
+      if (itemId <= 0) continue;
+      const timeSec = eventTimeToSeconds(e.timestamp);
+      if (!map.has(itemId)) map.set(itemId, timeSec);
+    }
+  }
+  return map;
 }
 
 /**
