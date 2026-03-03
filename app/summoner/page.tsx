@@ -645,8 +645,8 @@ function SummonerProfileContent() {
                           <span className="profile-badge-chip profile-badge-chip-main-character socialBadge">
                             <span className="profile-badge-chip-mc-inner">
                               <span className="profile-badge-chip-crown" aria-hidden>
-                                <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M16 2l4 7h5l-4 4 1.5 8L16 18l-6.5 5 1.5-8-4-4h5l4-7z" fill="currentColor" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" strokeLinejoin="round" />
+                                <svg width="14" height="16" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M12 2l2.5 6h4L14 11l1 7-3-4-3 4 1-7-4.5-3h4L12 2z" fill="#b8860b" />
                                 </svg>
                               </span>
                               <span className="profile-badge-chip-text profile-badge-chip-text-main-character">
