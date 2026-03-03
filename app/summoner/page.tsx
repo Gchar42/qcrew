@@ -640,29 +640,31 @@ function SummonerProfileContent() {
                       </span>
                     )}
                     {badgeInfo && (
-                      <span
-                        className={`profile-badge-chip socialBadge ${getBadgeCategoryClass(
-                          badgeInfo.badge
-                        )}${badgeInfo.badge === "Main Character" ? " profile-badge-chip-main-character" : ""}`}
-                        title={badgeInfo.reason}
-                      >
-                        {badgeInfo.badge === "Main Character" ? (
-                          <>
-                            <span className="profile-badge-chip-crown" aria-hidden>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 2L14 8h4l-3.5 4 1.5 6H8l1.5-6L6 8h4l2-6z" fill="currentColor" opacity="0.95" />
-                              </svg>
+                      badgeInfo.badge === "Main Character" ? (
+                        <span className="profile-badge-chip-mc-wrap" title={badgeInfo.reason}>
+                          <span className="profile-badge-chip profile-badge-chip-main-character socialBadge">
+                            <span className="profile-badge-chip-mc-inner">
+                              <span className="profile-badge-chip-crown" aria-hidden>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M12 2L14 8h4l-3.5 4 1.5 6H8l1.5-6L6 8h4l2-6z" fill="currentColor" />
+                                </svg>
+                              </span>
+                              <span className="profile-badge-chip-text profile-badge-chip-text-main-character">
+                                MAIN CHARACTER
+                              </span>
                             </span>
-                            <span className="profile-badge-chip-text socialBadgeText profile-badge-chip-text-main-character">
-                              MAIN CHARACTER
-                            </span>
-                          </>
-                        ) : (
+                          </span>
+                        </span>
+                      ) : (
+                        <span
+                          className={`profile-badge-chip socialBadge ${getBadgeCategoryClass(badgeInfo.badge)}`}
+                          title={badgeInfo.reason}
+                        >
                           <span className="profile-badge-chip-text socialBadgeText">
                             {badgeInfo.badge}
                           </span>
-                        )}
-                      </span>
+                        </span>
+                      )
                     )}
                   </div>
                   <div className="profile-match-items-row">
