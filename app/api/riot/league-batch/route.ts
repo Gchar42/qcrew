@@ -65,10 +65,10 @@ export async function GET(request: Request) {
     }
 
     const solo = Array.isArray(data)
-      ? data.find((e) => e.queueType === "RANKED_SOLO_5x5")
+      ? data.find((e) => e.queueType === "RANKED_SOLO_5x5" && e.tier && e.rank)
       : null;
     const value: { tier: string; rank: string } | null =
-      solo != null ? { tier: solo.tier, rank: solo.rank ?? "IV" } : null;
+      solo != null ? { tier: solo.tier, rank: solo.rank } : null;
     entries[summonerId] = value;
     await setCache(cacheKey, value);
   }

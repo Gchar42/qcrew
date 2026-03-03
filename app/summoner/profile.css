@@ -469,24 +469,26 @@
   gap: 8px 12px;
 }
 
-.profile-page .profile-matches-stat-chip {
+.profile-page .recent-stats .stat-chip {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.profile-page .recent-stats .stat-value {
+  font-size: 14px;
+  font-weight: 600;
   font-family: "Space Mono", monospace;
-  font-size: 11px;
   color: var(--ink);
 }
 
-.profile-page .profile-matches-stat-label {
-  color: var(--muted);
-  font-size: 10px;
-  text-transform: uppercase;
+.profile-page .recent-stats .stat-label {
+  font-size: 11px;
+  opacity: 0.7;
   letter-spacing: 0.5px;
-}
-
-.profile-page .profile-matches-stat-rank {
-  font-family: "Unbounded", sans-serif;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-family: "Space Mono", monospace;
+  color: var(--muted);
+  text-transform: uppercase;
 }
 
 .profile-page .profile-matches-winrate {
