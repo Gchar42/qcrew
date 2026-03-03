@@ -1288,6 +1288,120 @@
   margin-top: 3px;
 }
 
+/* Expandable match details panel (in-place under card) */
+.profile-page .profile-match-card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.profile-page .match-details-panel {
+  border-top: 2px solid var(--border);
+  padding: 16px 22px;
+  background: var(--surface2);
+  font-family: "Space Mono", monospace;
+}
+
+.profile-page .match-details-header-line {
+  margin-bottom: 12px;
+}
+
+.profile-page .match-details-meta {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.profile-page .match-details-team {
+  margin-bottom: 16px;
+}
+
+.profile-page .match-details-team:last-child {
+  margin-bottom: 0;
+}
+
+.profile-page .match-details-team-header.team-header {
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+}
+
+.profile-page .match-details-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-page .match-details-table-header.player-row,
+.profile-page .match-details-player-row.player-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 64px 72px 56px 44px 44px 1fr;
+  gap: 8px;
+  align-items: center;
+  min-height: 28px;
+  font-size: 10px;
+  color: var(--ink);
+}
+
+.profile-page .match-details-table-header.player-row {
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.profile-page .match-details-player-row.player-row.me-row {
+  background: rgba(29, 78, 216, 0.08);
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+  border-radius: 4px;
+}
+
+.profile-page .match-details-col-champ {
+  width: 24px;
+  height: 24px;
+}
+
+.profile-page .match-details-champ-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  object-fit: cover;
+}
+
+.profile-page .match-details-champ-placeholder {
+  display: block;
+  width: 24px;
+  height: 24px;
+  background: var(--surface);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.profile-page .match-details-col-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-page .match-details-col-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.profile-page .match-details-item-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  object-fit: contain;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .profile-page .profile-hero {

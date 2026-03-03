@@ -6,6 +6,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
+import { MatchDetails } from "@/components/MatchDetails";
 import {
   getChampionSplashUrl,
   getChampionSquareUrl,
@@ -357,6 +358,7 @@ export default function SummonerProfileBeige({
   const [summoner, setSummoner] = useState<SummonerDto | null>(null);
   const [matches, setMatches] = useState<MatchDto[]>([]);
   const [detailMatch, setDetailMatch] = useState<MatchDto | null>(null);
+  const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
   const [leagueEntries, setLeagueEntries] = useState<LeagueEntryDto[] | null>(null);
   const [leagueEntriesBySummonerId, setLeagueEntriesBySummonerId] = useState<
     Record<string, LeagueEntryDto[]>
@@ -875,14 +877,22 @@ export default function SummonerProfileBeige({
           const blueRows = [...blueFive, ...Array(5 - blueFive.length).fill(null)];
           const redRows = [...redFive, ...Array(5 - redFive.length).fill(null)];
           const { impactByPuuid, bestWinningPuuid, bestLosingPuuid } = getMatchImpactHighlights(m);
+          const matchId = m.metadata?.matchId ?? "";
 
           return (
-            <button
-              key={m.metadata?.matchId ?? ""}
-              type="button"
-              className={`profile-match-row ${win ? "win" : "loss"}${badgeInfo?.badge === "Main Character" ? " profile-match-row-main-character" : ""}`}
-              onClick={() => setDetailMatch(m)}
-            >
+            <div key={matchId} className="profile-match-card-wrap">
+              <div
+                role="button"
+                tabIndex={0}
+                className={`profile-match-row ${win ? "win" : "loss"}${badgeInfo?.badge === "Main Character" ? " profile-match-row-main-character" : ""}`}
+                onClick={() => setExpandedMatchId((prev) => (prev === matchId ? null : matchId))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setExpandedMatchId((prev) => (prev === matchId ? null : matchId));
+                  }
+                }}
+              >
               <div className="profile-match-left-zone">
                 <div className="profile-match-left-visual">
                   <div className="profile-outcome-col">
@@ -1168,7 +1178,16 @@ export default function SummonerProfileBeige({
                   )}
                 </div>
               </div>
-            </button>
+              </div>
+              {expandedMatchId === matchId ? (
+                <MatchDetails
+                  match={m}
+                  puuidOfSearchedPlayer={account.puuid}
+                  queue={queue === "flex" ? "flex" : "solo"}
+                  ddragonVersion={ddragonVersion}
+                />
+              ) : null}
+            </div>
           );
         })}
       </div>
