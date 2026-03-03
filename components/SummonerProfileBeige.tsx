@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
 import {
@@ -298,9 +298,14 @@ export default function SummonerProfileBeige({
   region?: string;
 } = {}) {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const riotIdParam = riotIdProp !== undefined && riotIdProp !== null ? riotIdProp : searchParams.get("riotId");
   const regionVal = regionProp ?? DEFAULT_REGION;
   const parsed = parseRiotIdFromQuery(riotIdParam);
+  const queue = searchParams.get("queue") ?? "solo";
+  const targetQueueType = queue === "flex" ? "RANKED_FLEX_SR" : "RANKED_SOLO_5x5";
+  const queueIdForMatches = queue === "flex" ? 440 : 420;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -308,9 +313,7 @@ export default function SummonerProfileBeige({
   const [summoner, setSummoner] = useState<SummonerDto | null>(null);
   const [matches, setMatches] = useState<MatchDto[]>([]);
   const [detailMatch, setDetailMatch] = useState<MatchDto | null>(null);
-  const [leagueEntry, setLeagueEntry] = useState<LeagueEntryDto | null>(null);
-  /** Only set when showing RANKED_FLEX_SR as fallback */
-  const [leagueQueueLabel, setLeagueQueueLabel] = useState<"" | "Flex">("");
+  const [leagueEntries, setLeagueEntries] = useState<LeagueEntryDto[] | null>(null);
   const [rankError, setRankError] = useState<string | null>(null);
   const [rankLoading, setRankLoading] = useState(false);
   const [avgRank, setAvgRank] = useState<{ label: string; rankedCount: number }>({ label: "Unranked", rankedCount: 0 });
@@ -369,7 +372,7 @@ export default function SummonerProfileBeige({
           2
         ),
         fetchJsonWithRetry<{ matchIds: string[] }>(
-          `/api/riot/matches?puuid=${encodeURIComponent(accountRes.puuid)}&region=${regionVal}&count=20`,
+          `/api/riot/matches?puuid=${encodeURIComponent(accountRes.puuid)}&region=${regionVal}&count=20&queue=${queueIdForMatches}`,
           2
         ),
       ]);
@@ -395,8 +398,7 @@ export default function SummonerProfileBeige({
           riotBody: riotBodySnippet,
         });
         setRankError(`Rank unavailable (${leagueRes.status})`);
-        setLeagueEntry(null);
-        setLeagueQueueLabel("");
+        setLeagueEntries(null);
       } else {
         let entries: LeagueEntryDto[] | null = null;
         try {
@@ -408,8 +410,7 @@ export default function SummonerProfileBeige({
             body: leagueBody,
           });
           setRankError(`Rank unavailable (${leagueRes.status})`);
-          setLeagueEntry(null);
-          setLeagueQueueLabel("");
+          setLeagueEntries(null);
         }
         if (entries !== null && !Array.isArray(entries)) {
           console.error("[riot/league] Rank response not an array", {
@@ -418,15 +419,10 @@ export default function SummonerProfileBeige({
             body: leagueBody,
           });
           setRankError(`Rank unavailable (${leagueRes.status})`);
-          setLeagueEntry(null);
-          setLeagueQueueLabel("");
+          setLeagueEntries(null);
         } else if (entries !== null) {
-          const solo = entries.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null;
-          const flex = entries.find((e) => e.queueType === "RANKED_FLEX_SR") ?? null;
-          const chosen = solo ?? flex;
           setRankError(null);
-          setLeagueEntry(chosen);
-          setLeagueQueueLabel(chosen === flex && flex != null ? "Flex" : "");
+          setLeagueEntries(entries);
         }
       }
       setRankLoading(false);
@@ -452,15 +448,14 @@ export default function SummonerProfileBeige({
       setAccount(null);
       setSummoner(null);
       setMatches([]);
-      setLeagueEntry(null);
-      setLeagueQueueLabel("");
+      setLeagueEntries(null);
       setRankError(null);
       setRankLoading(false);
       setAvgRank({ label: "Unranked", rankedCount: 0 });
     } finally {
       setLoading(false);
     }
-  }, [parsed?.gameName, parsed?.tagLine]);
+  }, [parsed?.gameName, parsed?.tagLine, regionVal, queue, queueIdForMatches]);
 
   useEffect(() => {
     fetchProfile();
@@ -581,6 +576,16 @@ export default function SummonerProfileBeige({
   const role = primaryRole(matches, account.puuid);
   const level = summoner?.summonerLevel ?? 0;
 
+  const leagueEntry = leagueEntries?.find((e) => e.queueType === targetQueueType) ?? null;
+  const leagueQueueLabel = queue === "flex" ? "Flex" : "";
+
+  const setQueueTab = (q: "solo" | "flex") => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("riotId", riotIdParam ?? "");
+    params.set("queue", q);
+    router.replace(`${pathname ?? "/summoner"}?${params.toString()}`);
+  };
+
   return (
     <>
       <section className="profile-hero">
@@ -659,13 +664,41 @@ export default function SummonerProfileBeige({
                 );
               })()
             ) : (
-              <span className="profile-ranked-unranked">Unranked</span>
+              <>
+                <div className="profile-ranked-header">
+                  <span className="profile-ranked-tier-line profile-ranked-unranked">
+                    Unranked
+                    {leagueQueueLabel && (
+                      <span className="profile-ranked-queue-label"> · {leagueQueueLabel}</span>
+                    )}
+                  </span>
+                </div>
+                <div className="profile-ranked-lp">0 LP</div>
+                <div className="profile-ranked-wl">0W 0L</div>
+                <div className="profile-ranked-winrate">0% win rate, 0 games</div>
+              </>
             )}
           </div>
         </div>
       </section>
 
       <div className="recent-matches-section">
+        <div className="profile-queue-tabs">
+          <button
+            type="button"
+            className={`profile-queue-tab${queue === "solo" ? " profile-queue-tab-active" : ""}`}
+            onClick={() => setQueueTab("solo")}
+          >
+            Solo or Duo
+          </button>
+          <button
+            type="button"
+            className={`profile-queue-tab${queue === "flex" ? " profile-queue-tab-active" : ""}`}
+            onClick={() => setQueueTab("flex")}
+          >
+            Flex
+          </button>
+        </div>
         <div className="profile-matches-header">
           <div className="profile-matches-header-left">
             <h2 className="profile-matches-title">Recent Matches</h2>

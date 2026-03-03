@@ -20,6 +20,8 @@ export async function GET(request: Request) {
   const region = searchParams.get("region") ?? "na1";
   const puuid = searchParams.get("puuid");
   const count = searchParams.get("count") ?? "20";
+  /** Optional queue id: 420 = Solo, 440 = Flex. Passed to Riot to filter match ids. */
+  const queue = searchParams.get("queue");
   if (!puuid) {
     return NextResponse.json(
       { error: "Missing puuid", status: 400 },
@@ -29,7 +31,10 @@ export async function GET(request: Request) {
 
   const routing = getRoutingRegion(region);
   const base = RIOT_MATCH_BASE.replace("{region}", routing);
-  const url = `${base}/by-puuid/${encodeURIComponent(puuid)}/ids?count=${encodeURIComponent(count)}`;
+  let url = `${base}/by-puuid/${encodeURIComponent(puuid)}/ids?count=${encodeURIComponent(count)}`;
+  if (queue != null && queue !== "") {
+    url += `&queue=${encodeURIComponent(queue)}`;
+  }
   const res = await fetch(url, {
     cache: "no-store",
     headers: { "X-Riot-Token": key },
