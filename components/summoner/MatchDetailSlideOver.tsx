@@ -1,14 +1,13 @@
 "use client";
 
 import type { MatchDto } from "@/types/riot";
+import { isValidItemId, DEFAULT_DDRAGON_VERSION } from "@/lib/riotAssets";
 
 function formatDuration(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
-
-const ITEM_ICON_BASE = "https://ddragon.leagueoflegends.com/cdn/14.6.1/img/item";
 
 export function MatchDetailSlideOver({
   match,
@@ -24,9 +23,7 @@ export function MatchDetailSlideOver({
 
   const duration = formatDuration(match.info?.gameDuration ?? 0);
   const cs = (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
-  const items = [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6].filter(
-    (i): i is number => i != null && i > 0
-  );
+  const itemSlots = [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6];
 
   return (
     <>
@@ -83,14 +80,23 @@ export function MatchDetailSlideOver({
             <div>
               <dt className="text-zinc-500 mb-2">Build</dt>
               <dd className="flex flex-wrap gap-2">
-                {items.map((id) => (
-                  <img
-                    key={id}
-                    src={`${ITEM_ICON_BASE}/${id}.png`}
-                    alt=""
-                    className="w-10 h-10 rounded bg-white/5"
-                  />
-                ))}
+                {itemSlots.map((itemId, idx) =>
+                  isValidItemId(itemId) ? (
+                    <img
+                      key={itemId}
+                      src={`https://ddragon.leagueoflegends.com/cdn/${DEFAULT_DDRAGON_VERSION}/img/item/${itemId}.png`}
+                      alt={`Item ${itemId}`}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-10 h-10 rounded bg-white/5"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div key={idx} className="item-slot-empty w-10 h-10 rounded bg-white/5" />
+                  )
+                )}
               </dd>
             </div>
           </dl>

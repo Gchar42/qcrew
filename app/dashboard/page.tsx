@@ -7,7 +7,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getChampionSplashUrl,
   getProfileIconUrl,
-  getItemIconUrl,
+  isValidItemId,
+  DEFAULT_DDRAGON_VERSION,
 } from "@/lib/riotAssets";
 import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
 import { computeImpactScore } from "@/lib/impactScore";
@@ -473,7 +474,7 @@ export default function DashboardRiotSearchPage() {
               const badges = getMatchBadges(m);
               const badgeInfo = badges.get(account.puuid);
 
-              const items = [
+              const itemSlots = [
                 p.item0,
                 p.item1,
                 p.item2,
@@ -481,10 +482,7 @@ export default function DashboardRiotSearchPage() {
                 p.item4,
                 p.item5,
                 p.item6,
-              ].filter(
-                (x): x is number =>
-                  typeof x === "number" && x > 0
-              );
+              ];
 
               return (
                 <div
@@ -548,23 +546,26 @@ export default function DashboardRiotSearchPage() {
                     </div>
 
                     <div className="flex shrink-0 items-center gap-2">
-                      {items.slice(0, 7).map((id) => {
-                        const iconUrl = getItemIconUrl(id);
-                        if (!iconUrl) return null;
-                        return (
+                      {itemSlots.slice(0, 7).map((itemId, idx) =>
+                        isValidItemId(itemId) ? (
+                          <img
+                            key={itemId}
+                            src={`https://ddragon.leagueoflegends.com/cdn/${DEFAULT_DDRAGON_VERSION}/img/item/${itemId}.png`}
+                            alt={`Item ${itemId}`}
+                            loading="lazy"
+                            decoding="async"
+                            className="h-9 w-9 rounded-lg border border-white/10 bg-black/30 object-cover"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                        ) : (
                           <div
-                            key={id}
-                            className="relative h-9 w-9 overflow-hidden rounded-lg border border-white/10 bg-black/30"
-                          >
-                            <Image
-                              src={iconUrl}
-                              alt={`Item ${id}`}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        );
-                      })}
+                            key={idx}
+                            className="item-slot-empty h-9 w-9 rounded-lg border border-white/10 bg-black/30"
+                          />
+                        )
+                      )}
                     </div>
                   </div>
                 </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { getChampionSplashUrl, getItemIconUrl } from "@/lib/riotAssets";
+import { getChampionSplashUrl, isValidItemId, DEFAULT_DDRAGON_VERSION } from "@/lib/riotAssets";
 import { getBadgeCategory } from "@/lib/matchBadges";
 
 function badgeChipClass(badge: string): string {
@@ -95,19 +95,24 @@ export function MatchCard({
           </div>
         </div>
         <div className="flex gap-1 shrink-0">
-          {items.slice(0, 6).map((id) => {
-            const iconUrl = getItemIconUrl(id);
-            if (!iconUrl) return null;
-            return (
+          {items.slice(0, 6).map((id, idx) =>
+            isValidItemId(id) ? (
               <img
                 key={id}
-                src={iconUrl}
-                alt=""
+                src={`https://ddragon.leagueoflegends.com/cdn/${DEFAULT_DDRAGON_VERSION}/img/item/${id}.png`}
+                alt={`Item ${id}`}
+                loading="lazy"
+                decoding="async"
                 className="w-8 h-8 rounded bg-white/5"
                 title={`Item ${id}`}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
               />
-            );
-          })}
+            ) : (
+              <div key={idx} className="item-slot-empty w-8 h-8 rounded bg-white/5" />
+            )
+          )}
         </div>
       </div>
     </button>

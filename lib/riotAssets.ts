@@ -1,5 +1,12 @@
 const DDragonVersion = "14.16.1";
 
+/** Default Data Dragon version for item/spell/champion assets when not fetched. Use same as spells/runes. */
+export const DEFAULT_DDRAGON_VERSION = DDragonVersion;
+
+/** Use when rendering item slots: only render an img if the value is a valid item id. */
+export const isValidItemId = (v: unknown): v is number =>
+  typeof v === "number" && Number.isFinite(v) && v > 0;
+
 /** Display name (from Riot API) to Data Dragon champion key for URLs */
 const CHAMPION_NAME_TO_KEY: Record<string, string> = {
   "Dr. Mundo": "DrMundo",

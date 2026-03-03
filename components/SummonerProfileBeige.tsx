@@ -9,10 +9,11 @@ import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver
 import {
   getChampionSplashUrl,
   getChampionSquareUrl,
-  getItemIconUrl,
   getProfileIconUrl,
   getRankEmblemUrl,
   getSummonerSpellIconUrl,
+  isValidItemId,
+  DEFAULT_DDRAGON_VERSION,
 } from "@/lib/riotAssets";
 import {
   getPerkIconUrl,
@@ -822,20 +823,29 @@ export default function SummonerProfileBeige({
                     )}
                   </div>
                   <div className="profile-match-items-row">
-                    {([p.item0, p.item1, p.item2, p.item3, p.item4, p.item5] as (number | undefined)[]).map((id, idx) => {
-                      const iconUrl = id != null && id > 0 ? getItemIconUrl(id) : null;
+                    {([p.item0, p.item1, p.item2, p.item3, p.item4, p.item5] as (number | undefined)[]).map((itemId, idx) => {
                       const timesBySlot = m.itemPurchaseTimesBySlot;
                       const timeStr = timesBySlot?.[idx] ?? null;
-                      const captionText =
-                        id != null && id > 0 && timeStr ? timeStr : null;
+                      const captionText = isValidItemId(itemId) && timeStr ? timeStr : null;
+                      const itemVersion = ddragonVersion ?? DEFAULT_DDRAGON_VERSION;
                       return (
                         <div key={`item-${idx}`} className="profile-match-item-tile">
                           <span className="profile-match-item">
-                            {iconUrl ? (
+                            {isValidItemId(itemId) ? (
                               /* eslint-disable-next-line @next/next/no-img-element */
-                              <img src={iconUrl} alt="" width={22} height={22} />
+                              <img
+                                src={`https://ddragon.leagueoflegends.com/cdn/${itemVersion}/img/item/${itemId}.png`}
+                                alt={`Item ${itemId}`}
+                                loading="lazy"
+                                decoding="async"
+                                width={22}
+                                height={22}
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                                }}
+                              />
                             ) : (
-                              <span className="profile-match-item-empty" aria-hidden />
+                              <div className="item-slot-empty" />
                             )}
                           </span>
                           <span className="profile-match-item-caption" style={{ fontSize: 12 }}>
@@ -844,10 +854,20 @@ export default function SummonerProfileBeige({
                         </div>
                       );
                     })}
-                    {p.item6 != null && p.item6 > 0 ? (
+                    {isValidItemId(p.item6) ? (
                       <span className="profile-match-item profile-match-item-trinket">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={getItemIconUrl(p.item6)} alt="" width={22} height={22} />
+                        <img
+                          src={`https://ddragon.leagueoflegends.com/cdn/${ddragonVersion ?? DEFAULT_DDRAGON_VERSION}/img/item/${p.item6}.png`}
+                          alt={`Item ${p.item6}`}
+                          loading="lazy"
+                          decoding="async"
+                          width={22}
+                          height={22}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = "none";
+                          }}
+                        />
                       </span>
                     ) : null}
                   </div>
