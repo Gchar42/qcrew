@@ -30,9 +30,8 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
       setError("Enter both name and tag");
       return;
     }
-    const nameEnc = encodeURIComponent(name);
-    const tagEnc = encodeURIComponent(tag);
-    router.push(`/summoner/${region}/${nameEnc}/${tagEnc}`);
+    const riotId = `${name}#${tag}`;
+    router.push(`/summoner?riotId=${encodeURIComponent(riotId)}`);
   }
 
   return (
