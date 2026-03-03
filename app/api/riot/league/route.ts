@@ -6,8 +6,13 @@ export const revalidate = 0;
 
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
 
+/**
+ * League-v4 is platform-routed (e.g. na1.api.riotgames.com), NOT americas.
+ * Americas is only for account-v1 and match-v5.
+ */
 export async function GET(request: Request) {
   const key = process.env.RIOT_API_KEY;
+  console.log("[riot/league] RIOT_API_KEY exists:", !!key);
   if (!key) {
     return NextResponse.json(
       { error: "Riot API key not configured", status: 503 },
@@ -26,6 +31,7 @@ export async function GET(request: Request) {
   }
 
   const url = `https://${region}.api.riotgames.com/lol/league/v4/entries/by-summoner/${encodeURIComponent(summonerId)}`;
+  console.log("[riot/league] League V4 request URL:", url);
   const res = await fetch(url, {
     cache: "no-store",
     headers: { "X-Riot-Token": key },
@@ -33,10 +39,12 @@ export async function GET(request: Request) {
 
   const text = await res.text();
   if (!res.ok) {
-    if (res.status === 404) {
-      return NextResponse.json([] as LeagueEntryDto[], { headers: NO_CACHE });
-    }
-    console.error("[riot/league] Riot response:", res.status, res.statusText, text);
+    console.error("[riot/league] League V4 request failed", {
+      url,
+      status: res.status,
+      statusText: res.statusText,
+      body: text,
+    });
     const message = text || "League lookup failed";
     return NextResponse.json(
       { error: message, status: res.status },

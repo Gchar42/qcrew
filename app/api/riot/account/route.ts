@@ -5,6 +5,7 @@ import { getCached, setCache } from "@/lib/supabase/route";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+/** Account-v1 uses routing region (e.g. americas), not platform. */
 const RIOT_ACCOUNT_BASE = "https://{region}.api.riotgames.com/riot/account/v1";
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
 

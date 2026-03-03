@@ -5,6 +5,7 @@ export const revalidate = 0;
 
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
 
+/** Summoner-v4 is platform-routed (e.g. na1), not americas. */
 export async function GET(request: Request) {
   const key = process.env.RIOT_API_KEY;
   if (!key) {

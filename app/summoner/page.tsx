@@ -269,6 +269,7 @@ function SummonerProfileContent() {
   const [matches, setMatches] = useState<MatchDto[]>([]);
   const [detailMatch, setDetailMatch] = useState<MatchDto | null>(null);
   const [soloLeagueEntry, setSoloLeagueEntry] = useState<LeagueEntryDto | null>(null);
+  const [rankError, setRankError] = useState<string | null>(null);
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
@@ -330,13 +331,52 @@ function SummonerProfileContent() {
       ]);
       setSummoner(summonerRes);
 
-      const leagueRes = await fetch(
-        `/api/riot/league?summonerId=${encodeURIComponent(summonerRes.id)}&region=${REGION}`
-      ).then((r) => (r.ok ? r.json() : []) as Promise<LeagueEntryDto[]>).catch(() => []);
-      const solo = Array.isArray(leagueRes)
-        ? leagueRes.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null
-        : null;
-      setSoloLeagueEntry(solo ?? null);
+      const leagueUrl = `/api/riot/league?summonerId=${encodeURIComponent(summonerRes.id)}&region=${REGION}`;
+      const leagueRes = await fetch(leagueUrl);
+      const leagueBody = await leagueRes.text();
+      if (!leagueRes.ok) {
+        console.error("[riot/league] Rank fetch failed", {
+          url: leagueUrl,
+          status: leagueRes.status,
+          statusCode: leagueRes.status,
+          body: leagueBody,
+        });
+        setRankError(`Rank unavailable (${leagueRes.status})`);
+        setSoloLeagueEntry(null);
+      } else {
+        let entries: LeagueEntryDto[] | null = null;
+        try {
+          entries = JSON.parse(leagueBody) as LeagueEntryDto[];
+        } catch {
+          console.error("[riot/league] Rank response not JSON", {
+            url: leagueUrl,
+            status: leagueRes.status,
+            body: leagueBody,
+          });
+          setRankError("Rank unavailable");
+          setSoloLeagueEntry(null);
+        }
+        if (entries !== null && !Array.isArray(entries)) {
+          console.error("[riot/league] Rank response not an array", {
+            url: leagueUrl,
+            status: leagueRes.status,
+            body: leagueBody,
+          });
+          setRankError("Rank unavailable");
+          setSoloLeagueEntry(null);
+        } else if (entries !== null) {
+          const solo = entries.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null;
+          if (solo == null) {
+            console.log("[riot/league] No RANKED_SOLO_5x5 entry (Unranked)", {
+              url: leagueUrl,
+              status: leagueRes.status,
+              body: leagueBody,
+            });
+          }
+          setRankError(null);
+          setSoloLeagueEntry(solo);
+        }
+      }
 
       const matchDetails = await mapWithConcurrency(
         matchListRes.matchIds.slice(0, 20),
@@ -360,6 +400,7 @@ function SummonerProfileContent() {
       setSummoner(null);
       setMatches([]);
       setSoloLeagueEntry(null);
+      setRankError(null);
     } finally {
       setLoading(false);
     }
@@ -479,7 +520,11 @@ function SummonerProfileContent() {
         </div>
         <div className="profile-hero-right">
           <div className="profile-ranked-summary">
-            {soloLeagueEntry != null ? (
+            {rankError != null ? (
+              <span className="profile-ranked-error" title={rankError}>
+                Rank unavailable
+              </span>
+            ) : soloLeagueEntry != null ? (
               <>
                 <div className="profile-ranked-current">
                   <span className="profile-ranked-emblem-wrap">

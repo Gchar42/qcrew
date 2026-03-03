@@ -264,6 +264,12 @@
   color: var(--muted);
 }
 
+.profile-page .profile-ranked-error {
+  font-family: "Space Mono", monospace;
+  font-size: 14px;
+  color: var(--error, #c53030);
+}
+
 .profile-page .profile-ranked-past {
   font-family: "Space Mono", monospace;
   font-size: 10px;
