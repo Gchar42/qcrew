@@ -132,3 +132,9 @@ export function getRuneStyleIconUrl(
   const v = version || DDragonVersion;
   return `https://ddragon.leagueoflegends.com/cdn/${v}/img/${path}`;
 }
+
+/** Ranked tier emblem (CommunityDragon). tier e.g. "EMERALD", "PLATINUM". */
+export function getRankEmblemUrl(tier: string): string {
+  const key = tier.toLowerCase();
+  return `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem/emblem-${key}.png`;
+}

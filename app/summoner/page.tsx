@@ -10,6 +10,7 @@ import {
   getChampionSplashUrl,
   getChampionSquareUrl,
   getItemIconUrl,
+  getRankEmblemUrl,
   getSummonerSpellIconUrl,
 } from "@/lib/riotAssets";
 import {
@@ -26,6 +27,22 @@ import type { AccountDto, SummonerDto, MatchDto } from "@/types/riot";
 function getBadgeCategoryClass(badge: string): string {
   const cat = getBadgeCategory(badge);
   return `profile-badge-chip-badge-${cat}`;
+}
+
+/** Current rank (from league API when available). */
+type CurrentRank = { tier: string; division: string } | null;
+/** Past season rank line. */
+type PastSeasonRank = { season: string; tier: string; division: string };
+
+/** Format tier + division e.g. "Emerald II". */
+function formatRankTier(tier: string, division: string): string {
+  const t = tier.charAt(0) + tier.slice(1).toLowerCase();
+  return `${t} ${division}`;
+}
+
+/** Placeholder until league API exists. */
+function getCurrentRank(): CurrentRank {
+  return null;
 }
 
 const REGION = "na1";
@@ -424,6 +441,12 @@ function SummonerProfileContent() {
   const role = primaryRole(matches, account.puuid);
   const level = summoner?.summonerLevel ?? 0;
 
+  const currentRank = getCurrentRank();
+  const pastSeasons: PastSeasonRank[] = [];
+  const losses = total > 0 ? total - wins : 0;
+  const winPct = total > 0 ? Math.round((wins / total) * 100) : 0;
+  const winBarPct = total > 0 ? (wins / total) * 100 : 0;
+
   return (
     <>
       <section className="profile-hero">
@@ -446,21 +469,63 @@ function SummonerProfileContent() {
           </div>
         </div>
         <div className="profile-hero-right">
-          <div className="profile-winrate-number">
-            {winRate}<span className="pct">%</span>
-          </div>
-          <div className="profile-winrate-record">
-            <span className="w">{wins}W</span> <span className="l">{total - wins}L</span>
+          <div className="profile-ranked-summary">
+            <div className="profile-ranked-current">
+              {currentRank != null ? (
+                <>
+                  <span className="profile-ranked-emblem-wrap">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={getRankEmblemUrl(currentRank.tier)}
+                      alt=""
+                      className="profile-ranked-emblem"
+                      width={56}
+                      height={56}
+                    />
+                  </span>
+                  <span className="profile-ranked-tier">
+                    {formatRankTier(currentRank.tier, currentRank.division)}
+                  </span>
+                </>
+              ) : (
+                <span className="profile-ranked-unranked">Unranked</span>
+              )}
+            </div>
+            {pastSeasons.length > 0 && (
+              <div className="profile-ranked-past">
+                {pastSeasons.map((s) => (
+                  <div key={s.season} className="profile-ranked-past-line">
+                    Season {s.season}: {formatRankTier(s.tier, s.division)}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="profile-win-loss-bar-wrap">
+              <div
+                className="profile-win-loss-bar profile-win-loss-bar-wins"
+                style={{
+                  width: `${winBarPct}%`,
+                  minWidth: wins > 0 ? "28px" : undefined,
+                }}
+              >
+                {total > 0 && wins >= 0 && <span className="profile-win-loss-bar-label">{wins}W</span>}
+              </div>
+              <div
+                className="profile-win-loss-bar profile-win-loss-bar-losses"
+                style={{
+                  width: `${100 - winBarPct}%`,
+                  minWidth: losses > 0 ? "28px" : undefined,
+                }}
+              >
+                {total > 0 && losses >= 0 && <span className="profile-win-loss-bar-label">{losses}L</span>}
+              </div>
+            </div>
+            {total > 0 && (
+              <div className="profile-win-rate-secondary">{winPct}% win rate</div>
+            )}
           </div>
         </div>
       </section>
-
-      <div className="profile-win-bar-wrap">
-        <div
-          className="profile-win-bar-fill"
-          style={{ width: `${winRate}%` }}
-        />
-      </div>
 
       <div className="profile-stats-row">
         <div className="profile-stat-cell">
@@ -487,9 +552,6 @@ function SummonerProfileContent() {
 
       <div className="profile-matches-header">
         <h2 className="profile-matches-title">Recent Matches</h2>
-        <span className="profile-matches-winrate">
-          {total > 0 && `${winRate}% win rate`}
-        </span>
       </div>
       <div className="profile-matches-list">
         {matches.map((m) => {

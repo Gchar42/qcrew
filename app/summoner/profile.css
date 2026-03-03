@@ -200,59 +200,104 @@
 
 .profile-page .profile-hero-right {
   text-align: right;
+  min-width: 0;
 }
 
-.profile-page .profile-winrate-number {
+/* Ranked summary block */
+.profile-page .profile-ranked-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.profile-page .profile-ranked-current {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-page .profile-ranked-emblem-wrap {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.profile-page .profile-ranked-emblem {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.profile-page .profile-ranked-tier {
   font-family: "Unbounded", sans-serif;
-  font-size: 72px;
-  font-weight: 900;
-  line-height: 1.15;
-  letter-spacing: -4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
 }
 
-.profile-page .profile-winrate-number .pct {
-  font-size: 36px;
-  font-weight: 300;
-  color: var(--muted);
-}
-
-.profile-page .profile-winrate-record {
+.profile-page .profile-ranked-unranked {
   font-family: "Space Mono", monospace;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
-  margin-top: 6px;
 }
 
-.profile-page .profile-winrate-record .w {
-  color: var(--win);
-  font-weight: 700;
+.profile-page .profile-ranked-past {
+  font-family: "Space Mono", monospace;
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.5;
+  text-align: right;
 }
 
-.profile-page .profile-winrate-record .l {
-  color: var(--loss);
-  font-weight: 700;
+.profile-page .profile-ranked-past-line {
+  margin-top: 1px;
 }
 
-/* Win bar */
-.profile-page .profile-win-bar-wrap {
-  height: 8px;
-  background: var(--loss-bg);
-  border: 2px solid var(--ink);
-  border-top: none;
-  margin-bottom: 28px;
+/* Win/loss progress bar – green left (W), red right (L), labels centered */
+.profile-page .profile-win-loss-bar-wrap {
+  display: flex;
+  width: 100%;
+  max-width: 200px;
+  height: 28px;
+  border-radius: 8px;
   overflow: hidden;
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
 }
 
-.profile-page .profile-win-bar-fill {
-  height: 100%;
-  background: var(--win-bg);
-  animation: profileBarGrow 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+.profile-page .profile-win-loss-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  transition: width 0.4s ease;
 }
 
-@keyframes profileBarGrow {
-  from {
-    width: 0;
-  }
+.profile-page .profile-win-loss-bar-wins {
+  background: var(--win);
+  color: #fff;
+}
+
+.profile-page .profile-win-loss-bar-losses {
+  background: var(--loss);
+  color: #fff;
+}
+
+.profile-page .profile-win-loss-bar-label {
+  font-family: "Space Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-page .profile-win-rate-secondary {
+  font-family: "Space Mono", monospace;
+  font-size: 10px;
+  color: var(--muted);
 }
 
 /* Stats row */
