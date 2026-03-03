@@ -235,7 +235,8 @@
 .profile-page .profile-ranked-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  font-size: 24px;
 }
 
 .profile-page .profile-ranked-emblem-wrap {
@@ -244,6 +245,7 @@
   justify-content: center;
   flex-shrink: 0;
   transition: transform 0.2s ease, filter 0.2s ease;
+  line-height: 1;
 }
 
 .profile-page .profile-ranked-emblem-wrap:hover {
@@ -251,10 +253,11 @@
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.15));
 }
 
+/* Emblem same height as tier text (e.g. "Platinum III") */
 .profile-page .profile-ranked-emblem {
   display: block;
-  width: 56px;
-  height: 56px;
+  width: 1em;
+  height: 1em;
   object-fit: contain;
 }
 
@@ -266,7 +269,7 @@
 
 .profile-page .profile-ranked-tier-line {
   font-family: "Unbounded", sans-serif;
-  font-size: 18px;
+  font-size: 1em;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--ink);
