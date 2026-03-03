@@ -509,13 +509,14 @@ export default function SummonerProfileBeige({
   const total = matches.length;
   const winRate = total ? Math.round((wins / total) * 100) : 0;
 
-  const last10 = matches.slice(0, 10);
+  const matchCount = matches?.length ?? 0;
+  const n = matchCount || 1;
   let avgKills = 0,
     avgDeaths = 0,
     avgAssists = 0,
     totalCs = 0,
     totalDurationSec = 0;
-  last10.forEach((m) => {
+  matches.forEach((m) => {
     const p = participant(m);
     if (p) {
       avgKills += p.kills;
@@ -525,7 +526,6 @@ export default function SummonerProfileBeige({
     }
     totalDurationSec += m.info?.gameDuration ?? 0;
   });
-  const n = last10.length || 1;
   avgKills = Math.round((avgKills / n) * 10) / 10;
   avgDeaths = Math.round((avgDeaths / n) * 10) / 10;
   avgAssists = Math.round((avgAssists / n) * 10) / 10;
@@ -620,31 +620,27 @@ export default function SummonerProfileBeige({
         </div>
       </section>
 
-      <div className="profile-stats-row">
-        <div className="profile-stat-cell">
-          <div className="profile-stat-label">Avg KDA</div>
-          <div className="profile-stat-value blue">
-            {avgKills} / {avgDeaths} / {avgAssists}
-          </div>
-        </div>
-        <div className="profile-stat-cell">
-          <div className="profile-stat-label">CS / Min</div>
-          <div className="profile-stat-value">{avgCsPerMin.toFixed(1)}</div>
-        </div>
-        <div className="profile-stat-cell">
-          <div className="profile-stat-label">Avg Duration</div>
-          <div className="profile-stat-value">
-            {avgDurationMin.toFixed(1)}<span className="unit">m</span>
-          </div>
-        </div>
-        <div className="profile-stat-cell">
-          <div className="profile-stat-label">Rank</div>
-          <div className="profile-stat-value pending">Data coming soon</div>
-        </div>
-      </div>
-
       <div className="profile-matches-header">
-        <h2 className="profile-matches-title">Recent Matches</h2>
+        <div className="profile-matches-header-left">
+          <h2 className="profile-matches-title">Recent Matches</h2>
+          <span className="profile-matches-count">({matchCount})</span>
+        </div>
+        <div className="profile-matches-header-stats">
+          <span className="profile-matches-stat-chip">
+            {avgKills}/{avgDeaths}/{avgAssists} <span className="profile-matches-stat-label">KDA</span>
+          </span>
+          <span className="profile-matches-stat-chip">
+            {avgCsPerMin.toFixed(1)} <span className="profile-matches-stat-label">CS/m</span>
+          </span>
+          <span className="profile-matches-stat-chip">
+            {avgDurationMin.toFixed(1)}m <span className="profile-matches-stat-label">avg</span>
+          </span>
+          {leagueEntry != null && (
+            <span className="profile-matches-stat-chip profile-matches-stat-rank">
+              {formatRankTier(leagueEntry.tier, leagueEntry.rank)}
+            </span>
+          )}
+        </div>
       </div>
       <div className="profile-matches-list">
         {matches.map((m) => {

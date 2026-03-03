@@ -425,13 +425,21 @@
   margin-top: 6px;
 }
 
-/* Matches header */
+/* Matches header – one row: title + count left, stat chips right; wraps on mobile */
 .profile-page .profile-matches-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: baseline;
+  gap: 8px 16px;
   margin-bottom: 10px;
   padding: 0 4px;
+}
+
+.profile-page .profile-matches-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
 }
 
 .profile-page .profile-matches-title {
@@ -441,6 +449,39 @@
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--ink);
+}
+
+.profile-page .profile-matches-count {
+  font-family: "Space Mono", monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.profile-page .profile-matches-header-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.profile-page .profile-matches-stat-chip {
+  font-family: "Space Mono", monospace;
+  font-size: 11px;
+  color: var(--ink);
+}
+
+.profile-page .profile-matches-stat-label {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.profile-page .profile-matches-stat-rank {
+  font-family: "Unbounded", sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .profile-page .profile-matches-winrate {
