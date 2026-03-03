@@ -253,11 +253,10 @@
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.15));
 }
 
-/* Emblem same height as tier text (e.g. "Platinum III") */
 .profile-page .profile-ranked-emblem {
   display: block;
-  width: 1em;
-  height: 1em;
+  width: 20px;
+  height: 20px;
   object-fit: contain;
 }
 
