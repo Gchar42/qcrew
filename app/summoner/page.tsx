@@ -389,9 +389,11 @@ function SummonerProfileContent() {
           setLeagueQueueLabel("");
         } else if (entries !== null) {
           const solo = entries.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null;
+          const flex = entries.find((e) => e.queueType === "RANKED_FLEX_SR") ?? null;
+          const chosen = solo ?? flex;
           setRankError(null);
-          setLeagueEntry(solo);
-          setLeagueQueueLabel("");
+          setLeagueEntry(chosen);
+          setLeagueQueueLabel(chosen === flex && flex != null ? "Flex" : "");
         }
       }
       setRankLoading(false);

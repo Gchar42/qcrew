@@ -59,18 +59,13 @@ export async function GET(request: Request) {
   console.log("[riot/summoner] data.id exists:", "id" in data && data.id != null);
 
   if (!data?.id) {
-    console.error("[riot/summoner] data.id (encryptedSummonerId) is missing on 200 response. Keys:", keys);
-    return NextResponse.json(
-      { error: "missing encryptedSummonerId (summoner v4 response must include field id)", status: 502, keys },
-      { status: 502, headers: NO_CACHE }
-    );
+    console.warn("[riot/summoner] data.id (encryptedSummonerId) missing; returning payload anyway so profile can load. Rank will use puuid.", keys);
   }
 
   return NextResponse.json(
     {
       puuid: data.puuid,
-      encryptedSummonerId: data.id,
-      id: data.id,
+      ...(data.id != null && { encryptedSummonerId: data.id, id: data.id }),
       accountId: data.accountId,
       name: data.name,
       profileIconId: data.profileIconId,
