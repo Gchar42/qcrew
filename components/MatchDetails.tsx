@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import type { MatchDto } from "@/types/riot";
 import {
   getChampionSquareUrl,
@@ -76,8 +75,6 @@ export function MatchDetails({
   stylesById: Map<number, string>;
   rankBadgesByPuuid?: Record<string, string | null>;
 }) {
-  const [openTeam, setOpenTeam] = useState<"win" | "lose" | null>("win");
-
   const parts = match.info?.participants ?? [];
   const team100 = parts.filter((p) => p.teamId === 100);
   const team200 = parts.filter((p) => p.teamId === 200);
@@ -93,31 +90,23 @@ export function MatchDetails({
   const winAgg = teamAggregates(winningTeam);
   const loseAgg = teamAggregates(losingTeam);
 
-  const renderAccordion = (
+  const renderTeamSection = (
     team: Participant[],
     teamKey: "win" | "lose",
     teamLabel: string,
     agg: { kills: number; gold: number }
-  ) => {
-    const isOpen = openTeam === teamKey;
-    return (
-      <div key={teamKey} className="match-acc">
-        <button
-          type="button"
-          className={`match-acc-header match-acc-header-${teamKey}`}
-          onClick={() => setOpenTeam(isOpen ? null : teamKey)}
-          aria-expanded={isOpen}
-        >
-          <span className="match-acc-label">{teamLabel}</span>
-          <span className="match-acc-summary">
-            {agg.kills} kills · {agg.gold.toLocaleString()} gold
-          </span>
-        </button>
-        {isOpen && (
-          <div className="match-acc-body">
+  ) => (
+    <div key={teamKey} className="match-acc">
+      <div className={`match-acc-header match-acc-header-${teamKey}`}>
+        <span className="match-acc-label">{teamLabel}</span>
+        <span className="match-acc-summary">
+          {agg.kills} kills · {agg.gold.toLocaleString()} gold
+        </span>
+      </div>
+      <div className="match-acc-body">
             <div className="match-acc-stat-headers player-row">
               <span className="player-left-dummy" />
-              <span className="player-items-dummy" />
+              <span className="player-items-label stat-head">Items</span>
               <div className="player-stats">
                 <span className="stat-head">Impact</span>
                 <span className="stat-head">KDA</span>
@@ -233,8 +222,8 @@ export function MatchDetails({
                           key={`${p.puuid}-item-${i}`}
                           src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
                           alt=""
-                          width={28}
-                          height={28}
+                          width={22}
+                          height={22}
                           className="player-item-icon"
                         />
                       ) : (
@@ -255,11 +244,9 @@ export function MatchDetails({
                 </div>
               );
             })}
-          </div>
-        )}
       </div>
-    );
-  };
+    </div>
+  );
 
   return (
     <div className="match-details-panel">
@@ -268,13 +255,13 @@ export function MatchDetails({
           {durationStr} · {queueName}
         </span>
       </div>
-      {renderAccordion(
+      {renderTeamSection(
         winningTeam,
         "win",
         winningTeam === team100 ? "TEAM 1 (Victory)" : "TEAM 2 (Victory)",
         winAgg
       )}
-      {renderAccordion(
+      {renderTeamSection(
         losingTeam,
         "lose",
         losingTeam === team100 ? "TEAM 1 (Defeat)" : "TEAM 2 (Defeat)",
