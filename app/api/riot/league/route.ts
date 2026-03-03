@@ -12,7 +12,14 @@ const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
  */
 export async function GET(request: Request) {
   const key = process.env.RIOT_API_KEY;
-  console.log("[riot/league] RIOT_API_KEY exists:", !!key);
+  const origin = request.headers.get("origin") ?? null;
+  const host = request.headers.get("host") ?? null;
+  console.log("[riot/league] On every request:", {
+    riotApiKeyExists: !!key,
+    riotApiKeyFirst5: key ? key.slice(0, 5) : "(none)",
+    requestOrigin: origin,
+    requestHost: host,
+  });
   if (!key) {
     return NextResponse.json(
       { error: "Riot API key not configured", status: 503 },
@@ -39,6 +46,8 @@ export async function GET(request: Request) {
   });
 
   const url = `https://${region}.api.riotgames.com/lol/league/v4/entries/by-summoner/${encodeURIComponent(summonerId)}`;
+  console.log("[riot/league] Exact Riot URL being called:", url);
+  // Riot expects "X-Riot-Token" only. Do NOT use Authorization: Bearer.
   const res = await fetch(url, {
     cache: "no-store",
     headers: { "X-Riot-Token": key },
@@ -55,7 +64,10 @@ export async function GET(request: Request) {
 
   if (!res.ok) {
     if (res.status === 403) {
-      console.error("[riot/league] → 403: API key invalid, expired, or blocked");
+      console.error("[riot/league] → 403: API key invalid, expired, or blocked. Riot response body:", text);
+      if (/production|forbidden/i.test(text)) {
+        console.error("[riot/league] → 403 body mentions production/forbidden → fix: use a production-approved API key.");
+      }
     } else if (res.status === 429) {
       console.error("[riot/league] → 429: Rate limited");
     } else if (res.status === 404) {
