@@ -16,6 +16,14 @@ export type SummonerDto = {
 
 export type MatchListDto = { matchIds: string[] };
 
+/** Server-attached: first match only — raw timeline counts and purchasedByPid[1..10]. */
+export type TimelineDiagnosticsDto = {
+  totalFrames: number;
+  totalEvents: number;
+  totalPurchased: number;
+  purchasedByPid: number[];
+};
+
 export type MatchDto = {
   metadata: { matchId: string; participants?: string[] };
   /** Server-attached: purchase times "m:ss" or null for item slots 0–5 (no trinket). */
@@ -27,6 +35,8 @@ export type MatchDto = {
     pid: number | null;
     pidPurchased: number;
   };
+  /** Server-attached: first match only — raw timeline counts and purchasedByPid[1..10]. */
+  timelineDiagnostics?: TimelineDiagnosticsDto;
   info: {
     gameDuration: number;
     gameEndTimestamp?: number;
