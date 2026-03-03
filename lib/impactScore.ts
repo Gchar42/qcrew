@@ -27,6 +27,23 @@ const ASSASSIN_CHAMPS = new Set([
   "Naafiri",
 ]);
 
+/** Engage supports: CC heavily rewarded. */
+const SUPPORT_ENGAGE_CHAMPS = new Set([
+  "Alistar",
+  "Thresh",
+  "Nautilus",
+  "Leona",
+  "Rell",
+  "Blitzcrank",
+  "Braum",
+  "Taric",
+  "Rakan",
+  "Maokai",
+  "Amumu",
+  "Pantheon",
+  "Pyke",
+]);
+
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -98,6 +115,9 @@ export function computeImpactScore(match: MatchDto, puuid: string): ImpactResult
   const utilityPm = (totalHealsOnTeammates + totalDamageShieldedOnTeammates) / minutes;
 
   const role = getPosition(p);
+  const isSupport = role === "UTILITY" || role === "SUPPORT";
+  const isEngageSupport =
+    isSupport && SUPPORT_ENGAGE_CHAMPS.has(p.championName ?? "");
 
   // ---- CombatScore (0–100) ----
   let combatKdaWeight = 30;
@@ -115,10 +135,11 @@ export function computeImpactScore(match: MatchDto, puuid: string): ImpactResult
   let turretWeight = 20;
   let csWeight = 35;
 
-  if (role === "UTILITY" || role === "SUPPORT") {
-    combatDpmWeight = 20; // reduce from 35; add utility 15 so sum stays 100
+  if (isSupport) {
+    // Support uses custom supportScore below; keep defaults for component norms
+    combatDpmWeight = 20;
     combatUtilityWeight = 15;
-    visionWeight = 18; // +20% in MacroScore
+    visionWeight = 18;
     csWeight = 32;
     turretWeight = 20;
     objDpmWeight = 30;
@@ -182,16 +203,60 @@ export function computeImpactScore(match: MatchDto, puuid: string): ImpactResult
   let effectivePenalty = baseDeathPenalty * (1 - 0.7 * mitigation);
 
   const assassinMode =
-    ASSASSIN_CHAMPS.has(p.championName) &&
+    ASSASSIN_CHAMPS.has(p.championName ?? "") &&
     (killsPerMin >= 0.35 || dpm >= 650 || takedownsPerMin >= 0.9);
   if (assassinMode) {
     effectivePenalty *= 0.88;
   }
 
+  // UTILITY death penalty reduction only for engage supports with high participation
+  if (isEngageSupport && takedownsPerMin >= 0.9) {
+    effectivePenalty *= 0.9;
+  }
+
   const efficiencyModifier = clamp(1.05 - 0.5 * effectivePenalty, 0.75, 1.05);
 
   // ---- Final score ----
-  const baseImpact = Math.max(combatScore, macroScore) / 100;
+  let baseImpact: number;
+  if (isSupport) {
+    const involvement = (combatKda + combatTakedowns) / 2;
+    const effNorm = (efficiencyModifier - 0.75) / 0.3;
+    const hasHealingShielding = totalHealsOnTeammates + totalDamageShieldedOnTeammates > 0;
+    let supportBase: number;
+    if (isEngageSupport) {
+      supportBase =
+        30 * involvement +
+        25 * macroVision +
+        20 * combatCc +
+        10 * combatDpm +
+        10 * macroObj +
+        5 * effNorm;
+      baseImpact = clamp(supportBase / 100, 0, 1);
+    } else {
+      if (hasHealingShielding) {
+        supportBase =
+          30 * involvement +
+          25 * macroVision +
+          5 * combatCc +
+          20 * combatDpm +
+          15 * combatUtility +
+          5 * macroObj +
+          5 * effNorm;
+        baseImpact = clamp(supportBase / 105, 0, 1);
+      } else {
+        supportBase =
+          37.5 * involvement +
+          32.5 * macroVision +
+          5 * combatCc +
+          20 * combatDpm +
+          5 * macroObj +
+          5 * effNorm;
+        baseImpact = clamp(supportBase / 100, 0, 1);
+      }
+    }
+  } else {
+    baseImpact = Math.max(combatScore, macroScore) / 100;
+  }
   let rawScore = baseImpact * efficiencyModifier * 100;
 
   const eliteMarkers = [
