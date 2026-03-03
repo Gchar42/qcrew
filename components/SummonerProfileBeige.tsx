@@ -75,9 +75,6 @@ function getRankTierColorClass(tier: string): string {
 
 const DEFAULT_REGION = "na1";
 
-// Client-side cache for participant rank badges, keyed by `${queue}:${summonerId}`.
-const clientBadgeCache = new Map<string, string | null>();
-
 /** Platform to short display label for badge/eyebrow */
 function regionDisplayLabel(region: string): string {
   const r = region.toLowerCase();
@@ -342,10 +339,14 @@ export default function SummonerProfileBeige({
   const [leagueEntriesBySummonerId, setLeagueEntriesBySummonerId] = useState<
     Record<string, LeagueEntryDto[]>
   >({});
+  const [rankBadgesBySummonerId, setRankBadgesBySummonerId] = useState<Record<string, string | null>>({});
   const [rankError, setRankError] = useState<string | null>(null);
   const [rankLoading, setRankLoading] = useState(false);
-  const [badgeVersion, setBadgeVersion] = useState(0);
   const [avgRank, setAvgRank] = useState<{ label: string; rankedCount: number }>({ label: "Unranked", rankedCount: 0 });
+
+  function mergeBadges(next: Record<string, string | null>) {
+    setRankBadgesBySummonerId((prev) => ({ ...prev, ...next }));
+  }
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
@@ -560,45 +561,31 @@ export default function SummonerProfileBeige({
       .catch(() => setAvgRank({ label: "Unranked", rankedCount: 0 }));
   }, [matches, regionVal]);
 
-  // Lazily fetch participant rank badges in batches, cached per queue + summonerId.
+  // Fetch rank badges for first match only (minimal); expand to matches.slice(0, 3) when confirmed.
   useEffect(() => {
     if (matches.length === 0) return;
-    const ids = new Set<string>();
-    matches.forEach((m) =>
-      m.info?.participants?.forEach((p) => {
-        if (p.summonerId) ids.add(p.summonerId);
-      })
-    );
-    const missing: string[] = [];
-    ids.forEach((id) => {
-      const key = `${queue}:${id}`;
-      if (!clientBadgeCache.has(key)) missing.push(id);
-    });
-    if (missing.length === 0) return;
-    fetch("/api/ranks", {
+    const firstMatch = matches[0];
+    const summonerIds = (firstMatch?.info?.participants ?? [])
+      .map((p) => p.summonerId)
+      .filter((id): id is string => Boolean(id));
+    const unique = [...new Set(summonerIds)];
+    if (unique.length === 0) return;
+    fetch("/api/riot/rank-badges", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         region: regionVal,
-        queue,
-        summonerIds: missing,
+        queueType: targetQueueType,
+        summonerIds: unique,
       }),
     })
       .then((res) => (res.ok ? res.json() : { badges: {} }))
       .then((data: { badges?: Record<string, string | null> }) => {
         const badges = data.badges ?? {};
-        let changed = false;
-        Object.entries(badges).forEach(([sid, badge]) => {
-          const key = `${queue}:${sid}`;
-          if (!clientBadgeCache.has(key) || clientBadgeCache.get(key) !== badge) {
-            clientBadgeCache.set(key, badge ?? null);
-            changed = true;
-          }
-        });
-        if (changed) setBadgeVersion((v) => v + 1);
+        mergeBadges(badges);
       })
       .catch(() => {});
-  }, [matches, queue, regionVal]);
+  }, [matches, regionVal, targetQueueType]);
 
   if (!riotIdParam) {
     return (
@@ -800,6 +787,7 @@ export default function SummonerProfileBeige({
           <div className="profile-matches-header-left">
             <h2 className="profile-matches-title">Recent Matches</h2>
             <span className="profile-matches-count">({matchCount})</span>
+            <span className="profile-matches-debug">Rank badges loaded: {Object.keys(rankBadgesBySummonerId).length}</span>
           </div>
           <div className="profile-matches-header-stats recent-stats">
             <div className="stat-chip">
@@ -1074,14 +1062,15 @@ export default function SummonerProfileBeige({
                           ddragonVersion={ddragonVersion}
                           highlight={part.puuid === account?.puuid}
                         />
-                        <span className="profile-match-team-name" title={part.riotIdGameName ?? part.summonerName}>
-                          {part.riotIdGameName ?? part.summonerName}
+                        <span className="profile-match-team-name-line">
+                          <span className="profile-match-team-name" title={part.riotIdGameName ?? part.summonerName}>
+                            {part.riotIdGameName ?? part.summonerName}
+                          </span>
+                          {rankBadgesBySummonerId[part.summonerId ?? ""] ? (
+                            <span className="profile-match-rank-badge">{rankBadgesBySummonerId[part.summonerId!]}</span>
+                          ) : null}
                         </span>
-                        <span className="profile-match-team-extra">
-                          {part.summonerId
-                            ? clientBadgeCache.get(`${queue}:${part.summonerId}`) ?? null
-                            : null}
-                        </span>
+                        <span className="profile-match-team-extra" aria-hidden />
                       </div>
                     ) : (
                       <div key={`blue-placeholder-${i}`} className="profile-match-team-row profile-match-team-row-placeholder" aria-hidden>
@@ -1119,14 +1108,15 @@ export default function SummonerProfileBeige({
                           ddragonVersion={ddragonVersion}
                           highlight={part.puuid === account?.puuid}
                         />
-                        <span className="profile-match-team-name" title={part.riotIdGameName ?? part.summonerName}>
-                          {part.riotIdGameName ?? part.summonerName}
+                        <span className="profile-match-team-name-line">
+                          <span className="profile-match-team-name" title={part.riotIdGameName ?? part.summonerName}>
+                            {part.riotIdGameName ?? part.summonerName}
+                          </span>
+                          {rankBadgesBySummonerId[part.summonerId ?? ""] ? (
+                            <span className="profile-match-rank-badge">{rankBadgesBySummonerId[part.summonerId!]}</span>
+                          ) : null}
                         </span>
-                        <span className="profile-match-team-extra">
-                          {part.summonerId
-                            ? clientBadgeCache.get(`${queue}:${part.summonerId}`) ?? null
-                            : null}
-                        </span>
+                        <span className="profile-match-team-extra" aria-hidden />
                       </div>
                     ) : (
                       <div key={`red-placeholder-${i}`} className="profile-match-team-row profile-match-team-row-placeholder" aria-hidden>

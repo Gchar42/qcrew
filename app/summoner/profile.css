@@ -1136,7 +1136,17 @@
   font-weight: 700;
 }
 
-/* Column 2: summoner name — fixed width, left aligned, single line ellipsis, vertically centered */
+/* Name + rank badge line in team row */
+.profile-page .profile-match-team-name-line {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+  width: 72px;
+  max-width: 72px;
+  line-height: 28px;
+}
+
 .profile-page .profile-match-team-name {
   display: block;
   font-size: 9px;
@@ -1145,10 +1155,24 @@
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
-  width: 72px;
-  max-width: 72px;
+  flex: 1;
   line-height: 28px;
   text-align: left;
+}
+
+.profile-page .profile-match-rank-badge {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.profile-page .profile-matches-debug {
+  font-family: "Space Mono", monospace;
+  font-size: 10px;
+  color: var(--muted);
+  margin-left: 8px;
 }
 
 /* Column 3: extra icon slot — always present, empty placeholder if no icon */
