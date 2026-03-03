@@ -65,6 +65,8 @@ export type MatchDto = {
     gameVersion?: string;
     participants: Array<{
       puuid: string;
+      /** Encrypted summoner id (for League v4 by-summoner). Present in Riot match-v5 response. */
+      summonerId?: string;
       /** Timeline participantId (1–10) when present in Riot response */
       participantId?: number;
       summonerName: string;

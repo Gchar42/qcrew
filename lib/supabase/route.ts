@@ -9,7 +9,7 @@ export function getSupabase() {
   return createClient(url, key);
 }
 
-export async function getCached<T>(key: string): Promise<T | null> {
+export async function getCached<T>(key: string, maxAgeMs?: number): Promise<T | null> {
   const supabase = getSupabase();
   if (!supabase) return null;
   const { data, error } = await supabase
@@ -19,7 +19,8 @@ export async function getCached<T>(key: string): Promise<T | null> {
     .single();
   if (error || !data) return null;
   const fetchedAt = new Date(data.fetched_at).getTime();
-  if (Date.now() - fetchedAt > CACHE_TTL_MS) return null;
+  const ttl = maxAgeMs ?? CACHE_TTL_MS;
+  if (Date.now() - fetchedAt > ttl) return null;
   return data.data as T;
 }
 

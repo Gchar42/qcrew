@@ -23,6 +23,7 @@ import {
 } from "@/lib/runesCd";
 import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
+import { numberToRankLabel, rankToNumber } from "@/lib/rankMapping";
 import type { AccountDto, LeagueEntryDto, SummonerDto, MatchDto } from "@/types/riot";
 
 /** Badge name -> profile CSS class for chip styling */
@@ -312,6 +313,7 @@ export default function SummonerProfileBeige({
   const [leagueQueueLabel, setLeagueQueueLabel] = useState<"" | "Flex">("");
   const [rankError, setRankError] = useState<string | null>(null);
   const [rankLoading, setRankLoading] = useState(false);
+  const [avgRankLabel, setAvgRankLabel] = useState<string>("Unranked");
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
@@ -454,6 +456,7 @@ export default function SummonerProfileBeige({
       setLeagueQueueLabel("");
       setRankError(null);
       setRankLoading(false);
+      setAvgRankLabel("Unranked");
     } finally {
       setLoading(false);
     }
@@ -462,6 +465,47 @@ export default function SummonerProfileBeige({
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  useEffect(() => {
+    if (matches.length === 0) {
+      setAvgRankLabel("Unranked");
+      return;
+    }
+    const summonerIds = new Set<string>();
+    matches.forEach((m) =>
+      m.info?.participants?.forEach((p) => {
+        if (p.summonerId) summonerIds.add(p.summonerId);
+      })
+    );
+    const idList = [...summonerIds].slice(0, 100);
+    if (idList.length === 0) {
+      setAvgRankLabel("Unranked");
+      return;
+    }
+    const platform = regionVal ?? "na1";
+    fetch(
+      `/api/riot/league-batch?summonerIds=${idList.map((id) => encodeURIComponent(id)).join(",")}&platform=${encodeURIComponent(platform)}`
+    )
+      .then((res) => (res.ok ? res.json() : { entries: {} }))
+      .then((data: { entries?: Record<string, { tier: string; rank: string } | null> }) => {
+        const entries = data.entries ?? {};
+        const numbers: number[] = [];
+        idList.forEach((id) => {
+          const e = entries[id];
+          if (e?.tier) {
+            const num = rankToNumber(e.tier, e.rank ?? "IV");
+            if (num != null) numbers.push(num);
+          }
+        });
+        if (numbers.length === 0) {
+          setAvgRankLabel("Unranked");
+          return;
+        }
+        const avg = numbers.reduce((a, b) => a + b, 0) / numbers.length;
+        setAvgRankLabel(numberToRankLabel(avg));
+      })
+      .catch(() => setAvgRankLabel("Unranked"));
+  }, [matches, regionVal]);
 
   if (!riotIdParam) {
     return (
@@ -620,29 +664,28 @@ export default function SummonerProfileBeige({
         </div>
       </section>
 
-      <div className="profile-matches-header">
-        <div className="profile-matches-header-left">
-          <h2 className="profile-matches-title">Recent Matches</h2>
-          <span className="profile-matches-count">({matchCount})</span>
-        </div>
-        <div className="profile-matches-header-stats">
-          <span className="profile-matches-stat-chip">
-            {avgKills}/{avgDeaths}/{avgAssists} <span className="profile-matches-stat-label">KDA</span>
-          </span>
-          <span className="profile-matches-stat-chip">
-            {avgCsPerMin.toFixed(1)} <span className="profile-matches-stat-label">CS/m</span>
-          </span>
-          <span className="profile-matches-stat-chip">
-            {avgDurationMin.toFixed(1)}m <span className="profile-matches-stat-label">avg</span>
-          </span>
-          {leagueEntry != null && (
-            <span className="profile-matches-stat-chip profile-matches-stat-rank">
-              {formatRankTier(leagueEntry.tier, leagueEntry.rank)}
+      <div className="recent-matches-section">
+        <div className="profile-matches-header">
+          <div className="profile-matches-header-left">
+            <h2 className="profile-matches-title">Recent Matches</h2>
+            <span className="profile-matches-count">({matchCount})</span>
+          </div>
+          <div className="profile-matches-header-stats">
+            <span className="profile-matches-stat-chip">
+              {avgKills}/{avgDeaths}/{avgAssists} <span className="profile-matches-stat-label">KDA</span>
             </span>
-          )}
+            <span className="profile-matches-stat-chip">
+              {avgCsPerMin.toFixed(1)} <span className="profile-matches-stat-label">CS/m</span>
+            </span>
+            <span className="profile-matches-stat-chip">
+              {avgDurationMin.toFixed(1)}m <span className="profile-matches-stat-label">avg</span>
+            </span>
+            <span className="profile-matches-stat-chip profile-matches-stat-rank">
+              {avgRankLabel} <span className="profile-matches-stat-label">AVG RANK</span>
+            </span>
+          </div>
         </div>
-      </div>
-      <div className="profile-matches-list">
+        <div className="profile-matches-list">
         {matches.map((m) => {
           const p = participant(m);
           if (!p) return null;
@@ -956,6 +999,8 @@ export default function SummonerProfileBeige({
             </button>
           );
         })}
+      </div>
+
       </div>
 
       {detailMatch && (

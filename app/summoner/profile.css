@@ -425,6 +425,11 @@
   margin-top: 6px;
 }
 
+/* Section wrapper: spacing between banner and Recent Matches */
+.profile-page .recent-matches-section {
+  margin-top: 18px;
+}
+
 /* Matches header – one row: title + count left, stat chips right; wraps on mobile */
 .profile-page .profile-matches-header {
   display: flex;
