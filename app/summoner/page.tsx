@@ -343,7 +343,7 @@ function SummonerProfileContent() {
       setSummoner(summonerRes);
 
       setRankLoading(true);
-      const encryptedSummonerId = summonerRes.id;
+      const encryptedSummonerId = summonerRes.encryptedSummonerId ?? summonerRes.id;
       if (!encryptedSummonerId) {
         console.error(
           "[riot/league] Missing encryptedSummonerId (summoner.id). Do not call League V4. Full summoner response:",
@@ -354,6 +354,7 @@ function SummonerProfileContent() {
         setLeagueQueueLabel("");
         setRankLoading(false);
       } else {
+      console.log("[riot/league] encryptedSummonerId being sent to /api/riot/league:", encryptedSummonerId);
       const leagueUrl = `/api/riot/league?encryptedSummonerId=${encodeURIComponent(encryptedSummonerId)}&region=${REGION}`;
       const leagueRes = await fetch(leagueUrl);
       const leagueBody = await leagueRes.text();

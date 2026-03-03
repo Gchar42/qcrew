@@ -6,6 +6,8 @@ export type AccountDto = {
 
 export type SummonerDto = {
   id: string;
+  /** Explicit copy of id for League V4; server returns this from summoner-v4 response. */
+  encryptedSummonerId?: string;
   accountId: string;
   puuid: string;
   name: string;

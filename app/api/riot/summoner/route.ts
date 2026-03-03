@@ -47,5 +47,19 @@ export async function GET(request: Request) {
   }
 
   const data = JSON.parse(text);
-  return NextResponse.json(data, { headers: NO_CACHE });
+  console.log("[riot/summoner] Full Riot summoner-v4 response JSON:", JSON.stringify(data));
+
+  const encryptedSummonerId = data?.id;
+  if (!encryptedSummonerId) {
+    console.error("[riot/summoner] encryptedSummonerId (response.id) is falsy. Full summoner response:", JSON.stringify(data));
+    return NextResponse.json(
+      { error: "missing encryptedSummonerId (summoner v4 response must include field id)", status: 500 },
+      { status: 500, headers: NO_CACHE }
+    );
+  }
+
+  return NextResponse.json(
+    { ...data, encryptedSummonerId },
+    { headers: NO_CACHE }
+  );
 }
