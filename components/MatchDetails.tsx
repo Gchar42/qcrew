@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { useState } from "react";
 import type { MatchDto } from "@/types/riot";
 import {
   getChampionSquareUrl,
@@ -39,6 +39,26 @@ function participantDisplayName(p: Participant): string {
   return p.summonerName ?? "";
 }
 
+function teamAggregates(team: Participant[]) {
+  let kills = 0;
+  let deaths = 0;
+  let assists = 0;
+  let gold = 0;
+  let damage = 0;
+  let vision = 0;
+  team.forEach((p) => {
+    kills += p.kills ?? 0;
+    deaths += p.deaths ?? 0;
+    assists += p.assists ?? 0;
+    gold += (p as Participant & { goldEarned?: number }).goldEarned ?? 0;
+    damage +=
+      (p as Participant & { totalDamageDealtToChampions?: number })
+        .totalDamageDealtToChampions ?? 0;
+    vision += (p as Participant & { visionScore?: number }).visionScore ?? 0;
+  });
+  return { kills, deaths, assists, gold, damage, vision };
+}
+
 export function MatchDetails({
   match,
   puuidOfSearchedPlayer,
@@ -56,6 +76,8 @@ export function MatchDetails({
   stylesById: Map<number, string>;
   rankBadgesByPuuid?: Record<string, string | null>;
 }) {
+  const [openTeam, setOpenTeam] = useState<"win" | "lose" | null>("win");
+
   const parts = match.info?.participants ?? [];
   const team100 = parts.filter((p) => p.teamId === 100);
   const team200 = parts.filter((p) => p.teamId === 200);
@@ -68,153 +90,176 @@ export function MatchDetails({
   const queueName = queueLabel(match.info?.queueId);
   const version = ddragonVersion ?? DEFAULT_DDRAGON_VERSION;
 
-  const renderTeam = (team: Participant[], label: string, isWinner: boolean) => (
-    <div key={label} className="match-details-team">
-      <div className="match-details-team-header team-header">
-        {isWinner ? "Victory" : "Defeat"} ({label})
-      </div>
-      <div className="match-details-table">
-        <div className="match-details-table-header player-row">
-          <span className="match-details-col-champ" />
-          <span className="match-details-col-name">Player</span>
-          <span className="match-details-col-impact">Impact</span>
-          <span className="match-details-col-kda">KDA</span>
-          <span className="match-details-col-damage">Damage</span>
-          <span className="match-details-col-gold">Gold</span>
-          <span className="match-details-col-cs">CS</span>
-          <span className="match-details-col-vision">Vision</span>
-          <span className="match-details-col-items">Items</span>
-        </div>
-        {team.map((p) => {
-          const isMe = p.puuid === puuidOfSearchedPlayer;
-          const kda = `${p.kills}/${p.deaths}/${p.assists}`;
-          const damage =
-            (p as Participant & { totalDamageDealtToChampions?: number })
-              .totalDamageDealtToChampions ?? 0;
-          const gold = (p as Participant & { goldEarned?: number }).goldEarned ?? 0;
-          const cs = (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
-          const vision = (p as Participant & { visionScore?: number }).visionScore ?? 0;
-          const itemIds = [
-            p.item0,
-            p.item1,
-            p.item2,
-            p.item3,
-            p.item4,
-            p.item5,
-            p.item6,
-          ].filter((id): id is number => id != null && id > 0);
-          const champUrl = getChampionSquareUrl(p.championName, version);
-          const impactScore = computeImpactScore(match, p.puuid)?.score ?? 0;
+  const winAgg = teamAggregates(winningTeam);
+  const loseAgg = teamAggregates(losingTeam);
 
-          const spell1Src = getSummonerSpellIconUrl(p.summoner1Id, version);
-          const spell2Src = getSummonerSpellIconUrl(p.summoner2Id, version);
-          const primaryKeystoneId =
-            p.perks?.styles?.[0]?.selections?.[0]?.perk;
-          const secondaryStyleId = p.perks?.styles?.[1]?.style;
-          const keystoneSrc = getPerkIconUrl(primaryKeystoneId, perksById);
-          const secondarySrc = getStyleIconUrlCd(secondaryStyleId, stylesById);
+  const renderAccordion = (
+    team: Participant[],
+    teamKey: "win" | "lose",
+    teamLabel: string,
+    agg: { kills: number; gold: number }
+  ) => {
+    const isOpen = openTeam === teamKey;
+    return (
+      <div key={teamKey} className="match-acc">
+        <button
+          type="button"
+          className={`match-acc-header match-acc-header-${teamKey}`}
+          onClick={() => setOpenTeam(isOpen ? null : teamKey)}
+          aria-expanded={isOpen}
+        >
+          <span className="match-acc-label">{teamLabel}</span>
+          <span className="match-acc-summary">
+            {agg.kills} kills · {agg.gold.toLocaleString()} gold
+          </span>
+        </button>
+        {isOpen && (
+          <div className="match-acc-body">
+            <div className="match-acc-stat-headers player-row">
+              <span className="player-left-dummy" />
+              <span className="player-items-dummy" />
+              <div className="player-stats">
+                <span className="stat-head">Impact</span>
+                <span className="stat-head">KDA</span>
+                <span className="stat-head">CS</span>
+                <span className="stat-head">Vision</span>
+                <span className="stat-head">Dmg</span>
+                <span className="stat-head">Gold</span>
+              </div>
+            </div>
+            {team.map((p) => {
+              const isMe = p.puuid === puuidOfSearchedPlayer;
+              const kda = `${p.kills}/${p.deaths}/${p.assists}`;
+              const damage =
+                (p as Participant & { totalDamageDealtToChampions?: number })
+                  .totalDamageDealtToChampions ?? 0;
+              const gold =
+                (p as Participant & { goldEarned?: number }).goldEarned ?? 0;
+              const cs =
+                (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
+              const vision =
+                (p as Participant & { visionScore?: number }).visionScore ?? 0;
+              const champUrl = getChampionSquareUrl(p.championName, version);
+              const impactScore = computeImpactScore(match, p.puuid)?.score ?? 0;
 
-          const badge = rankBadgesByPuuid?.[p.puuid] ?? null;
+              const spell1Src = getSummonerSpellIconUrl(p.summoner1Id, version);
+              const spell2Src = getSummonerSpellIconUrl(p.summoner2Id, version);
+              const primaryKeystoneId =
+                p.perks?.styles?.[0]?.selections?.[0]?.perk;
+              const secondaryStyleId = p.perks?.styles?.[1]?.style;
+              const keystoneSrc = getPerkIconUrl(primaryKeystoneId, perksById);
+              const secondarySrc = getStyleIconUrlCd(
+                secondaryStyleId,
+                stylesById
+              );
 
-          return (
-            <div
-              key={p.puuid}
-              className={`match-details-player-row player-row${isMe ? " me-row" : ""}`}
-            >
-              <span className="match-details-col-champ">
-                <div className="match-details-champ-block">
-                  {champUrl ? (
-                    <Image
-                      src={champUrl}
-                      alt=""
-                      width={24}
-                      height={24}
-                      unoptimized
-                      className="match-details-champ-icon"
-                    />
-                  ) : (
-                    <span className="match-details-champ-placeholder" />
-                  )}
-                  <div className="match-details-spells-runes">
-                    <div className="match-details-spells">
-                      {spell1Src && (
+              const badge = rankBadgesByPuuid?.[p.puuid] ?? null;
+
+              return (
+                <div
+                  key={p.puuid}
+                  className={`player-row${isMe ? " me-row" : ""}`}
+                >
+                  <div className="player-left">
+                    <span className="player-champ">
+                      {champUrl ? (
                         <img
-                          src={spell1Src}
+                          src={champUrl}
                           alt=""
-                          width={18}
-                          height={18}
-                          className="match-details-spell-icon"
+                          width={40}
+                          height={40}
+                          className="player-champ-icon"
                         />
+                      ) : (
+                        <span className="player-champ-placeholder" />
                       )}
-                      {spell2Src && (
-                        <img
-                          src={spell2Src}
-                          alt=""
-                          width={18}
-                          height={18}
-                          className="match-details-spell-icon"
-                        />
-                      )}
+                    </span>
+                    <div className="player-spells-runes">
+                      <div className="player-spells">
+                        {spell1Src && (
+                          <img
+                            src={spell1Src}
+                            alt=""
+                            width={22}
+                            height={22}
+                            className="player-spell-icon"
+                          />
+                        )}
+                        {spell2Src && (
+                          <img
+                            src={spell2Src}
+                            alt=""
+                            width={22}
+                            height={22}
+                            className="player-spell-icon"
+                          />
+                        )}
+                      </div>
+                      <div className="player-runes">
+                        {keystoneSrc && (
+                          <img
+                            src={keystoneSrc}
+                            alt=""
+                            width={22}
+                            height={22}
+                            className="player-rune-icon"
+                          />
+                        )}
+                        {secondarySrc && (
+                          <img
+                            src={secondarySrc}
+                            alt=""
+                            width={22}
+                            height={22}
+                            className="player-rune-icon"
+                          />
+                        )}
+                      </div>
                     </div>
-                    <div className="match-details-runes">
-                      {keystoneSrc && (
-                        <img
-                          src={keystoneSrc}
-                          alt=""
-                          width={18}
-                          height={18}
-                          className="match-details-rune-icon"
-                        />
-                      )}
-                      {secondarySrc && (
-                        <img
-                          src={secondarySrc}
-                          alt=""
-                          width={18}
-                          height={18}
-                          className="match-details-rune-icon"
-                        />
-                      )}
+                    <div className="player-name-block">
+                      <span className="player-name" title={participantDisplayName(p)}>
+                        {participantDisplayName(p)}
+                        {badge ? (
+                          <span className="rank-badge">{badge}</span>
+                        ) : null}
+                      </span>
                     </div>
                   </div>
+                  <div className="player-items">
+                    {[0, 1, 2, 3, 4, 5, 6].map((i) => {
+                      const itemId = [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6][i];
+                      return isValidItemId(itemId) ? (
+                        <img
+                          key={`${p.puuid}-item-${i}`}
+                          src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
+                          alt=""
+                          width={28}
+                          height={28}
+                          className="player-item-icon"
+                        />
+                      ) : (
+                        <span key={`${p.puuid}-item-${i}`} className="player-item-slot" />
+                      );
+                    })}
+                  </div>
+                  <div className="player-stats">
+                    <span className="stat-val">{Math.round(impactScore)}</span>
+                    <span className="stat-val">{kda}</span>
+                    <span className="stat-val">{cs}</span>
+                    <span className="stat-val">{vision}</span>
+                    <span className="stat-val">
+                      {damage.toLocaleString()}
+                    </span>
+                    <span className="stat-val">{gold.toLocaleString()}</span>
+                  </div>
                 </div>
-              </span>
-              <span className="match-details-col-name" title={participantDisplayName(p)}>
-                {participantDisplayName(p)}
-                {badge ? <span className="rank-badge">{badge}</span> : null}
-              </span>
-              <span className="match-details-col-impact">
-                {Math.round(impactScore)}
-              </span>
-              <span className="match-details-col-kda">{kda}</span>
-              <span className="match-details-col-damage">
-                {damage.toLocaleString()}
-              </span>
-              <span className="match-details-col-gold">
-                {gold.toLocaleString()}
-              </span>
-              <span className="match-details-col-cs">{cs}</span>
-              <span className="match-details-col-vision">{vision}</span>
-              <span className="match-details-col-items">
-                {itemIds.map((itemId, i) =>
-                  isValidItemId(itemId) ? (
-                    <img
-                      key={`${p.puuid}-item-${i}`}
-                      src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
-                      alt=""
-                      width={22}
-                      height={22}
-                      className="match-details-item-icon"
-                    />
-                  ) : null
-                )}
-              </span>
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="match-details-panel">
@@ -223,8 +268,18 @@ export function MatchDetails({
           {durationStr} · {queueName}
         </span>
       </div>
-      {renderTeam(winningTeam, winningTeam === team100 ? "Blue Team" : "Red Team", true)}
-      {renderTeam(losingTeam, losingTeam === team100 ? "Blue Team" : "Red Team", false)}
+      {renderAccordion(
+        winningTeam,
+        "win",
+        winningTeam === team100 ? "TEAM 1 (Victory)" : "TEAM 2 (Victory)",
+        winAgg
+      )}
+      {renderAccordion(
+        losingTeam,
+        "lose",
+        losingTeam === team100 ? "TEAM 1 (Defeat)" : "TEAM 2 (Defeat)",
+        loseAgg
+      )}
     </div>
   );
 }
