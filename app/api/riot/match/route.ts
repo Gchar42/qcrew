@@ -34,6 +34,30 @@ async function fetchTimelineServer(
   return data;
 }
 
+function resolveSelectedPuuidFromMatch(
+  match: MatchDto,
+  gameName: string,
+  tagLine: string
+): string | null {
+  const participants = match.info?.participants ?? [];
+  const lowerGame = gameName.toLowerCase();
+  const lowerTag = tagLine.toLowerCase();
+
+  // Prefer Riot ID fields when available.
+  const byRiotId = participants.find((p) => {
+    const g = (p.riotIdGameName ?? p.summonerName)?.toLowerCase();
+    const t = p.riotIdTagline?.toLowerCase();
+    return g === lowerGame && t === lowerTag;
+  });
+  if (byRiotId) return byRiotId.puuid;
+
+  // Fallback: match by summonerName only (case-insensitive).
+  const bySummonerName = participants.find(
+    (p) => p.summonerName?.toLowerCase() === lowerGame
+  );
+  return bySummonerName?.puuid ?? null;
+}
+
 export async function GET(request: Request) {
   const key = process.env.RIOT_API_KEY;
   if (!key) {
@@ -47,6 +71,8 @@ export async function GET(request: Request) {
   const region = searchParams.get("region") ?? "na1";
   const id = searchParams.get("matchId");
   const puuid = searchParams.get("puuid") ?? undefined;
+  const gameName = searchParams.get("gameName") ?? undefined;
+  const tagLine = searchParams.get("tagLine") ?? undefined;
   if (!id) {
     return NextResponse.json(
       { error: "Missing matchId", status: 400 },
@@ -77,7 +103,9 @@ export async function GET(request: Request) {
     await setCache(cacheKey, data);
   }
 
-  if (puuid) {
+  // Compute item purchase times only when we know which summoner this profile is for.
+  // selectedPuuid must come from the match participants, not from an external account API puuid.
+  if (gameName && tagLine) {
     const timeline = await fetchTimelineServer(id, region, key);
     const match = data as MatchDto;
     if (!timeline) {
@@ -89,11 +117,31 @@ export async function GET(request: Request) {
     const logFirstMatchOnly = !timelineDiagnosticsLoggedOnce;
     if (logFirstMatchOnly) timelineDiagnosticsLoggedOnce = true;
 
+    const selectedPuuid = resolveSelectedPuuidFromMatch(match, gameName, tagLine);
+    if (!selectedPuuid) {
+      if (logFirstMatchOnly) {
+        console.log("[riot/match] could not resolve selectedPuuid from match participants", {
+          gameName,
+          tagLine,
+          paramPuuid: puuid,
+          participantNames: match.info?.participants?.map((p) => ({
+            summonerName: p.summonerName,
+            riotIdGameName: p.riotIdGameName,
+            riotIdTagline: p.riotIdTagline,
+          })),
+        });
+      }
+      return NextResponse.json(
+        { ...data, itemPurchaseTimesBySlot: [null, null, null, null, null, null] },
+        { headers: NO_CACHE }
+      );
+    }
+
     const { itemPurchaseTimesBySlot, debugCounts, timelineDiagnostics } =
       computeItemPurchaseTimesBySlotWithDiagnostics(
         timeline,
         match,
-        puuid,
+        selectedPuuid,
         id,
         logFirstMatchOnly
       );

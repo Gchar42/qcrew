@@ -83,6 +83,8 @@ export type MatchDto = {
       summoner2Id?: number;
       /** Riot ID in-game name (optional, from match) */
       riotIdGameName?: string;
+      /** Riot ID tagline (optional, from match) */
+      riotIdTagline?: string;
       perks?: {
         styleIds?: number[];
         /** Primary style first, secondary second. selections[0] is keystone. */

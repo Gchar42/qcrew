@@ -434,7 +434,7 @@ function resolvePidFromTimelineMetadata(
 export function computeItemPurchaseTimesBySlotWithDiagnostics(
   timeline: MatchTimelineDto,
   _match: MatchDto,
-  puuid: string,
+  selectedPuuid: string,
   matchId: string,
   logFirstMatchOnly: boolean
 ): {
@@ -452,9 +452,9 @@ export function computeItemPurchaseTimesBySlotWithDiagnostics(
     });
   }
 
-  const pid = resolvePidFromTimelineMetadata(timeline, puuid);
+  const pid = resolvePidFromTimelineMetadata(timeline, selectedPuuid);
   const fullDiagnostics = logFirstMatchOnly
-    ? withPidMapping(timelineDiagnostics, puuid, timeline, pid)
+    ? withPidMapping(timelineDiagnostics, selectedPuuid, timeline, pid)
     : undefined;
 
   if (pid == null) {
