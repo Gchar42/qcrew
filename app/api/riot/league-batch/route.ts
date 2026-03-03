@@ -31,15 +31,12 @@ export async function GET(request: Request) {
   const rawIds = summonerIdsParam.split(",").map((s) => s.trim()).filter(Boolean);
   const uniqueIds = [...new Set(rawIds)].slice(0, MAX_SUMMONER_IDS);
 
-  const entries: Record<string, { tier: string; rank: string } | null> = {};
+  const entries: Record<string, LeagueEntryDto[]> = {};
 
   for (const summonerId of uniqueIds) {
-    const cacheKey = `leagueEntry:${summonerId}`;
-    const cached = await getCached<{ tier: string; rank: string } | null>(
-      cacheKey,
-      LEAGUE_CACHE_TTL_MS
-    );
-    if (cached !== undefined && cached !== null) {
+    const cacheKey = `leagueEntries:${summonerId}`;
+    const cached = await getCached<LeagueEntryDto[]>(cacheKey, LEAGUE_CACHE_TTL_MS);
+    if (cached !== undefined && Array.isArray(cached)) {
       entries[summonerId] = cached;
       continue;
     }
@@ -52,7 +49,7 @@ export async function GET(request: Request) {
     const text = await res.text();
 
     if (!res.ok) {
-      entries[summonerId] = null;
+      entries[summonerId] = [];
       continue;
     }
 
@@ -60,17 +57,13 @@ export async function GET(request: Request) {
     try {
       data = JSON.parse(text) as LeagueEntryDto[];
     } catch {
-      entries[summonerId] = null;
+      entries[summonerId] = [];
       continue;
     }
 
-    const solo = Array.isArray(data)
-      ? data.find((e) => e.queueType === "RANKED_SOLO_5x5" && e.tier && e.rank)
-      : null;
-    const value: { tier: string; rank: string } | null =
-      solo != null ? { tier: solo.tier, rank: solo.rank } : null;
-    entries[summonerId] = value;
-    await setCache(cacheKey, value);
+    const list = Array.isArray(data) ? data : [];
+    entries[summonerId] = list;
+    await setCache(cacheKey, list);
   }
 
   return NextResponse.json({ entries }, { headers: NO_CACHE });

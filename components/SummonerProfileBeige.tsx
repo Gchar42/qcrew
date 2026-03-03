@@ -38,6 +38,19 @@ function formatRankTier(tier: string, rank: string): string {
   return `${t} ${rank}`;
 }
 
+/** Pick queue entry and return display label, or null if unranked in that queue. */
+function formatRankBadge(
+  entries: LeagueEntryDto[] | null | undefined,
+  targetQueueType: string
+): string | null {
+  if (!entries?.length) return null;
+  const entry = entries.find(
+    (e) => e.queueType === targetQueueType && e.tier && e.rank
+  );
+  if (!entry?.tier || !entry?.rank) return null;
+  return formatRankTier(entry.tier, entry.rank);
+}
+
 /** Win rate and total games from league entry. */
 function rankStats(entry: LeagueEntryDto): { gamesPlayed: number; winRatePct: number } {
   const wins = entry.wins;
@@ -323,6 +336,9 @@ export default function SummonerProfileBeige({
   const [matches, setMatches] = useState<MatchDto[]>([]);
   const [detailMatch, setDetailMatch] = useState<MatchDto | null>(null);
   const [leagueEntries, setLeagueEntries] = useState<LeagueEntryDto[] | null>(null);
+  const [leagueEntriesBySummonerId, setLeagueEntriesBySummonerId] = useState<
+    Record<string, LeagueEntryDto[]>
+  >({});
   const [rankError, setRankError] = useState<string | null>(null);
   const [rankLoading, setRankLoading] = useState(false);
   const [avgRank, setAvgRank] = useState<{ label: string; rankedCount: number }>({ label: "Unranked", rankedCount: 0 });
@@ -516,13 +532,16 @@ export default function SummonerProfileBeige({
       `/api/riot/league-batch?summonerIds=${idList.map((id) => encodeURIComponent(id)).join(",")}&platform=${encodeURIComponent(platform)}`
     )
       .then((res) => (res.ok ? res.json() : { entries: {} }))
-      .then((data: { entries?: Record<string, { tier: string; rank: string } | null> }) => {
+      .then((data: { entries?: Record<string, LeagueEntryDto[]> }) => {
         const entries = data.entries ?? {};
+        setLeagueEntriesBySummonerId(entries);
         const values: number[] = [];
+        const targetSolo = "RANKED_SOLO_5x5";
         idList.forEach((id) => {
-          const e = entries[id];
-          if (!e?.tier || !e?.rank) return;
-          const numeric = rankToNumber(e.tier, e.rank);
+          const list = entries[id] ?? [];
+          const solo = list.find((e) => e.queueType === targetSolo && e.tier && e.rank);
+          if (!solo?.tier || !solo?.rank) return;
+          const numeric = rankToNumber(solo.tier, solo.rank);
           if (numeric != null && Number.isFinite(numeric)) values.push(numeric);
         });
         let label: string;
@@ -1014,7 +1033,16 @@ export default function SummonerProfileBeige({
                         <span className="profile-match-team-name" title={part.riotIdGameName ?? part.summonerName}>
                           {part.riotIdGameName ?? part.summonerName}
                         </span>
-                        <span className="profile-match-team-extra" aria-hidden />
+                        <span className="profile-match-team-extra">
+                          {(() => {
+                            const sid = part.summonerId;
+                            const entries = leagueEntriesBySummonerId[sid ?? ""] ?? [];
+                            const badge = formatRankBadge(entries, targetQueueType);
+                            if (!badge && entries?.length) console.log("No badge but entries exist", sid, entries);
+                            if (!badge && sid) console.log("No entries for sid", sid);
+                            return badge ?? null;
+                          })()}
+                        </span>
                       </div>
                     ) : (
                       <div key={`blue-placeholder-${i}`} className="profile-match-team-row profile-match-team-row-placeholder" aria-hidden>
@@ -1055,7 +1083,16 @@ export default function SummonerProfileBeige({
                         <span className="profile-match-team-name" title={part.riotIdGameName ?? part.summonerName}>
                           {part.riotIdGameName ?? part.summonerName}
                         </span>
-                        <span className="profile-match-team-extra" aria-hidden />
+                        <span className="profile-match-team-extra">
+                          {(() => {
+                            const sid = part.summonerId;
+                            const entries = leagueEntriesBySummonerId[sid ?? ""] ?? [];
+                            const badge = formatRankBadge(entries, targetQueueType);
+                            if (!badge && entries?.length) console.log("No badge but entries exist", sid, entries);
+                            if (!badge && sid) console.log("No entries for sid", sid);
+                            return badge ?? null;
+                          })()}
+                        </span>
                       </div>
                     ) : (
                       <div key={`red-placeholder-${i}`} className="profile-match-team-row profile-match-team-row-placeholder" aria-hidden>
