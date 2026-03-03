@@ -1,33 +1,33 @@
-\"use client\";
+"use client";
 
-import Image from \"next/image\";
-import type { MatchDto } from \"@/types/riot\";
+import Image from "next/image";
+import type { MatchDto } from "@/types/riot";
 import {
   getChampionSquareUrl,
   getSummonerSpellIconUrl,
   isValidItemId,
   DEFAULT_DDRAGON_VERSION,
-} from \"@/lib/riotAssets\";
-import { getPerkIconUrl, getStyleIconUrlCd } from \"@/lib/runesCd\";
-import { computeImpactScore } from \"@/lib/impactScore\";
+} from "@/lib/riotAssets";
+import { getPerkIconUrl, getStyleIconUrlCd } from "@/lib/runesCd";
+import { computeImpactScore } from "@/lib/impactScore";
 
-type Participant = NonNullable<MatchDto[\"info\"]>[\"participants\"][number];
+type Participant = NonNullable<MatchDto["info"]>["participants"][number];
 
 function formatDuration(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, \"0\")}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 function queueLabel(queueId: number | undefined): string {
-  if (queueId == null) return \"Custom\";
+  if (queueId == null) return "Custom";
   const map: Record<number, string> = {
-    420: \"Ranked Solo\",
-    440: \"Ranked Flex\",
-    400: \"Draft Pick\",
-    430: \"Blind Pick\",
-    450: \"ARAM\",
-    1020: \"One for All\",
+    420: "Ranked Solo",
+    440: "Ranked Flex",
+    400: "Draft Pick",
+    430: "Blind Pick",
+    450: "ARAM",
+    1020: "One for All",
   };
   return map[queueId] ?? `Queue ${queueId}`;
 }
@@ -36,7 +36,7 @@ function participantDisplayName(p: Participant): string {
   if (p.riotIdGameName && p.riotIdTagline) {
     return `${p.riotIdGameName}#${p.riotIdTagline}`;
   }
-  return p.summonerName ?? \"\";
+  return p.summonerName ?? "";
 }
 
 export function MatchDetails({
@@ -50,7 +50,7 @@ export function MatchDetails({
 }: {
   match: MatchDto;
   puuidOfSearchedPlayer: string;
-  queue?: \"solo\" | \"flex\";
+  queue?: "solo" | "flex";
   ddragonVersion?: string | null;
   perksById: Map<number, string>;
   stylesById: Map<number, string>;
