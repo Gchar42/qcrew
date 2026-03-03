@@ -680,31 +680,6 @@ function SummonerProfileContent() {
                       </span>
                     ) : null}
                   </div>
-                  {m.metadata?.matchId === matches[0]?.metadata?.matchId && m.timelineDiagnostics ? (
-                    <div
-                      className="profile-match-debug-times"
-                      style={{ fontSize: 11, marginTop: 4, color: "var(--muted, #666)" }}
-                    >
-                      DEBUG DIAG: frames={m.timelineDiagnostics.totalFrames} events={m.timelineDiagnostics.totalEvents} purchased={m.timelineDiagnostics.totalPurchased} byPid=
-                      {JSON.stringify(m.timelineDiagnostics.purchasedByPid)}
-                      <br />
-                      selectedPuuid={m.timelineDiagnostics.selectedPuuid}
-                      <br />
-                      timelineParticipants={JSON.stringify(m.timelineDiagnostics.timelineParticipants)}
-                      <br />
-                      computedPid={m.timelineDiagnostics.computedPid ?? "null"}
-                      <br />
-                      timelineAtPid=
-                      {m.timelineDiagnostics.computedPid != null &&
-                      m.timelineDiagnostics.computedPid >= 1 &&
-                      m.timelineDiagnostics.computedPid <
-                        (m.timelineDiagnostics.timelineParticipants?.length ?? 0)
-                        ? m.timelineDiagnostics.timelineParticipants?.[
-                            m.timelineDiagnostics.computedPid - 1
-                          ]
-                        : "null"}
-                    </div>
-                  ) : null}
                 </div>
               </div>
               <div className="profile-match-teams-block">

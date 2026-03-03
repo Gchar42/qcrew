@@ -137,18 +137,18 @@ export async function GET(request: Request) {
       );
     }
 
-    const { itemPurchaseTimesBySlot, debugCounts, timelineDiagnostics } =
-      computeItemPurchaseTimesBySlotWithDiagnostics(
-        timeline,
-        match,
-        selectedPuuid,
-        id,
-        logFirstMatchOnly
-      );
+    const { itemPurchaseTimesBySlot } = computeItemPurchaseTimesBySlotWithDiagnostics(
+      timeline,
+      match,
+      selectedPuuid,
+      id,
+      logFirstMatchOnly
+    );
 
-    const payload: Record<string, unknown> = { ...data, itemPurchaseTimesBySlot, debugCounts };
-    if (timelineDiagnostics != null) payload.timelineDiagnostics = timelineDiagnostics;
-    return NextResponse.json(payload, { headers: NO_CACHE });
+    return NextResponse.json(
+      { ...data, itemPurchaseTimesBySlot },
+      { headers: NO_CACHE }
+    );
   }
 
   return NextResponse.json(data, { headers: NO_CACHE });
