@@ -167,8 +167,8 @@
 }
 
 .profile-page .profile-hero-icon {
-  width: 36px;
-  height: 36px;
+  width: 45px;
+  height: 45px;
   border-radius: 6px;
   border: 2px solid var(--border);
   object-fit: cover;
@@ -176,6 +176,7 @@
 
 .profile-page .profile-hero-name-text {
   display: inline;
+  font-family: "Segoe UI";
 }
 
 .profile-page .profile-hero-name .tag-part {

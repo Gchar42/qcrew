@@ -534,8 +534,8 @@ function SummonerProfileContent() {
                   src={getProfileIconUrl(summoner.profileIconId, ddragonVersion)}
                   alt=""
                   className="profile-hero-icon"
-                  width={36}
-                  height={36}
+                  width={45}
+                  height={45}
                 />
               </span>
             )}
