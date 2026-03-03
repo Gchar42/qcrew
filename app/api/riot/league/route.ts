@@ -30,24 +30,45 @@ export async function GET(request: Request) {
     );
   }
 
+  // Validation: League V4 requires encryptedSummonerId (summoner v4 field "id"), not puuid, not account id.
+  console.log("[riot/league] Before Riot call:", {
+    region,
+    summonerIdLength: summonerId.length,
+    summonerIdFirst6: summonerId.slice(0, 6),
+    xRiotTokenHeader: "present",
+  });
+
   const url = `https://${region}.api.riotgames.com/lol/league/v4/entries/by-summoner/${encodeURIComponent(summonerId)}`;
-  console.log("[riot/league] League V4 request URL:", url);
   const res = await fetch(url, {
     cache: "no-store",
     headers: { "X-Riot-Token": key },
   });
 
   const text = await res.text();
+  const bodySnippet = text.slice(0, 500);
+  console.log("[riot/league] League V4 response:", {
+    requestUrl: url,
+    status: res.status,
+    statusText: res.statusText,
+    bodySnippet,
+  });
+
   if (!res.ok) {
-    console.error("[riot/league] League V4 request failed", {
-      url,
-      status: res.status,
-      statusText: res.statusText,
-      body: text,
-    });
-    const message = text || "League lookup failed";
+    if (res.status === 403) {
+      console.error("[riot/league] → 403: API key invalid, expired, or blocked");
+    } else if (res.status === 429) {
+      console.error("[riot/league] → 429: Rate limited");
+    } else if (res.status === 404) {
+      console.error("[riot/league] → 404: Wrong encryptedSummonerId or wrong route");
+    }
     return NextResponse.json(
-      { error: message, status: res.status },
+      {
+        ok: false,
+        status: res.status,
+        statusText: res.statusText,
+        riotBody: text,
+        requestUrl: url,
+      },
       { status: res.status, headers: NO_CACHE }
     );
   }

@@ -347,11 +347,19 @@ function SummonerProfileContent() {
       const leagueRes = await fetch(leagueUrl);
       const leagueBody = await leagueRes.text();
       if (!leagueRes.ok) {
-        console.error("[riot/league] Rank fetch failed", {
-          url: leagueUrl,
+        let errPayload: { requestUrl?: string; riotBody?: string } | null = null;
+        try {
+          errPayload = JSON.parse(leagueBody) as { requestUrl?: string; riotBody?: string };
+        } catch {
+          /* use leagueUrl and leagueBody below */
+        }
+        const requestUrl = errPayload?.requestUrl ?? leagueUrl;
+        const riotBodySnippet = (errPayload?.riotBody ?? leagueBody).slice(0, 500);
+        console.error("[riot/league] Rank fetch failed — League request URL, status, Riot response body:", {
+          requestUrl,
           status: leagueRes.status,
-          statusCode: leagueRes.status,
-          body: leagueBody,
+          statusText: leagueRes.statusText,
+          riotBody: riotBodySnippet,
         });
         setRankError(`Rank unavailable (${leagueRes.status})`);
         setLeagueEntry(null);
@@ -366,7 +374,7 @@ function SummonerProfileContent() {
             status: leagueRes.status,
             body: leagueBody,
           });
-          setRankError("Rank unavailable");
+          setRankError(`Rank unavailable (${leagueRes.status})`);
           setLeagueEntry(null);
           setLeagueQueueLabel("");
         }
@@ -376,7 +384,7 @@ function SummonerProfileContent() {
             status: leagueRes.status,
             body: leagueBody,
           });
-          setRankError("Rank unavailable");
+          setRankError(`Rank unavailable (${leagueRes.status})`);
           setLeagueEntry(null);
           setLeagueQueueLabel("");
         } else if (entries !== null) {
@@ -538,7 +546,7 @@ function SummonerProfileContent() {
               <span className="profile-ranked-loading">Loading rank…</span>
             ) : rankError != null ? (
               <span className="profile-ranked-error" title={rankError}>
-                Rank unavailable
+                {rankError}
               </span>
             ) : leagueEntry != null ? (
               (() => {
