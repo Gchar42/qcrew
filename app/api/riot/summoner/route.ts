@@ -32,28 +32,36 @@ export async function GET(request: Request) {
   // GET https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}
   const base = `https://${region}.api.riotgames.com/lol/summoner/v4/summoners`;
   const url = `${base}/by-puuid/${encodeURIComponent(puuid)}`;
+  console.log("[riot/summoner] Exact Riot URL being called:", url);
   const res = await fetch(url, {
     cache: "no-store",
     headers: { "X-Riot-Token": key },
   });
 
   const text = await res.text();
+  const bodySnippet = text.slice(0, 500);
+  console.log("[riot/summoner] Riot response:", {
+    status: res.status,
+    statusText: res.statusText,
+    bodySnippet,
+  });
+
   if (!res.ok) {
-    console.error("[riot/summoner] Riot response:", res.status, res.statusText, text);
-    const message = text || "Summoner lookup failed";
     return NextResponse.json(
-      { error: message, status: res.status },
+      { error: text || "Summoner lookup failed", status: res.status, body: text },
       { status: res.status, headers: NO_CACHE }
     );
   }
 
   const data = JSON.parse(text);
-  console.log("[riot/summoner] Riot response keys:", Object.keys(data));
+  const keys = Object.keys(data);
+  console.log("[riot/summoner] Riot response keys:", keys);
+  console.log("[riot/summoner] data.id exists:", "id" in data && data.id != null);
 
   if (!data?.id) {
-    console.error("[riot/summoner] data.id (encryptedSummonerId) is missing. Status:", res.status, "Full Riot response:", JSON.stringify(data));
+    console.error("[riot/summoner] data.id (encryptedSummonerId) is missing on 200 response. Keys:", keys);
     return NextResponse.json(
-      { error: "missing encryptedSummonerId (summoner v4 response must include field id)", status: 502 },
+      { error: "missing encryptedSummonerId (summoner v4 response must include field id)", status: 502, keys },
       { status: 502, headers: NO_CACHE }
     );
   }
