@@ -676,9 +676,9 @@ function SummonerProfileContent() {
                       </span>
                     ) : null}
                   </div>
-                  {m.metadata?.matchId === matches[0]?.metadata?.matchId ? (
+                  {m.metadata?.matchId === matches[0]?.metadata?.matchId && m.timelineDiagnostics ? (
                     <div className="profile-match-debug-times" style={{ fontSize: 11, marginTop: 4, color: "var(--muted, #666)" }}>
-                      DEBUG TIMES: {JSON.stringify(m.itemPurchaseTimesBySlot)}
+                      DEBUG DIAG: frames={m.timelineDiagnostics.totalFrames} events={m.timelineDiagnostics.totalEvents} purchased={m.timelineDiagnostics.totalPurchased} byPid={JSON.stringify(m.timelineDiagnostics.purchasedByPid)}
                     </div>
                   ) : null}
                 </div>

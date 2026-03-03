@@ -89,7 +89,7 @@ export async function GET(request: Request) {
     const logFirstMatchOnly = !timelineDiagnosticsLoggedOnce;
     if (logFirstMatchOnly) timelineDiagnosticsLoggedOnce = true;
 
-    const { itemPurchaseTimesBySlot, debugCounts } =
+    const { itemPurchaseTimesBySlot, debugCounts, timelineDiagnostics } =
       computeItemPurchaseTimesBySlotWithDiagnostics(
         timeline,
         match,
@@ -98,10 +98,9 @@ export async function GET(request: Request) {
         logFirstMatchOnly
       );
 
-    return NextResponse.json(
-      { ...data, itemPurchaseTimesBySlot, debugCounts },
-      { headers: NO_CACHE }
-    );
+    const payload: Record<string, unknown> = { ...data, itemPurchaseTimesBySlot, debugCounts };
+    if (timelineDiagnostics != null) payload.timelineDiagnostics = timelineDiagnostics;
+    return NextResponse.json(payload, { headers: NO_CACHE });
   }
 
   return NextResponse.json(data, { headers: NO_CACHE });
