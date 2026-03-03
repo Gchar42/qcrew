@@ -516,6 +516,102 @@
   color: #8b6914;
 }
 
+/* Main Character: premium achievement badge – same size, elevated and celebratory */
+.profile-page .profile-badge-chip-main-character {
+  position: relative;
+  z-index: 2;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1.5px solid rgba(212, 175, 55, 0.6);
+  background: linear-gradient(
+    135deg,
+    rgba(218, 165, 32, 0.35) 0%,
+    rgba(184, 134, 11, 0.28) 40%,
+    rgba(139, 105, 20, 0.22) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(255, 220, 120, 0.15) inset,
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    0 0 16px rgba(218, 165, 32, 0.25);
+  color: #f4e4a6;
+  overflow: hidden;
+  animation: profile-main-character-shimmer 1.2s ease-out 0.3s both;
+}
+.profile-page .profile-badge-chip-main-character:hover {
+  box-shadow:
+    0 0 0 1px rgba(255, 220, 120, 0.2) inset,
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    0 0 24px rgba(218, 165, 32, 0.4),
+    0 0 32px rgba(218, 165, 32, 0.2);
+}
+.profile-page .profile-badge-chip-main-character .profile-badge-chip-crown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 5px;
+  color: #f4e4a6;
+  flex-shrink: 0;
+}
+.profile-page .profile-badge-chip-main-character .profile-badge-chip-text-main-character {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+@keyframes profile-main-character-shimmer {
+  0% {
+    box-shadow:
+      0 0 0 1px rgba(255, 220, 120, 0.15) inset,
+      0 2px 8px rgba(0, 0, 0, 0.2),
+      0 0 16px rgba(218, 165, 32, 0.25);
+  }
+  30% {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.25) inset,
+      0 2px 8px rgba(0, 0, 0, 0.2),
+      0 0 20px rgba(218, 165, 32, 0.35);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 220, 120, 0.15) inset,
+      0 2px 8px rgba(0, 0, 0, 0.2),
+      0 0 16px rgba(218, 165, 32, 0.25);
+  }
+}
+/* Shimmer sweep using a pseudo-element (single run on load) */
+.profile-page .profile-badge-chip-main-character::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    transparent 35%,
+    rgba(255, 255, 255, 0.18) 48%,
+    rgba(255, 255, 255, 0.28) 50%,
+    rgba(255, 255, 255, 0.18) 52%,
+    transparent 65%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: profile-main-character-sweep 1s ease-out 0.4s both;
+  pointer-events: none;
+}
+@keyframes profile-main-character-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Gold accent ring on champion portrait when Main Character */
+.profile-page .profile-match-portrait-wrap-main-character {
+  border: 2px solid rgba(212, 175, 55, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(255, 220, 120, 0.2),
+    0 0 12px rgba(218, 165, 32, 0.2);
+}
+
 .profile-page .profile-badge-chip-badge-positive {
   background: rgba(21, 128, 61, 0.15);
   border-color: rgba(21, 128, 61, 0.4);

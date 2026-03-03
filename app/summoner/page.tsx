@@ -538,7 +538,9 @@ function SummonerProfileContent() {
                   </div>
                   <span className={`profile-verdict-line ${win ? "win" : "loss"}`} />
                   <div className="profile-match-portrait-spells-wrap">
-                    <div className="profile-match-portrait-wrap">
+                    <div
+                      className={`profile-match-portrait-wrap${badgeInfo?.badge === "Main Character" ? " profile-match-portrait-wrap-main-character" : ""}`}
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={portraitBaseUrl}
@@ -641,12 +643,25 @@ function SummonerProfileContent() {
                       <span
                         className={`profile-badge-chip socialBadge ${getBadgeCategoryClass(
                           badgeInfo.badge
-                        )}`}
+                        )}${badgeInfo.badge === "Main Character" ? " profile-badge-chip-main-character" : ""}`}
                         title={badgeInfo.reason}
                       >
-                        <span className="profile-badge-chip-text socialBadgeText">
-                          {badgeInfo.badge}
-                        </span>
+                        {badgeInfo.badge === "Main Character" ? (
+                          <>
+                            <span className="profile-badge-chip-crown" aria-hidden>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L14 8h4l-3.5 4 1.5 6H8l1.5-6L6 8h4l2-6z" fill="currentColor" opacity="0.95" />
+                              </svg>
+                            </span>
+                            <span className="profile-badge-chip-text socialBadgeText profile-badge-chip-text-main-character">
+                              MAIN CHARACTER
+                            </span>
+                          </>
+                        ) : (
+                          <span className="profile-badge-chip-text socialBadgeText">
+                            {badgeInfo.badge}
+                          </span>
+                        )}
                       </span>
                     )}
                   </div>
