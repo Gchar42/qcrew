@@ -224,12 +224,38 @@
   min-width: 0;
 }
 
-/* Ranked summary block – minimal: tier, LP, W/L, win rate */
+/* Ranked summary block – emblem + tier, LP, W/L, win rate */
 .profile-page .profile-ranked-summary {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
+}
+
+.profile-page .profile-ranked-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-page .profile-ranked-emblem-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.profile-page .profile-ranked-emblem-wrap:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.15));
+}
+
+.profile-page .profile-ranked-emblem {
+  display: block;
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
 }
 
 .profile-page .profile-ranked-loading {
@@ -242,8 +268,37 @@
   font-family: "Unbounded", sans-serif;
   font-size: 18px;
   font-weight: 700;
-  color: var(--ink);
   letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+/* Tier-based rank text colors – clean, premium */
+.profile-page .profile-ranked-tier-platinum {
+  color: #7eb8b8;
+}
+
+.profile-page .profile-ranked-tier-gold {
+  color: #c9a227;
+}
+
+.profile-page .profile-ranked-tier-silver {
+  color: #9ca3af;
+}
+
+.profile-page .profile-ranked-tier-emerald {
+  color: #34d399;
+}
+
+.profile-page .profile-ranked-tier-diamond-plus {
+  color: #60a5fa;
+}
+
+.profile-page .profile-ranked-tier-bronze {
+  color: #b87333;
+}
+
+.profile-page .profile-ranked-tier-iron {
+  color: #6b7280;
 }
 
 .profile-page .profile-ranked-queue-label {

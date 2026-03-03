@@ -11,6 +11,7 @@ import {
   getChampionSquareUrl,
   getItemIconUrl,
   getProfileIconUrl,
+  getRankEmblemUrl,
   getSummonerSpellIconUrl,
 } from "@/lib/riotAssets";
 import {
@@ -42,6 +43,19 @@ function rankStats(entry: LeagueEntryDto): { gamesPlayed: number; winRatePct: nu
   const gamesPlayed = wins + losses;
   const winRatePct = gamesPlayed > 0 ? Math.round((wins / gamesPlayed) * 100) : 0;
   return { gamesPlayed, winRatePct };
+}
+
+/** CSS class for tier-based rank text color (clean, premium). */
+function getRankTierColorClass(tier: string): string {
+  const t = tier.toUpperCase();
+  if (t === "PLATINUM") return "profile-ranked-tier-platinum";
+  if (t === "GOLD") return "profile-ranked-tier-gold";
+  if (t === "SILVER") return "profile-ranked-tier-silver";
+  if (t === "EMERALD") return "profile-ranked-tier-emerald";
+  if (["DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"].includes(t)) return "profile-ranked-tier-diamond-plus";
+  if (t === "BRONZE") return "profile-ranked-tier-bronze";
+  if (t === "IRON") return "profile-ranked-tier-iron";
+  return "";
 }
 
 const REGION = "na1";
@@ -551,13 +565,26 @@ function SummonerProfileContent() {
             ) : leagueEntry != null ? (
               (() => {
                 const { gamesPlayed, winRatePct } = rankStats(leagueEntry);
+                const tierColorClass = getRankTierColorClass(leagueEntry.tier);
                 return (
                   <>
-                    <div className="profile-ranked-tier-line">
-                      {formatRankTier(leagueEntry.tier, leagueEntry.rank)}
-                      {leagueQueueLabel && (
-                        <span className="profile-ranked-queue-label"> · {leagueQueueLabel}</span>
-                      )}
+                    <div className="profile-ranked-header">
+                      <span className="profile-ranked-emblem-wrap">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={getRankEmblemUrl(leagueEntry.tier)}
+                          alt=""
+                          className="profile-ranked-emblem"
+                          width={56}
+                          height={56}
+                        />
+                      </span>
+                      <span className={`profile-ranked-tier-line ${tierColorClass}`.trim()}>
+                        {formatRankTier(leagueEntry.tier, leagueEntry.rank)}
+                        {leagueQueueLabel && (
+                          <span className="profile-ranked-queue-label"> · {leagueQueueLabel}</span>
+                        )}
+                      </span>
                     </div>
                     <div className="profile-ranked-lp">{leagueEntry.leaguePoints} LP</div>
                     <div className="profile-ranked-wl">
