@@ -16,12 +16,15 @@ export type SummonerDto = {
 
 export type MatchListDto = { matchIds: string[] };
 
-/** Server-attached: first match only — raw timeline counts and purchasedByPid[1..10]. */
+/** Server-attached: first match only — raw timeline counts, purchasedByPid[1..10], and pid mapping. */
 export type TimelineDiagnosticsDto = {
   totalFrames: number;
   totalEvents: number;
   totalPurchased: number;
   purchasedByPid: number[];
+  selectedPuuid: string;
+  timelineParticipants: string[];
+  computedPid: number | null;
 };
 
 export type MatchDto = {

@@ -361,6 +361,12 @@ export type TimelineDiagnostics = {
   totalPurchased: number;
   /** purchasedByPid[i] = count of ITEM_PURCHASED for participantId i (indices 0..10, use 1..10). */
   purchasedByPid: number[];
+  /** First match only: puuid we are resolving (from request). */
+  selectedPuuid?: string;
+  /** First match only: timeline.metadata.participants (pid = indexOf(selectedPuuid)+1). No fallback to match. */
+  timelineParticipants?: string[];
+  /** First match only: pid from timeline.metadata.participants only, or null if not found. */
+  computedPid?: number | null;
 };
 
 /**
@@ -388,6 +394,21 @@ function computeTimelineDiagnostics(timeline: MatchTimelineDto): TimelineDiagnos
     }
   }
   return { totalFrames, totalEvents, totalPurchased, purchasedByPid };
+}
+
+/** Augment base timeline diagnostics with pid-mapping fields for first-match DEBUG DIAG. */
+function withPidMapping(
+  base: { totalFrames: number; totalEvents: number; totalPurchased: number; purchasedByPid: number[] },
+  selectedPuuid: string,
+  timeline: MatchTimelineDto,
+  computedPid: number | null
+): TimelineDiagnostics {
+  return {
+    ...base,
+    selectedPuuid,
+    timelineParticipants: timeline.metadata?.participants ?? [],
+    computedPid,
+  };
 }
 
 /**
@@ -432,6 +453,10 @@ export function computeItemPurchaseTimesBySlotWithDiagnostics(
   }
 
   const pid = resolvePidFromTimelineMetadata(timeline, puuid);
+  const fullDiagnostics = logFirstMatchOnly
+    ? withPidMapping(timelineDiagnostics, puuid, timeline, pid)
+    : undefined;
+
   if (pid == null) {
     if (logFirstMatchOnly) {
       console.log("[riot/match] selectedPuuid was not found in timeline.metadata.participants");
@@ -456,7 +481,7 @@ export function computeItemPurchaseTimesBySlotWithDiagnostics(
       itemPurchaseTimesBySlot: NULL_SLOTS,
       diagnostics,
       debugCounts,
-      timelineDiagnostics: logFirstMatchOnly ? timelineDiagnostics : undefined,
+      timelineDiagnostics: fullDiagnostics,
     };
   }
 
@@ -496,6 +521,6 @@ export function computeItemPurchaseTimesBySlotWithDiagnostics(
     itemPurchaseTimesBySlot,
     diagnostics,
     debugCounts,
-    timelineDiagnostics: logFirstMatchOnly ? timelineDiagnostics : undefined,
+    timelineDiagnostics: fullDiagnostics,
   };
 }
