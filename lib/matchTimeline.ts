@@ -185,6 +185,51 @@ export function getPurchaseTimeMap(
 }
 
 /**
+ * Completion time (seconds) per itemId for final build only.
+ * Parse timeline events in order; only record ITEM_PURCHASED when event.itemId is in finalItemSet.
+ * Keep earliest valid time per itemId; ITEM_UNDO removes that item's record so next purchase counts.
+ * timestampSeconds = Math.floor(timestampMs / 1000).
+ */
+export function getCompletionTimesForFinalItems(
+  timeline: MatchTimelineDto,
+  participantId: number,
+  finalItemSet: Set<number>
+): Map<number, number> {
+  const completionTime = new Map<number, number>();
+  const purchaseStack: { itemId: number; timestamp: number }[] = [];
+  const frames = timeline.info?.frames ?? [];
+
+  for (const frame of frames) {
+    for (const e of frame.events ?? []) {
+      const evtPid = e.participantId != null ? Number(e.participantId) : undefined;
+      if (evtPid !== participantId) continue;
+
+      if (e.type === "ITEM_PURCHASED" && e.itemId != null && e.itemId > 0 && finalItemSet.has(e.itemId)) {
+        const timeSec = eventTimeToSeconds(e.timestamp);
+        purchaseStack.push({ itemId: e.itemId, timestamp: timeSec });
+        if (!completionTime.has(e.itemId)) {
+          completionTime.set(e.itemId, timeSec);
+        }
+        continue;
+      }
+
+      if (e.type === "ITEM_UNDO") {
+        if (e.beforeId != null && e.beforeId > 0) {
+          completionTime.delete(e.beforeId);
+          const idx = purchaseStack.findIndex((x) => x.itemId === e.beforeId);
+          if (idx !== -1) purchaseStack.splice(idx, 1);
+        } else if (purchaseStack.length > 0) {
+          const last = purchaseStack.pop()!;
+          completionTime.delete(last.itemId);
+        }
+      }
+    }
+  }
+
+  return completionTime;
+}
+
+/**
  * Per-slot purchase timestamps (seconds) for item slots 0–5 only.
  * Slots with no item (0) or no recorded purchase are null.
  * Trinket (slot 6) is not included; caller should never show timestamp for trinket.
@@ -210,14 +255,21 @@ export function getItemSlotPurchaseTimes(
 
 /**
  * Per-slot purchase times as formatted strings "m:ss" or null for slots 0–5 only.
- * For server response itemPurchaseTimesBySlot.
+ * Uses last frame item0–item5 as final build; only records completion times for those itemIds.
+ * Trinket (item6) is ignored.
  */
 export function getItemPurchaseTimesFormatted(
   timeline: MatchTimelineDto,
   participantId: number
 ): (string | null)[] {
   const finalBuild = getFinalBuild(timeline, participantId);
-  const purchaseMap = getPurchaseTimeMap(timeline, participantId);
+  const finalItemIds = (finalBuild.slice(0, 6) as number[]).filter((id) => id > 0);
+  const finalItemSet = new Set(finalItemIds);
+  const completionMap = getCompletionTimesForFinalItems(
+    timeline,
+    participantId,
+    finalItemSet
+  );
   const out: (string | null)[] = [];
   for (let i = 0; i < 6; i++) {
     const itemId = finalBuild[i] ?? 0;
@@ -225,7 +277,7 @@ export function getItemPurchaseTimesFormatted(
       out.push(null);
       continue;
     }
-    const sec = purchaseMap.get(itemId);
+    const sec = completionMap.get(itemId);
     out.push(sec != null ? formatMss(sec) : null);
   }
   return out;
@@ -247,10 +299,19 @@ export type ItemPurchaseTimesDiagnostics = {
   }>;
 };
 
+export type DebugCounts = {
+  totalEvents: number;
+  totalPurchased: number;
+  pid: number | null;
+  pidPurchased: number;
+};
+
+const NULL_SLOTS: (string | null)[] = [null, null, null, null, null, null];
+
 /**
- * Iterate timeline.info.frames and frame.events; count events and resolve pid.
- * If participantPurchasedCount is 0 but totalItemPurchasedEvents > 0, try 0-based pid from timeline/match metadata.
- * Returns itemPurchaseTimesBySlot and diagnostics. Caller may log diagnostics for first match only.
+ * Resolve pid from timeline.metadata.participants (indexOf(selectedPuuid) + 1).
+ * Fallback to match.metadata.participants when timeline has no participants array.
+ * Returns itemPurchaseTimesBySlot (completion times for final build only) and debugCounts.
  */
 export function computeItemPurchaseTimesBySlotWithDiagnostics(
   timeline: MatchTimelineDto,
@@ -258,17 +319,21 @@ export function computeItemPurchaseTimesBySlotWithDiagnostics(
   puuid: string,
   matchId: string,
   logFirstMatchOnly: boolean
-): { itemPurchaseTimesBySlot: (string | null)[]; diagnostics: ItemPurchaseTimesDiagnostics } {
+): {
+  itemPurchaseTimesBySlot: (string | null)[];
+  diagnostics: ItemPurchaseTimesDiagnostics;
+  debugCounts: DebugCounts;
+} {
   const frames = timeline.info?.frames ?? [];
   let totalEvents = 0;
-  let totalItemPurchasedEvents = 0;
+  let totalPurchased = 0;
   const allItemPurchasedEvents: MatchTimelineEvent[] = [];
   for (const frame of frames) {
     const events = frame.events ?? [];
     totalEvents += events.length;
     for (const e of events) {
       if (e.type === "ITEM_PURCHASED") {
-        totalItemPurchasedEvents += 1;
+        totalPurchased += 1;
         allItemPurchasedEvents.push(e);
       }
     }
@@ -280,77 +345,81 @@ export function computeItemPurchaseTimesBySlotWithDiagnostics(
     itemId: e.itemId,
   }));
 
-  let { pid, source } = resolveTimelineParticipantIdWithSource(timeline, match, puuid);
+  const timelinePuuids = timeline.metadata?.participants ?? match.metadata?.participants;
+  if (!timelinePuuids || !Array.isArray(timelinePuuids)) {
+    const debugCounts: DebugCounts = {
+      totalEvents,
+      totalPurchased,
+      pid: null,
+      pidPurchased: 0,
+    };
+    const diagnostics: ItemPurchaseTimesDiagnostics = {
+      matchId,
+      totalEvents,
+      totalItemPurchasedEvents: totalPurchased,
+      pid: null,
+      pidSource: null,
+      participantPurchasedCount: 0,
+      participantUndoCount: 0,
+      firstThreeItemPurchased,
+    };
+    if (logFirstMatchOnly) console.log("[riot/match] timeline diagnostics (first match)", diagnostics);
+    return { itemPurchaseTimesBySlot: NULL_SLOTS, diagnostics, debugCounts };
+  }
 
-  const countForPid = (participantId: number) => {
-    let purchased = 0;
-    let undo = 0;
-    for (const frame of frames) {
-      for (const e of frame.events ?? []) {
-        const evtPid = e.participantId != null ? Number(e.participantId) : undefined;
-        if (evtPid !== participantId) continue;
-        if (e.type === "ITEM_PURCHASED") purchased += 1;
-        if (e.type === "ITEM_UNDO") undo += 1;
-      }
-    }
-    return { purchased, undo };
-  };
+  const idx = timelinePuuids.indexOf(puuid);
+  if (idx === -1) {
+    const debugCounts: DebugCounts = {
+      totalEvents,
+      totalPurchased,
+      pid: null,
+      pidPurchased: 0,
+    };
+    const diagnostics: ItemPurchaseTimesDiagnostics = {
+      matchId,
+      totalEvents,
+      totalItemPurchasedEvents: totalPurchased,
+      pid: null,
+      pidSource: null,
+      participantPurchasedCount: 0,
+      participantUndoCount: 0,
+      firstThreeItemPurchased,
+    };
+    if (logFirstMatchOnly) console.log("[riot/match] timeline diagnostics (first match)", diagnostics);
+    return { itemPurchaseTimesBySlot: NULL_SLOTS, diagnostics, debugCounts };
+  }
 
-  let participantPurchasedCount = pid != null ? countForPid(pid).purchased : 0;
-  let participantUndoCount = pid != null ? countForPid(pid).undo : 0;
+  const pid = idx + 1;
+  const source: TimelineParticipantIdSource = "timeline.metadata.participants (0-based)";
 
-  if (
-    participantPurchasedCount === 0 &&
-    totalItemPurchasedEvents > 0 &&
-    pid != null &&
-    pid >= 1
-  ) {
-    const timelineMetaIdx =
-      typeof timeline.metadata?.participants !== "undefined"
-        ? timeline.metadata.participants.indexOf(puuid)
-        : -1;
-    const matchMetaIdx =
-      typeof match.metadata?.participants !== "undefined"
-        ? match.metadata.participants.indexOf(puuid)
-        : -1;
-    const tryPid0Based =
-      timelineMetaIdx >= 0 ? timelineMetaIdx : matchMetaIdx >= 0 ? matchMetaIdx : -1;
-    if (tryPid0Based >= 0) {
-      const { purchased, undo } = countForPid(tryPid0Based);
-      if (purchased > 0) {
-        pid = tryPid0Based;
-        source =
-          timelineMetaIdx >= 0
-            ? "timeline.metadata.participants (0-based)"
-            : "match.metadata.participants (0-based)";
-        participantPurchasedCount = purchased;
-        participantUndoCount = undo;
-      }
+  let pidPurchased = 0;
+  for (const frame of frames) {
+    const events = frame.events ?? [];
+    for (const e of events) {
+      if (e.type !== "ITEM_PURCHASED") continue;
+      const evtPid = e.participantId != null ? Number(e.participantId) : undefined;
+      if (evtPid === pid) pidPurchased += 1;
     }
   }
 
+  const debugCounts: DebugCounts = {
+    totalEvents,
+    totalPurchased,
+    pid,
+    pidPurchased,
+  };
   const diagnostics: ItemPurchaseTimesDiagnostics = {
     matchId,
     totalEvents,
-    totalItemPurchasedEvents,
+    totalItemPurchasedEvents: totalPurchased,
     pid,
     pidSource: source,
-    participantPurchasedCount,
-    participantUndoCount,
+    participantPurchasedCount: pidPurchased,
+    participantUndoCount: 0,
     firstThreeItemPurchased,
   };
-
-  if (logFirstMatchOnly) {
-    console.log("[riot/match] timeline diagnostics (first match)", diagnostics);
-  }
-
-  if (pid == null) {
-    return {
-      itemPurchaseTimesBySlot: [null, null, null, null, null, null],
-      diagnostics,
-    };
-  }
+  if (logFirstMatchOnly) console.log("[riot/match] timeline diagnostics (first match)", diagnostics);
 
   const itemPurchaseTimesBySlot = getItemPurchaseTimesFormatted(timeline, pid);
-  return { itemPurchaseTimesBySlot, diagnostics };
+  return { itemPurchaseTimesBySlot, diagnostics, debugCounts };
 }

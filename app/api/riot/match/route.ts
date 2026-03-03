@@ -89,20 +89,17 @@ export async function GET(request: Request) {
     const logFirstMatchOnly = !timelineDiagnosticsLoggedOnce;
     if (logFirstMatchOnly) timelineDiagnosticsLoggedOnce = true;
 
-    const { itemPurchaseTimesBySlot } = computeItemPurchaseTimesBySlotWithDiagnostics(
-      timeline,
-      match,
-      puuid,
-      id,
-      logFirstMatchOnly
-    );
+    const { itemPurchaseTimesBySlot, debugCounts } =
+      computeItemPurchaseTimesBySlotWithDiagnostics(
+        timeline,
+        match,
+        puuid,
+        id,
+        logFirstMatchOnly
+      );
 
     return NextResponse.json(
-      { ...data, itemPurchaseTimesBySlot },
-      { headers: NO_CACHE }
-    );
-    return NextResponse.json(
-      { ...data, itemPurchaseTimesBySlot: [null, null, null, null, null, null] },
+      { ...data, itemPurchaseTimesBySlot, debugCounts },
       { headers: NO_CACHE }
     );
   }

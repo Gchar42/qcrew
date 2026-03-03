@@ -676,13 +676,6 @@ function SummonerProfileContent() {
                       </span>
                     ) : null}
                   </div>
-                  {m.metadata?.matchId === matches[0]?.metadata?.matchId ? (
-                    <div className="profile-match-debug-times" style={{ fontSize: 11, marginTop: 4, color: "var(--muted, #666)" }}>
-                      {m.itemPurchaseTimesBySlot == null
-                        ? "DEBUG MISSING itemPurchaseTimesBySlot"
-                        : `DEBUG TIMES: ${JSON.stringify(m.itemPurchaseTimesBySlot)}`}
-                    </div>
-                  ) : null}
                 </div>
               </div>
               <div className="profile-match-teams-block">

@@ -20,6 +20,13 @@ export type MatchDto = {
   metadata: { matchId: string; participants?: string[] };
   /** Server-attached: purchase times "m:ss" or null for item slots 0–5 (no trinket). */
   itemPurchaseTimesBySlot?: (string | null)[];
+  /** Server-attached: debug counts for first-match UI (totalEvents, totalPurchased, pid, pidPurchased). */
+  debugCounts?: {
+    totalEvents: number;
+    totalPurchased: number;
+    pid: number | null;
+    pidPurchased: number;
+  };
   info: {
     gameDuration: number;
     gameEndTimestamp?: number;
