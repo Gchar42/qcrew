@@ -149,12 +149,33 @@
 }
 
 .profile-page .profile-hero-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   font-family: "Unbounded", sans-serif;
   font-size: 42px;
   font-weight: 900;
   line-height: 1.1;
   letter-spacing: -2px;
   margin-bottom: 16px;
+}
+
+.profile-page .profile-hero-icon-wrap {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.profile-page .profile-hero-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  object-fit: cover;
+}
+
+.profile-page .profile-hero-name-text {
+  display: inline;
 }
 
 .profile-page .profile-hero-name .tag-part {
@@ -255,48 +276,15 @@
   margin-top: 1px;
 }
 
-/* Win/loss progress bar – green left (W), red right (L), labels centered */
-.profile-page .profile-win-loss-bar-wrap {
-  display: flex;
-  width: 100%;
-  max-width: 200px;
-  height: 28px;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1.5px solid var(--border);
-  background: var(--surface2);
+.profile-page .profile-ranked-lp {
+  font-family: "Space Mono", monospace;
+  font-size: 12px;
+  color: var(--ink);
 }
 
-.profile-page .profile-win-loss-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-  transition: width 0.4s ease;
-}
-
-.profile-page .profile-win-loss-bar-wins {
-  background: var(--win);
-  color: #fff;
-}
-
-.profile-page .profile-win-loss-bar-losses {
-  background: var(--loss);
-  color: #fff;
-}
-
-.profile-page .profile-win-loss-bar-label {
+.profile-page .profile-ranked-wl {
   font-family: "Space Mono", monospace;
   font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.profile-page .profile-win-rate-secondary {
-  font-family: "Space Mono", monospace;
-  font-size: 10px;
   color: var(--muted);
 }
 

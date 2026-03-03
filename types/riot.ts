@@ -14,6 +14,19 @@ export type SummonerDto = {
   revisionDate?: number;
 };
 
+/** League v4 entry (GET /lol/league/v4/entries/by-summoner/{id}). */
+export type LeagueEntryDto = {
+  queueType: string;
+  tier: string;
+  rank: string;
+  leaguePoints: number;
+  wins: number;
+  losses: number;
+  summonerId: string;
+  summonerName?: string;
+  [key: string]: unknown;
+};
+
 export type MatchListDto = { matchIds: string[] };
 
 /** Server-attached: first match only — raw timeline counts, purchasedByPid[1..10], and pid mapping. */

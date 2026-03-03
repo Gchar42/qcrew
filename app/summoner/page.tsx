@@ -10,6 +10,7 @@ import {
   getChampionSplashUrl,
   getChampionSquareUrl,
   getItemIconUrl,
+  getProfileIconUrl,
   getRankEmblemUrl,
   getSummonerSpellIconUrl,
 } from "@/lib/riotAssets";
@@ -21,7 +22,7 @@ import {
 } from "@/lib/runesCd";
 import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
-import type { AccountDto, SummonerDto, MatchDto } from "@/types/riot";
+import type { AccountDto, LeagueEntryDto, SummonerDto, MatchDto } from "@/types/riot";
 
 /** Badge name -> profile CSS class for chip styling */
 function getBadgeCategoryClass(badge: string): string {
@@ -29,20 +30,10 @@ function getBadgeCategoryClass(badge: string): string {
   return `profile-badge-chip-badge-${cat}`;
 }
 
-/** Current rank (from league API when available). */
-type CurrentRank = { tier: string; division: string } | null;
-/** Past season rank line. */
-type PastSeasonRank = { season: string; tier: string; division: string };
-
-/** Format tier + division e.g. "Emerald II". */
-function formatRankTier(tier: string, division: string): string {
+/** Format tier + rank (division) e.g. "Emerald II". */
+function formatRankTier(tier: string, rank: string): string {
   const t = tier.charAt(0) + tier.slice(1).toLowerCase();
-  return `${t} ${division}`;
-}
-
-/** Placeholder until league API exists. */
-function getCurrentRank(): CurrentRank {
-  return null;
+  return `${t} ${rank}`;
 }
 
 const REGION = "na1";
@@ -277,6 +268,7 @@ function SummonerProfileContent() {
   const [summoner, setSummoner] = useState<SummonerDto | null>(null);
   const [matches, setMatches] = useState<MatchDto[]>([]);
   const [detailMatch, setDetailMatch] = useState<MatchDto | null>(null);
+  const [soloLeagueEntry, setSoloLeagueEntry] = useState<LeagueEntryDto | null>(null);
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
@@ -338,6 +330,14 @@ function SummonerProfileContent() {
       ]);
       setSummoner(summonerRes);
 
+      const leagueRes = await fetch(
+        `/api/riot/league?summonerId=${encodeURIComponent(summonerRes.id)}&region=${REGION}`
+      ).then((r) => (r.ok ? r.json() : []) as Promise<LeagueEntryDto[]>).catch(() => []);
+      const solo = Array.isArray(leagueRes)
+        ? leagueRes.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null
+        : null;
+      setSoloLeagueEntry(solo ?? null);
+
       const matchDetails = await mapWithConcurrency(
         matchListRes.matchIds.slice(0, 20),
         3,
@@ -359,6 +359,7 @@ function SummonerProfileContent() {
       setAccount(null);
       setSummoner(null);
       setMatches([]);
+      setSoloLeagueEntry(null);
     } finally {
       setLoading(false);
     }
@@ -441,12 +442,6 @@ function SummonerProfileContent() {
   const role = primaryRole(matches, account.puuid);
   const level = summoner?.summonerLevel ?? 0;
 
-  const currentRank = getCurrentRank();
-  const pastSeasons: PastSeasonRank[] = [];
-  const losses = total > 0 ? total - wins : 0;
-  const winPct = total > 0 ? Math.round((wins / total) * 100) : 0;
-  const winBarPct = total > 0 ? (wins / total) * 100 : 0;
-
   return (
     <>
       <section className="profile-hero">
@@ -455,8 +450,22 @@ function SummonerProfileContent() {
             Summoner Profile · NA
           </div>
           <h1 className="profile-hero-name">
-            {account.gameName}
-            <span className="tag-part"> #{account.tagLine}</span>
+            {summoner?.profileIconId != null && (
+              <span className="profile-hero-icon-wrap">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={getProfileIconUrl(summoner.profileIconId, ddragonVersion)}
+                  alt=""
+                  className="profile-hero-icon"
+                  width={36}
+                  height={36}
+                />
+              </span>
+            )}
+            <span className="profile-hero-name-text">
+              {account.gameName}
+              <span className="tag-part"> #{account.tagLine}</span>
+            </span>
           </h1>
           <div className="profile-hero-badges">
             <span className="profile-badge profile-badge-na">NA</span>
@@ -470,13 +479,13 @@ function SummonerProfileContent() {
         </div>
         <div className="profile-hero-right">
           <div className="profile-ranked-summary">
-            <div className="profile-ranked-current">
-              {currentRank != null ? (
-                <>
+            {soloLeagueEntry != null ? (
+              <>
+                <div className="profile-ranked-current">
                   <span className="profile-ranked-emblem-wrap">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={getRankEmblemUrl(currentRank.tier)}
+                      src={getRankEmblemUrl(soloLeagueEntry.tier)}
                       alt=""
                       className="profile-ranked-emblem"
                       width={56}
@@ -484,44 +493,18 @@ function SummonerProfileContent() {
                     />
                   </span>
                   <span className="profile-ranked-tier">
-                    {formatRankTier(currentRank.tier, currentRank.division)}
+                    {formatRankTier(soloLeagueEntry.tier, soloLeagueEntry.rank)}
                   </span>
-                </>
-              ) : (
-                <span className="profile-ranked-unranked">Unranked</span>
-              )}
-            </div>
-            {pastSeasons.length > 0 && (
-              <div className="profile-ranked-past">
-                {pastSeasons.map((s) => (
-                  <div key={s.season} className="profile-ranked-past-line">
-                    Season {s.season}: {formatRankTier(s.tier, s.division)}
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="profile-win-loss-bar-wrap">
-              <div
-                className="profile-win-loss-bar profile-win-loss-bar-wins"
-                style={{
-                  width: `${winBarPct}%`,
-                  minWidth: wins > 0 ? "28px" : undefined,
-                }}
-              >
-                {total > 0 && wins >= 0 && <span className="profile-win-loss-bar-label">{wins}W</span>}
-              </div>
-              <div
-                className="profile-win-loss-bar profile-win-loss-bar-losses"
-                style={{
-                  width: `${100 - winBarPct}%`,
-                  minWidth: losses > 0 ? "28px" : undefined,
-                }}
-              >
-                {total > 0 && losses >= 0 && <span className="profile-win-loss-bar-label">{losses}L</span>}
-              </div>
-            </div>
-            {total > 0 && (
-              <div className="profile-win-rate-secondary">{winPct}% win rate</div>
+                </div>
+                <div className="profile-ranked-lp">
+                  {soloLeagueEntry.leaguePoints} LP
+                </div>
+                <div className="profile-ranked-wl">
+                  {soloLeagueEntry.wins}W {soloLeagueEntry.losses}L
+                </div>
+              </>
+            ) : (
+              <span className="profile-ranked-unranked">Unranked</span>
             )}
           </div>
         </div>

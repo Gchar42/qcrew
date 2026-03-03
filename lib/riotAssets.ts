@@ -71,8 +71,9 @@ export function getChampionSplashUrl(championName: string) {
   return getChampionSplashUrlWithSkin(championName, 0);
 }
 
-export function getProfileIconUrl(profileIconId: number) {
-  return `https://ddragon.leagueoflegends.com/cdn/${DDragonVersion}/img/profileicon/${profileIconId}.png`;
+export function getProfileIconUrl(profileIconId: number, version?: string | null) {
+  const v = version || DDragonVersion;
+  return `https://ddragon.leagueoflegends.com/cdn/${v}/img/profileicon/${profileIconId}.png`;
 }
 
 export function getItemIconUrl(itemId: number) {
