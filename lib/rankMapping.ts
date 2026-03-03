@@ -33,7 +33,7 @@ export function rankToNumber(tier: string, rank: string): number | null {
 /** Numeric value back to display label (e.g. 2.25 => "Bronze III"). */
 export function numberToRankLabel(value: number): string {
   const tierNum = Math.floor(value);
-  const frac = value - tierNum;
+  const frac: number = value - Math.floor(value);
   const tierNames = [
     "",
     "Iron",
@@ -49,11 +49,11 @@ export function numberToRankLabel(value: number): string {
   ];
   const tier = tierNames[tierNum] ?? "Iron";
   if (tierNum >= 8) return tier; // Master+ no division
-  const rankLabels = [
-    [0, 0.125, "IV"],
-    [0.125, 0.375, "III"],
-    [0.375, 0.625, "II"],
-    [0.625, 1, "I"],
+  const rankLabels: Array<[number, number, string]> = [
+    [0.0, 0.25, "IV"],
+    [0.25, 0.5, "III"],
+    [0.5, 0.75, "II"],
+    [0.75, 1.0, "I"],
   ];
   for (const [lo, hi, label] of rankLabels) {
     if (frac >= lo && frac < hi) return `${tier} ${label}`;
