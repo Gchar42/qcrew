@@ -6,9 +6,11 @@ export const revalidate = 0;
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
 
 /**
- * Summoner-v4 uses platform routing only (e.g. na1). Do NOT use americas.api.riotgames.com or getRoutingRegion (those are for account-v1 and match-v5).
- * Exact endpoint: https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}
- * Response includes: id (encryptedSummonerId), accountId, puuid, name, profileIconId, summonerLevel.
+ * Routing rules (lock this in):
+ * - americas: riot/account/v1, lol/match/v5
+ * - platform (na1, euw1, kr): lol/summoner/v4, lol/league/v4, lol/champion-mastery/v4
+ * Summoner V4 uses platform only. Do NOT reuse routing value from account-v1 or match-v5.
+ * NA: platform = "na1". URL must start with https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/
  */
 export async function GET(request: Request) {
   const key = process.env.RIOT_API_KEY;
@@ -29,9 +31,9 @@ export async function GET(request: Request) {
     );
   }
 
-  const url = `https://${platform}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${encodeURIComponent(puuid)}`;
-  console.log("[riot/summoner] Exact Riot URL being called:", url);
-  const res = await fetch(url, {
+  const riotUrl = `https://${platform}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${encodeURIComponent(puuid)}`;
+  console.log("[riot/summoner] exactUrl", riotUrl);
+  const res = await fetch(riotUrl, {
     cache: "no-store",
     headers: { "X-Riot-Token": key },
   });
