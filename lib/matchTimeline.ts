@@ -5,6 +5,51 @@ import type {
   MatchTimelineFrameParticipant,
 } from "@/types/riot";
 
+export type TimelineParticipantIdSource =
+  | "timeline.info.participants"
+  | "timeline.metadata.participants (1-based)"
+  | "timeline.metadata.participants (0-based)"
+  | "match.info.participantId"
+  | "match.metadata.participants"
+  | "match.info.participants index";
+
+/**
+ * Resolve timeline participantId and which method was used.
+ * Prefer timeline metadata (puuid mapping); then match participantId; then match order.
+ */
+export function resolveTimelineParticipantIdWithSource(
+  timeline: MatchTimelineDto,
+  match: MatchDto,
+  puuid: string
+): { pid: number | null; source: TimelineParticipantIdSource | null } {
+  const fromTimelineInfo = timeline.info?.participants?.find(
+    (p) => (p.puuid ?? (p as { puuid?: string }).puuid) === puuid
+  );
+  if (fromTimelineInfo?.participantId != null) {
+    return { pid: fromTimelineInfo.participantId, source: "timeline.info.participants" };
+  }
+  const timelineMetaIdx = timeline.metadata?.participants?.indexOf(puuid);
+  if (typeof timelineMetaIdx === "number" && timelineMetaIdx >= 0) {
+    return {
+      pid: timelineMetaIdx + 1,
+      source: "timeline.metadata.participants (1-based)",
+    };
+  }
+  const matchParticipant = match.info?.participants?.find((p) => p.puuid === puuid);
+  if (matchParticipant?.participantId != null) {
+    return { pid: matchParticipant.participantId, source: "match.info.participantId" };
+  }
+  const matchMetaIdx = match.metadata?.participants?.indexOf(puuid);
+  if (typeof matchMetaIdx === "number" && matchMetaIdx >= 0) {
+    return { pid: matchMetaIdx + 1, source: "match.metadata.participants" };
+  }
+  const infoIdx = match.info?.participants?.findIndex((p) => p.puuid === puuid);
+  if (infoIdx != null && infoIdx >= 0) {
+    return { pid: infoIdx + 1, source: "match.info.participants index" };
+  }
+  return { pid: null, source: null };
+}
+
 /**
  * Resolve timeline participantId (1–10) for the given puuid.
  * Prefer timeline.info.participants when present; else match metadata order; else match info participants.
@@ -14,21 +59,7 @@ export function resolveTimelineParticipantId(
   match: MatchDto,
   puuid: string
 ): number | null {
-  const fromTimeline = timeline.info?.participants?.find(
-    (p) => (p.puuid ?? (p as { puuid?: string }).puuid) === puuid
-  );
-  if (fromTimeline?.participantId != null) {
-    return fromTimeline.participantId;
-  }
-  const metaIdx = match.metadata?.participants?.indexOf(puuid);
-  if (typeof metaIdx === "number" && metaIdx >= 0) {
-    return metaIdx + 1; // timeline uses 1–10
-  }
-  const infoIdx = match.info?.participants?.findIndex((p) => p.puuid === puuid);
-  if (infoIdx != null && infoIdx >= 0) {
-    return infoIdx + 1;
-  }
-  return null;
+  return resolveTimelineParticipantIdWithSource(timeline, match, puuid).pid;
 }
 
 /** @deprecated Use resolveTimelineParticipantId. Match order only. */
@@ -200,4 +231,128 @@ export function getItemPurchaseTimesFormatted(
     out.push(sec != null ? formatMss(sec) : null);
   }
   return out;
+}
+
+export type ItemPurchaseTimesDiagnostics = {
+  matchId: string;
+  totalEvents: number;
+  totalItemPurchasedEvents: number;
+  pid: number | null;
+  pidSource: TimelineParticipantIdSource | null;
+  participantPurchasedCount: number;
+  participantUndoCount: number;
+  firstThreeItemPurchased: Array<{
+    type: string;
+    timestamp?: number;
+    participantId?: number;
+    itemId?: number;
+  }>;
+};
+
+/**
+ * Iterate timeline.info.frames and frame.events; count events and resolve pid.
+ * If participantPurchasedCount is 0 but totalItemPurchasedEvents > 0, try 0-based pid from timeline/match metadata.
+ * Returns itemPurchaseTimesBySlot and diagnostics. Caller may log diagnostics for first match only.
+ */
+export function computeItemPurchaseTimesBySlotWithDiagnostics(
+  timeline: MatchTimelineDto,
+  match: MatchDto,
+  puuid: string,
+  matchId: string,
+  logFirstMatchOnly: boolean
+): { itemPurchaseTimesBySlot: (string | null)[]; diagnostics: ItemPurchaseTimesDiagnostics } {
+  const frames = timeline.info?.frames ?? [];
+  let totalEvents = 0;
+  let totalItemPurchasedEvents = 0;
+  const allItemPurchasedEvents: MatchTimelineEvent[] = [];
+  for (const frame of frames) {
+    const events = frame.events ?? [];
+    totalEvents += events.length;
+    for (const e of events) {
+      if (e.type === "ITEM_PURCHASED") {
+        totalItemPurchasedEvents += 1;
+        allItemPurchasedEvents.push(e);
+      }
+    }
+  }
+  const firstThreeItemPurchased = allItemPurchasedEvents.slice(0, 3).map((e) => ({
+    type: e.type,
+    timestamp: e.timestamp,
+    participantId: e.participantId != null ? Number(e.participantId) : undefined,
+    itemId: e.itemId,
+  }));
+
+  let { pid, source } = resolveTimelineParticipantIdWithSource(timeline, match, puuid);
+
+  const countForPid = (participantId: number) => {
+    let purchased = 0;
+    let undo = 0;
+    for (const frame of frames) {
+      for (const e of frame.events ?? []) {
+        const evtPid = e.participantId != null ? Number(e.participantId) : undefined;
+        if (evtPid !== participantId) continue;
+        if (e.type === "ITEM_PURCHASED") purchased += 1;
+        if (e.type === "ITEM_UNDO") undo += 1;
+      }
+    }
+    return { purchased, undo };
+  };
+
+  let participantPurchasedCount = pid != null ? countForPid(pid).purchased : 0;
+  let participantUndoCount = pid != null ? countForPid(pid).undo : 0;
+
+  if (
+    participantPurchasedCount === 0 &&
+    totalItemPurchasedEvents > 0 &&
+    pid != null &&
+    pid >= 1
+  ) {
+    const timelineMetaIdx =
+      typeof timeline.metadata?.participants !== "undefined"
+        ? timeline.metadata.participants.indexOf(puuid)
+        : -1;
+    const matchMetaIdx =
+      typeof match.metadata?.participants !== "undefined"
+        ? match.metadata.participants.indexOf(puuid)
+        : -1;
+    const tryPid0Based =
+      timelineMetaIdx >= 0 ? timelineMetaIdx : matchMetaIdx >= 0 ? matchMetaIdx : -1;
+    if (tryPid0Based >= 0) {
+      const { purchased, undo } = countForPid(tryPid0Based);
+      if (purchased > 0) {
+        pid = tryPid0Based;
+        source =
+          timelineMetaIdx >= 0
+            ? "timeline.metadata.participants (0-based)"
+            : "match.metadata.participants (0-based)";
+        participantPurchasedCount = purchased;
+        participantUndoCount = undo;
+      }
+    }
+  }
+
+  const diagnostics: ItemPurchaseTimesDiagnostics = {
+    matchId,
+    totalEvents,
+    totalItemPurchasedEvents,
+    pid,
+    pidSource: source,
+    participantPurchasedCount,
+    participantUndoCount,
+    firstThreeItemPurchased,
+  };
+
+  if (logFirstMatchOnly) {
+    console.log("[riot/match] timeline diagnostics (first match)", diagnostics);
+  }
+
+  if (pid == null) {
+    return {
+      itemPurchaseTimesBySlot: [null, null, null, null, null, null],
+      diagnostics,
+    };
+  }
+
+  const itemPurchaseTimesBySlot = getItemPurchaseTimesFormatted(timeline, pid);
+  return { itemPurchaseTimesBySlot, diagnostics };
 }

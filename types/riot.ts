@@ -30,6 +30,8 @@ export type MatchDto = {
     gameVersion?: string;
     participants: Array<{
       puuid: string;
+      /** Timeline participantId (1–10) when present in Riot response */
+      participantId?: number;
       summonerName: string;
       championName: string;
       kills: number;
