@@ -38,17 +38,39 @@ function formatRankTier(tier: string, rank: string): string {
   return `${t} ${rank}`;
 }
 
-/** Pick queue entry and return display label, or null if unranked in that queue. */
-function formatRankBadge(
-  entries: LeagueEntryDto[] | null | undefined,
-  targetQueueType: string
-): string | null {
-  if (!entries?.length) return null;
-  const entry = entries.find(
-    (e) => e.queueType === targetQueueType && e.tier && e.rank
-  );
-  if (!entry?.tier || !entry?.rank) return null;
-  return formatRankTier(entry.tier, entry.rank);
+/** League entry shape for participant rank badges (queueType + tier/rank). */
+type LeagueEntry = { queueType: string; tier?: string; rank?: string };
+
+/** Format short badge (P3, G1, M, GM, C) from entries for the given queueType. */
+function formatRankBadge(entries: LeagueEntry[] | undefined, queueType: string): string | null {
+  if (!entries) return null;
+  const e = entries.find((x) => x.queueType === queueType);
+  if (!e?.tier) return null;
+
+  const tier = String(e.tier).toUpperCase();
+  const rank = String(e.rank ?? "").toUpperCase();
+
+  const tierLetter: Record<string, string> = {
+    IRON: "I",
+    BRONZE: "B",
+    SILVER: "S",
+    GOLD: "G",
+    PLATINUM: "P",
+    EMERALD: "E",
+    DIAMOND: "D",
+    MASTER: "M",
+    GRANDMASTER: "GM",
+    CHALLENGER: "C",
+  };
+
+  const letter = tierLetter[tier];
+  if (!letter) return null;
+
+  if (tier === "MASTER" || tier === "GRANDMASTER" || tier === "CHALLENGER") return letter;
+
+  const divNum: Record<string, string> = { I: "1", II: "2", III: "3", IV: "4" };
+  const n = divNum[rank];
+  return n ? `${letter}${n}` : letter;
 }
 
 /** Win rate and total games from league entry. */
@@ -339,14 +361,13 @@ export default function SummonerProfileBeige({
   const [leagueEntriesBySummonerId, setLeagueEntriesBySummonerId] = useState<
     Record<string, LeagueEntryDto[]>
   >({});
-  const [rankBadgesBySummonerId, setRankBadgesBySummonerId] = useState<Record<string, string | null>>({});
+  const [leagueBySummonerId, setLeagueBySummonerId] = useState<Record<string, LeagueEntry[]>>({});
   const [rankError, setRankError] = useState<string | null>(null);
   const [rankLoading, setRankLoading] = useState(false);
   const [avgRank, setAvgRank] = useState<{ label: string; rankedCount: number }>({ label: "Unranked", rankedCount: 0 });
 
-  function mergeBadges(next: Record<string, string | null>) {
-    setRankBadgesBySummonerId((prev) => ({ ...prev, ...next }));
-  }
+  const activeQueueType = queue === "flex" ? "RANKED_FLEX_SR" : "RANKED_SOLO_5x5";
+
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
@@ -561,31 +582,45 @@ export default function SummonerProfileBeige({
       .catch(() => setAvgRank({ label: "Unranked", rankedCount: 0 }));
   }, [matches, regionVal]);
 
-  // Fetch rank badges for first match only (minimal); expand to matches.slice(0, 3) when confirmed.
+  // Fetch league entries for first 3 matches only; keyed by summonerId. Do not clear when switching tabs.
   useEffect(() => {
     if (matches.length === 0) return;
-    const firstMatch = matches[0];
-    const summonerIds = (firstMatch?.info?.participants ?? [])
-      .map((p) => p.summonerId)
-      .filter((id): id is string => Boolean(id));
-    const unique = [...new Set(summonerIds)];
-    if (unique.length === 0) return;
-    fetch("/api/riot/rank-badges", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        region: regionVal,
-        queueType: targetQueueType,
-        summonerIds: unique,
-      }),
-    })
-      .then((res) => (res.ok ? res.json() : { badges: {} }))
-      .then((data: { badges?: Record<string, string | null> }) => {
-        const badges = data.badges ?? {};
-        mergeBadges(badges);
-      })
-      .catch(() => {});
-  }, [matches, regionVal, targetQueueType]);
+    const ids = Array.from(
+      new Set(
+        matches
+          .slice(0, 3)
+          .flatMap((m) =>
+            (m.info?.participants ?? []).map((p) => p.summonerId).filter(Boolean)
+          )
+      )
+    ) as string[];
+    const missing = ids.filter((id) => leagueBySummonerId[id] === undefined);
+    if (missing.length === 0) return;
+
+    const concurrency = 6;
+    const nextMap: Record<string, LeagueEntry[]> = {};
+    let index = 0;
+    async function runPool(): Promise<void> {
+      while (index < missing.length) {
+        const current = index++;
+        const summonerId = missing[current];
+        try {
+          const res = await fetch(
+            `/api/riot/league?summonerId=${encodeURIComponent(summonerId)}&region=${regionVal}`
+          );
+          const data = await res.json();
+          nextMap[summonerId] = Array.isArray(data) ? (data as LeagueEntry[]) : [];
+        } catch {
+          nextMap[summonerId] = [];
+        }
+      }
+    }
+    Promise.all(Array.from({ length: concurrency }, () => runPool())).then(() => {
+      if (Object.keys(nextMap).length > 0) {
+        setLeagueBySummonerId((prev) => ({ ...prev, ...nextMap }));
+      }
+    });
+  }, [matches, regionVal, leagueBySummonerId]);
 
   if (!riotIdParam) {
     return (
@@ -787,7 +822,7 @@ export default function SummonerProfileBeige({
           <div className="profile-matches-header-left">
             <h2 className="profile-matches-title">Recent Matches</h2>
             <span className="profile-matches-count">({matchCount})</span>
-            <span className="profile-matches-debug">Rank badges loaded: {Object.keys(rankBadgesBySummonerId).length}</span>
+            <span className="profile-matches-debug">Ranks loaded: {Object.keys(leagueBySummonerId).length}</span>
           </div>
           <div className="profile-matches-header-stats recent-stats">
             <div className="stat-chip">
@@ -1063,12 +1098,13 @@ export default function SummonerProfileBeige({
                           highlight={part.puuid === account?.puuid}
                         />
                         <span className="profile-match-team-name-line">
-                          <span className="profile-match-team-name" title={part.riotIdGameName ?? part.summonerName}>
+                          <span className="profile-match-team-name summoner-name" title={part.riotIdGameName ?? part.summonerName}>
                             {part.riotIdGameName ?? part.summonerName}
+                            {(() => {
+                              const badge = formatRankBadge(leagueBySummonerId[part.summonerId ?? ""], activeQueueType);
+                              return badge ? <span className="rank-badge">{badge}</span> : null;
+                            })()}
                           </span>
-                          {rankBadgesBySummonerId[part.summonerId ?? ""] ? (
-                            <span className="profile-match-rank-badge">{rankBadgesBySummonerId[part.summonerId!]}</span>
-                          ) : null}
                         </span>
                         <span className="profile-match-team-extra" aria-hidden />
                       </div>
@@ -1109,12 +1145,13 @@ export default function SummonerProfileBeige({
                           highlight={part.puuid === account?.puuid}
                         />
                         <span className="profile-match-team-name-line">
-                          <span className="profile-match-team-name" title={part.riotIdGameName ?? part.summonerName}>
+                          <span className="profile-match-team-name summoner-name" title={part.riotIdGameName ?? part.summonerName}>
                             {part.riotIdGameName ?? part.summonerName}
+                            {(() => {
+                              const badge = formatRankBadge(leagueBySummonerId[part.summonerId ?? ""], activeQueueType);
+                              return badge ? <span className="rank-badge">{badge}</span> : null;
+                            })()}
                           </span>
-                          {rankBadgesBySummonerId[part.summonerId ?? ""] ? (
-                            <span className="profile-match-rank-badge">{rankBadgesBySummonerId[part.summonerId!]}</span>
-                          ) : null}
                         </span>
                         <span className="profile-match-team-extra" aria-hidden />
                       </div>

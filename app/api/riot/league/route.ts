@@ -23,14 +23,19 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const platform = searchParams.get("platform") ?? searchParams.get("region") ?? "na1";
   const puuid = searchParams.get("puuid");
-  if (!puuid || typeof puuid !== "string" || !puuid.trim()) {
+  const summonerId = searchParams.get("summonerId");
+
+  let riotUrl: string;
+  if (summonerId && typeof summonerId === "string" && summonerId.trim()) {
+    riotUrl = `https://${platform}.api.riotgames.com/lol/league/v4/entries/by-summoner/${encodeURIComponent(summonerId.trim())}`;
+  } else if (puuid && typeof puuid === "string" && puuid.trim()) {
+    riotUrl = `https://${platform}.api.riotgames.com/lol/league/v4/entries/by-puuid/${encodeURIComponent(puuid.trim())}`;
+  } else {
     return NextResponse.json(
-      { ok: false, error: "missing puuid", status: 400 },
+      { ok: false, error: "missing puuid or summonerId", status: 400 },
       { status: 400, headers: NO_CACHE }
     );
   }
-
-  const riotUrl = `https://${platform}.api.riotgames.com/lol/league/v4/entries/by-puuid/${encodeURIComponent(puuid.trim())}`;
   const upstream = await cachedRiotFetch(riotUrl);
   const text = await upstream.text();
 
