@@ -343,19 +343,7 @@ function SummonerProfileContent() {
       setSummoner(summonerRes);
 
       setRankLoading(true);
-      const encryptedSummonerId = summonerRes.encryptedSummonerId;
-      if (!encryptedSummonerId) {
-        console.error(
-          "[riot/league] Missing encryptedSummonerId. Do not call League V4. Full summoner response:",
-          summonerRes
-        );
-        setRankError("Missing summoner id");
-        setLeagueEntry(null);
-        setLeagueQueueLabel("");
-        setRankLoading(false);
-      } else {
-      console.log("[riot/league] encryptedSummonerId being sent to /api/riot/league:", encryptedSummonerId);
-      const leagueUrl = `/api/riot/league?encryptedSummonerId=${encodeURIComponent(encryptedSummonerId)}&region=${REGION}`;
+      const leagueUrl = `/api/riot/league?puuid=${encodeURIComponent(accountRes.puuid)}&platform=${REGION}`;
       const leagueRes = await fetch(leagueUrl);
       const leagueBody = await leagueRes.text();
       if (!leagueRes.ok) {
@@ -401,15 +389,12 @@ function SummonerProfileContent() {
           setLeagueQueueLabel("");
         } else if (entries !== null) {
           const solo = entries.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null;
-          const flex = entries.find((e) => e.queueType === "RANKED_FLEX_SR") ?? null;
-          const chosen = solo ?? flex;
           setRankError(null);
-          setLeagueEntry(chosen);
-          setLeagueQueueLabel(chosen === flex && flex != null ? "Flex" : "");
+          setLeagueEntry(solo);
+          setLeagueQueueLabel("");
         }
       }
       setRankLoading(false);
-      }
 
       const matchDetails = await mapWithConcurrency(
         matchListRes.matchIds.slice(0, 20),

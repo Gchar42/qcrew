@@ -28,35 +28,19 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  // Platform only (e.g. na1 for NA). Never use americas or routing region.
-  const platform = searchParams.get("region") ?? "na1";
-  // Must be summoner v4 field "id" (encryptedSummonerId). Do NOT pass puuid or accountId.
-  const encryptedSummonerId =
-    searchParams.get("encryptedSummonerId") ?? searchParams.get("summonerId");
-  const trimmed = typeof encryptedSummonerId === "string" ? encryptedSummonerId.trim() : "";
-  if (!trimmed || trimmed === "undefined") {
-    console.error("[riot/league] missing encryptedSummonerId — do not call League V4. Received:", {
-      encryptedSummonerId: encryptedSummonerId ?? "(missing)",
-      type: typeof encryptedSummonerId,
-    });
+  const platform = searchParams.get("platform") ?? searchParams.get("region") ?? "na1";
+  const puuid = searchParams.get("puuid");
+  if (!puuid || typeof puuid !== "string" || !puuid.trim()) {
     return NextResponse.json(
-      { ok: false, error: "missing encryptedSummonerId", status: 500 },
-      { status: 500, headers: NO_CACHE }
+      { ok: false, error: "missing puuid", status: 400 },
+      { status: 400, headers: NO_CACHE }
     );
   }
 
-  // League V4 requires encryptedSummonerId (summoner v4 field "id"), not puuid, not account id.
-  console.log("[riot/league] Before Riot call:", {
-    platform,
-    summonerIdLength: trimmed.length,
-    summonerIdFirst6: trimmed.slice(0, 6),
-    xRiotTokenHeader: "present",
-  });
-
-  const url = `https://${platform}.api.riotgames.com/lol/league/v4/entries/by-summoner/${encodeURIComponent(trimmed)}`;
-  console.log("[riot/league] Exact Riot URL being called:", url);
+  const riotUrl = `https://${platform}.api.riotgames.com/lol/league/v4/entries/by-puuid/${encodeURIComponent(puuid.trim())}`;
+  console.log("[riot/league] Exact Riot URL being called:", riotUrl);
   // Riot expects "X-Riot-Token" only. Do NOT use Authorization: Bearer.
-  const res = await fetch(url, {
+  const res = await fetch(riotUrl, {
     cache: "no-store",
     headers: { "X-Riot-Token": key },
   });
@@ -64,7 +48,7 @@ export async function GET(request: Request) {
   const text = await res.text();
   const bodySnippet = text.slice(0, 500);
   console.log("[riot/league] League V4 response:", {
-    requestUrl: url,
+    requestUrl: riotUrl,
     status: res.status,
     statusText: res.statusText,
     bodySnippet,
@@ -79,7 +63,7 @@ export async function GET(request: Request) {
     } else if (res.status === 429) {
       console.error("[riot/league] → 429: Rate limited");
     } else if (res.status === 404) {
-      console.error("[riot/league] → 404: Wrong encryptedSummonerId or wrong route");
+      console.error("[riot/league] → 404: No entries or wrong route");
     }
     return NextResponse.json(
       {
@@ -87,7 +71,7 @@ export async function GET(request: Request) {
         status: res.status,
         statusText: res.statusText,
         riotBody: text,
-        requestUrl: url,
+        requestUrl: riotUrl,
       },
       { status: res.status, headers: NO_CACHE }
     );
