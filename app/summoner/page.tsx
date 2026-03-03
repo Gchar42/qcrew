@@ -526,7 +526,7 @@ function SummonerProfileContent() {
             <button
               key={m.metadata?.matchId ?? ""}
               type="button"
-              className={`profile-match-row ${win ? "win" : "loss"}`}
+              className={`profile-match-row ${win ? "win" : "loss"}${badgeInfo?.badge === "Main Character" ? " profile-match-row-main-character" : ""}`}
               onClick={() => setDetailMatch(m)}
             >
               <div className="profile-match-left-zone">
@@ -645,8 +645,8 @@ function SummonerProfileContent() {
                           <span className="profile-badge-chip profile-badge-chip-main-character socialBadge">
                             <span className="profile-badge-chip-mc-inner">
                               <span className="profile-badge-chip-crown" aria-hidden>
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M12 2L14 8h4l-3.5 4 1.5 6H8l1.5-6L6 8h4l2-6z" fill="currentColor" />
+                                <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M16 2l4 7h5l-4 4 1.5 8L16 18l-6.5 5 1.5-8-4-4h5l4-7z" fill="currentColor" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" strokeLinejoin="round" />
                                 </svg>
                               </span>
                               <span className="profile-badge-chip-text profile-badge-chip-text-main-character">

@@ -419,6 +419,14 @@
   background: rgba(185, 28, 28, 0.17);
 }
 
+/* Slightly darker card when Main Character badge is present so gold pops */
+.profile-page .profile-match-row-main-character.win {
+  background: rgba(12, 80, 45, 0.18);
+}
+.profile-page .profile-match-row-main-character.loss {
+  background: rgba(120, 15, 15, 0.2);
+}
+
 /* Left zone: visual row (L + bar + portrait + spells) + meta block */
 .profile-page .profile-match-left-zone {
   display: flex;
@@ -445,7 +453,7 @@
   flex-shrink: 0;
 }
 
-/* Two chips row: Impact chip + Badge chip (overflow visible so badge descenders don't clip) */
+/* Two chips row: Impact chip + Badge chip (overflow visible so Main Character can break out) */
 .profile-page .profile-chips-row {
   display: flex;
   flex-direction: row;
@@ -454,6 +462,7 @@
   gap: 8px;
   margin-top: 6px;
   overflow: visible !important;
+  position: relative;
 }
 
 /* Chip 1: Impact score – hero number, stronger border, subtle glow */
@@ -516,55 +525,62 @@
   color: #8b6914;
 }
 
-/* Main Character: crown-level achievement – shield badge, radial glow, portrait ring */
+/* Main Character: breaks out of layout, hexagon crest, dominant crown, elevated above card */
 
-/* Wrapper for radial glow that lights the card around the badge */
+/* Wrapper: scale up ~18%, overlap layout, soft radial highlight behind badge */
 .profile-page .profile-badge-chip-mc-wrap {
   position: relative;
   display: inline-flex;
-  z-index: 1;
+  z-index: 3;
+  transform: scale(1.18);
+  transform-origin: left center;
+  margin-top: -8px;
+  margin-bottom: -4px;
+  margin-left: -2px;
 }
 .profile-page .profile-badge-chip-mc-wrap::before {
   content: "";
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 140%;
-  height: 180%;
+  width: 200%;
+  height: 220%;
   transform: translate(-50%, -50%);
   background: radial-gradient(
     ellipse at center,
-    rgba(218, 165, 32, 0.18) 0%,
-    rgba(184, 134, 11, 0.08) 45%,
-    transparent 70%
+    rgba(255, 230, 150, 0.12) 0%,
+    rgba(218, 165, 32, 0.08) 35%,
+    rgba(184, 134, 11, 0.03) 60%,
+    transparent 75%
   );
-  filter: blur(12px);
+  filter: blur(16px);
   pointer-events: none;
   z-index: -1;
 }
 
-/* Shield-shaped badge (not a button) */
+/* Hexagon crest – not a button, overlaps card */
 .profile-page .profile-badge-chip-main-character {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 12px 8px;
+  padding: 8px 14px 10px;
   min-width: 0;
-  clip-path: polygon(0% 0%, 100% 0%, 100% 85%, 50% 100%, 0% 85%);
-  border: 2px solid #5c4a0a;
+  clip-path: polygon(50% 0%, 100% 22%, 100% 78%, 50% 100%, 0% 78%, 0% 22%);
+  border: 2px solid #4a3c08;
   background: linear-gradient(
     180deg,
-    #d4a84b 0%,
-    #c49420 12%,
-    #a67c10 40%,
-    #8b6914 70%,
-    #5c4a0a 100%
+    #e0b84a 0%,
+    #c49420 15%,
+    #a67c10 45%,
+    #7a5c0e 75%,
+    #4a3c08 100%
   );
   box-shadow:
-    0 2px 0 0 rgba(255, 255, 255, 0.28) inset,
-    0 6px 16px rgba(0, 0, 0, 0.5),
-    0 0 20px rgba(184, 134, 11, 0.25);
+    0 3px 0 0 rgba(255, 255, 255, 0.25) inset,
+    0 8px 24px rgba(0, 0, 0, 0.55),
+    0 0 32px rgba(218, 165, 32, 0.4),
+    0 0 48px rgba(184, 134, 11, 0.25);
   color: #fffef7;
   overflow: visible;
   animation: profile-main-character-shimmer 1.2s ease-out 0.3s both;
@@ -574,39 +590,44 @@
 }
 @keyframes profile-main-character-shimmer {
   0% {
-    filter: brightness(0.92);
+    filter: brightness(0.94);
     box-shadow:
-      0 2px 0 0 rgba(255, 255, 255, 0.28) inset,
-      0 6px 16px rgba(0, 0, 0, 0.5),
-      0 0 20px rgba(184, 134, 11, 0.25);
+      0 3px 0 0 rgba(255, 255, 255, 0.25) inset,
+      0 8px 24px rgba(0, 0, 0, 0.55),
+      0 0 32px rgba(218, 165, 32, 0.4),
+      0 0 48px rgba(184, 134, 11, 0.25);
   }
-  35% {
-    filter: brightness(1.08);
+  40% {
+    filter: brightness(1.06);
     box-shadow:
-      0 2px 0 0 rgba(255, 255, 255, 0.4) inset,
-      0 6px 16px rgba(0, 0, 0, 0.5),
-      0 0 28px rgba(218, 165, 32, 0.4);
+      0 3px 0 0 rgba(255, 255, 255, 0.38) inset,
+      0 8px 24px rgba(0, 0, 0, 0.55),
+      0 0 40px rgba(218, 165, 32, 0.5),
+      0 0 56px rgba(184, 134, 11, 0.35);
   }
   100% {
     filter: brightness(1);
     box-shadow:
-      0 2px 0 0 rgba(255, 255, 255, 0.28) inset,
-      0 6px 16px rgba(0, 0, 0, 0.5),
-      0 0 20px rgba(184, 134, 11, 0.25);
+      0 3px 0 0 rgba(255, 255, 255, 0.25) inset,
+      0 8px 24px rgba(0, 0, 0, 0.55),
+      0 0 32px rgba(218, 165, 32, 0.4),
+      0 0 48px rgba(184, 134, 11, 0.25);
   }
 }
 @keyframes profile-main-character-pulse-glow {
   0%, 100% {
     box-shadow:
-      0 2px 0 0 rgba(255, 255, 255, 0.28) inset,
-      0 6px 16px rgba(0, 0, 0, 0.5),
-      0 0 20px rgba(184, 134, 11, 0.3);
+      0 3px 0 0 rgba(255, 255, 255, 0.25) inset,
+      0 8px 24px rgba(0, 0, 0, 0.55),
+      0 0 32px rgba(218, 165, 32, 0.4),
+      0 0 48px rgba(184, 134, 11, 0.28);
   }
   50% {
     box-shadow:
-      0 2px 0 0 rgba(255, 255, 255, 0.32) inset,
-      0 6px 16px rgba(0, 0, 0, 0.5),
-      0 0 28px rgba(218, 165, 32, 0.45);
+      0 3px 0 0 rgba(255, 255, 255, 0.32) inset,
+      0 8px 24px rgba(0, 0, 0, 0.55),
+      0 0 40px rgba(218, 165, 32, 0.55),
+      0 0 60px rgba(184, 134, 11, 0.35);
   }
 }
 
@@ -620,9 +641,9 @@
     105deg,
     transparent 0%,
     transparent 38%,
-    rgba(255, 255, 255, 0.2) 48%,
-    rgba(255, 255, 255, 0.35) 50%,
-    rgba(255, 255, 255, 0.2) 52%,
+    rgba(255, 255, 255, 0.22) 48%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.22) 52%,
     transparent 62%,
     transparent 100%
   );
@@ -636,12 +657,12 @@
   }
 }
 
-/* Stacked layout: crown above label */
+/* Crown dominant above label */
 .profile-page .profile-badge-chip-mc-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   position: relative;
   z-index: 1;
 }
@@ -650,12 +671,12 @@
   align-items: center;
   justify-content: center;
   color: #fffef7;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4));
 }
 .profile-page .profile-badge-chip-main-character .profile-badge-chip-text-main-character {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #fffef7;
   line-height: 1.2;
