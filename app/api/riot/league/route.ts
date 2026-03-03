@@ -7,8 +7,8 @@ export const revalidate = 0;
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
 
 /**
- * League-v4 is platform-routed (e.g. na1.api.riotgames.com), NOT americas.
- * Americas is only for account-v1 and match-v5.
+ * League V4 must use platform routing only. For NA, host must be https://na1.api.riotgames.com.
+ * Do NOT use americas.api.riotgames.com or getRoutingRegion(); those are for account-v1 and match-v5 only.
  */
 export async function GET(request: Request) {
   const key = process.env.RIOT_API_KEY;
@@ -28,24 +28,25 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const region = searchParams.get("region") ?? "na1";
-  const summonerId = searchParams.get("summonerId");
-  if (!summonerId) {
+  // Platform only (e.g. na1 for NA). Never use americas or routing region.
+  const platform = searchParams.get("region") ?? "na1";
+  const encryptedSummonerId = searchParams.get("summonerId");
+  if (!encryptedSummonerId) {
     return NextResponse.json(
       { error: "Missing summonerId", status: 400 },
       { status: 400, headers: NO_CACHE }
     );
   }
 
-  // Validation: League V4 requires encryptedSummonerId (summoner v4 field "id"), not puuid, not account id.
+  // League V4 requires encryptedSummonerId (summoner v4 field "id"), not puuid, not account id.
   console.log("[riot/league] Before Riot call:", {
-    region,
-    summonerIdLength: summonerId.length,
-    summonerIdFirst6: summonerId.slice(0, 6),
+    platform,
+    summonerIdLength: encryptedSummonerId.length,
+    summonerIdFirst6: encryptedSummonerId.slice(0, 6),
     xRiotTokenHeader: "present",
   });
 
-  const url = `https://${region}.api.riotgames.com/lol/league/v4/entries/by-summoner/${encodeURIComponent(summonerId)}`;
+  const url = `https://${platform}.api.riotgames.com/lol/league/v4/entries/by-summoner/${encodeURIComponent(encryptedSummonerId)}`;
   console.log("[riot/league] Exact Riot URL being called:", url);
   // Riot expects "X-Riot-Token" only. Do NOT use Authorization: Bearer.
   const res = await fetch(url, {
