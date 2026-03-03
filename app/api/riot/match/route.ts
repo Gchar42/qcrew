@@ -4,8 +4,12 @@ import { getCached, setCache } from "@/lib/supabase/route";
 import {
   getTimelineParticipantId,
   getItemPurchaseTimesFormatted,
+  getFinalBuild,
+  getPurchaseTimeMap,
 } from "@/lib/matchTimeline";
 import type { MatchDto, MatchTimelineDto } from "@/types/riot";
+
+const timelineDebugLogged = new Set<string>();
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -86,6 +90,35 @@ export async function GET(request: Request) {
         timeline,
         participantId
       );
+      if (!timelineDebugLogged.has(id)) {
+        timelineDebugLogged.add(id);
+        const frames = timeline.info?.frames ?? [];
+        const totalEvents = frames.reduce(
+          (acc, f) => acc + (f.events?.length ?? 0),
+          0
+        );
+        const purchasedCount = frames.reduce(
+          (acc, f) =>
+            acc +
+            (f.events?.filter(
+              (e) =>
+                e.participantId === participantId &&
+                e.type === "ITEM_PURCHASED"
+            ).length ?? 0),
+          0
+        );
+        const finalBuild = getFinalBuild(timeline, participantId);
+        const purchaseMap = getPurchaseTimeMap(timeline, participantId);
+        console.log("[riot/match] timeline debug (one per matchId)", {
+          matchId: id,
+          selectedPuuid: puuid,
+          timelineParticipantId: participantId,
+          timelineEventCount: totalEvents,
+          itemPurchasedCountForParticipant: purchasedCount,
+          finalFrameItem0To5: finalBuild.slice(0, 6),
+          purchaseTimeMapSize: purchaseMap.size,
+        });
+      }
       return NextResponse.json(
         { ...data, itemPurchaseTimesBySlot },
         { headers: NO_CACHE }

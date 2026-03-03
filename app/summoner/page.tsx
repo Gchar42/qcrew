@@ -650,12 +650,9 @@ function SummonerProfileContent() {
                     {([p.item0, p.item1, p.item2, p.item3, p.item4, p.item5] as (number | undefined)[]).map((id, idx) => {
                       const iconUrl = id != null && id > 0 ? getItemIconUrl(id) : null;
                       const timesBySlot = m.itemPurchaseTimesBySlot;
+                      const timeStr = timesBySlot?.[idx] ?? null;
                       const captionText =
-                        id != null && id > 0 && timesBySlot?.[idx]
-                          ? timesBySlot[idx]
-                          : null;
-                      const isFirstMatchCard = m.metadata?.matchId === matches[0]?.metadata?.matchId;
-                      const showDebugUnderFirst = isFirstMatchCard && idx === 0;
+                        id != null && id > 0 && timeStr ? timeStr : null;
                       return (
                         <div key={`item-${idx}`} className="profile-match-item-tile">
                           <span className="profile-match-item">
@@ -667,11 +664,7 @@ function SummonerProfileContent() {
                             )}
                           </span>
                           <span className="profile-match-item-caption" style={{ fontSize: 12 }}>
-                            {showDebugUnderFirst
-                              ? timesBySlot != null
-                                ? "DEBUG OK"
-                                : "DEBUG MISSING"
-                              : captionText}
+                            {captionText}
                           </span>
                         </div>
                       );
@@ -683,6 +676,13 @@ function SummonerProfileContent() {
                       </span>
                     ) : null}
                   </div>
+                  {m.metadata?.matchId === matches[0]?.metadata?.matchId ? (
+                    <div className="profile-match-debug-times" style={{ fontSize: 11, marginTop: 4, color: "var(--muted, #666)" }}>
+                      {m.itemPurchaseTimesBySlot == null
+                        ? "DEBUG MISSING itemPurchaseTimesBySlot"
+                        : `DEBUG TIMES: ${JSON.stringify(m.itemPurchaseTimesBySlot)}`}
+                    </div>
+                  ) : null}
                 </div>
               </div>
               <div className="profile-match-teams-block">
