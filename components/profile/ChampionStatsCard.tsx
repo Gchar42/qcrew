@@ -2,20 +2,9 @@
 
 import * as React from "react";
 import { getChampionSquareUrl } from "@/lib/riotAssets";
+import { aggregateChampRows, type ChampRow } from "@/lib/aggregateChampRows";
 
 type QueueKey = "solo" | "flex";
-type ChampRow = {
-  championId: number;
-  championName: string;
-  championIcon: string;
-  games: number;
-  wins: number;
-  winRate: number;
-  kda: number;
-  kills: number;
-  deaths: number;
-  assists: number;
-};
 
 function fmt1(n: number) {
   return Math.round(n * 10) / 10;
@@ -29,36 +18,11 @@ export default function ChampionStatsCard(props: {
 }) {
   const { puuid, matches, ddragonVersion } = props;
   const [queue, setQueue] = React.useState<QueueKey>("solo");
-  const [rows, setRows] = React.useState<ChampRow[]>([]);
-  const [loading, setLoading] = React.useState(true);
 
-  React.useEffect(() => {
-    let cancelled = false;
-    async function run() {
-      setLoading(true);
-      try {
-        const res = await fetch("/api/champion_stats", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            puuid,
-            queue,
-            matches,
-          }),
-        });
-        const json = await res.json();
-        if (!cancelled) setRows(Array.isArray(json?.rows) ? json.rows : []);
-      } catch {
-        if (!cancelled) setRows([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [puuid, queue, matches]);
+  const rows = React.useMemo(() => {
+    if (!Array.isArray(matches) || !puuid) return [];
+    return aggregateChampRows(matches, puuid, queue);
+  }, [matches, puuid, queue]);
 
   return (
     <div className="profile-rank-card champion-stats-card">
@@ -80,9 +44,7 @@ export default function ChampionStatsCard(props: {
             Ranked Flex
           </button>
         </div>
-        {loading ? (
-          <span className="profile-ranked-loading">Loading…</span>
-        ) : rows.length === 0 ? (
+        {rows.length === 0 ? (
           <span className="left_card_muted">No ranked matches found</span>
         ) : (
           <div className="champ_list">

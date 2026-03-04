@@ -4,8 +4,15 @@ import { getRoutingRegion } from "@/lib/riot-regions";
 import { queueToRiotQueueId } from "@/lib/riotCacheUtils";
 import { rankToNumber, numberToRankLabel } from "@/lib/rankMapping";
 import { tryLock } from "@/lib/lock";
-import { getCached, setCached, getInFlight, setInFlight, clearInFlight } from "@/lib/serverRequestCache";
-import { riotFetchJson } from "@/lib/riotFetch";
+import {
+  getCached as getSharedCached,
+  setCached as setSharedCached,
+  tryAcquireLock,
+  releaseLock,
+  PROFILE_BUNDLE_TTL_SEC,
+  LOCK_TTL_SEC,
+} from "@/lib/sharedCache";
+import { riotFetchJson, RiotRateLimitError } from "@/lib/riotFetch";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +20,7 @@ export const revalidate = 0;
 
 const FRESH_SEC = 120; // 2 minutes
 const MATCH_CACHE_STALE_DAYS = 7;
-const MAX_NEW_MATCH_FETCHES = 10;
+const MAX_NEW_MATCH_FETCHES = 5;
 const NO_CACHE_HEADERS = {
   "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
 };
@@ -78,7 +85,7 @@ async function fetchBundleFromRiot(
   const matchIdsUrl =
     `https://${regionRouting}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(puuid)}/ids` +
     `?start=0&count=20&queue=${riotQueueId}`;
-  const matchIdList = await riotFetchJson<string[]>(matchIdsUrl);
+  const matchIdList = await riotFetchJson<string[]>(matchIdsUrl, regionRouting);
 
   const [summoner, leagueEntries] = await Promise.all([
     fetch(`${baseUrl}/api/riot/summoner?puuid=${encodeURIComponent(puuid)}&region=${region}`).then(async (r) => {
@@ -123,7 +130,7 @@ async function fetchBundleFromRiot(
   for (const matchId of toFetch) {
     const matchUrl = `https://${regionRouting}.api.riotgames.com/lol/match/v5/matches/${encodeURIComponent(matchId)}`;
     try {
-      const matchDto = await riotFetchJson<MatchDto>(matchUrl);
+      const matchDto = await riotFetchJson<MatchDto>(matchUrl, regionRouting);
       await sb.from("match_cache").upsert(
         {
           region,
@@ -256,13 +263,19 @@ export async function GET(request: Request) {
   const parsed = { gameName, tagLine };
   const baseUrl = getBaseUrl(request);
   const cacheKey = `profileBundle:${region}:${normRiotId}:${queue}`;
+  const lockKey = `lock:profileBundle:${region}:${normRiotId}:${queue}`;
 
-  const cached = getCached(cacheKey);
+  const cached = await getSharedCached(cacheKey);
   if (cached) return Response.json(cached, { status: 200, headers: NO_CACHE_HEADERS });
-  const existing = getInFlight(cacheKey);
-  if (existing) {
-    const data = await existing;
-    return Response.json(data, { status: 200, headers: NO_CACHE_HEADERS });
+
+  const lockAcquired = await tryAcquireLock(lockKey, LOCK_TTL_SEC);
+  if (!lockAcquired) {
+    const stale = await getSharedCached(cacheKey);
+    if (stale) return Response.json(stale, { status: 200, headers: NO_CACHE_HEADERS });
+    return NextResponse.json(
+      { error: "Profile busy; retry shortly", status: 202, retryAfter: 1 },
+      { status: 202, headers: { "Retry-After": "1", ...NO_CACHE } }
+    );
   }
 
   let puuid: string | null = null;
@@ -292,12 +305,13 @@ export async function GET(request: Request) {
         if (ageSec < FRESH_SEC) {
           return NextResponse.json(payload, { headers: NO_CACHE_HEADERS });
         }
-        const lockKey = `profile_refresh:${region}:${puuid}:${queueKey}`;
-        tryLock(lockKey, 120).then((ok) => {
+        const refreshLockKey = `profile_refresh:${region}:${puuid}:${queueKey}`;
+        tryLock(refreshLockKey, 120).then((ok) => {
           if (ok) {
             fetchBundleFromRiot(baseUrl, region, queue, parsed)
-              .then((bundle) => {
+              .then(async (bundle) => {
                 const p = bundle.profile.account.puuid;
+                await setSharedCached(cacheKey, bundle, PROFILE_BUNDLE_TTL_SEC);
                 return Promise.all([
                   supabaseAdmin.from("summoner_cache").upsert(
                     { region, riot_id: normRiotId, puuid: p, payload: { puuid: p }, fetched_at: new Date().toISOString() },
@@ -323,26 +337,27 @@ export async function GET(request: Request) {
     }
   }
 
-  const p = (async (): Promise<ProfileBundle> => {
-    const data = await fetchBundleFromRiot(baseUrl, region, queue, parsed);
-    setCached(cacheKey, data, 60_000);
-    return data;
-  })();
-  setInFlight(cacheKey, p);
-
   let bundle: ProfileBundle;
   try {
-    bundle = await p;
+    bundle = await fetchBundleFromRiot(baseUrl, region, queue, parsed);
+    await setSharedCached(cacheKey, bundle, PROFILE_BUNDLE_TTL_SEC);
   } catch (e) {
-    clearInFlight(cacheKey);
+    await releaseLock(lockKey);
+    if (e instanceof RiotRateLimitError) {
+      const retrySec = Math.ceil(e.retryAfterMs / 1000);
+      return NextResponse.json(
+        { error: "Rate limited; retry soon", status: 503, retryAfter: retrySec },
+        { status: 503, headers: { "Retry-After": String(retrySec), ...NO_CACHE } }
+      );
+    }
     const message = e instanceof Error ? e.message : "Failed to load profile";
     return NextResponse.json(
       { error: message, status: 502 },
       { status: 502, headers: NO_CACHE }
     );
-  } finally {
-    clearInFlight(cacheKey);
   }
+
+  await releaseLock(lockKey);
 
   const puuidForUpsert = bundle.profile.account.puuid;
   await supabaseAdmin.from("summoner_cache").upsert(
