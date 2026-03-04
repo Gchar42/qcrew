@@ -104,18 +104,20 @@ export function MatchDetails({
         </span>
       </div>
       <div className="match-acc-body">
-            <div className="stats-header-row">
-              <span className="player-left-dummy" />
-              <span className="player-items-label stat-head">Items</span>
-              <div className="stats-header">
-                <span className="stat-head">Impact</span>
-                <span className="stat-head">KDA</span>
-                <span className="stat-head">CS</span>
-                <span className="stat-head">Vision</span>
-                <span className="stat-head">Dmg</span>
-                <span className="stat-head">Gold</span>
-              </div>
-            </div>
+        <table className="md-table">
+          <thead>
+            <tr>
+              <th className="col-player">Player</th>
+              <th className="col-items">Items</th>
+              <th className="col-impact">Impact</th>
+              <th className="col-kda">KDA</th>
+              <th className="col-cs">CS</th>
+              <th className="col-vision">Vision</th>
+              <th className="col-dmg">Dmg</th>
+              <th className="col-gold">Gold</th>
+            </tr>
+          </thead>
+          <tbody>
             {team.map((p) => {
               const isMe = p.puuid === puuidOfSearchedPlayer;
               const kda = `${p.kills}/${p.deaths}/${p.assists}`;
@@ -145,105 +147,107 @@ export function MatchDetails({
               const badge = rankBadgesByPuuid?.[p.puuid] ?? null;
 
               return (
-                <div
+                <tr
                   key={p.puuid}
-                  className={`player-row${isMe ? " me-row" : ""}`.trim()}
+                  className={isMe ? "me-row" : ""}
                 >
-                  <div className="player-left">
-                    <span className="player-champ">
-                      {champUrl ? (
-                        <img
-                          src={champUrl}
-                          alt=""
-                          width={40}
-                          height={40}
-                          className="player-champ-icon"
-                        />
-                      ) : (
-                        <span className="player-champ-placeholder" />
-                      )}
-                    </span>
-                    <div className="player-spells-runes">
-                      <div className="player-spells">
-                        {spell1Src && (
+                  <td className="col-player">
+                    <div className="md-player-cell">
+                      <span className="player-champ">
+                        {champUrl ? (
                           <img
-                            src={spell1Src}
+                            src={champUrl}
                             alt=""
-                            width={22}
-                            height={22}
-                            className="player-spell-icon"
+                            width={40}
+                            height={40}
+                            className="player-champ-icon"
                           />
+                        ) : (
+                          <span className="player-champ-placeholder" />
                         )}
-                        {spell2Src && (
-                          <img
-                            src={spell2Src}
-                            alt=""
-                            width={22}
-                            height={22}
-                            className="player-spell-icon"
-                          />
-                        )}
-                      </div>
-                      <div className="player-runes">
-                        {keystoneSrc && (
-                          <img
-                            src={keystoneSrc}
-                            alt=""
-                            width={22}
-                            height={22}
-                            className="player-rune-icon"
-                          />
-                        )}
-                        {secondarySrc && (
-                          <img
-                            src={secondarySrc}
-                            alt=""
-                            width={22}
-                            height={22}
-                            className="player-rune-icon"
-                          />
-                        )}
-                      </div>
-                    </div>
-                    <div className="player-name-block">
-                      <span className="player-name" title={participantDisplayName(p)}>
-                        {participantDisplayName(p)}
-                        {badge ? (
-                          <span className="rank-badge">{badge}</span>
-                        ) : null}
                       </span>
+                      <div className="player-spells-runes">
+                        <div className="player-spells">
+                          {spell1Src && (
+                            <img
+                              src={spell1Src}
+                              alt=""
+                              width={22}
+                              height={22}
+                              className="player-spell-icon"
+                            />
+                          )}
+                          {spell2Src && (
+                            <img
+                              src={spell2Src}
+                              alt=""
+                              width={22}
+                              height={22}
+                              className="player-spell-icon"
+                            />
+                          )}
+                        </div>
+                        <div className="player-runes">
+                          {keystoneSrc && (
+                            <img
+                              src={keystoneSrc}
+                              alt=""
+                              width={22}
+                              height={22}
+                              className="player-rune-icon"
+                            />
+                          )}
+                          {secondarySrc && (
+                            <img
+                              src={secondarySrc}
+                              alt=""
+                              width={22}
+                              height={22}
+                              className="player-rune-icon"
+                            />
+                          )}
+                        </div>
+                      </div>
+                      <div className="player-name-block">
+                        <span className="player-name" title={participantDisplayName(p)}>
+                          {participantDisplayName(p)}
+                          {badge ? (
+                            <span className="rank-badge">{badge}</span>
+                          ) : null}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="player-items">
-                    {[0, 1, 2, 3, 4, 5, 6].map((i) => {
-                      const itemId = [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6][i];
-                      return isValidItemId(itemId) ? (
-                        <img
-                          key={`${p.puuid}-item-${i}`}
-                          src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
-                          alt=""
-                          width={22}
-                          height={22}
-                          className="player-item-icon"
-                        />
-                      ) : (
-                        <span key={`${p.puuid}-item-${i}`} className="player-item-slot" />
-                      );
-                    })}
-                  </div>
-                  <div className="player-stats">
-                    <span className="stat-val">{Math.round(impactScore)}</span>
-                    <span className="stat-val">{kda}</span>
-                    <span className="stat-val">{cs}</span>
-                    <span className="stat-val">{vision}</span>
-                    <span className="stat-val">
-                      {damage.toLocaleString()}
-                    </span>
-                    <span className="stat-val">{gold.toLocaleString()}</span>
-                  </div>
-                </div>
+                  </td>
+                  <td className="col-items">
+                    <div className="player-items">
+                      {[0, 1, 2, 3, 4, 5, 6].map((i) => {
+                        const itemId = [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6][i];
+                        return isValidItemId(itemId) ? (
+                          <img
+                            key={`${p.puuid}-item-${i}`}
+                            src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
+                            alt=""
+                            width={22}
+                            height={22}
+                            className="player-item-icon"
+                          />
+                        ) : (
+                          <span key={`${p.puuid}-item-${i}`} className="player-item-slot" />
+                        );
+                      })}
+                    </div>
+                  </td>
+                  <td className="col-impact">{Math.round(impactScore)}</td>
+                  <td className="col-kda">{kda}</td>
+                  <td className="col-cs">{cs}</td>
+                  <td className="col-vision">{vision}</td>
+                  <td className="col-dmg">{damage.toLocaleString()}</td>
+                  <td className="col-gold">{gold.toLocaleString()}</td>
+                </tr>
               );
             })}
+          </tbody>
+        </table>
       </div>
     </div>
   );

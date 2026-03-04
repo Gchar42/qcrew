@@ -1357,9 +1357,6 @@
 }
 
 .profile-page .match-details-panel {
-  --col-left: 320px;
-  --col-items: 260px;
-  --col-stats: 560px;
   border-top: 1px solid var(--border);
   padding: 16px 20px;
   background: var(--surface3);
@@ -1416,49 +1413,91 @@
   background: var(--surface2);
 }
 
-.profile-page .stats-header-row {
-  display: grid;
-  grid-template-columns: var(--col-left) var(--col-items) var(--col-stats);
-  align-items: center;
-  column-gap: 12px;
-  padding: 6px 6px 8px 6px;
-  font-size: 10px;
-  opacity: 0.7;
-  color: var(--muted);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.profile-page .player-left-dummy {
-  min-width: 0;
-}
-
-.profile-page .player-items-label {
-  align-self: center;
-}
-
-.profile-page .player-row {
-  display: grid;
-  grid-template-columns: var(--col-left) var(--col-items) var(--col-stats);
-  align-items: center;
-  column-gap: 12px;
-  padding: 8px 6px;
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
+/* Match details table: single scrollable unit, no split panes */
+.profile-page .md-table {
+  width: max-content;
+  border-collapse: collapse;
   font-size: 12px;
   color: var(--ink);
-  min-width: calc(var(--col-left) + var(--col-items) + var(--col-stats));
 }
 
-.profile-page .match-acc-body > .player-row:first-child {
-  border-top: 0;
+.profile-page .md-table th,
+.profile-page .md-table td {
+  padding: 10px 8px;
+  white-space: nowrap;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  vertical-align: middle;
 }
 
-.profile-page .player-row.me-row {
+.profile-page .md-table thead th {
+  border-top: none;
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.7;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  text-align: left;
+}
+
+.profile-page .md-table .col-impact,
+.profile-page .md-table .col-kda,
+.profile-page .md-table .col-cs,
+.profile-page .md-table .col-vision,
+.profile-page .md-table .col-dmg,
+.profile-page .md-table .col-gold {
+  text-align: right;
+}
+
+.profile-page .md-table th.col-impact,
+.profile-page .md-table th.col-kda,
+.profile-page .md-table th.col-cs,
+.profile-page .md-table th.col-vision,
+.profile-page .md-table th.col-dmg,
+.profile-page .md-table th.col-gold {
+  text-align: right;
+}
+
+.profile-page .md-table .col-player {
+  width: 320px;
+}
+
+.profile-page .md-table .col-items {
+  width: 260px;
+}
+
+.profile-page .md-table .col-impact {
+  width: 70px;
+}
+
+.profile-page .md-table .col-kda {
+  width: 95px;
+}
+
+.profile-page .md-table .col-cs {
+  width: 70px;
+}
+
+.profile-page .md-table .col-vision {
+  width: 80px;
+}
+
+.profile-page .md-table .col-dmg {
+  width: 110px;
+}
+
+.profile-page .md-table .col-gold {
+  width: 95px;
+}
+
+.profile-page .md-table tr.me-row {
   background: rgba(0, 120, 255, 0.08);
-  border-left: 4px solid rgba(0, 120, 255, 0.8);
-  border-radius: 8px;
 }
 
-.profile-page .player-left {
+.profile-page .md-table tr.me-row td:first-child {
+  border-left: 4px solid rgba(0, 120, 255, 0.8);
+}
+
+.profile-page .md-player-cell {
   display: grid;
   grid-template-columns: 40px 26px 1fr;
   gap: 10px;
@@ -1544,42 +1583,6 @@
   background: var(--surface);
 }
 
-.profile-page .player-stats,
-.profile-page .stats-header {
-  display: grid;
-  grid-template-columns: 64px 90px 60px 70px 96px 86px;
-  justify-content: end;
-  column-gap: 12px;
-  font-size: 12px;
-}
-
-.profile-page .player-stats {
-  min-width: 0;
-}
-
-.profile-page .stats-header {
-  font-size: 10px;
-}
-
-.profile-page .stat-head {
-  font-size: 10px;
-  opacity: 0.7;
-  letter-spacing: 0.5px;
-  color: var(--muted);
-}
-
-.profile-page .stat-val {
-  font-weight: 700;
-}
-
-/* Match details: narrow viewports use same vars (scroll moves whole row) */
-@media (max-width: 960px) {
-  .profile-page .match-details-panel {
-    --col-left: 300px;
-    --col-items: 240px;
-    --col-stats: 560px;
-  }
-}
 
 /* Responsive */
 @media (max-width: 900px) {
