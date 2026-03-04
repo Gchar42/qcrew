@@ -374,7 +374,7 @@ export default function SummonerProfileBeige({
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
-  const [mainTab, setMainTab] = useState<"overview" | "champion-pool" | "lp-history">("overview");
+  const [mainTab, setMainTab] = useState<"overview" | "champion-pool">("overview");
 
   useEffect(() => {
     fetch("/api/ddragon/version")
@@ -781,25 +781,13 @@ export default function SummonerProfileBeige({
         <nav className="profile-hero-tabs" aria-label="Profile sections">
           <button type="button" className={`profile-hero-tab${mainTab === "overview" ? " profile-hero-tab-active" : ""}`} onClick={() => setMainTab("overview")}>Overview</button>
           <button type="button" className={`profile-hero-tab${mainTab === "champion-pool" ? " profile-hero-tab-active" : ""}`} onClick={() => setMainTab("champion-pool")}>Champion Pool</button>
-          <button type="button" className={`profile-hero-tab${mainTab === "lp-history" ? " profile-hero-tab-active" : ""}`} onClick={() => setMainTab("lp-history")}>LP History</button>
         </nav>
       </section>
 
       <div className="profile-body">
         <aside className="profile-body-left">
           {renderRankCard("Ranked Solo", soloEntry, rankLoading, rankError ?? null)}
-          <div className="profile-lp-history">
-            <div className="profile-lp-history-title">LP History</div>
-            <div style={{ height: 80, background: "var(--surface3)", borderRadius: 6 }} aria-hidden />
-            <a href="#" className="profile-lp-history-link" onClick={(e) => e.preventDefault()}>VIEW FULL HISTORY</a>
-          </div>
           {renderRankCard("Ranked Flex", flexEntry, rankLoading, null)}
-          <div className="profile-rank-card">
-            <div className="profile-rank-card-title">ARAM</div>
-            <div className="profile-rank-card-content">
-              <span className="profile-ranked-tier-line profile-ranked-unranked">0 Games</span>
-            </div>
-          </div>
         </aside>
         <div className="profile-body-right">
       <div className="recent-matches-section">
