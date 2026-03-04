@@ -1538,7 +1538,7 @@
 .profile-page .md-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px 22px;
+  gap: 8px 22px;
 }
 
 .profile-page .md-stat {
@@ -1572,31 +1572,6 @@
 
 .profile-page .md-stat-val.gold {
   color: rgba(255, 220, 120, 0.95);
-}
-
-/* Micro bars for Impact and Damage (QCrew signature) */
-.profile-page .md-bar {
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-  margin-top: 3px;
-  width: 100%;
-  min-width: 40px;
-}
-
-.profile-page .md-bar span {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-}
-
-.profile-page .md-bar.damage span {
-  background: rgba(255, 165, 90, 0.85);
-}
-
-.profile-page .md-bar.impact span {
-  background: rgba(170, 140, 255, 0.85);
 }
 
 /* Player cell content (champ + spells/runes + name) inside first td only */

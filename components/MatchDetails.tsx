@@ -314,13 +314,6 @@ width={18}
                       <div className="md-stat">
                         <div className="md-stat-label">Impact</div>
                         <div className="md-stat-val impact">{Math.round(impactScore)}</div>
-                        <div className="md-bar impact">
-                          <span
-                            style={{
-                              width: `${maxImp ? (impactScore / maxImp) * 100 : 0}%`,
-                            }}
-                          />
-                        </div>
                       </div>
                       <div className="md-stat">
                         <div className="md-stat-label">KDA</div>
@@ -337,13 +330,6 @@ width={18}
                       <div className="md-stat">
                         <div className="md-stat-label">Dmg</div>
                         <div className="md-stat-val damage">{formatShortNum(damage)}</div>
-                        <div className="md-bar damage">
-                          <span
-                            style={{
-                              width: `${maxDmg ? (damage / maxDmg) * 100 : 0}%`,
-                            }}
-                          />
-                        </div>
                       </div>
                       <div className="md-stat">
                         <div className="md-stat-label">Gold</div>
