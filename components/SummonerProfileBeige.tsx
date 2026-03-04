@@ -699,6 +699,10 @@ export default function SummonerProfileBeige({
 
   const leagueEntry = leagueEntries?.find((e) => e.queueType === targetQueueType) ?? null;
   const leagueQueueLabel = queue === "flex" ? "Flex" : "";
+  const soloEntry = leagueEntries?.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null;
+  const flexEntry = leagueEntries?.find((e) => e.queueType === "RANKED_FLEX_SR") ?? null;
+
+  const [mainTab, setMainTab] = useState<"overview" | "champion-pool" | "lp-history">("overview");
 
   const setQueueTab = (q: "solo" | "flex") => {
     const params = new URLSearchParams(searchParams.toString());
@@ -707,102 +711,93 @@ export default function SummonerProfileBeige({
     router.replace(`${pathname ?? "/summoner"}?${params.toString()}`);
   };
 
+  const renderRankCard = (title: string, entry: LeagueEntryDto | null, loading: boolean, err: string | null) => {
+    if (loading) return <div className="profile-rank-card"><div className="profile-rank-card-title">{title}</div><div className="profile-rank-card-content"><span className="profile-ranked-loading">Loading…</span></div></div>;
+    if (err) return <div className="profile-rank-card"><div className="profile-rank-card-title">{title}</div><div className="profile-rank-card-content"><span className="profile-ranked-error">{err}</span></div></div>;
+    if (!entry) return (
+      <div className="profile-rank-card">
+        <div className="profile-rank-card-title">{title}</div>
+        <div className="profile-rank-card-content">
+          <span className="profile-ranked-tier-line profile-ranked-unranked">Unranked</span>
+        </div>
+      </div>
+    );
+    const { gamesPlayed, winRatePct } = rankStats(entry);
+    const tierColorClass = getRankTierColorClass(entry.tier);
+    return (
+      <div className="profile-rank-card">
+        <div className="profile-rank-card-title">{title}</div>
+        <div className="profile-rank-card-content">
+          <span className="profile-ranked-emblem-wrap">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={getRankEmblemUrl(entry.tier)} alt="" className="profile-rank-card-emblem profile-ranked-emblem" width={48} height={48} />
+          </span>
+          <div className="profile-ranked-summary">
+            <span className={`profile-rank-card-tier profile-ranked-tier-line ${tierColorClass}`.trim()}>
+              {formatRankTier(entry.tier, entry.rank)}
+            </span>
+            <span className="profile-rank-card-lp profile-ranked-lp">{entry.leaguePoints} LP</span>
+            <span className="profile-rank-card-wr profile-ranked-winrate">{winRatePct}% WR · {entry.wins}W - {entry.losses}L</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <section className="profile-hero">
         <div className="profile-hero-left">
-          <div className="profile-hero-eyebrow">
-            Summoner Profile · {regionDisplayLabel(regionVal)}
-          </div>
           <h1 className="profile-hero-name">
             {summoner?.profileIconId != null && (
               <span className="profile-hero-icon-wrap">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={getProfileIconUrl(summoner.profileIconId, ddragonVersion)}
                   alt=""
                   className="profile-hero-icon"
-                  width={45}
-                  height={45}
+                  width={56}
+                  height={56}
                 />
               </span>
             )}
-            <span className="profile-hero-name-text">
-              {account.gameName}
-              <span className="tag-part"> #{account.tagLine}</span>
+            <span>
+              <span className="profile-hero-name-text">
+                {account.gameName}
+                <span className="tag-part"> #{account.tagLine}</span>
+              </span>
+              <span className="profile-hero-subline">{level}</span>
             </span>
           </h1>
           <div className="profile-hero-badges">
             <span className="profile-badge profile-badge-na">{regionDisplayLabel(regionVal)}</span>
-            {role && (
-              <span className="profile-badge profile-badge-role">{role}</span>
-            )}
-            <span className="profile-badge profile-badge-level">
-              Lv.{level}
-            </span>
+            {role && <span className="profile-badge profile-badge-role">{role}</span>}
+            <span className="profile-badge profile-badge-level">Lv.{level}</span>
           </div>
         </div>
-        <div className="profile-hero-right">
-          <div className="profile-ranked-summary">
-            {rankLoading ? (
-              <span className="profile-ranked-loading">Loading rank…</span>
-            ) : rankError != null ? (
-              <span className="profile-ranked-error" title={rankError}>
-                {rankError}
-              </span>
-            ) : leagueEntry != null ? (
-              (() => {
-                const { gamesPlayed, winRatePct } = rankStats(leagueEntry);
-                const tierColorClass = getRankTierColorClass(leagueEntry.tier);
-                return (
-                  <>
-                    <div className="profile-ranked-header">
-                      <span className="profile-ranked-emblem-wrap">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={getRankEmblemUrl(leagueEntry.tier)}
-                          alt=""
-                          className="profile-ranked-emblem"
-                          width={56}
-                          height={56}
-                        />
-                      </span>
-                      <span className={`profile-ranked-tier-line ${tierColorClass}`.trim()}>
-                        {formatRankTier(leagueEntry.tier, leagueEntry.rank)}
-                        {leagueQueueLabel && (
-                          <span className="profile-ranked-queue-label"> · {leagueQueueLabel}</span>
-                        )}
-                      </span>
-                    </div>
-                    <div className="profile-ranked-lp">{leagueEntry.leaguePoints} LP</div>
-                    <div className="profile-ranked-wl">
-                      {leagueEntry.wins}W {leagueEntry.losses}L
-                    </div>
-                    <div className="profile-ranked-winrate">
-                      {winRatePct}% win rate, {gamesPlayed} games
-                    </div>
-                  </>
-                );
-              })()
-            ) : (
-              <>
-                <div className="profile-ranked-header">
-                  <span className="profile-ranked-tier-line profile-ranked-unranked">
-                    Unranked
-                    {leagueQueueLabel && (
-                      <span className="profile-ranked-queue-label"> · {leagueQueueLabel}</span>
-                    )}
-                  </span>
-                </div>
-                <div className="profile-ranked-lp">0 LP</div>
-                <div className="profile-ranked-wl">0W 0L</div>
-                <div className="profile-ranked-winrate">0% win rate, 0 games</div>
-              </>
-            )}
-          </div>
-        </div>
+        <nav className="profile-hero-tabs" aria-label="Profile sections">
+          <button type="button" className={`profile-hero-tab${mainTab === "overview" ? " profile-hero-tab-active" : ""}`} onClick={() => setMainTab("overview")}>Overview</button>
+          <button type="button" className={`profile-hero-tab${mainTab === "champion-pool" ? " profile-hero-tab-active" : ""}`} onClick={() => setMainTab("champion-pool")}>Champion Pool</button>
+          <button type="button" className={`profile-hero-tab${mainTab === "lp-history" ? " profile-hero-tab-active" : ""}`} onClick={() => setMainTab("lp-history")}>LP History</button>
+        </nav>
       </section>
 
+      <div className="profile-body">
+        <aside className="profile-body-left">
+          {renderRankCard("Ranked Solo", soloEntry, rankLoading, rankError ?? null)}
+          <div className="profile-lp-history">
+            <div className="profile-lp-history-title">LP History</div>
+            <div style={{ height: 80, background: "var(--surface3)", borderRadius: 6 }} aria-hidden />
+            <a href="#" className="profile-lp-history-link" onClick={(e) => e.preventDefault()}>VIEW FULL HISTORY</a>
+          </div>
+          {renderRankCard("Ranked Flex", flexEntry, rankLoading, null)}
+          <div className="profile-rank-card">
+            <div className="profile-rank-card-title">ARAM</div>
+            <div className="profile-rank-card-content">
+              <span className="profile-ranked-tier-line profile-ranked-unranked">0 Games</span>
+            </div>
+          </div>
+        </aside>
+        <div className="profile-body-right">
       <div className="recent-matches-section">
         <div className="profile-queue-tabs">
           <button
@@ -824,7 +819,6 @@ export default function SummonerProfileBeige({
           <div className="profile-matches-header-left">
             <h2 className="profile-matches-title">Recent Matches</h2>
             <span className="profile-matches-count">({matchCount})</span>
-            <span className="profile-matches-debug">Ranks loaded: {Object.keys(leagueBySummonerId).length}</span>
           </div>
           <div className="profile-matches-header-stats recent-stats">
             <div className="stat-chip">
@@ -984,7 +978,8 @@ export default function SummonerProfileBeige({
                 </div>
                 <div className="profile-match-left-meta">
                   <div className="profile-match-line1">
-                    {win ? "Victory" : "Defeat"} · {queue} · {duration}
+                    <span className={win ? "victory-text" : "defeat-text"}>{win ? "Victory" : "Defeat"}</span>
+                    {" · "}{queue} · {duration}
                     {relative && ` · ${relative}`}
                   </div>
                   <div className="profile-match-line2">
@@ -1194,6 +1189,8 @@ export default function SummonerProfileBeige({
         })}
       </div>
 
+      </div>
+        </div>
       </div>
 
       {detailMatch && (

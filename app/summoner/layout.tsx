@@ -2,7 +2,7 @@ import Link from "next/link";
 import "./profile.css";
 
 const FONTS_URL =
-  "https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&family=Unbounded:wght@300;400;600;900&display=swap";
+  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap";
 
 export default function SummonerLayout({
   children,
