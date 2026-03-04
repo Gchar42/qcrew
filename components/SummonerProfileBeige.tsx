@@ -28,7 +28,6 @@ import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
 import { numberToRankLabel, rankToNumber } from "@/lib/rankMapping";
 import ChampionStatsCard from "@/components/profile/ChampionStatsCard";
-import type { MatchRow } from "@/lib/matchesDb";
 import type { AccountDto, LeagueEntryDto, SummonerDto, MatchDto } from "@/types/riot";
 
 /** Badge name -> profile CSS class for chip styling */
@@ -463,7 +462,8 @@ export default function SummonerProfileBeige({
     );
   }
 
-  const wins = matches.filter((m) => (m as MatchRow).win).length;
+  const participant = (m: MatchDto) => m.info?.participants?.find((p) => p.puuid === account.puuid);
+  const wins = matches.filter((m) => participant(m)?.win).length;
   const total = matches.length;
   const winRate = total ? Math.round((wins / total) * 100) : 0;
 
@@ -588,19 +588,30 @@ export default function SummonerProfileBeige({
             Flex
           </button>
         </div>
-        {!matches?.length ? (
+        {!matches?.length && !matchIds?.length ? (
           <div className="profile-matches-empty">
-            <p>
-              {matchIds.length > 0
-                ? "Match details temporarily unavailable, retry"
-                : "No matches loaded yet"}
-            </p>
+            <p>No matches loaded yet</p>
             <button type="button" onClick={() => mutate()} className="mt-4 underline">
               Retry
             </button>
           </div>
+        ) : matchIds?.length > 0 && !matches?.length ? (
+          <div className="profile-matches-empty">
+            <p>Loading match details…</p>
+            <button type="button" onClick={() => mutate()} className="mt-4 underline">
+              Refresh
+            </button>
+          </div>
         ) : (
           <>
+        {bundle?.partialMatches && (
+          <div className="profile-matches-partial flex items-center gap-2 py-2 text-sm text-neutral-400">
+            <span>Loading more matches…</span>
+            <button type="button" onClick={() => mutate()} className="underline">
+              Refresh
+            </button>
+          </div>
+        )}
         <div className="profile-matches-header">
           <div className="profile-matches-header-left">
             <h2 className="profile-matches-title">Recent Matches</h2>
@@ -628,16 +639,18 @@ export default function SummonerProfileBeige({
           </div>
         </div>
         <div className="profile-matches-list">
-        {(matches as MatchRow[]).map((m) => {
-          const win = m.win;
-          const duration = formatDuration(m.game_duration ?? 0);
-          const minutes = Math.max(1, (m.game_duration ?? 0) / 60);
-          const csPerMin = minutes > 0 ? m.cs / minutes : 0;
-          const queue = queueLabelFromQueueId(m.queue_id);
-          const champName = m.champion_name ?? `Champion ${m.champion_id}`;
+        {(matches as MatchDto[]).map((m) => {
+          const p = participant(m);
+          const win = p?.win ?? false;
+          const duration = formatDuration(m.info?.gameDuration ?? 0);
+          const minutes = Math.max(1, (m.info?.gameDuration ?? 0) / 60);
+          const cs = (p?.totalMinionsKilled ?? 0) + (p?.neutralMinionsKilled ?? 0);
+          const csPerMin = minutes > 0 ? cs / minutes : 0;
+          const queue = queueLabel(m.info?.queueId);
+          const champName = p?.championName ?? "Champion";
           const champSquareUrl = getChampionSquareUrl(champName, ddragonVersion);
           const portraitBaseUrl = getChampionSplashUrl(champName);
-          const matchId = m.match_id;
+          const matchId = m.metadata?.matchId ?? "";
 
           return (
             <div key={matchId} className="profile-match-card-wrap">
@@ -678,12 +691,12 @@ export default function SummonerProfileBeige({
                   </div>
                   <div className="profile-match-line2">
                     <span className="profile-kda-inline">
-                      <span className="k">{m.kills}</span> /{" "}
-                      <span className="d">{m.deaths}</span> /{" "}
-                      <span className="a">{m.assists}</span>
+                      <span className="k">{p?.kills ?? 0}</span> /{" "}
+                      <span className="d">{p?.deaths ?? 0}</span> /{" "}
+                      <span className="a">{p?.assists ?? 0}</span>
                     </span>
                     {" · "}
-                    <span>{m.cs} CS ({csPerMin.toFixed(1)}/m)</span>
+                    <span>{cs} CS ({csPerMin.toFixed(1)}/m)</span>
                   </div>
                 </div>
               </div>

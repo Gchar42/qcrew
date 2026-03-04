@@ -13,15 +13,13 @@ import {
   LOCK_TTL_SEC,
 } from "@/lib/sharedCache";
 import { riotFetchJson, RiotRateLimitError } from "@/lib/riotFetch";
-import { matchDtoToRow, type MatchRow } from "@/lib/matchesDb";
+import { ingestMatches } from "@/lib/ingestMatches";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const FRESH_SEC = 120; // 2 minutes
-const MAX_NEW_MATCH_FETCHES = 5; // cap Riot match-detail calls per request
-const MATCH_LIST_COUNT = 20;
 const NO_CACHE_HEADERS = {
   "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
 };
@@ -36,7 +34,8 @@ export type ProfileBundle = {
   profile: { account: AccountDto; summoner: SummonerDto };
   ranked: { solo: LeagueEntryDto | null; flex: LeagueEntryDto | null };
   matchIds: string[];
-  matches: MatchRow[];
+  matches: MatchDto[];
+  partialMatches?: boolean;
   computed: {
     matchCount: number;
     avgKda: string;
@@ -61,17 +60,46 @@ function normalizeRiotId(riotId: string): string {
   return `${(name ?? "").toLowerCase()}#${(tag ?? "").toLowerCase()}`;
 }
 
+function computedFromMatches(matches: MatchDto[], puuid: string) {
+  const n = matches.length || 1;
+  const participant = (m: MatchDto) => m.info?.participants?.find((p) => p.puuid === puuid);
+  let avgKills = 0,
+    avgDeaths = 0,
+    avgAssists = 0,
+    totalCs = 0,
+    totalDurationSec = 0;
+  matches.forEach((m) => {
+    const p = participant(m);
+    if (p) {
+      avgKills += p.kills ?? 0;
+      avgDeaths += p.deaths ?? 0;
+      avgAssists += p.assists ?? 0;
+      totalCs += (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
+    }
+    totalDurationSec += m.info?.gameDuration ?? 0;
+  });
+  avgKills = Math.round((avgKills / n) * 10) / 10;
+  avgDeaths = Math.round((avgDeaths / n) * 10) / 10;
+  avgAssists = Math.round((avgAssists / n) * 10) / 10;
+  const avgDurationMin = totalDurationSec / 60 / n;
+  const avgCsPerMin = totalDurationSec > 0 ? totalCs / (totalDurationSec / 60) : 0;
+  return {
+    matchCount: matches.length,
+    avgKda: `${avgKills}/${avgDeaths}/${avgAssists}`,
+    csPerMin: Math.round(avgCsPerMin * 10) / 10,
+    avgDuration: Math.round(avgDurationMin * 10) / 10,
+    avgRankPlayedAgainst: "Unranked" as string,
+    avgRankRankedCount: 0,
+  };
+}
+
 async function fetchBundleFromRiot(
   baseUrl: string,
   region: string,
   queue: "solo" | "flex",
   parsed: { gameName: string; tagLine: string }
 ): Promise<ProfileBundle> {
-  const startTime = Date.now();
-  const sb = supabaseAdmin;
   const platform = region;
-  const regionRouting = getRoutingRegion(region);
-  const riotQueueId = queueToRiotQueueId(queue);
 
   const accountRes = await fetch(
     `${baseUrl}/api/riot/account?gameName=${encodeURIComponent(parsed.gameName)}&tagLine=${encodeURIComponent(parsed.tagLine)}&region=${region}`
@@ -83,12 +111,7 @@ async function fetchBundleFromRiot(
   const account = (await accountRes.json()) as AccountDto;
   const puuid = account.puuid;
 
-  const matchIdsUrl =
-    `https://${regionRouting}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(puuid)}/ids` +
-    `?start=0&count=${MATCH_LIST_COUNT}&queue=${riotQueueId}`;
-  const matchIdList = await riotFetchJson<string[]>(matchIdsUrl, regionRouting);
-
-  const [summoner, leagueEntries] = await Promise.all([
+  const [summoner, leagueEntries, ingest] = await Promise.all([
     fetch(`${baseUrl}/api/riot/summoner?puuid=${encodeURIComponent(puuid)}&region=${region}`).then(async (r) => {
       if (!r.ok) throw new Error("Summoner lookup failed");
       return r.json() as Promise<SummonerDto>;
@@ -102,96 +125,25 @@ async function fetchBundleFromRiot(
         return [] as LeagueEntryDto[];
       }
     }),
+    ingestMatches(region, puuid, queue),
   ]);
 
   const soloEntry = leagueEntries.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null;
   const flexEntry = leagueEntries.find((e) => e.queueType === "RANKED_FLEX_SR") ?? null;
 
-  // Match ingestion: check matches table for each id; fetch from Riot only if missing, then INSERT
-  const needFetch: string[] = [];
-  for (const matchId of matchIdList) {
-    const { data: existing } = await sb
-      .from("matches")
-      .select("match_id")
-      .eq("match_id", matchId)
-      .eq("puuid", puuid)
-      .maybeSingle();
-    if (!existing) needFetch.push(matchId);
-  }
-
-  const toFetch = needFetch.slice(0, MAX_NEW_MATCH_FETCHES);
-  for (const matchId of toFetch) {
-    const matchUrl = `https://${regionRouting}.api.riotgames.com/lol/match/v5/matches/${encodeURIComponent(matchId)}`;
-    try {
-      const matchDto = await riotFetchJson<MatchDto>(matchUrl, regionRouting);
-      const row = matchDtoToRow(matchId, matchDto, puuid);
-      if (row) {
-        await sb.from("matches").upsert(
-          {
-            match_id: row.match_id,
-            puuid: row.puuid,
-            queue_id: row.queue_id,
-            champion_id: row.champion_id,
-            kills: row.kills,
-            deaths: row.deaths,
-            assists: row.assists,
-            win: row.win,
-            cs: row.cs,
-            damage: row.damage,
-            game_duration: row.game_duration,
-            game_creation: row.game_creation,
-            champion_name: row.champion_name,
-          },
-          { onConflict: "match_id,puuid" }
-        );
-      }
-    } catch {
-      // skip failed match fetch
-    }
-  }
-
-  // Load match rows from DB in list order (last 20 from Riot)
-  const { data: rows } = await sb
-    .from("matches")
-    .select("*")
-    .eq("puuid", puuid)
-    .in("match_id", matchIdList);
-
-  const rowMap = new Map<string, MatchRow>();
-  (rows ?? []).forEach((r) => rowMap.set(r.match_id, r as MatchRow));
-  const matches = matchIdList.map((id) => rowMap.get(id)).filter((m): m is MatchRow => m != null);
-  console.log("[profileBundle] matches", matches.length, "new fetches", toFetch.length);
-
-  const n = matches.length || 1;
-  const avgKills = Math.round((matches.reduce((a, m) => a + m.kills, 0) / n) * 10) / 10;
-  const avgDeaths = Math.round((matches.reduce((a, m) => a + m.deaths, 0) / n) * 10) / 10;
-  const avgAssists = Math.round((matches.reduce((a, m) => a + m.assists, 0) / n) * 10) / 10;
-  const totalCs = matches.reduce((a, m) => a + m.cs, 0);
-  const totalDurationSec = matches.reduce((a, m) => a + m.game_duration, 0);
-  const avgDurationMin = totalDurationSec / 60 / n;
-  const avgCsPerMin = totalDurationSec > 0 ? totalCs / (totalDurationSec / 60) : 0;
-
-  const leagueEntriesBySummonerId: Record<string, LeagueEntryDto[]> = {};
-  const avgRankPlayedAgainst = "Unranked";
+  const matches = ingest.matchPayloads;
+  const computed = computedFromMatches(matches, puuid);
 
   const bundle: ProfileBundle = {
     profile: { account, summoner },
     ranked: { solo: soloEntry, flex: flexEntry },
-    matchIds: matchIdList,
+    matchIds: ingest.matchIds,
     matches,
-    computed: {
-      matchCount: matches.length,
-      avgKda: `${avgKills}/${avgDeaths}/${avgAssists}`,
-      csPerMin: Math.round(avgCsPerMin * 10) / 10,
-      avgDuration: Math.round(avgDurationMin * 10) / 10,
-      avgRankPlayedAgainst,
-      avgRankRankedCount: 0,
-    },
-    leagueEntriesBySummonerId,
+    partialMatches: ingest.needsMore,
+    computed,
+    leagueEntriesBySummonerId: {},
   };
 
-  console.log("bundle keys", Object.keys(bundle), "matches", bundle.matches?.length);
-  console.log("PROFILE FETCH END", Date.now() - startTime);
   return bundle;
 }
 
@@ -323,6 +275,21 @@ export async function GET(request: Request) {
     await setSharedCached(`profile:${bundle.profile.account.puuid}:${queue}`, bundle, PROFILE_BUNDLE_TTL_SEC);
   } catch (e) {
     await releaseLock(lockKey);
+    const { data: summonerCacheRow } = await supabaseAdmin.from("summoner_cache").select("puuid").eq("region", region).eq("riot_id", normRiotId).maybeSingle();
+    const cachedPuuid = puuid ?? (summonerCacheRow?.puuid as string | undefined);
+    if (cachedPuuid) {
+      const { data: bundleRow } = await supabaseAdmin
+        .from("profile_bundle_cache")
+        .select("payload")
+        .eq("region", region)
+        .eq("puuid", cachedPuuid)
+        .eq("queue_key", queueKey)
+        .maybeSingle();
+      if (bundleRow?.payload && hasUsableMatches(bundleRow.payload)) {
+        const cached = bundleRow.payload as ProfileBundle;
+        return NextResponse.json({ ...cached, partialMatches: true }, { status: 200, headers: NO_CACHE_HEADERS });
+      }
+    }
     if (e instanceof RiotRateLimitError) {
       const retrySec = Math.ceil(e.retryAfterMs / 1000);
       return NextResponse.json(

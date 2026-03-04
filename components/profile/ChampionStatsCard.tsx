@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { getChampionSquareUrl } from "@/lib/riotAssets";
-import type { ChampionStatRow } from "@/app/api/champion_stats/route";
+import type { ChampionStatRow } from "@/app/api/champion_stats_season/route";
 
 type QueueKey = "solo" | "flex";
 
@@ -28,7 +28,7 @@ export default function ChampionStatsCard(props: {
     }
     let cancelled = false;
     setLoading(true);
-    const url = `/api/champion_stats?puuid=${encodeURIComponent(puuid)}&queue=${queue}`;
+    const url = `/api/champion_stats_season?puuid=${encodeURIComponent(puuid)}&queueKey=${queue}`;
     fetch(url)
       .then((r) => r.json())
       .then((data) => {
