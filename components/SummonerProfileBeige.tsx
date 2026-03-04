@@ -372,6 +372,7 @@ export default function SummonerProfileBeige({
   const account = bundle?.profile.account ?? null;
   const summoner = bundle?.profile.summoner ?? null;
   const matches = bundle?.matches ?? [];
+  const matchIds = bundle?.matchIds ?? [];
   const leagueEntries = bundle
     ? ([bundle.ranked.solo, bundle.ranked.flex].filter(Boolean) as LeagueEntryDto[])
     : [];
@@ -611,7 +612,11 @@ export default function SummonerProfileBeige({
         </div>
         {!matches?.length ? (
           <div className="profile-matches-empty">
-            <p>No matches loaded yet</p>
+            <p>
+              {matchIds.length > 0
+                ? "Match details temporarily unavailable, retry"
+                : "No matches loaded yet"}
+            </p>
             <button type="button" onClick={() => mutate()} className="mt-4 underline">
               Retry
             </button>

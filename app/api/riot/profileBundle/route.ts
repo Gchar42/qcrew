@@ -84,6 +84,7 @@ async function fetchBundleFromRiot(
   const startTime = Date.now();
   console.log("PROFILE FETCH START");
 
+  // Riot match-v5: Solo or Duo = 420, Flex SR = 440
   const queueId = queue === "flex" ? 440 : 420;
   const platform = region;
 
@@ -95,6 +96,7 @@ async function fetchBundleFromRiot(
     throw new Error((err as { error?: string }).error ?? "Account lookup failed");
   }
   const account = (await accountRes.json()) as AccountDto;
+  console.log("[profileBundle] puuid", account.puuid);
 
   const [summoner, matchIdList, leagueEntries] = await Promise.all([
     fetch(`${baseUrl}/api/riot/summoner?puuid=${encodeURIComponent(account.puuid)}&region=${region}`).then(
@@ -124,6 +126,7 @@ async function fetchBundleFromRiot(
   ]);
 
   console.log("RANK FETCH END", Date.now() - startTime);
+  console.log("[profileBundle] matchIds", matchIdList?.length, "first", matchIdList?.[0]);
   console.log("MATCH LIST FETCH END", Date.now() - startTime);
 
   const soloEntry = leagueEntries.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null;
@@ -137,13 +140,16 @@ async function fetchBundleFromRiot(
       chunk.map((matchId) =>
         fetch(
           `${baseUrl}/api/riot/match?matchId=${encodeURIComponent(matchId)}&region=${region}&puuid=${encodeURIComponent(account.puuid)}&gameName=${encodeURIComponent(account.gameName)}&tagLine=${encodeURIComponent(account.tagLine)}`
-        ).then((r) => (r.ok ? r.json() : null))
+        )
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null)
       )
     );
     results.forEach((m) => {
       if (m) matches.push(m as MatchDto);
     });
   }
+  console.log("[profileBundle] matchesBuilt", matches.length);
 
   const summonerIds = new Set<string>();
   matches.forEach((m) =>
@@ -257,6 +263,8 @@ export async function GET(request: Request) {
   }
   const parsed = { gameName, tagLine };
 
+  console.log("[profileBundle] riotId", riotIdParam, "queue", queue, "region", region);
+
   const { data: snapshot, error: selectError } = await supabaseAdmin
     .from("profile_snapshots")
     .select("*")
@@ -274,6 +282,7 @@ export async function GET(request: Request) {
   }
 
   const row = snapshot as ProfileSnapshotRow | null;
+  console.log("[profileBundle] cache hit", !!row?.data, "cache matches", (row?.data as ProfileBundle | undefined)?.matches?.length);
 
   if (row?.data) {
     const cached = row.data as ProfileBundle;
