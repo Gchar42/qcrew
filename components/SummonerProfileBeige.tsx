@@ -35,8 +35,9 @@ function getBadgeCategoryClass(badge: string): string {
 
 /** Format tier + rank (division) e.g. "Platinum 3". */
 function formatRankTier(tier: string, rank: string): string {
+  if (tier == null || typeof tier !== "string") return rank ? String(rank) : "Unranked";
   const t = tier.charAt(0) + tier.slice(1).toLowerCase();
-  return `${t} ${rank}`;
+  return `${t} ${rank ?? ""}`.trim() || "Unranked";
 }
 
 /** League entry shape for participant rank badges (queueType + tier/rank). */
@@ -76,8 +77,8 @@ function formatRankBadge(entries: LeagueEntry[] | undefined, queueType: string):
 
 /** Win rate and total games from league entry. */
 function rankStats(entry: LeagueEntryDto): { gamesPlayed: number; winRatePct: number } {
-  const wins = entry.wins;
-  const losses = entry.losses;
+  const wins = entry.wins ?? 0;
+  const losses = entry.losses ?? 0;
   const gamesPlayed = wins + losses;
   const winRatePct = gamesPlayed > 0 ? Math.round((wins / gamesPlayed) * 100) : 0;
   return { gamesPlayed, winRatePct };
@@ -723,20 +724,23 @@ export default function SummonerProfileBeige({
       </div>
     );
     const { gamesPlayed, winRatePct } = rankStats(entry);
-    const tierColorClass = getRankTierColorClass(entry.tier);
+    const tier = entry.tier ?? "";
+    const tierColorClass = getRankTierColorClass(tier);
     return (
       <div className="profile-rank-card">
         <div className="profile-rank-card-title">{title}</div>
         <div className="profile-rank-card-content">
-          <span className="profile-ranked-emblem-wrap">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={getRankEmblemUrl(entry.tier)} alt="" className="profile-rank-card-emblem profile-ranked-emblem" width={48} height={48} />
-          </span>
+          {tier && (
+            <span className="profile-ranked-emblem-wrap">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={getRankEmblemUrl(tier)} alt="" className="profile-rank-card-emblem profile-ranked-emblem" width={48} height={48} />
+            </span>
+          )}
           <div className="profile-ranked-summary">
             <span className={`profile-rank-card-tier profile-ranked-tier-line ${tierColorClass}`.trim()}>
-              {formatRankTier(entry.tier, entry.rank)}
+              {formatRankTier(tier, entry.rank ?? "")}
             </span>
-            <span className="profile-rank-card-lp profile-ranked-lp">{entry.leaguePoints} LP</span>
+            <span className="profile-rank-card-lp profile-ranked-lp">{entry.leaguePoints ?? 0} LP</span>
             <span className="profile-rank-card-wr profile-ranked-winrate">{winRatePct}% WR · {entry.wins}W - {entry.losses}L</span>
           </div>
         </div>

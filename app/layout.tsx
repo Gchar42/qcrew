@@ -23,8 +23,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const profileFontsUrl =
+    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap";
+
   return (
     <html lang="en" className="dark">
+      <head>
+        <link rel="stylesheet" href={profileFontsUrl} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-[var(--background)] text-[var(--foreground)]`}
       >
