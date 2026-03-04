@@ -1637,26 +1637,31 @@
 
 .profile-page .md-items {
   display: grid;
-  grid-template-columns: repeat(3, 30px);
-  grid-template-rows: repeat(3, 30px);
+  grid-template-columns: repeat(3, 32px);
+  grid-auto-rows: 32px;
   gap: 6px;
   align-items: center;
+  justify-content: start;
 }
 
 .profile-page .md-item-icon.item-icon {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 6px;
   object-fit: cover;
   border: 1px solid var(--border);
 }
 
-.profile-page .item-slot.empty {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+.profile-page .md-items .trinket-row {
+  grid-column: 1 / span 3;
+  display: flex;
+  justify-content: center;
+}
+
+.profile-page .md-items .trinket-icon {
+  width: 28px;
+  height: 28px;
+  opacity: 0.95;
 }
 
 

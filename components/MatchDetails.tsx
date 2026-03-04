@@ -280,37 +280,30 @@ width={18}
 
                   <td className="c-items">
                     <div className="md-items">
-                      {Array.from({ length: 9 }, (_, i) => {
-                        const itemIds = [
-                          p.item0,
-                          p.item1,
-                          p.item2,
-                          p.item3,
-                          p.item4,
-                          p.item5,
-                          p.item6,
-                        ];
-                        const itemId = i < 7 ? itemIds[i] : null;
-                        if (i < 7 && isValidItemId(itemId)) {
-                          return (
+                      {[p.item0, p.item1, p.item2, p.item3, p.item4, p.item5].map(
+                        (itemId, i) =>
+                          isValidItemId(itemId) ? (
                             <img
                               key={`${p.puuid}-item-${i}`}
                               src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
                               alt=""
-                              width={30}
-                              height={30}
+                              width={32}
+                              height={32}
                               className="md-item-icon item-icon"
                             />
-                          );
-                        }
-                        return (
-                          <div
-                            key={`${p.puuid}-item-slot-${i}`}
-                            className="item-slot empty"
-                            aria-hidden
+                          ) : null
+                      )}
+                      {isValidItemId(p.item6) ? (
+                        <div className="trinket-row">
+                          <img
+                            src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${p.item6}.png`}
+                            alt=""
+                            width={28}
+                            height={28}
+                            className="md-item-icon item-icon trinket-icon"
                           />
-                        );
-                      })}
+                        </div>
+                      ) : null}
                     </div>
                   </td>
 
