@@ -1630,6 +1630,23 @@
   font-weight: 600;
 }
 
+/* Clickable summoner name (match card teams + expanded match details) */
+.profile-page .player-link {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.profile-page .player-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: 0.95;
+}
+
+.profile-page .player-link:active {
+  opacity: 0.85;
+}
+
 .profile-page .md-rank-badge {
   margin-left: 4px;
   font-size: 10px;

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { MatchDto } from "@/types/riot";
 import {
   getChampionSquareUrl,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/riotAssets";
 import { getPerkIconUrl, getStyleIconUrlCd } from "@/lib/runesCd";
 import { computeImpactScore } from "@/lib/impactScore";
+import { buildProfileHref } from "@/lib/routes";
 
 type Participant = NonNullable<MatchDto["info"]>["participants"][number];
 
@@ -67,7 +69,8 @@ function teamAggregates(team: Participant[]) {
 export function MatchDetails({
   match,
   puuidOfSearchedPlayer,
-  queue,
+  region = "na1",
+  queue = "solo",
   ddragonVersion,
   perksById,
   stylesById,
@@ -75,6 +78,7 @@ export function MatchDetails({
 }: {
   match: MatchDto;
   puuidOfSearchedPlayer: string;
+  region?: string;
   queue?: "solo" | "flex";
   ddragonVersion?: string | null;
   perksById: Map<number, string>;
@@ -269,12 +273,25 @@ width={18}
                           )}
                         </div>
                       </div>
-                      <span className="md-name" title={participantDisplayName(p)}>
+                      <Link
+                        className="md-name player-link"
+                        href={buildProfileHref({
+                          riotId:
+                            p.riotIdGameName && p.riotIdTagline
+                              ? `${p.riotIdGameName}#${p.riotIdTagline}`
+                              : `${p.summonerName ?? ""}#${p.riotIdTagline ?? "NA1"}`,
+                          region,
+                          queue: queue === "flex" ? "flex" : "solo",
+                        })}
+                        prefetch={false}
+                        onClick={(e) => e.stopPropagation()}
+                        title={participantDisplayName(p)}
+                      >
                         {participantDisplayName(p)}
                         {badge ? (
                           <span className="md-rank-badge">{badge}</span>
                         ) : null}
-                      </span>
+                      </Link>
                     </div>
                   </td>
 

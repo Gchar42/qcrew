@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
+import { buildProfileHref } from "@/lib/routes";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
 import { MatchDetails } from "@/components/MatchDetails";
 import {
@@ -1095,13 +1096,25 @@ export default function SummonerProfileBeige({
                           highlight={part.puuid === account?.puuid}
                         />
                         <span className="profile-match-team-name-line">
-                          <span className="profile-match-team-name summoner-name" title={part.riotIdGameName ?? part.summonerName}>
+                          <Link
+                            className="profile-match-team-name summoner-name player-link"
+                            href={buildProfileHref({
+                              riotId: part.riotIdGameName && part.riotIdTagline
+                                ? `${part.riotIdGameName}#${part.riotIdTagline}`
+                                : `${part.summonerName ?? ""}#${part.riotIdTagline ?? "NA1"}`,
+                              region: regionVal,
+                              queue: queue === "flex" ? "flex" : "solo",
+                            })}
+                            prefetch={false}
+                            onClick={(e) => e.stopPropagation()}
+                            title={part.riotIdGameName ?? part.summonerName}
+                          >
                             {part.riotIdGameName ?? part.summonerName}
                             {(() => {
                               const badge = formatRankBadge(leagueBySummonerId[part.summonerId ?? ""], activeQueueType);
                               return badge ? <span className="rank-badge">{badge}</span> : null;
                             })()}
-                          </span>
+                          </Link>
                         </span>
                         <span className="profile-match-team-extra" aria-hidden />
                       </div>
@@ -1142,13 +1155,25 @@ export default function SummonerProfileBeige({
                           highlight={part.puuid === account?.puuid}
                         />
                         <span className="profile-match-team-name-line">
-                          <span className="profile-match-team-name summoner-name" title={part.riotIdGameName ?? part.summonerName}>
+                          <Link
+                            className="profile-match-team-name summoner-name player-link"
+                            href={buildProfileHref({
+                              riotId: part.riotIdGameName && part.riotIdTagline
+                                ? `${part.riotIdGameName}#${part.riotIdTagline}`
+                                : `${part.summonerName ?? ""}#${part.riotIdTagline ?? "NA1"}`,
+                              region: regionVal,
+                              queue: queue === "flex" ? "flex" : "solo",
+                            })}
+                            prefetch={false}
+                            onClick={(e) => e.stopPropagation()}
+                            title={part.riotIdGameName ?? part.summonerName}
+                          >
                             {part.riotIdGameName ?? part.summonerName}
                             {(() => {
                               const badge = formatRankBadge(leagueBySummonerId[part.summonerId ?? ""], activeQueueType);
                               return badge ? <span className="rank-badge">{badge}</span> : null;
                             })()}
-                          </span>
+                          </Link>
                         </span>
                         <span className="profile-match-team-extra" aria-hidden />
                       </div>
@@ -1170,6 +1195,7 @@ export default function SummonerProfileBeige({
                 <MatchDetails
                   match={m}
                   puuidOfSearchedPlayer={account.puuid}
+                  region={regionVal}
                   queue={queue === "flex" ? "flex" : "solo"}
                   ddragonVersion={ddragonVersion}
                   perksById={perksById}
