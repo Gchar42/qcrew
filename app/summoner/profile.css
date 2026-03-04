@@ -1415,7 +1415,8 @@
 
 /* Match details table: single scrollable unit, no split panes */
 .profile-page .md-table {
-  width: max-content;
+  table-layout: fixed;
+  width: 1100px; /* 320+260+70+95+70+80+110+95 so columns stay aligned */
   border-collapse: collapse;
   font-size: 12px;
   color: var(--ink);
@@ -1427,6 +1428,8 @@
   white-space: nowrap;
   border-top: 1px solid rgba(0, 0, 0, 0.12);
   vertical-align: middle;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .profile-page .md-table thead th {
@@ -1459,34 +1462,44 @@
 
 .profile-page .md-table .col-player {
   width: 320px;
+  min-width: 320px;
+  max-width: 320px;
 }
 
 .profile-page .md-table .col-items {
   width: 260px;
+  min-width: 260px;
+  max-width: 260px;
 }
 
 .profile-page .md-table .col-impact {
   width: 70px;
+  min-width: 70px;
 }
 
 .profile-page .md-table .col-kda {
   width: 95px;
+  min-width: 95px;
 }
 
 .profile-page .md-table .col-cs {
   width: 70px;
+  min-width: 70px;
 }
 
 .profile-page .md-table .col-vision {
   width: 80px;
+  min-width: 80px;
 }
 
 .profile-page .md-table .col-dmg {
   width: 110px;
+  min-width: 110px;
 }
 
 .profile-page .md-table .col-gold {
   width: 95px;
+  min-width: 95px;
 }
 
 .profile-page .md-table tr.me-row {
@@ -1503,6 +1516,8 @@
   gap: 10px;
   align-items: center;
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .profile-page .player-champ-icon,
