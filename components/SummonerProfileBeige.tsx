@@ -609,6 +609,15 @@ export default function SummonerProfileBeige({
             Flex
           </button>
         </div>
+        {!matches?.length ? (
+          <div className="profile-matches-empty">
+            <p>No matches loaded yet</p>
+            <button type="button" onClick={() => mutate()} className="mt-4 underline">
+              Retry
+            </button>
+          </div>
+        ) : (
+          <>
         <div className="profile-matches-header">
           <div className="profile-matches-header-left">
             <h2 className="profile-matches-title">Recent Matches</h2>
@@ -1027,7 +1036,8 @@ export default function SummonerProfileBeige({
           );
         })}
       </div>
-
+        </>
+        )}
       </div>
         </div>
       </div>

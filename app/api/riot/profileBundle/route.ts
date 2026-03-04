@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { rankToNumber, numberToRankLabel } from "@/lib/rankMapping";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 
 export const dynamic = "force-dynamic";
@@ -128,22 +129,92 @@ async function fetchBundleFromRiot(
   const soloEntry = leagueEntries.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null;
   const flexEntry = leagueEntries.find((e) => e.queueType === "RANKED_FLEX_SR") ?? null;
 
+  const matches: MatchDto[] = [];
+  const concurrency = 3;
+  for (let i = 0; i < matchIdList.length; i += concurrency) {
+    const chunk = matchIdList.slice(i, i + concurrency);
+    const results = await Promise.all(
+      chunk.map((matchId) =>
+        fetch(
+          `${baseUrl}/api/riot/match?matchId=${encodeURIComponent(matchId)}&region=${region}&puuid=${encodeURIComponent(account.puuid)}&gameName=${encodeURIComponent(account.gameName)}&tagLine=${encodeURIComponent(account.tagLine)}`
+        ).then((r) => (r.ok ? r.json() : null))
+      )
+    );
+    results.forEach((m) => {
+      if (m) matches.push(m as MatchDto);
+    });
+  }
+
+  const summonerIds = new Set<string>();
+  matches.forEach((m) =>
+    m.info?.participants?.forEach((p) => {
+      if (p.summonerId) summonerIds.add(p.summonerId);
+    })
+  );
+  const idList = [...summonerIds].slice(0, 100);
+  let leagueEntriesBySummonerId: Record<string, LeagueEntryDto[]> = {};
+  if (idList.length > 0) {
+    const batchRes = await fetch(
+      `${baseUrl}/api/riot/league-batch?summonerIds=${idList.map((id) => encodeURIComponent(id)).join(",")}&platform=${platform}`
+    );
+    if (batchRes.ok) {
+      const data = (await batchRes.json()) as { entries?: Record<string, LeagueEntryDto[]> };
+      leagueEntriesBySummonerId = data.entries ?? {};
+    }
+  }
+
+  const n = matches.length || 1;
+  let avgKills = 0,
+    avgDeaths = 0,
+    avgAssists = 0,
+    totalCs = 0,
+    totalDurationSec = 0;
+  const participant = (m: MatchDto) => m.info?.participants?.find((p) => p.puuid === account.puuid);
+  matches.forEach((m) => {
+    const p = participant(m);
+    if (p) {
+      avgKills += p.kills ?? 0;
+      avgDeaths += p.deaths ?? 0;
+      avgAssists += p.assists ?? 0;
+      totalCs += (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
+    }
+    totalDurationSec += m.info?.gameDuration ?? 0;
+  });
+  avgKills = Math.round((avgKills / n) * 10) / 10;
+  avgDeaths = Math.round((avgDeaths / n) * 10) / 10;
+  avgAssists = Math.round((avgAssists / n) * 10) / 10;
+  const avgDurationMin = totalDurationSec / 60 / n;
+  const avgCsPerMin = totalDurationSec > 0 ? totalCs / (totalDurationSec / 60) : 0;
+
+  const values: number[] = [];
+  const targetSolo = "RANKED_SOLO_5x5";
+  idList.forEach((id) => {
+    const list = leagueEntriesBySummonerId[id] ?? [];
+    const solo = list.find((e) => e.queueType === targetSolo && e.tier && e.rank);
+    if (!solo?.tier || !solo?.rank) return;
+    const numeric = rankToNumber(solo.tier, solo.rank);
+    if (numeric != null && Number.isFinite(numeric)) values.push(numeric);
+  });
+  const avgRankPlayedAgainst =
+    values.length > 0 ? numberToRankLabel(values.reduce((a, b) => a + b, 0) / values.length) : "Unranked";
+
   const bundle: ProfileBundle = {
     profile: { account, summoner },
     ranked: { solo: soloEntry, flex: flexEntry },
     matchIds: matchIdList,
-    matches: [],
+    matches,
     computed: {
-      matchCount: matchIdList.length,
-      avgKda: "0/0/0",
-      csPerMin: 0,
-      avgDuration: 0,
-      avgRankPlayedAgainst: "Unranked",
-      avgRankRankedCount: 0,
+      matchCount: matches.length,
+      avgKda: `${avgKills}/${avgDeaths}/${avgAssists}`,
+      csPerMin: Math.round(avgCsPerMin * 10) / 10,
+      avgDuration: Math.round(avgDurationMin * 10) / 10,
+      avgRankPlayedAgainst,
+      avgRankRankedCount: values.length,
     },
-    leagueEntriesBySummonerId: {},
+    leagueEntriesBySummonerId,
   };
 
+  console.log("bundle keys", Object.keys(bundle), "matches", bundle.matches?.length);
   console.log("PROFILE FETCH END", Date.now() - startTime);
   return bundle;
 }
@@ -205,11 +276,12 @@ export async function GET(request: Request) {
   const row = snapshot as ProfileSnapshotRow | null;
 
   if (row?.data) {
+    const cached = row.data as ProfileBundle;
     const ageSec = (Date.now() - new Date(row.fetched_at).getTime()) / 1000;
     const stale = ageSec > (row.stale_after_sec ?? STALE_AFTER_SEC);
 
     if (!stale) {
-      return NextResponse.json(row.data, {
+      return NextResponse.json(cached, {
         headers: CACHE_HEADERS,
       });
     }
@@ -217,7 +289,7 @@ export async function GET(request: Request) {
     const baseUrl = getBaseUrl(request);
     refreshSnapshot(baseUrl, region, queue, normRiotId).catch(() => {});
 
-    return NextResponse.json(row.data, {
+    return NextResponse.json(cached, {
       headers: CACHE_HEADERS,
     });
   }
@@ -233,6 +305,8 @@ export async function GET(request: Request) {
       { status: 502, headers: NO_CACHE }
     );
   }
+
+  console.log("bundle keys", Object.keys(bundle), "matches", bundle.matches?.length);
 
   await supabaseAdmin.from("profile_snapshots").upsert(
     {
