@@ -104,10 +104,10 @@ export function MatchDetails({
         </span>
       </div>
       <div className="match-acc-body">
-            <div className="match-acc-stat-headers player-row">
+            <div className="stats-header-row">
               <span className="player-left-dummy" />
               <span className="player-items-label stat-head">Items</span>
-              <div className="player-stats">
+              <div className="stats-header">
                 <span className="stat-head">Impact</span>
                 <span className="stat-head">KDA</span>
                 <span className="stat-head">CS</span>
@@ -147,7 +147,7 @@ export function MatchDetails({
               return (
                 <div
                   key={p.puuid}
-                  className={`player-row${isMe ? " me-row" : ""}`}
+                  className={`player-row${isMe ? " me-row" : ""}`.trim()}
                 >
                   <div className="player-left">
                     <span className="player-champ">
