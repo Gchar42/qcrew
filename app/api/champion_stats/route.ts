@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 
-const SOLO = 420;
-const FLEX = 440;
-
 export async function POST(req: Request) {
   const body = await req.json();
   const matches = body.matches || [];
   const queue = body.queue;
-  const puuid = body.puuid;
+
+  const SOLO = 420;
+  const FLEX = 440;
 
   const agg = new Map<
     number,
@@ -30,14 +29,16 @@ export async function POST(req: Request) {
     if (queue === "solo" && info.queueId !== SOLO) continue;
     if (queue === "flex" && info.queueId !== FLEX) continue;
 
-    const me = info.participants.find((p: { puuid?: string }) => p.puuid === puuid);
+    const me = info.participants.find((p: { puuid?: string }) => p.puuid === body.puuid);
     if (!me) continue;
 
     const champ = Number(me.championId ?? 0);
     if (!champ) continue;
 
     const championName =
-      typeof me.championName === "string" ? me.championName : `Champion ${champ}`;
+      typeof (me as { championName?: string }).championName === "string"
+        ? (me as { championName: string }).championName
+        : `Champion ${champ}`;
 
     if (!agg.has(champ)) {
       agg.set(champ, {
