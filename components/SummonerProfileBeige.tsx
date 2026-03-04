@@ -374,6 +374,8 @@ export default function SummonerProfileBeige({
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
+  const [mainTab, setMainTab] = useState<"overview" | "champion-pool" | "lp-history">("overview");
+
   useEffect(() => {
     fetch("/api/ddragon/version")
       .then((r) => r.json())
@@ -702,8 +704,6 @@ export default function SummonerProfileBeige({
   const leagueQueueLabel = queue === "flex" ? "Flex" : "";
   const soloEntry = leagueEntries?.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null;
   const flexEntry = leagueEntries?.find((e) => e.queueType === "RANKED_FLEX_SR") ?? null;
-
-  const [mainTab, setMainTab] = useState<"overview" | "champion-pool" | "lp-history">("overview");
 
   const setQueueTab = (q: "solo" | "flex") => {
     const params = new URLSearchParams(searchParams.toString());
