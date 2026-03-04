@@ -329,11 +329,13 @@ function primaryRole(matches: MatchDto[], puuid: string): string {
   return roleLabel(entries[0][0]);
 }
 
-const profileBundleFetcher = (url: string) =>
-  fetch(url).then((r) => {
+function profileBundleFetcher([, riotId, region, queue]: [string, string, string, string]) {
+  const url = `/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}&queue=${encodeURIComponent(queue)}`;
+  return fetch(url).then((r) => {
     if (!r.ok) return r.json().then((body) => Promise.reject(new Error((body as { error?: string }).error ?? "Failed to load profile")));
     return r.json() as Promise<ProfileBundle>;
   });
+}
 
 export default function SummonerProfileBeige({
   riotId: riotIdProp,
@@ -348,15 +350,24 @@ export default function SummonerProfileBeige({
   const riotIdParam = riotIdProp !== undefined && riotIdProp !== null ? riotIdProp : searchParams.get("riotId");
   const regionVal = regionProp ?? DEFAULT_REGION;
   const parsed = parseRiotIdFromQuery(riotIdParam);
-  const queue = searchParams.get("queue") ?? "solo";
+  const queue = searchParams.get("queue") || "solo";
   const targetQueueType = queue === "flex" ? "RANKED_FLEX_SR" : "RANKED_SOLO_5x5";
   const queueIdForMatches = queue === "flex" ? 440 : 420;
 
-  const bundleKey =
+  const swrKey =
     riotIdParam && regionVal && parsed
-      ? `/api/riot/profileBundle?riotId=${encodeURIComponent(riotIdParam)}&region=${encodeURIComponent(regionVal)}&queue=${encodeURIComponent(queue)}`
+      ? (["profileBundle", riotIdParam, regionVal, queue] as const)
       : null;
-  const { data: bundle, error: bundleError, isLoading, mutate } = useSWR(bundleKey, profileBundleFetcher);
+  const { data: bundle, error: bundleError, isLoading, mutate } = useSWR(
+    swrKey,
+    profileBundleFetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      shouldRetryOnError: false,
+      dedupingInterval: 60000,
+    }
+  );
 
   const account = bundle?.profile.account ?? null;
   const summoner = bundle?.profile.summoner ?? null;
@@ -496,6 +507,7 @@ export default function SummonerProfileBeige({
   const flexEntry = leagueEntries?.find((e) => e.queueType === "RANKED_FLEX_SR") ?? null;
 
   const setQueueTab = (q: "solo" | "flex") => {
+    if (queue === q) return;
     const params = new URLSearchParams(searchParams.toString());
     params.set("riotId", riotIdParam ?? "");
     params.set("queue", q);
@@ -901,8 +913,10 @@ export default function SummonerProfileBeige({
                                 ? `${part.riotIdGameName}#${part.riotIdTagline}`
                                 : `${part.summonerName ?? ""}#${part.riotIdTagline ?? "NA1"}`;
                               if (!riotId.includes("#")) return;
-                              globalMutate(`/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(regionVal)}&queue=solo`);
-                              globalMutate(`/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(regionVal)}&queue=flex`);
+                              const keySolo: [string, string, string, string] = ["profileBundle", riotId, regionVal, "solo"];
+                              const keyFlex: [string, string, string, string] = ["profileBundle", riotId, regionVal, "flex"];
+                              globalMutate(keySolo, () => profileBundleFetcher(keySolo));
+                              globalMutate(keyFlex, () => profileBundleFetcher(keyFlex));
                             }}
                             title={part.riotIdGameName ?? part.summonerName}
                           >
@@ -968,8 +982,10 @@ export default function SummonerProfileBeige({
                                 ? `${part.riotIdGameName}#${part.riotIdTagline}`
                                 : `${part.summonerName ?? ""}#${part.riotIdTagline ?? "NA1"}`;
                               if (!riotId.includes("#")) return;
-                              globalMutate(`/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(regionVal)}&queue=solo`);
-                              globalMutate(`/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(regionVal)}&queue=flex`);
+                              const keySolo: [string, string, string, string] = ["profileBundle", riotId, regionVal, "solo"];
+                              const keyFlex: [string, string, string, string] = ["profileBundle", riotId, regionVal, "flex"];
+                              globalMutate(keySolo, () => profileBundleFetcher(keySolo));
+                              globalMutate(keyFlex, () => profileBundleFetcher(keyFlex));
                             }}
                             title={part.riotIdGameName ?? part.summonerName}
                           >
