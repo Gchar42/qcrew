@@ -12,6 +12,13 @@ const NO_CACHE_HEADERS = {
 };
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
 
+/** Cache is valid only if it contains matches (not rank-only blobs). */
+function hasUsableMatches(data: unknown): boolean {
+  const matches = (data as { matches?: unknown[]; matchIds?: unknown[] })?.matches;
+  if (Array.isArray(matches)) return matches.length > 0;
+  return false;
+}
+
 async function refreshSnapshot(
   baseUrl: string,
   region: string,
@@ -284,7 +291,7 @@ export async function GET(request: Request) {
   const row = snapshot as ProfileSnapshotRow | null;
   console.log("[profileBundle] cache hit", !!row?.data, "cache matches", (row?.data as ProfileBundle | undefined)?.matches?.length);
 
-  if (row?.data) {
+  if (row?.data && hasUsableMatches(row.data)) {
     const cached = row.data as ProfileBundle;
     const ageSec = (Date.now() - new Date(row.fetched_at).getTime()) / 1000;
     const stale = ageSec > (row.stale_after_sec ?? STALE_AFTER_SEC);
@@ -303,6 +310,7 @@ export async function GET(request: Request) {
     });
   }
 
+  /* Cache miss or cache has no usable matches (rank-only blob): fetch full bundle and overwrite cache. */
   const baseUrl = getBaseUrl(request);
   let bundle: ProfileBundle;
   try {
