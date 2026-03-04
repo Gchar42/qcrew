@@ -56,51 +56,71 @@ export async function GET(req: Request) {
 
   const { routing } = riotRegionToRouting(region);
   const qid = queueIdFor(queue);
-  const count = Math.min(Number(searchParams.get("count") || "40"), 80);
-  const idsUrl =
-    `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/` +
-    encodeURIComponent(puuid) +
-    `/ids?start=0&count=${count}&queue=${qid}`;
-  const matchIds: string[] = await riotFetch(idsUrl);
+  const totalWanted = Math.min(Number(searchParams.get("count") || "120"), 200);
+  const pageSize = 60;
+  const allIds: string[] = [];
+  for (let start = 0; start < totalWanted; start += pageSize) {
+    const idsUrl =
+      `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/` +
+      encodeURIComponent(puuid) +
+      `/ids?start=${start}&count=${Math.min(pageSize, totalWanted - start)}&queue=${qid}`;
+    const ids: string[] = await riotFetch(idsUrl);
+    if (!Array.isArray(ids) || ids.length === 0) break;
+    allIds.push(...ids);
+    if (ids.length < pageSize) break;
+  }
+  const matchIds = allIds;
   const agg = new Map<number, ChampAgg>();
-  const maxDetails = Math.min(matchIds.length, 30);
-
-  for (let i = 0; i < maxDetails; i++) {
-    const matchId = matchIds[i];
-    const matchUrl =
-      `https://${routing}.api.riotgames.com/lol/match/v5/matches/` +
-      encodeURIComponent(matchId);
-    const match = await riotFetch(matchUrl);
-    const info = match?.info;
-    const participants = info?.participants;
-    if (!Array.isArray(participants)) continue;
-    const me = participants.find((p: { puuid?: string }) => p?.puuid === puuid);
-    if (!me) continue;
-    const championId = Number(me?.championId || 0);
-    if (!championId) continue;
-    const championName =
-      typeof me?.championName === "string" ? me.championName : `Champion ${championId}`;
-    const kills = Number(me?.kills || 0);
-    const deaths = Number(me?.deaths || 0);
-    const assists = Number(me?.assists || 0);
-    const win = Boolean(me?.win);
-    const cur = agg.get(championId) || {
-      championId,
-      championName,
-      games: 0,
-      wins: 0,
-      kills: 0,
-      deaths: 0,
-      assists: 0,
-    };
-    if (!cur.championName || cur.championName.startsWith("Champion "))
-      cur.championName = championName;
-    cur.games += 1;
-    if (win) cur.wins += 1;
-    cur.kills += kills;
-    cur.deaths += deaths;
-    cur.assists += assists;
-    agg.set(championId, cur);
+  const detailsWanted = Math.min(matchIds.length, 80);
+  const batchSize = 8;
+  for (let start = 0; start < detailsWanted; start += batchSize) {
+    const batch = matchIds.slice(start, start + batchSize);
+    const matches = await Promise.all(
+      batch.map((matchId) => {
+        const matchUrl =
+          `https://${routing}.api.riotgames.com/lol/match/v5/matches/` +
+          encodeURIComponent(matchId);
+        return riotFetch(matchUrl).catch(() => null);
+      })
+    );
+    for (const match of matches) {
+      if (!match) continue;
+      const info = match?.info;
+      const participants = info?.participants;
+      if (!Array.isArray(participants)) continue;
+      const me = participants.find(
+        (p: { puuid?: string; championId?: number; championName?: string }) =>
+          p?.puuid === puuid
+      );
+      if (!me) continue;
+      const championId = Number(me?.championId || 0);
+      if (!championId) continue;
+      const championName =
+        typeof me?.championName === "string"
+          ? me.championName
+          : `Champion ${championId}`;
+      const kills = Number(me?.kills || 0);
+      const deaths = Number(me?.deaths || 0);
+      const assists = Number(me?.assists || 0);
+      const win = Boolean(me?.win);
+      const cur = agg.get(championId) || {
+        championId,
+        championName,
+        games: 0,
+        wins: 0,
+        kills: 0,
+        deaths: 0,
+        assists: 0,
+      };
+      if (!cur.championName || cur.championName.startsWith("Champion "))
+        cur.championName = championName;
+      cur.games += 1;
+      if (win) cur.wins += 1;
+      cur.kills += kills;
+      cur.deaths += deaths;
+      cur.assists += assists;
+      agg.set(championId, cur);
+    }
   }
 
   const rows = Array.from(agg.values())
