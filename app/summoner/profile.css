@@ -1316,7 +1316,7 @@
 .profile-page .match-acc {
   border: 1px solid rgba(0, 0, 0, 0.25);
   border-radius: 10px;
-  overflow: hidden;
+  overflow: visible;
   margin-top: 12px;
 }
 
@@ -1367,7 +1367,7 @@
 
 .profile-page .player-row {
   display: grid;
-  grid-template-columns: 320px 280px 1fr;
+  grid-template-columns: 320px 260px 560px;
   align-items: center;
   gap: 12px;
   padding: 8px 6px;
@@ -1473,10 +1473,10 @@
 
 .profile-page .player-stats {
   display: grid;
-  grid-template-columns: 64px 86px 64px 70px 90px 80px;
+  grid-template-columns: 64px 90px 60px 70px 96px 86px;
   justify-content: end;
   column-gap: 12px;
-  min-width: 520px;
+  min-width: 560px;
   font-size: 12px;
 }
 
@@ -1489,6 +1489,13 @@
 
 .profile-page .stat-val {
   font-weight: 700;
+}
+
+/* Match details: allow horizontal scroll on narrow viewports */
+@media (max-width: 960px) {
+  .profile-page .player-row {
+    grid-template-columns: 300px 240px 560px;
+  }
 }
 
 /* Responsive */
