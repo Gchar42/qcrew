@@ -96,31 +96,34 @@ export function MatchDetails({
     teamLabel: string,
     agg: { kills: number; gold: number }
   ) => (
-    <div key={teamKey} className="match-acc">
-      <div className={`match-acc-header match-acc-header-${teamKey}`}>
-        <span className="match-acc-label">{teamLabel}</span>
-        <span className="match-acc-summary">
+    <div key={teamKey} className="md-team">
+      <div className={`md-team-header md-team-header-${teamKey}`}>
+        <span className="md-team-label">{teamLabel}</span>
+        <span className="md-team-summary">
           {agg.kills} kills · {agg.gold.toLocaleString()} gold
         </span>
       </div>
-      <div className="match-acc-body">
+
+      <div className="md-scroll">
         <table className="md-table">
           <thead>
             <tr>
-              <th className="col-player">Player</th>
-              <th className="col-items">Items</th>
-              <th className="col-impact">Impact</th>
-              <th className="col-kda">KDA</th>
-              <th className="col-cs">CS</th>
-              <th className="col-vision">Vision</th>
-              <th className="col-dmg">Dmg</th>
-              <th className="col-gold">Gold</th>
+              <th className="c-player">Player</th>
+              <th className="c-items">Items</th>
+              <th className="c-impact">Impact</th>
+              <th className="c-kda">KDA</th>
+              <th className="c-cs">CS</th>
+              <th className="c-vision">Vision</th>
+              <th className="c-dmg">Dmg</th>
+              <th className="c-gold">Gold</th>
             </tr>
           </thead>
           <tbody>
             {team.map((p) => {
               const isMe = p.puuid === puuidOfSearchedPlayer;
-              const kda = `${p.kills}/${p.deaths}/${p.assists}`;
+              const k = p.kills ?? 0;
+              const d = p.deaths ?? 0;
+              const a = p.assists ?? 0;
               const damage =
                 (p as Participant & { totalDamageDealtToChampions?: number })
                   .totalDamageDealtToChampions ?? 0;
@@ -147,34 +150,31 @@ export function MatchDetails({
               const badge = rankBadgesByPuuid?.[p.puuid] ?? null;
 
               return (
-                <tr
-                  key={p.puuid}
-                  className={isMe ? "me-row" : ""}
-                >
-                  <td className="col-player">
-                    <div className="md-player-cell">
-                      <span className="player-champ">
+                <tr key={p.puuid} className={isMe ? "md-me" : ""}>
+                  <td className="c-player">
+                    <div className="md-player-inner">
+                      <span className="md-champ">
                         {champUrl ? (
                           <img
                             src={champUrl}
                             alt=""
                             width={40}
                             height={40}
-                            className="player-champ-icon"
+                            className="md-champ-icon"
                           />
                         ) : (
-                          <span className="player-champ-placeholder" />
+                          <span className="md-champ-placeholder" />
                         )}
                       </span>
-                      <div className="player-spells-runes">
-                        <div className="player-spells">
+                      <div className="md-spells-runes">
+                        <div className="md-spells">
                           {spell1Src && (
                             <img
                               src={spell1Src}
                               alt=""
                               width={22}
                               height={22}
-                              className="player-spell-icon"
+                              className="md-spell-icon"
                             />
                           )}
                           {spell2Src && (
@@ -183,18 +183,18 @@ export function MatchDetails({
                               alt=""
                               width={22}
                               height={22}
-                              className="player-spell-icon"
+                              className="md-spell-icon"
                             />
                           )}
                         </div>
-                        <div className="player-runes">
+                        <div className="md-runes">
                           {keystoneSrc && (
                             <img
                               src={keystoneSrc}
                               alt=""
                               width={22}
                               height={22}
-                              className="player-rune-icon"
+                              className="md-rune-icon"
                             />
                           )}
                           {secondarySrc && (
@@ -203,25 +203,32 @@ export function MatchDetails({
                               alt=""
                               width={22}
                               height={22}
-                              className="player-rune-icon"
+                              className="md-rune-icon"
                             />
                           )}
                         </div>
                       </div>
-                      <div className="player-name-block">
-                        <span className="player-name" title={participantDisplayName(p)}>
-                          {participantDisplayName(p)}
-                          {badge ? (
-                            <span className="rank-badge">{badge}</span>
-                          ) : null}
-                        </span>
-                      </div>
+                      <span className="md-name" title={participantDisplayName(p)}>
+                        {participantDisplayName(p)}
+                        {badge ? (
+                          <span className="md-rank-badge">{badge}</span>
+                        ) : null}
+                      </span>
                     </div>
                   </td>
-                  <td className="col-items">
-                    <div className="player-items">
+
+                  <td className="c-items">
+                    <div className="md-items">
                       {[0, 1, 2, 3, 4, 5, 6].map((i) => {
-                        const itemId = [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6][i];
+                        const itemId = [
+                          p.item0,
+                          p.item1,
+                          p.item2,
+                          p.item3,
+                          p.item4,
+                          p.item5,
+                          p.item6,
+                        ][i];
                         return isValidItemId(itemId) ? (
                           <img
                             key={`${p.puuid}-item-${i}`}
@@ -229,20 +236,24 @@ export function MatchDetails({
                             alt=""
                             width={22}
                             height={22}
-                            className="player-item-icon"
+                            className="md-item-icon"
                           />
                         ) : (
-                          <span key={`${p.puuid}-item-${i}`} className="player-item-slot" />
+                          <span
+                            key={`${p.puuid}-item-${i}`}
+                            className="md-item-slot"
+                          />
                         );
                       })}
                     </div>
                   </td>
-                  <td className="col-impact">{Math.round(impactScore)}</td>
-                  <td className="col-kda">{kda}</td>
-                  <td className="col-cs">{cs}</td>
-                  <td className="col-vision">{vision}</td>
-                  <td className="col-dmg">{damage.toLocaleString()}</td>
-                  <td className="col-gold">{gold.toLocaleString()}</td>
+
+                  <td className="c-impact">{Math.round(impactScore)}</td>
+                  <td className="c-kda">{`${k}/${d}/${a}`}</td>
+                  <td className="c-cs">{cs}</td>
+                  <td className="c-vision">{vision}</td>
+                  <td className="c-dmg">{damage.toLocaleString()}</td>
+                  <td className="c-gold">{gold.toLocaleString()}</td>
                 </tr>
               );
             })}
@@ -259,20 +270,18 @@ export function MatchDetails({
           {durationStr} · {queueName}
         </span>
       </div>
-      <div className="match-details-tables-wrap">
-        {renderTeamSection(
-          winningTeam,
-          "win",
-          winningTeam === team100 ? "TEAM 1 (Victory)" : "TEAM 2 (Victory)",
-          winAgg
-        )}
-        {renderTeamSection(
-          losingTeam,
-          "lose",
-          losingTeam === team100 ? "TEAM 1 (Defeat)" : "TEAM 2 (Defeat)",
-          loseAgg
-        )}
-      </div>
+      {renderTeamSection(
+        winningTeam,
+        "win",
+        winningTeam === team100 ? "TEAM 1 (Victory)" : "TEAM 2 (Victory)",
+        winAgg
+      )}
+      {renderTeamSection(
+        losingTeam,
+        "lose",
+        losingTeam === team100 ? "TEAM 1 (Defeat)" : "TEAM 2 (Defeat)",
+        loseAgg
+      )}
     </div>
   );
 }

@@ -1356,19 +1356,13 @@
   gap: 0;
 }
 
-/* No overflow on panel so no second vertical scrollbar; tables scroll horizontally in inner wrap */
+/* Match details: single table per team, one scroll container (.md-scroll) */
 .profile-page .match-details-panel {
   border-top: 1px solid var(--border);
   padding: 16px 20px;
   background: var(--surface3);
   border-radius: 0 0 10px 10px;
   overflow: visible;
-}
-
-.profile-page .match-details-tables-wrap {
-  overflow-x: auto;
-  overflow-y: visible;
-  margin-top: 12px;
 }
 
 .profile-page .match-details-header-line {
@@ -1380,16 +1374,14 @@
   color: var(--muted);
 }
 
-/* Blitz-style match sections (both teams visible) */
-.profile-page .match-acc {
+.profile-page .md-team {
   border: 1px solid var(--border);
   border-radius: 8px;
-  overflow: visible;
   margin-top: 12px;
   background: var(--surface2);
 }
 
-.profile-page .match-acc-header {
+.profile-page .md-team-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1399,46 +1391,45 @@
   background: var(--surface);
 }
 
-.profile-page .match-acc-header-win {
+.profile-page .md-team-header-win {
   background: var(--win-bg);
   color: var(--ink);
 }
 
-.profile-page .match-acc-header-lose {
+.profile-page .md-team-header-lose {
   background: var(--loss-bg);
   color: var(--ink);
 }
 
-.profile-page .match-acc-summary {
+.profile-page .md-team-label {
+  font-size: 12px;
+}
+
+.profile-page .md-team-summary {
   font-weight: 600;
   color: var(--muted);
   font-size: 12px;
 }
 
-.profile-page .match-acc-body {
-  padding: 8px 10px 10px 10px;
-  background: var(--surface2);
-  overflow: visible;
+.profile-page .md-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
-/* Match details table: single scrollable unit, no split panes */
 .profile-page .md-table {
-  display: table;
-  table-layout: fixed;
-  width: 1100px; /* 320+260+70+95+70+80+110+95 so columns stay aligned */
   border-collapse: collapse;
+  width: max-content;
+  table-layout: fixed;
   font-size: 12px;
   color: var(--ink);
 }
 
 .profile-page .md-table th,
 .profile-page .md-table td {
-  padding: 10px 8px;
+  padding: 10px 10px;
   white-space: nowrap;
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
   vertical-align: middle;
-  overflow: hidden;
-  box-sizing: border-box;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .profile-page .md-table thead th {
@@ -1448,116 +1439,107 @@
   opacity: 0.7;
   letter-spacing: 0.5px;
   color: var(--muted);
+}
+
+.profile-page .md-table thead th.c-player,
+.profile-page .md-table thead th.c-items {
   text-align: left;
 }
 
-.profile-page .md-table .col-impact,
-.profile-page .md-table .col-kda,
-.profile-page .md-table .col-cs,
-.profile-page .md-table .col-vision,
-.profile-page .md-table .col-dmg,
-.profile-page .md-table .col-gold {
+.profile-page .md-table thead th.c-impact,
+.profile-page .md-table thead th.c-kda,
+.profile-page .md-table thead th.c-cs,
+.profile-page .md-table thead th.c-vision,
+.profile-page .md-table thead th.c-dmg,
+.profile-page .md-table thead th.c-gold {
   text-align: right;
 }
 
-.profile-page .md-table th.col-impact,
-.profile-page .md-table th.col-kda,
-.profile-page .md-table th.col-cs,
-.profile-page .md-table th.col-vision,
-.profile-page .md-table th.col-dmg,
-.profile-page .md-table th.col-gold {
-  text-align: right;
-}
-
-.profile-page .md-table .col-player {
+.profile-page .md-table .c-player {
   width: 320px;
-  min-width: 320px;
-  max-width: 320px;
 }
 
-.profile-page .md-table .col-items {
+.profile-page .md-table .c-items {
   width: 260px;
-  min-width: 260px;
-  max-width: 260px;
 }
 
-.profile-page .md-table .col-impact {
+.profile-page .md-table .c-impact {
   width: 70px;
-  min-width: 70px;
+  text-align: right;
 }
 
-.profile-page .md-table .col-kda {
-  width: 95px;
-  min-width: 95px;
+.profile-page .md-table .c-kda {
+  width: 90px;
+  text-align: right;
 }
 
-.profile-page .md-table .col-cs {
+.profile-page .md-table .c-cs {
+  width: 60px;
+  text-align: right;
+}
+
+.profile-page .md-table .c-vision {
   width: 70px;
-  min-width: 70px;
+  text-align: right;
 }
 
-.profile-page .md-table .col-vision {
-  width: 80px;
-  min-width: 80px;
-}
-
-.profile-page .md-table .col-dmg {
+.profile-page .md-table .c-dmg {
   width: 110px;
-  min-width: 110px;
+  text-align: right;
 }
 
-.profile-page .md-table .col-gold {
+.profile-page .md-table .c-gold {
   width: 95px;
-  min-width: 95px;
+  text-align: right;
 }
 
-.profile-page .md-table tr.me-row {
+.profile-page .md-table tr.md-me td {
   background: rgba(0, 120, 255, 0.08);
 }
 
-.profile-page .md-table tr.me-row td:first-child {
+.profile-page .md-table tr.md-me td:first-child {
   border-left: 4px solid rgba(0, 120, 255, 0.8);
 }
 
-.profile-page .md-player-cell {
-  display: grid;
-  grid-template-columns: 40px 26px 1fr;
-  gap: 10px;
+/* Player cell content (champ + spells/runes + name) inside first td only */
+.profile-page .md-player-inner {
+  display: flex;
   align-items: center;
+  gap: 10px;
   min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
 }
 
-.profile-page .player-champ-icon,
-.profile-page .player-champ-placeholder {
+.profile-page .md-champ-icon,
+.profile-page .md-champ-placeholder {
   width: 40px;
   height: 40px;
   border-radius: 6px;
   border: 1px solid var(--border);
   object-fit: cover;
+  flex-shrink: 0;
 }
 
-.profile-page .player-champ-placeholder {
+.profile-page .md-champ-placeholder {
   display: block;
   background: var(--surface);
 }
 
-.profile-page .player-spells-runes {
+.profile-page .md-spells-runes {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex-shrink: 0;
 }
 
-.profile-page .player-spells,
-.profile-page .player-runes {
+.profile-page .md-spells,
+.profile-page .md-runes {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.profile-page .player-spell-icon,
-.profile-page .player-rune-icon {
+.profile-page .md-spell-icon,
+.profile-page .md-rune-icon {
   width: 22px;
   height: 22px;
   border-radius: 4px;
@@ -1565,36 +1547,29 @@
   object-fit: contain;
 }
 
-.profile-page .player-name-block {
+.profile-page .md-name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.profile-page .player-name {
-  display: block;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   font-weight: 600;
 }
 
-.profile-page .rank-badge {
+.profile-page .md-rank-badge {
   margin-left: 4px;
   font-size: 10px;
   color: var(--muted);
 }
 
-.profile-page .player-items {
+.profile-page .md-items {
   display: flex;
   flex-wrap: nowrap;
   gap: 4px;
   align-items: center;
-  min-width: 0;
 }
 
-.profile-page .player-item-icon,
-.profile-page .player-item-slot {
+.profile-page .md-item-icon,
+.profile-page .md-item-slot {
   width: 22px;
   height: 22px;
   border-radius: 6px;
@@ -1602,7 +1577,7 @@
   object-fit: contain;
 }
 
-.profile-page .player-item-slot {
+.profile-page .md-item-slot {
   display: block;
   background: var(--surface);
 }
