@@ -4,6 +4,8 @@ import { getRoutingRegion } from "@/lib/riot-regions";
 import { queueToRiotQueueId } from "@/lib/riotCacheUtils";
 import { rankToNumber, numberToRankLabel } from "@/lib/rankMapping";
 import { tryLock } from "@/lib/lock";
+import { getCached, setCached, getInFlight, setInFlight, clearInFlight } from "@/lib/serverRequestCache";
+import { riotFetchJson } from "@/lib/riotFetch";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 
 export const dynamic = "force-dynamic";
@@ -62,7 +64,6 @@ async function fetchBundleFromRiot(
   const platform = region;
   const regionRouting = getRoutingRegion(region);
   const riotQueueId = queueToRiotQueueId(queue);
-  const riotKey = process.env.RIOT_API_KEY ?? "";
 
   const accountRes = await fetch(
     `${baseUrl}/api/riot/account?gameName=${encodeURIComponent(parsed.gameName)}&tagLine=${encodeURIComponent(parsed.tagLine)}&region=${region}`
@@ -77,15 +78,7 @@ async function fetchBundleFromRiot(
   const matchIdsUrl =
     `https://${regionRouting}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(puuid)}/ids` +
     `?start=0&count=20&queue=${riotQueueId}`;
-  const matchIdsRes = await fetch(matchIdsUrl, {
-    headers: { "X-Riot-Token": riotKey },
-    cache: "no-store",
-  });
-  if (!matchIdsRes.ok) {
-    const text = await matchIdsRes.text().catch(() => "");
-    throw new Error(`Match list failed: ${matchIdsRes.status} ${text.slice(0, 200)}`);
-  }
-  const matchIdList: string[] = (await matchIdsRes.json()) as string[];
+  const matchIdList = await riotFetchJson<string[]>(matchIdsUrl);
 
   const [summoner, leagueEntries] = await Promise.all([
     fetch(`${baseUrl}/api/riot/summoner?puuid=${encodeURIComponent(puuid)}&region=${region}`).then(async (r) => {
@@ -107,7 +100,7 @@ async function fetchBundleFromRiot(
   const flexEntry = leagueEntries.find((e) => e.queueType === "RANKED_FLEX_SR") ?? null;
 
   const staleCutoff = new Date(Date.now() - MATCH_CACHE_STALE_DAYS * 24 * 60 * 60 * 1000).toISOString();
-  const matchIdsToUse = matchIdList.slice(0, 20);
+  const matchIdsToUse = matchIdList.slice(0, 10);
   const matchMap = new Map<string, MatchDto>();
   const needFetch: string[] = [];
 
@@ -129,20 +122,22 @@ async function fetchBundleFromRiot(
   const toFetch = needFetch.slice(0, MAX_NEW_MATCH_FETCHES);
   for (const matchId of toFetch) {
     const matchUrl = `https://${regionRouting}.api.riotgames.com/lol/match/v5/matches/${encodeURIComponent(matchId)}`;
-    const matchRes = await fetch(matchUrl, { headers: { "X-Riot-Token": riotKey }, cache: "no-store" });
-    if (!matchRes.ok) continue;
-    const matchDto = (await matchRes.json()) as MatchDto;
-    await sb.from("match_cache").upsert(
-      {
-        region,
-        puuid,
-        match_id: matchId,
-        payload: matchDto as unknown as Record<string, unknown>,
-        fetched_at: new Date().toISOString(),
-      },
-      { onConflict: "region,puuid,match_id" }
-    );
-    matchMap.set(matchId, matchDto);
+    try {
+      const matchDto = await riotFetchJson<MatchDto>(matchUrl);
+      await sb.from("match_cache").upsert(
+        {
+          region,
+          puuid,
+          match_id: matchId,
+          payload: matchDto as unknown as Record<string, unknown>,
+          fetched_at: new Date().toISOString(),
+        },
+        { onConflict: "region,puuid,match_id" }
+      );
+      matchMap.set(matchId, matchDto);
+    } catch {
+      // skip failed match fetch
+    }
   }
 
   const matches = matchIdsToUse.map((id) => matchMap.get(id)).filter((m): m is MatchDto => m != null);
@@ -260,6 +255,15 @@ export async function GET(request: Request) {
   }
   const parsed = { gameName, tagLine };
   const baseUrl = getBaseUrl(request);
+  const cacheKey = `profileBundle:${region}:${normRiotId}:${queue}`;
+
+  const cached = getCached(cacheKey);
+  if (cached) return Response.json(cached, { status: 200, headers: NO_CACHE_HEADERS });
+  const existing = getInFlight(cacheKey);
+  if (existing) {
+    const data = await existing;
+    return Response.json(data, { status: 200, headers: NO_CACHE_HEADERS });
+  }
 
   let puuid: string | null = null;
   const { data: summonerRow } = await supabaseAdmin
@@ -319,26 +323,36 @@ export async function GET(request: Request) {
     }
   }
 
+  const p = (async (): Promise<ProfileBundle> => {
+    const data = await fetchBundleFromRiot(baseUrl, region, queue, parsed);
+    setCached(cacheKey, data, 60_000);
+    return data;
+  })();
+  setInFlight(cacheKey, p);
+
   let bundle: ProfileBundle;
   try {
-    bundle = await fetchBundleFromRiot(baseUrl, region, queue, parsed);
+    bundle = await p;
   } catch (e) {
+    clearInFlight(cacheKey);
     const message = e instanceof Error ? e.message : "Failed to load profile";
     return NextResponse.json(
       { error: message, status: 502 },
       { status: 502, headers: NO_CACHE }
     );
+  } finally {
+    clearInFlight(cacheKey);
   }
 
-  const p = bundle.profile.account.puuid;
+  const puuidForUpsert = bundle.profile.account.puuid;
   await supabaseAdmin.from("summoner_cache").upsert(
-    { region, riot_id: normRiotId, puuid: p, payload: { puuid: p }, fetched_at: new Date().toISOString() },
+    { region, riot_id: normRiotId, puuid: puuidForUpsert, payload: { puuid: puuidForUpsert }, fetched_at: new Date().toISOString() },
     { onConflict: "region,riot_id" }
   );
   await supabaseAdmin.from("profile_bundle_cache").upsert(
     {
       region,
-      puuid: p,
+      puuid: puuidForUpsert,
       queue_key: queueKey,
       payload: bundle as unknown as Record<string, unknown>,
       fetched_at: new Date().toISOString(),

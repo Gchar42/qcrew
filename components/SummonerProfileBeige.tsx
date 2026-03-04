@@ -365,6 +365,7 @@ export default function SummonerProfileBeige({
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
+      refreshInterval: 0,
       shouldRetryOnError: false,
       dedupingInterval: 60000,
     }
