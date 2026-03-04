@@ -1,147 +1,85 @@
 import { NextResponse } from "next/server";
 
-type QueueKey = "solo" | "flex";
-type ChampAgg = {
-  championId: number;
-  championName: string;
-  games: number;
-  wins: number;
-  kills: number;
-  deaths: number;
-  assists: number;
-};
+const SOLO = 420;
+const FLEX = 440;
 
-function riotRegionToRouting(region: string) {
-  const r = (region || "").toLowerCase();
-  if (r === "na" || r === "na1") return { platform: "na1", routing: "americas" };
-  if (r === "euw" || r === "euw1") return { platform: "euw1", routing: "europe" };
-  if (r === "eune" || r === "eun1") return { platform: "eun1", routing: "europe" };
-  if (r === "kr") return { platform: "kr", routing: "asia" };
-  if (r === "jp" || r === "jp1") return { platform: "jp1", routing: "asia" };
-  if (r === "br" || r === "br1") return { platform: "br1", routing: "americas" };
-  if (r === "la1") return { platform: "la1", routing: "americas" };
-  if (r === "la2") return { platform: "la2", routing: "americas" };
-  if (r === "oc" || r === "oc1") return { platform: "oc1", routing: "sea" };
-  if (r === "tr" || r === "tr1") return { platform: "tr1", routing: "europe" };
-  if (r === "ru") return { platform: "ru", routing: "europe" };
-  return { platform: "na1", routing: "americas" };
-}
+export async function POST(req: Request) {
+  const body = await req.json();
+  const matches = body.matches || [];
+  const queue = body.queue;
+  const puuid = body.puuid;
 
-async function riotFetch(url: string, signal?: AbortSignal) {
-  const key = process.env.RIOT_API_KEY;
-  if (!key) throw new Error("Missing RIOT_API_KEY");
-  const res = await fetch(url, {
-    headers: { "X-Riot-Token": key },
-    signal,
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`Riot error ${res.status} ${txt.slice(0, 120)}`);
-  }
-  return res.json();
-}
+  const agg = new Map<
+    number,
+    {
+      championId: number;
+      championName: string;
+      games: number;
+      wins: number;
+      kills: number;
+      deaths: number;
+      assists: number;
+    }
+  >();
 
-function queueIdFor(queue: QueueKey) {
-  return queue === "solo" ? 420 : 440;
-}
+  for (const match of matches) {
+    if (!match?.info?.participants) continue;
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const region = searchParams.get("region") || "na";
-  const puuid = searchParams.get("puuid") || "";
-  const queue = (searchParams.get("queue") || "solo") as QueueKey;
+    const info = match.info;
 
-  if (!puuid) return NextResponse.json({ rows: [] }, { status: 200 });
+    if (queue === "solo" && info.queueId !== SOLO) continue;
+    if (queue === "flex" && info.queueId !== FLEX) continue;
 
-  const { routing } = riotRegionToRouting(region);
-  const qid = queueIdFor(queue);
-  const totalWanted = Math.min(Number(searchParams.get("count") || "120"), 200);
-  const pageSize = 60;
-  const allIds: string[] = [];
-  for (let start = 0; start < totalWanted; start += pageSize) {
-    const idsUrl =
-      `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/` +
-      encodeURIComponent(puuid) +
-      `/ids?start=${start}&count=${Math.min(pageSize, totalWanted - start)}&queue=${qid}`;
-    const ids: string[] = await riotFetch(idsUrl);
-    if (!Array.isArray(ids) || ids.length === 0) break;
-    allIds.push(...ids);
-    if (ids.length < pageSize) break;
-  }
-  const matchIds = allIds;
-  const agg = new Map<number, ChampAgg>();
-  const detailsWanted = Math.min(matchIds.length, 80);
-  const batchSize = 8;
-  for (let start = 0; start < detailsWanted; start += batchSize) {
-    const batch = matchIds.slice(start, start + batchSize);
-    const matches = await Promise.all(
-      batch.map((matchId) => {
-        const matchUrl =
-          `https://${routing}.api.riotgames.com/lol/match/v5/matches/` +
-          encodeURIComponent(matchId);
-        return riotFetch(matchUrl).catch(() => null);
-      })
-    );
-    for (const match of matches) {
-      if (!match) continue;
-      const info = match?.info;
-      const participants = info?.participants;
-      if (!Array.isArray(participants)) continue;
-      const me = participants.find(
-        (p: { puuid?: string; championId?: number; championName?: string }) =>
-          p?.puuid === puuid
-      );
-      if (!me) continue;
-      const championId = Number(me?.championId || 0);
-      if (!championId) continue;
-      const championName =
-        typeof me?.championName === "string"
-          ? me.championName
-          : `Champion ${championId}`;
-      const kills = Number(me?.kills || 0);
-      const deaths = Number(me?.deaths || 0);
-      const assists = Number(me?.assists || 0);
-      const win = Boolean(me?.win);
-      const cur = agg.get(championId) || {
-        championId,
+    const me = info.participants.find((p: { puuid?: string }) => p.puuid === puuid);
+    if (!me) continue;
+
+    const champ = Number(me.championId ?? 0);
+    if (!champ) continue;
+
+    const championName =
+      typeof me.championName === "string" ? me.championName : `Champion ${champ}`;
+
+    if (!agg.has(champ)) {
+      agg.set(champ, {
+        championId: champ,
         championName,
         games: 0,
         wins: 0,
         kills: 0,
         deaths: 0,
         assists: 0,
-      };
-      if (!cur.championName || cur.championName.startsWith("Champion "))
-        cur.championName = championName;
-      cur.games += 1;
-      if (win) cur.wins += 1;
-      cur.kills += kills;
-      cur.deaths += deaths;
-      cur.assists += assists;
-      agg.set(championId, cur);
+      });
     }
+
+    const c = agg.get(champ)!;
+    if (!c.championName || c.championName.startsWith("Champion "))
+      c.championName = championName;
+
+    c.games++;
+    if (me.win) c.wins++;
+    c.kills += Number(me.kills ?? 0);
+    c.deaths += Number(me.deaths ?? 0);
+    c.assists += Number(me.assists ?? 0);
   }
 
-  const rows = Array.from(agg.values())
-    .sort((a, b) => b.games - a.games)
-    .map((c) => {
-      const safeDeaths = c.deaths > 0 ? c.deaths : 1;
-      const kda = (c.kills + c.assists) / safeDeaths;
-      const winRate = c.games > 0 ? (c.wins / c.games) * 100 : 0;
-      return {
-        championId: c.championId,
-        championName: c.championName,
-        championIcon: c.championName,
-        games: c.games,
-        wins: c.wins,
-        winRate,
-        kda,
-        kills: c.kills / c.games,
-        deaths: c.deaths / c.games,
-        assists: c.assists / c.games,
-      };
-    });
+  const rows = [...agg.values()].map((c) => {
+    const kda = (c.kills + c.assists) / Math.max(1, c.deaths);
+    const winRate = c.games ? (c.wins / c.games) * 100 : 0;
 
-  return NextResponse.json({ rows }, { status: 200 });
+    return {
+      championId: c.championId,
+      championName: c.championName,
+      championIcon: c.championName,
+      games: c.games,
+      winRate,
+      kda,
+      kills: c.kills / c.games,
+      deaths: c.deaths / c.games,
+      assists: c.assists / c.games,
+    };
+  });
+
+  rows.sort((a, b) => b.games - a.games);
+
+  return NextResponse.json({ rows });
 }

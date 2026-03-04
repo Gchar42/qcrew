@@ -22,11 +22,12 @@ function fmt1(n: number) {
 }
 
 export default function ChampionStatsCard(props: {
-  region: string;
+  region?: string;
   puuid: string;
+  matches: unknown[];
   ddragonVersion?: string | null;
 }) {
-  const { region, puuid, ddragonVersion } = props;
+  const { puuid, matches, ddragonVersion } = props;
   const [queue, setQueue] = React.useState<QueueKey>("solo");
   const [rows, setRows] = React.useState<ChampRow[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -36,10 +37,15 @@ export default function ChampionStatsCard(props: {
     async function run() {
       setLoading(true);
       try {
-        const res = await fetch(
-          `/api/champion_stats?region=${encodeURIComponent(region)}&puuid=${encodeURIComponent(puuid)}&queue=${queue}`,
-          { cache: "no-store" }
-        );
+        const res = await fetch("/api/champion_stats", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            puuid,
+            queue,
+            matches,
+          }),
+        });
         const json = await res.json();
         if (!cancelled) setRows(Array.isArray(json?.rows) ? json.rows : []);
       } catch {
@@ -52,7 +58,7 @@ export default function ChampionStatsCard(props: {
     return () => {
       cancelled = true;
     };
-  }, [region, puuid, queue]);
+  }, [puuid, queue, matches]);
 
   return (
     <div className="profile-rank-card champion-stats-card">

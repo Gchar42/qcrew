@@ -595,6 +595,7 @@ export default function SummonerProfileBeige({
           <ChampionStatsCard
             region={regionVal}
             puuid={account.puuid}
+            matches={matches}
             ddragonVersion={ddragonVersion}
           />
         </aside>
