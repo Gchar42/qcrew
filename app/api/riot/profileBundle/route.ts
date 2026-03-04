@@ -8,9 +8,33 @@ export const revalidate = 0;
 
 const STALE_AFTER_SEC = 120;
 const CACHE_HEADERS = {
-  "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120",
+  "Cache-Control": "s-maxage=60, stale-while-revalidate=300",
 };
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
+
+async function refreshSnapshot(
+  baseUrl: string,
+  region: string,
+  queue: "solo" | "flex",
+  normRiotId: string
+): Promise<void> {
+  const [gameName, tagLine] = normRiotId.split("#").map((s) => s.trim());
+  if (!gameName || !tagLine) return;
+  const parsed = { gameName, tagLine };
+  const bundle = await fetchFromRiot(baseUrl, region, queue, parsed);
+  await supabaseAdmin.from("profile_snapshots").upsert(
+    {
+      region,
+      queue,
+      riot_id: normRiotId,
+      puuid: bundle.profile.account.puuid,
+      data: bundle as unknown as Record<string, unknown>,
+      fetched_at: new Date().toISOString(),
+      stale_after_sec: STALE_AFTER_SEC,
+    },
+    { onConflict: "region,queue,riot_id" }
+  );
+}
 
 type ProfileSnapshotRow = {
   region: string;
@@ -222,9 +246,9 @@ export async function GET(request: Request) {
   }
   const parsed = { gameName, tagLine };
 
-  const { data: row, error: selectError } = await supabaseAdmin
+  const { data: snapshot, error: selectError } = await supabaseAdmin
     .from("profile_snapshots")
-    .select("puuid, data, fetched_at, stale_after_sec")
+    .select("*")
     .eq("region", region)
     .eq("queue", queue)
     .eq("riot_id", normRiotId)
@@ -238,36 +262,24 @@ export async function GET(request: Request) {
     );
   }
 
-  const snapshot = row as ProfileSnapshotRow | null;
-  const now = Date.now();
-  const fetchedAt = snapshot?.fetched_at ? new Date(snapshot.fetched_at).getTime() : 0;
-  const ageSec = (now - fetchedAt) / 1000;
-  const staleSec = snapshot?.stale_after_sec ?? STALE_AFTER_SEC;
-  const isFresh = ageSec <= staleSec;
+  const row = snapshot as ProfileSnapshotRow | null;
 
-  if (snapshot?.data && isFresh) {
-    return NextResponse.json(snapshot.data, { status: 200, headers: CACHE_HEADERS });
-  }
+  if (row?.data) {
+    const ageSec = (Date.now() - new Date(row.fetched_at).getTime()) / 1000;
+    const stale = ageSec > (row.stale_after_sec ?? STALE_AFTER_SEC);
 
-  if (snapshot?.data && !isFresh) {
+    if (!stale) {
+      return NextResponse.json(row.data, {
+        headers: CACHE_HEADERS,
+      });
+    }
+
     const baseUrl = getBaseUrl(request);
-    void fetchFromRiot(baseUrl, region, queue, parsed)
-      .then((bundle) =>
-        supabaseAdmin.from("profile_snapshots").upsert(
-          {
-            region,
-            queue,
-            riot_id: normRiotId,
-            puuid: bundle.profile.account.puuid,
-            data: bundle as unknown as Record<string, unknown>,
-            fetched_at: new Date().toISOString(),
-            stale_after_sec: STALE_AFTER_SEC,
-          },
-          { onConflict: "region,queue,riot_id" }
-        )
-      )
-      .catch((e) => console.error("[profileBundle] background refresh failed:", e));
-    return NextResponse.json(snapshot.data, { status: 200, headers: CACHE_HEADERS });
+    refreshSnapshot(baseUrl, region, queue, normRiotId).catch(() => {});
+
+    return NextResponse.json(row.data, {
+      headers: CACHE_HEADERS,
+    });
   }
 
   const baseUrl = getBaseUrl(request);
@@ -282,7 +294,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const { error: upsertError } = await supabaseAdmin.from("profile_snapshots").upsert(
+  await supabaseAdmin.from("profile_snapshots").upsert(
     {
       region,
       queue,
@@ -294,10 +306,6 @@ export async function GET(request: Request) {
     },
     { onConflict: "region,queue,riot_id" }
   );
-
-  if (upsertError) {
-    console.error("[profileBundle] Supabase upsert error:", upsertError);
-  }
 
   return NextResponse.json(bundle, { status: 200, headers: CACHE_HEADERS });
 }
