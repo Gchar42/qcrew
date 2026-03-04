@@ -4,8 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { fetchJsonWithRetry, mapWithConcurrency } from "@/lib/fetchUtils";
+import useSWR, { mutate as globalMutate } from "swr";
 import { buildProfileHref } from "@/lib/routes";
+import type { ProfileBundle } from "@/app/api/riot/profileBundle/route";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
 import { MatchDetails } from "@/components/MatchDetails";
 import {
@@ -328,14 +329,11 @@ function primaryRole(matches: MatchDto[], puuid: string): string {
   return roleLabel(entries[0][0]);
 }
 
-const PROFILE_CACHE_MAX = 10;
-type ProfileCacheEntry = {
-  account: AccountDto;
-  summoner: SummonerDto;
-  leagueEntries: LeagueEntryDto[] | null;
-  matches: MatchDto[];
-};
-const profileCache = new Map<string, ProfileCacheEntry>();
+const profileBundleFetcher = (url: string) =>
+  fetch(url).then((r) => {
+    if (!r.ok) return r.json().then((body) => Promise.reject(new Error((body as { error?: string }).error ?? "Failed to load profile")));
+    return r.json() as Promise<ProfileBundle>;
+  });
 
 export default function SummonerProfileBeige({
   riotId: riotIdProp,
@@ -354,21 +352,30 @@ export default function SummonerProfileBeige({
   const targetQueueType = queue === "flex" ? "RANKED_FLEX_SR" : "RANKED_SOLO_5x5";
   const queueIdForMatches = queue === "flex" ? 440 : 420;
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [account, setAccount] = useState<AccountDto | null>(null);
-  const [summoner, setSummoner] = useState<SummonerDto | null>(null);
-  const [matches, setMatches] = useState<MatchDto[]>([]);
+  const bundleKey =
+    riotIdParam && regionVal && parsed
+      ? `/api/riot/profileBundle?riotId=${encodeURIComponent(riotIdParam)}&region=${encodeURIComponent(regionVal)}&queue=${encodeURIComponent(queue)}`
+      : null;
+  const { data: bundle, error: bundleError, isLoading, mutate } = useSWR(bundleKey, profileBundleFetcher);
+
+  const account = bundle?.profile.account ?? null;
+  const summoner = bundle?.profile.summoner ?? null;
+  const matches = bundle?.matches ?? [];
+  const leagueEntries = bundle
+    ? ([bundle.ranked.solo, bundle.ranked.flex].filter(Boolean) as LeagueEntryDto[])
+    : [];
+  const leagueEntriesBySummonerId = bundle?.leagueEntriesBySummonerId ?? {};
+  const leagueBySummonerId = (bundle?.leagueEntriesBySummonerId ?? {}) as Record<string, LeagueEntry[]>;
+  const avgRank = bundle
+    ? { label: bundle.computed.avgRankPlayedAgainst, rankedCount: bundle.computed.avgRankRankedCount }
+    : { label: "Unranked", rankedCount: 0 };
+  const rankError = bundle ? null : null;
+  const rankLoading = isLoading;
+  const loading = isLoading;
+  const error = bundleError?.message ?? null;
+
   const [detailMatch, setDetailMatch] = useState<MatchDto | null>(null);
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
-  const [leagueEntries, setLeagueEntries] = useState<LeagueEntryDto[] | null>(null);
-  const [leagueEntriesBySummonerId, setLeagueEntriesBySummonerId] = useState<
-    Record<string, LeagueEntryDto[]>
-  >({});
-  const [leagueBySummonerId, setLeagueBySummonerId] = useState<Record<string, LeagueEntry[]>>({});
-  const [rankError, setRankError] = useState<string | null>(null);
-  const [rankLoading, setRankLoading] = useState(false);
-  const [avgRank, setAvgRank] = useState<{ label: string; rankedCount: number }>({ label: "Unranked", rankedCount: 0 });
 
   const activeQueueType = queue === "flex" ? "RANKED_FLEX_SR" : "RANKED_SOLO_5x5";
 
@@ -408,226 +415,6 @@ export default function SummonerProfileBeige({
       .catch(() => {});
   }, []);
 
-  const fetchProfile = useCallback(async () => {
-    if (!parsed) {
-      setLoading(false);
-      setError(null);
-      return;
-    }
-    const cacheKey = `${riotIdParam ?? ""}|${queue}`;
-    const cached = profileCache.get(cacheKey);
-    if (cached) {
-      setAccount(cached.account);
-      setSummoner(cached.summoner);
-      setLeagueEntries(cached.leagueEntries);
-      setMatches(cached.matches);
-      setRankError(null);
-      setRankLoading(false);
-      setLoading(false);
-      setError(null);
-    } else {
-      setLoading(true);
-      setError(null);
-    }
-    let leagueEntriesFromFetch: LeagueEntryDto[] | null = null;
-    try {
-      const accountRes = await fetchJsonWithRetry<AccountDto>(
-        `/api/riot/account?gameName=${encodeURIComponent(parsed.gameName)}&tagLine=${encodeURIComponent(parsed.tagLine)}&region=${regionVal}`,
-        2
-      );
-      setAccount(accountRes);
-
-      const [summonerRes, matchListRes] = await Promise.all([
-        fetchJsonWithRetry<SummonerDto>(
-          `/api/riot/summoner?puuid=${encodeURIComponent(accountRes.puuid)}&region=${regionVal}`,
-          2
-        ),
-        fetchJsonWithRetry<{ matchIds: string[] }>(
-          `/api/riot/match-ids?puuid=${encodeURIComponent(accountRes.puuid)}&region=${regionVal}&count=20&queueId=${queueIdForMatches}`,
-          2
-        ),
-      ]);
-      setSummoner(summonerRes);
-
-      setRankLoading(true);
-      const leagueUrl = `/api/riot/league?puuid=${encodeURIComponent(accountRes.puuid)}&platform=${regionVal}`;
-      const leagueRes = await fetch(leagueUrl);
-      const leagueBody = await leagueRes.text();
-      if (!leagueRes.ok) {
-        let errPayload: { requestUrl?: string; riotBody?: string } | null = null;
-        try {
-          errPayload = JSON.parse(leagueBody) as { requestUrl?: string; riotBody?: string };
-        } catch {
-          /* use leagueUrl and leagueBody below */
-        }
-        const requestUrl = errPayload?.requestUrl ?? leagueUrl;
-        const riotBodySnippet = (errPayload?.riotBody ?? leagueBody).slice(0, 500);
-        console.error("[riot/league] Rank fetch failed — League request URL, status, Riot response body:", {
-          requestUrl,
-          status: leagueRes.status,
-          statusText: leagueRes.statusText,
-          riotBody: riotBodySnippet,
-        });
-        setRankError(`Rank unavailable (${leagueRes.status})`);
-        setLeagueEntries(null);
-      } else {
-        let entries: LeagueEntryDto[] | null = null;
-        try {
-          entries = JSON.parse(leagueBody) as LeagueEntryDto[];
-        } catch {
-          console.error("[riot/league] Rank response not JSON", {
-            url: leagueUrl,
-            status: leagueRes.status,
-            body: leagueBody,
-          });
-          setRankError(`Rank unavailable (${leagueRes.status})`);
-          setLeagueEntries(null);
-        }
-        if (entries !== null && !Array.isArray(entries)) {
-          console.error("[riot/league] Rank response not an array", {
-            url: leagueUrl,
-            status: leagueRes.status,
-            body: leagueBody,
-          });
-          setRankError(`Rank unavailable (${leagueRes.status})`);
-          setLeagueEntries(null);
-        } else if (entries !== null) {
-          setRankError(null);
-          setLeagueEntries(entries);
-          leagueEntriesFromFetch = entries;
-        }
-      }
-      setRankLoading(false);
-
-      const matchDetails = await mapWithConcurrency(
-        matchListRes.matchIds.slice(0, 20),
-        3,
-        async (matchId) =>
-          fetchJsonWithRetry<MatchDto>(
-            `/api/riot/match?matchId=${encodeURIComponent(matchId)}&region=${regionVal}&puuid=${encodeURIComponent(
-              accountRes.puuid
-            )}&gameName=${encodeURIComponent(accountRes.gameName)}&tagLine=${encodeURIComponent(
-              accountRes.tagLine
-            )}`,
-            3
-          )
-      );
-      setMatches(matchDetails);
-      profileCache.set(cacheKey, {
-        account: accountRes,
-        summoner: summonerRes,
-        leagueEntries: leagueEntriesFromFetch ?? null,
-        matches: matchDetails,
-      });
-      if (profileCache.size > PROFILE_CACHE_MAX) {
-        const firstKey = profileCache.keys().next().value;
-        if (firstKey != null) profileCache.delete(firstKey);
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load summoner"
-      );
-      setAccount(null);
-      setSummoner(null);
-      setMatches([]);
-      setLeagueEntries(null);
-      setRankError(null);
-      setRankLoading(false);
-      setAvgRank({ label: "Unranked", rankedCount: 0 });
-    } finally {
-      setLoading(false);
-    }
-  }, [parsed?.gameName, parsed?.tagLine, regionVal, queue, queueIdForMatches, riotIdParam]);
-
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
-
-  useEffect(() => {
-    if (matches.length === 0) {
-      setAvgRank({ label: "Unranked", rankedCount: 0 });
-      return;
-    }
-    const summonerIds = new Set<string>();
-    matches.forEach((m) =>
-      m.info?.participants?.forEach((p) => {
-        if (p.summonerId) summonerIds.add(p.summonerId);
-      })
-    );
-    const idList = [...summonerIds].slice(0, 100);
-    if (idList.length === 0) {
-      setAvgRank({ label: "Unranked", rankedCount: 0 });
-      return;
-    }
-    const platform = regionVal ?? "na1";
-    fetch(
-      `/api/riot/league-batch?summonerIds=${idList.map((id) => encodeURIComponent(id)).join(",")}&platform=${encodeURIComponent(platform)}`
-    )
-      .then((res) => (res.ok ? res.json() : { entries: {} }))
-      .then((data: { entries?: Record<string, LeagueEntryDto[]> }) => {
-        const entries = data.entries ?? {};
-        setLeagueEntriesBySummonerId(entries);
-        const values: number[] = [];
-        const targetSolo = "RANKED_SOLO_5x5";
-        idList.forEach((id) => {
-          const list = entries[id] ?? [];
-          const solo = list.find((e) => e.queueType === targetSolo && e.tier && e.rank);
-          if (!solo?.tier || !solo?.rank) return;
-          const numeric = rankToNumber(solo.tier, solo.rank);
-          if (numeric != null && Number.isFinite(numeric)) values.push(numeric);
-        });
-        let label: string;
-        if (values.length > 0) {
-          const avg = values.reduce((a, b) => a + b, 0) / values.length;
-          label = numberToRankLabel(avg);
-        } else {
-          label = "Unranked";
-        }
-        setAvgRank({ label, rankedCount: values.length });
-      })
-      .catch(() => setAvgRank({ label: "Unranked", rankedCount: 0 }));
-  }, [matches, regionVal]);
-
-  // Fetch league entries for first 3 matches only; keyed by summonerId. Do not clear when switching tabs.
-  useEffect(() => {
-    if (matches.length === 0) return;
-    const ids = Array.from(
-      new Set(
-        matches
-          .slice(0, 3)
-          .flatMap((m) =>
-            (m.info?.participants ?? []).map((p) => p.summonerId).filter(Boolean)
-          )
-      )
-    ) as string[];
-    const missing = ids.filter((id) => leagueBySummonerId[id] === undefined);
-    if (missing.length === 0) return;
-
-    const concurrency = 6;
-    const nextMap: Record<string, LeagueEntry[]> = {};
-    let index = 0;
-    async function runPool(): Promise<void> {
-      while (index < missing.length) {
-        const current = index++;
-        const summonerId = missing[current];
-        try {
-          const res = await fetch(
-            `/api/riot/league?summonerId=${encodeURIComponent(summonerId)}&region=${regionVal}`
-          );
-          const data = await res.json();
-          nextMap[summonerId] = Array.isArray(data) ? (data as LeagueEntry[]) : [];
-        } catch {
-          nextMap[summonerId] = [];
-        }
-      }
-    }
-    Promise.all(Array.from({ length: concurrency }, () => runPool())).then(() => {
-      if (Object.keys(nextMap).length > 0) {
-        setLeagueBySummonerId((prev) => ({ ...prev, ...nextMap }));
-      }
-    });
-  }, [matches, regionVal, leagueBySummonerId]);
-
   if (!riotIdParam) {
     return (
       <div className="profile-empty">
@@ -661,7 +448,7 @@ export default function SummonerProfileBeige({
     return (
       <div className="profile-empty">
         <p>{error ?? "Failed to load summoner"}</p>
-        <button type="button" onClick={fetchProfile} className="mt-4 underline">
+        <button type="button" onClick={() => mutate()} className="mt-4 underline">
           Try again
         </button>
       </div>
@@ -674,29 +461,31 @@ export default function SummonerProfileBeige({
   const total = matches.length;
   const winRate = total ? Math.round((wins / total) * 100) : 0;
 
-  const matchCount = matches?.length ?? 0;
-  const n = matchCount || 1;
-  let avgKills = 0,
-    avgDeaths = 0,
-    avgAssists = 0,
-    totalCs = 0,
-    totalDurationSec = 0;
-  matches.forEach((m) => {
-    const p = participant(m);
-    if (p) {
-      avgKills += p.kills;
-      avgDeaths += p.deaths;
-      avgAssists += p.assists;
-      totalCs += (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
-    }
-    totalDurationSec += m.info?.gameDuration ?? 0;
-  });
-  avgKills = Math.round((avgKills / n) * 10) / 10;
-  avgDeaths = Math.round((avgDeaths / n) * 10) / 10;
-  avgAssists = Math.round((avgAssists / n) * 10) / 10;
-  const avgDurationMin = totalDurationSec / 60 / n;
-  const avgCsPerMin =
-    totalDurationSec > 0 ? totalCs / (totalDurationSec / 60) : 0;
+  const matchCount = bundle?.computed.matchCount ?? matches.length;
+  const avgKdaDisplay = bundle?.computed.avgKda ?? (() => {
+    const n = matches.length || 1;
+    let k = 0, d = 0, a = 0;
+    matches.forEach((m) => {
+      const p = participant(m);
+      if (p) { k += p.kills ?? 0; d += p.deaths ?? 0; a += p.assists ?? 0; }
+    });
+    return `${Math.round((k / n) * 10) / 10}/${Math.round((d / n) * 10) / 10}/${Math.round((a / n) * 10) / 10}`;
+  })();
+  const avgDurationMin = bundle?.computed.avgDuration ?? (() => {
+    const n = matches.length || 1;
+    const totalSec = matches.reduce((s, m) => s + (m.info?.gameDuration ?? 0), 0);
+    return totalSec / 60 / n;
+  })();
+  const avgCsPerMin = bundle?.computed.csPerMin ?? (() => {
+    const n = matches.length || 1;
+    const totalSec = matches.reduce((s, m) => s + (m.info?.gameDuration ?? 0), 0);
+    let totalCs = 0;
+    matches.forEach((m) => {
+      const p = participant(m);
+      if (p) totalCs += (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
+    });
+    return totalSec > 0 ? totalCs / (totalSec / 60) : 0;
+  })();
 
   const role = primaryRole(matches, account.puuid);
   const level = summoner?.summonerLevel ?? 0;
@@ -815,7 +604,7 @@ export default function SummonerProfileBeige({
           </div>
           <div className="profile-matches-header-stats recent-stats">
             <div className="stat-chip">
-              <span className="stat-value">{avgKills}/{avgDeaths}/{avgAssists}</span>
+              <span className="stat-value">{avgKdaDisplay}</span>
               <span className="stat-label">KDA</span>
             </div>
             <div className="stat-chip">
@@ -1107,6 +896,14 @@ export default function SummonerProfileBeige({
                             })}
                             prefetch={false}
                             onClick={(e) => e.stopPropagation()}
+                            onMouseEnter={() => {
+                              const riotId = part.riotIdGameName && part.riotIdTagline
+                                ? `${part.riotIdGameName}#${part.riotIdTagline}`
+                                : `${part.summonerName ?? ""}#${part.riotIdTagline ?? "NA1"}`;
+                              if (!riotId.includes("#")) return;
+                              globalMutate(`/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(regionVal)}&queue=solo`);
+                              globalMutate(`/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(regionVal)}&queue=flex`);
+                            }}
                             title={part.riotIdGameName ?? part.summonerName}
                           >
                             {part.riotIdGameName ?? part.summonerName}
@@ -1166,6 +963,14 @@ export default function SummonerProfileBeige({
                             })}
                             prefetch={false}
                             onClick={(e) => e.stopPropagation()}
+                            onMouseEnter={() => {
+                              const riotId = part.riotIdGameName && part.riotIdTagline
+                                ? `${part.riotIdGameName}#${part.riotIdTagline}`
+                                : `${part.summonerName ?? ""}#${part.riotIdTagline ?? "NA1"}`;
+                              if (!riotId.includes("#")) return;
+                              globalMutate(`/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(regionVal)}&queue=solo`);
+                              globalMutate(`/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(regionVal)}&queue=flex`);
+                            }}
                             title={part.riotIdGameName ?? part.summonerName}
                           >
                             {part.riotIdGameName ?? part.summonerName}

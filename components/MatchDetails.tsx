@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { mutate as globalMutate } from "swr";
 import type { MatchDto } from "@/types/riot";
 import {
   getChampionSquareUrl,
@@ -285,6 +286,15 @@ width={18}
                         })}
                         prefetch={false}
                         onClick={(e) => e.stopPropagation()}
+                        onMouseEnter={() => {
+                          const riotId =
+                            p.riotIdGameName && p.riotIdTagline
+                              ? `${p.riotIdGameName}#${p.riotIdTagline}`
+                              : `${p.summonerName ?? ""}#${p.riotIdTagline ?? "NA1"}`;
+                          if (!riotId.includes("#")) return;
+                          globalMutate(`/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}&queue=solo`);
+                          globalMutate(`/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}&queue=flex`);
+                        }}
                         title={participantDisplayName(p)}
                       >
                         {participantDisplayName(p)}
