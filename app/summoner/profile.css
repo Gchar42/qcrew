@@ -1781,3 +1781,102 @@
     transform: rotate(360deg);
   }
 }
+
+/* Champion Stats card (left column, under Ranked Flex) */
+.profile-page .left_card {
+  border-radius: 14px;
+  background: rgba(20, 24, 36, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  margin-top: 14px;
+}
+.profile-page .left_card_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 14px 10px 14px;
+}
+.profile-page .left_card_title {
+  font-weight: 700;
+  font-size: 14px;
+}
+.profile-page .left_card_filters {
+  display: flex;
+  gap: 8px;
+}
+.profile-page .pill {
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+}
+.profile-page .pill_active {
+  border-color: rgba(96, 165, 250, 0.6);
+  background: rgba(96, 165, 250, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+}
+.profile-page .left_card_body {
+  padding: 10px 14px 14px 14px;
+}
+.profile-page .left_card_muted {
+  color: rgba(255, 255, 255, 0.55);
+}
+.profile-page .left_card_small {
+  font-size: 12px;
+}
+.profile-page .champ_list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.profile-page .champ_row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.6fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.profile-page .champ_left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.profile-page .champ_icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.profile-page .champ_meta {
+  min-width: 0;
+}
+.profile-page .champ_name {
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profile-page .champ_mid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.profile-page .kda_big {
+  font-weight: 700;
+  font-size: 14px;
+}
+.profile-page .champ_right {
+  text-align: right;
+}
+.profile-page .champ_right .wr {
+  font-weight: 800;
+  font-size: 16px;
+}

@@ -27,6 +27,7 @@ import {
 import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
 import { numberToRankLabel, rankToNumber } from "@/lib/rankMapping";
+import ChampionStatsCard from "@/components/profile/ChampionStatsCard";
 import type { AccountDto, LeagueEntryDto, SummonerDto, MatchDto } from "@/types/riot";
 
 /** Badge name -> profile CSS class for chip styling */
@@ -591,6 +592,11 @@ export default function SummonerProfileBeige({
         <aside className="profile-body-left">
           {renderRankCard("Ranked Solo", soloEntry, rankLoading, rankError ?? null)}
           {renderRankCard("Ranked Flex", flexEntry, rankLoading, null)}
+          <ChampionStatsCard
+            region={regionVal}
+            puuid={account.puuid}
+            ddragonVersion={ddragonVersion}
+          />
         </aside>
         <div className="profile-body-right">
       <div className="recent-matches-section">
