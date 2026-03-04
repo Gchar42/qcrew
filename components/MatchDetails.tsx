@@ -118,7 +118,7 @@ export function MatchDetails({
     maxImp: number
   ) => (
     <div key={teamKey} className="md-team">
-      <div className={`md-team-header md-team-header-${teamKey}`}>
+      <div className={`md-team-header team-header md-team-header-${teamKey}`}>
         <span className="md-team-label">{teamLabel}</span>
         <span className="md-team-summary">
           {agg.kills} kills · {agg.gold.toLocaleString()} gold
@@ -174,9 +174,9 @@ export function MatchDetails({
                           <img
                             src={champUrl}
                             alt=""
-                            width={40}
-                            height={40}
-                            className="md-champ-icon"
+                            width={36}
+                            height={36}
+                            className="md-champ-icon champ-icon"
                           />
                         ) : (
                           <span className="md-champ-placeholder" />
@@ -188,18 +188,18 @@ export function MatchDetails({
                             <img
                               src={spell1Src}
                               alt=""
-                              width={22}
-                              height={22}
-                              className="md-spell-icon"
+width={18}
+                            height={18}
+                            className="md-spell-icon spell-icon"
                             />
                           )}
                           {spell2Src && (
                             <img
                               src={spell2Src}
                               alt=""
-                              width={22}
-                              height={22}
-                              className="md-spell-icon"
+width={18}
+                            height={18}
+                            className="md-spell-icon spell-icon"
                             />
                           )}
                         </div>
@@ -208,18 +208,18 @@ export function MatchDetails({
                             <img
                               src={keystoneSrc}
                               alt=""
-                              width={22}
-                              height={22}
-                              className="md-rune-icon"
+                              width={18}
+                              height={18}
+                              className="md-rune-icon rune-icon"
                             />
                           )}
                           {secondarySrc && (
                             <img
                               src={secondarySrc}
                               alt=""
-                              width={22}
-                              height={22}
-                              className="md-rune-icon"
+                              width={18}
+                              height={18}
+                              className="md-rune-icon rune-icon"
                             />
                           )}
                         </div>
@@ -252,7 +252,7 @@ export function MatchDetails({
                             alt=""
                             width={22}
                             height={22}
-                            className="md-item-icon"
+                            className="md-item-icon item-icon"
                           />
                         ) : (
                           <span
@@ -267,46 +267,42 @@ export function MatchDetails({
                   <td className="c-stats">
                     <div className="md-stats">
                       <div className="md-stat">
-                        <span className="md-stat-label">Impact</span>
-                        <div className="md-stat-with-bar">
-                          <span className="md-stat-val">{Math.round(impactScore)}</span>
-                          <div className="md-bar impact">
-                            <span
-                              style={{
-                                width: `${maxImp ? (impactScore / maxImp) * 100 : 0}%`,
-                              }}
-                            />
-                          </div>
+                        <div className="md-stat-label">Impact</div>
+                        <div className="md-stat-val impact">{Math.round(impactScore)}</div>
+                        <div className="md-bar impact">
+                          <span
+                            style={{
+                              width: `${maxImp ? (impactScore / maxImp) * 100 : 0}%`,
+                            }}
+                          />
                         </div>
                       </div>
                       <div className="md-stat">
-                        <span className="md-stat-label">KDA</span>
-                        <span className="md-stat-val kda">{`${k}/${d}/${a}`}</span>
+                        <div className="md-stat-label">KDA</div>
+                        <div className="md-stat-val kda">{`${k}/${d}/${a}`}</div>
                       </div>
                       <div className="md-stat">
-                        <span className="md-stat-label">CS</span>
-                        <span className="md-stat-val">{cs}</span>
+                        <div className="md-stat-label">CS</div>
+                        <div className="md-stat-val">{cs}</div>
                       </div>
                       <div className="md-stat">
-                        <span className="md-stat-label">VS</span>
-                        <span className="md-stat-val vision">{vision}</span>
+                        <div className="md-stat-label">VS</div>
+                        <div className="md-stat-val vision">{vision}</div>
                       </div>
                       <div className="md-stat">
-                        <span className="md-stat-label">Dmg</span>
-                        <div className="md-stat-with-bar">
-                          <span className="md-stat-val damage">{formatShortNum(damage)}</span>
-                          <div className="md-bar damage">
-                            <span
-                              style={{
-                                width: `${maxDmg ? (damage / maxDmg) * 100 : 0}%`,
-                              }}
-                            />
-                          </div>
+                        <div className="md-stat-label">Dmg</div>
+                        <div className="md-stat-val damage">{formatShortNum(damage)}</div>
+                        <div className="md-bar damage">
+                          <span
+                            style={{
+                              width: `${maxDmg ? (damage / maxDmg) * 100 : 0}%`,
+                            }}
+                          />
                         </div>
                       </div>
                       <div className="md-stat">
-                        <span className="md-stat-label">Gold</span>
-                        <span className="md-stat-val gold">{formatShortNum(gold)}</span>
+                        <div className="md-stat-label">Gold</div>
+                        <div className="md-stat-val gold">{formatShortNum(gold)}</div>
                       </div>
                     </div>
                   </td>
