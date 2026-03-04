@@ -280,8 +280,8 @@ width={18}
 
                   <td className="c-items">
                     <div className="md-items">
-                      {[0, 1, 2, 3, 4, 5, 6].map((i) => {
-                        const itemId = [
+                      {Array.from({ length: 9 }, (_, i) => {
+                        const itemIds = [
                           p.item0,
                           p.item1,
                           p.item2,
@@ -289,20 +289,25 @@ width={18}
                           p.item4,
                           p.item5,
                           p.item6,
-                        ][i];
-                        return isValidItemId(itemId) ? (
-                          <img
-                            key={`${p.puuid}-item-${i}`}
-                            src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
-                            alt=""
-                            width={22}
-                            height={22}
-                            className="md-item-icon item-icon"
-                          />
-                        ) : (
-                          <span
-                            key={`${p.puuid}-item-${i}`}
-                            className="md-item-slot"
+                        ];
+                        const itemId = i < 7 ? itemIds[i] : null;
+                        if (i < 7 && isValidItemId(itemId)) {
+                          return (
+                            <img
+                              key={`${p.puuid}-item-${i}`}
+                              src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
+                              alt=""
+                              width={30}
+                              height={30}
+                              className="md-item-icon item-icon"
+                            />
+                          );
+                        }
+                        return (
+                          <div
+                            key={`${p.puuid}-item-slot-${i}`}
+                            className="item-slot empty"
+                            aria-hidden
                           />
                         );
                       })}
