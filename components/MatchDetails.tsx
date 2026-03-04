@@ -38,6 +38,12 @@ function participantDisplayName(p: Participant): string {
   return p.summonerName ?? "";
 }
 
+/** Damage/gold: one decimal + "k" when >= 10000, else full number */
+function formatShortNum(n: number): string {
+  if (n >= 10000) return `${(n / 1000).toFixed(1)}k`;
+  return n.toLocaleString();
+}
+
 function teamAggregates(team: Participant[]) {
   let kills = 0;
   let deaths = 0;
@@ -110,12 +116,7 @@ export function MatchDetails({
             <tr>
               <th className="c-player">Player</th>
               <th className="c-items">Items</th>
-              <th className="c-impact">Impact</th>
-              <th className="c-kda">KDA</th>
-              <th className="c-cs">CS</th>
-              <th className="c-vision">Vision</th>
-              <th className="c-dmg">Dmg</th>
-              <th className="c-gold">Gold</th>
+              <th className="c-stats">Stats</th>
             </tr>
           </thead>
           <tbody>
@@ -234,8 +235,8 @@ export function MatchDetails({
                             key={`${p.puuid}-item-${i}`}
                             src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
                             alt=""
-                            width={22}
-                            height={22}
+                            width={20}
+                            height={20}
                             className="md-item-icon"
                           />
                         ) : (
@@ -248,12 +249,34 @@ export function MatchDetails({
                     </div>
                   </td>
 
-                  <td className="c-impact">{Math.round(impactScore)}</td>
-                  <td className="c-kda">{`${k}/${d}/${a}`}</td>
-                  <td className="c-cs">{cs}</td>
-                  <td className="c-vision">{vision}</td>
-                  <td className="c-dmg">{damage.toLocaleString()}</td>
-                  <td className="c-gold">{gold.toLocaleString()}</td>
+                  <td className="c-stats">
+                    <div className="md-stats">
+                      <div className="md-stat">
+                        <span className="md-stat-label">Impact</span>
+                        <span className="md-stat-val">{Math.round(impactScore)}</span>
+                      </div>
+                      <div className="md-stat">
+                        <span className="md-stat-label">KDA</span>
+                        <span className="md-stat-val">{`${k}/${d}/${a}`}</span>
+                      </div>
+                      <div className="md-stat">
+                        <span className="md-stat-label">CS</span>
+                        <span className="md-stat-val">{cs}</span>
+                      </div>
+                      <div className="md-stat">
+                        <span className="md-stat-label">VS</span>
+                        <span className="md-stat-val">{vision}</span>
+                      </div>
+                      <div className="md-stat">
+                        <span className="md-stat-label">Dmg</span>
+                        <span className="md-stat-val">{formatShortNum(damage)}</span>
+                      </div>
+                      <div className="md-stat">
+                        <span className="md-stat-label">Gold</span>
+                        <span className="md-stat-val">{formatShortNum(gold)}</span>
+                      </div>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
