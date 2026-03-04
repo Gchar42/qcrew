@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const STALE_AFTER_SEC = 120;
-const CACHE_HEADERS = {
-  "Cache-Control": "s-maxage=60, stale-while-revalidate=300",
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
 };
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
 
@@ -291,7 +291,7 @@ export async function GET(request: Request) {
 
     if (!stale) {
       return NextResponse.json(cached, {
-        headers: CACHE_HEADERS,
+        headers: NO_CACHE_HEADERS,
       });
     }
 
@@ -299,7 +299,7 @@ export async function GET(request: Request) {
     refreshSnapshot(baseUrl, region, queue, normRiotId).catch(() => {});
 
     return NextResponse.json(cached, {
-      headers: CACHE_HEADERS,
+      headers: NO_CACHE_HEADERS,
     });
   }
 
@@ -330,5 +330,8 @@ export async function GET(request: Request) {
     { onConflict: "region,queue,riot_id" }
   );
 
-  return NextResponse.json(bundle, { status: 200, headers: CACHE_HEADERS });
+  return NextResponse.json(bundle, {
+    status: 200,
+    headers: NO_CACHE_HEADERS,
+  });
 }
