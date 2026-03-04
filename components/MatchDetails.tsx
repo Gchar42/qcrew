@@ -96,6 +96,51 @@ export function MatchDetails({
   const winAgg = teamAggregates(winningTeam);
   const loseAgg = teamAggregates(losingTeam);
 
+  const winDmg = winAgg.damage;
+  const loseDmg = loseAgg.damage;
+  const winGold = winAgg.gold;
+  const loseGold = loseAgg.gold;
+  const winImpactAvg =
+    winningTeam.length > 0
+      ? winningTeam.reduce(
+          (s, p) => s + (computeImpactScore(match, p.puuid)?.score ?? 0),
+          0
+        ) / winningTeam.length
+      : 0;
+  const loseImpactAvg =
+    losingTeam.length > 0
+      ? losingTeam.reduce(
+          (s, p) => s + (computeImpactScore(match, p.puuid)?.score ?? 0),
+          0
+        ) / losingTeam.length
+      : 0;
+
+  const totalDmg = winDmg + loseDmg;
+  const winDmgPct = totalDmg ? winDmg / totalDmg : 0.5;
+  const loseDmgPct = totalDmg ? loseDmg / totalDmg : 0.5;
+  const totalGold = winGold + loseGold;
+  const winGoldPct = totalGold ? winGold / totalGold : 0.5;
+  const loseGoldPct = totalGold ? loseGold / totalGold : 0.5;
+  const totalImpact = winImpactAvg + loseImpactAvg;
+  const winImpactPct = totalImpact ? winImpactAvg / totalImpact : 0.5;
+  const loseImpactPct = totalImpact ? loseImpactAvg / totalImpact : 0.5;
+
+  const damageEdge = winDmg - loseDmg;
+  const goldEdge = winGold - loseGold;
+  const impactEdge = winImpactAvg - loseImpactAvg;
+  const damageEdgeText =
+    damageEdge >= 0
+      ? `Damage edge: TEAM 2 +${formatShortNum(damageEdge)}`
+      : `Damage edge: TEAM 1 +${formatShortNum(Math.abs(damageEdge))}`;
+  const goldEdgeText =
+    goldEdge >= 0
+      ? `Gold edge: TEAM 2 +${formatShortNum(goldEdge)}`
+      : `Gold edge: TEAM 1 +${formatShortNum(Math.abs(goldEdge))}`;
+  const impactEdgeText =
+    impactEdge >= 0
+      ? `Impact edge: TEAM 2 +${Math.round(impactEdge)}`
+      : `Impact edge: TEAM 1 +${Math.round(Math.abs(impactEdge))}`;
+
   const maxDamage = Math.max(
     0,
     ...parts.map(
@@ -330,6 +375,46 @@ width={18}
         maxDamage,
         maxImpact
       )}
+      <div className="qcrew-summary">
+        <div className="qcrew-summary-adv">
+          <span>{damageEdgeText}</span>
+          <span>{goldEdgeText}</span>
+          <span>{impactEdgeText}</span>
+        </div>
+        <div className="qcrew-summary-row">
+          <div className="qcrew-summary-label">Damage</div>
+          <div className="qcrew-summary-bar">
+            <div className="left" style={{ width: `${winDmgPct * 100}%` }} />
+            <div className="right" style={{ width: `${loseDmgPct * 100}%` }} />
+          </div>
+          <div className="qcrew-summary-values">
+            <span className="leftVal">{formatShortNum(winDmg)}</span>
+            <span className="rightVal">{formatShortNum(loseDmg)}</span>
+          </div>
+        </div>
+        <div className="qcrew-summary-row">
+          <div className="qcrew-summary-label">Gold</div>
+          <div className="qcrew-summary-bar">
+            <div className="left" style={{ width: `${winGoldPct * 100}%` }} />
+            <div className="right" style={{ width: `${loseGoldPct * 100}%` }} />
+          </div>
+          <div className="qcrew-summary-values">
+            <span className="leftVal">{formatShortNum(winGold)}</span>
+            <span className="rightVal">{formatShortNum(loseGold)}</span>
+          </div>
+        </div>
+        <div className="qcrew-summary-row">
+          <div className="qcrew-summary-label">Avg Impact</div>
+          <div className="qcrew-summary-bar">
+            <div className="left" style={{ width: `${winImpactPct * 100}%` }} />
+            <div className="right" style={{ width: `${loseImpactPct * 100}%` }} />
+          </div>
+          <div className="qcrew-summary-values">
+            <span className="leftVal">{Math.round(winImpactAvg)}</span>
+            <span className="rightVal">{Math.round(loseImpactAvg)}</span>
+          </div>
+        </div>
+      </div>
       {renderTeamSection(
         losingTeam,
         "lose",
