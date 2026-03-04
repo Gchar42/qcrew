@@ -876,7 +876,7 @@
 /* (temp overrides removed; using inline-style verification instead) */
 
 .profile-page .profile-outcome-pill {
-  font-family: "Space Mono", monospace;
+  font-family: "Segoe UI", sans-serif;
   font-size: 13px;
   font-weight: 700;
   width: 32px;
@@ -1179,7 +1179,7 @@
 }
 
 .profile-page .profile-match-team-impact-purple {
-  color: #6b21a8;
+  color: rgba(171, 115, 217, 1);
   font-weight: 600;
 }
 
@@ -1518,7 +1518,7 @@
 }
 
 .profile-page .md-table .c-items {
-  width: 240px;
+  width: auto;
   vertical-align: middle;
   padding-right: 8px;
 }
@@ -1638,9 +1638,10 @@
 
 .profile-page .md-itemsWrap {
   display: grid;
-  grid-template-columns: auto 28px;
-  column-gap: 4px;
+  grid-template-columns: max-content max-content;
+  column-gap: 6px;
   align-items: center;
+  justify-content: start;
 }
 
 .profile-page .md-itemGrid {
@@ -1648,6 +1649,7 @@
   grid-template-columns: repeat(3, 32px);
   grid-template-rows: repeat(2, 32px);
   gap: 5px;
+  width: max-content;
 }
 
 .profile-page .md-trinket {
