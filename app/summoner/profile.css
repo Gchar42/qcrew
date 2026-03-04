@@ -1520,6 +1520,7 @@
 .profile-page .md-table .c-items {
   width: 240px;
   vertical-align: middle;
+  padding-right: 8px;
 }
 
 .profile-page .md-table .c-stats {
@@ -1637,8 +1638,8 @@
 
 .profile-page .md-itemsWrap {
   display: grid;
-  grid-template-columns: auto 34px;
-  column-gap: 10px;
+  grid-template-columns: auto 28px;
+  column-gap: 4px;
   align-items: center;
 }
 
@@ -1646,14 +1647,13 @@
   display: grid;
   grid-template-columns: repeat(3, 32px);
   grid-template-rows: repeat(2, 32px);
-  gap: 6px;
+  gap: 5px;
 }
 
 .profile-page .md-trinket {
   display: flex;
-  justify-content: center;
   align-items: center;
-  height: 100%;
+  justify-content: flex-start;
 }
 
 .profile-page .md-item-icon.item-icon {
@@ -1665,8 +1665,8 @@
 }
 
 .profile-page .md-item-icon.trinket-icon {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 6px;
   opacity: 0.95;
 }
