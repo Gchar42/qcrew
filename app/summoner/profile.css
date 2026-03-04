@@ -1584,8 +1584,8 @@
 
 .profile-page .md-champ-icon.champ-icon,
 .profile-page .md-champ-placeholder {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
   border: 1px solid var(--border);
   object-fit: cover;
@@ -1613,8 +1613,8 @@
 
 .profile-page .md-spell-icon.spell-icon,
 .profile-page .md-rune-icon.rune-icon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 4px;
   border: 1px solid var(--border);
   object-fit: contain;
@@ -1638,14 +1638,14 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   max-width: 240px;
 }
 
 .profile-page .md-item-icon.item-icon,
 .profile-page .md-item-slot {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: 6px;
   border: 1px solid var(--border);
   object-fit: contain;
