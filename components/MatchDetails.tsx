@@ -96,11 +96,26 @@ export function MatchDetails({
   const winAgg = teamAggregates(winningTeam);
   const loseAgg = teamAggregates(losingTeam);
 
+  const maxDamage = Math.max(
+    0,
+    ...parts.map(
+      (p) =>
+        (p as Participant & { totalDamageDealtToChampions?: number })
+          .totalDamageDealtToChampions ?? 0
+    )
+  );
+  const maxImpact = Math.max(
+    0,
+    ...parts.map((p) => computeImpactScore(match, p.puuid)?.score ?? 0)
+  );
+
   const renderTeamSection = (
     team: Participant[],
     teamKey: "win" | "lose",
     teamLabel: string,
-    agg: { kills: number; gold: number }
+    agg: { kills: number; gold: number },
+    maxDmg: number,
+    maxImp: number
   ) => (
     <div key={teamKey} className="md-team">
       <div className={`md-team-header md-team-header-${teamKey}`}>
@@ -235,8 +250,8 @@ export function MatchDetails({
                             key={`${p.puuid}-item-${i}`}
                             src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
                             alt=""
-                            width={20}
-                            height={20}
+                            width={22}
+                            height={22}
                             className="md-item-icon"
                           />
                         ) : (
@@ -253,11 +268,20 @@ export function MatchDetails({
                     <div className="md-stats">
                       <div className="md-stat">
                         <span className="md-stat-label">Impact</span>
-                        <span className="md-stat-val">{Math.round(impactScore)}</span>
+                        <div className="md-stat-with-bar">
+                          <span className="md-stat-val">{Math.round(impactScore)}</span>
+                          <div className="md-bar impact">
+                            <span
+                              style={{
+                                width: `${maxImp ? (impactScore / maxImp) * 100 : 0}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
                       </div>
                       <div className="md-stat">
                         <span className="md-stat-label">KDA</span>
-                        <span className="md-stat-val">{`${k}/${d}/${a}`}</span>
+                        <span className="md-stat-val kda">{`${k}/${d}/${a}`}</span>
                       </div>
                       <div className="md-stat">
                         <span className="md-stat-label">CS</span>
@@ -265,15 +289,24 @@ export function MatchDetails({
                       </div>
                       <div className="md-stat">
                         <span className="md-stat-label">VS</span>
-                        <span className="md-stat-val">{vision}</span>
+                        <span className="md-stat-val vision">{vision}</span>
                       </div>
                       <div className="md-stat">
                         <span className="md-stat-label">Dmg</span>
-                        <span className="md-stat-val">{formatShortNum(damage)}</span>
+                        <div className="md-stat-with-bar">
+                          <span className="md-stat-val damage">{formatShortNum(damage)}</span>
+                          <div className="md-bar damage">
+                            <span
+                              style={{
+                                width: `${maxDmg ? (damage / maxDmg) * 100 : 0}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
                       </div>
                       <div className="md-stat">
                         <span className="md-stat-label">Gold</span>
-                        <span className="md-stat-val">{formatShortNum(gold)}</span>
+                        <span className="md-stat-val gold">{formatShortNum(gold)}</span>
                       </div>
                     </div>
                   </td>
@@ -297,13 +330,17 @@ export function MatchDetails({
         winningTeam,
         "win",
         winningTeam === team100 ? "TEAM 1 (Victory)" : "TEAM 2 (Victory)",
-        winAgg
+        winAgg,
+        maxDamage,
+        maxImpact
       )}
       {renderTeamSection(
         losingTeam,
         "lose",
         losingTeam === team100 ? "TEAM 1 (Defeat)" : "TEAM 2 (Defeat)",
-        loseAgg
+        loseAgg,
+        maxDamage,
+        maxImpact
       )}
     </div>
   );

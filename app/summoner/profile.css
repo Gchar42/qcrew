@@ -1425,7 +1425,7 @@
 
 .profile-page .md-table th,
 .profile-page .md-table td {
-  padding: 10px 10px;
+  padding: 10px 12px;
   vertical-align: middle;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
@@ -1461,29 +1461,81 @@
   border-left: 4px solid rgba(0, 120, 255, 0.8);
 }
 
-/* Stats cell: compact 2-line grid (Impact KDA CS / VS Dmg Gold) */
+/* Stats cell: consistent 3x2 grid */
 .profile-page .md-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px 10px;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 6px 18px;
   font-size: 12px;
-  white-space: nowrap;
 }
 
 .profile-page .md-stat {
   display: flex;
   gap: 6px;
-  align-items: baseline;
+  align-items: center;
+  min-width: 0;
+}
+
+.profile-page .md-stat-with-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
 }
 
 .profile-page .md-stat-label {
   opacity: 0.65;
   font-size: 10px;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
 .profile-page .md-stat-val {
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.profile-page .md-stat-val.kda {
+  color: rgba(140, 240, 190, 0.95);
+}
+
+.profile-page .md-stat-val.vision {
+  color: rgba(120, 210, 255, 0.95);
+}
+
+.profile-page .md-stat-val.damage {
+  color: rgba(255, 170, 110, 0.95);
+}
+
+.profile-page .md-stat-val.gold {
+  color: rgba(255, 220, 120, 0.95);
+}
+
+/* Micro bars for Impact and Damage (QCrew signature) */
+.profile-page .md-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  margin-top: 4px;
+  width: 100%;
+  min-width: 40px;
+}
+
+.profile-page .md-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.profile-page .md-bar.damage > span {
+  background: rgba(255, 170, 110, 0.85);
+}
+
+.profile-page .md-bar.impact > span {
+  background: rgba(180, 140, 255, 0.85);
 }
 
 /* Player cell content (champ + spells/runes + name) inside first td only */
@@ -1550,13 +1602,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  max-width: 220px;
+  max-width: 240px;
 }
 
 .profile-page .md-item-icon,
 .profile-page .md-item-slot {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 6px;
   border: 1px solid var(--border);
   object-fit: contain;
