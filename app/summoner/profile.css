@@ -1356,12 +1356,19 @@
   gap: 0;
 }
 
+/* No overflow on panel so no second vertical scrollbar; tables scroll horizontally in inner wrap */
 .profile-page .match-details-panel {
   border-top: 1px solid var(--border);
   padding: 16px 20px;
   background: var(--surface3);
   border-radius: 0 0 10px 10px;
+  overflow: visible;
+}
+
+.profile-page .match-details-tables-wrap {
   overflow-x: auto;
+  overflow-y: visible;
+  margin-top: 12px;
 }
 
 .profile-page .match-details-header-line {
@@ -1411,10 +1418,12 @@
 .profile-page .match-acc-body {
   padding: 8px 10px 10px 10px;
   background: var(--surface2);
+  overflow: visible;
 }
 
 /* Match details table: single scrollable unit, no split panes */
 .profile-page .md-table {
+  display: table;
   table-layout: fixed;
   width: 1100px; /* 320+260+70+95+70+80+110+95 so columns stay aligned */
   border-collapse: collapse;

@@ -259,18 +259,20 @@ export function MatchDetails({
           {durationStr} · {queueName}
         </span>
       </div>
-      {renderTeamSection(
-        winningTeam,
-        "win",
-        winningTeam === team100 ? "TEAM 1 (Victory)" : "TEAM 2 (Victory)",
-        winAgg
-      )}
-      {renderTeamSection(
-        losingTeam,
-        "lose",
-        losingTeam === team100 ? "TEAM 1 (Defeat)" : "TEAM 2 (Defeat)",
-        loseAgg
-      )}
+      <div className="match-details-tables-wrap">
+        {renderTeamSection(
+          winningTeam,
+          "win",
+          winningTeam === team100 ? "TEAM 1 (Victory)" : "TEAM 2 (Victory)",
+          winAgg
+        )}
+        {renderTeamSection(
+          losingTeam,
+          "lose",
+          losingTeam === team100 ? "TEAM 1 (Defeat)" : "TEAM 2 (Defeat)",
+          loseAgg
+        )}
+      </div>
     </div>
   );
 }
