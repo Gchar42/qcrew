@@ -279,22 +279,24 @@ width={18}
                   </td>
 
                   <td className="c-items">
-                    <div className="md-items">
-                      {[p.item0, p.item1, p.item2, p.item3, p.item4, p.item5].map(
-                        (itemId, i) =>
-                          isValidItemId(itemId) ? (
-                            <img
-                              key={`${p.puuid}-item-${i}`}
-                              src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
-                              alt=""
-                              width={32}
-                              height={32}
-                              className="md-item-icon item-icon"
-                            />
-                          ) : null
-                      )}
+                    <div className="md-itemsWrap">
+                      <div className="md-itemGrid">
+                        {[p.item0, p.item1, p.item2, p.item3, p.item4, p.item5].map(
+                          (itemId, i) =>
+                            isValidItemId(itemId) ? (
+                              <img
+                                key={`${p.puuid}-item-${i}`}
+                                src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
+                                alt=""
+                                width={32}
+                                height={32}
+                                className="md-item-icon item-icon"
+                              />
+                            ) : null
+                        )}
+                      </div>
                       {isValidItemId(p.item6) ? (
-                        <div className="trinket-row">
+                        <div className="md-trinket">
                           <img
                             src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${p.item6}.png`}
                             alt=""
