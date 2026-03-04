@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { getChampionSquareUrl } from "@/lib/riotAssets";
-import { aggregateChampRows, type ChampRow } from "@/lib/aggregateChampRows";
+import type { ChampionStatRow } from "@/app/api/champion_stats/route";
 
 type QueueKey = "solo" | "flex";
 
@@ -13,16 +13,37 @@ function fmt1(n: number) {
 export default function ChampionStatsCard(props: {
   region?: string;
   puuid: string;
-  matches: unknown[];
   ddragonVersion?: string | null;
 }) {
-  const { puuid, matches, ddragonVersion } = props;
+  const { puuid, ddragonVersion } = props;
   const [queue, setQueue] = React.useState<QueueKey>("solo");
+  const [rows, setRows] = React.useState<ChampionStatRow[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-  const rows = React.useMemo(() => {
-    if (!Array.isArray(matches) || !puuid) return [];
-    return aggregateChampRows(matches, puuid, queue);
-  }, [matches, puuid, queue]);
+  React.useEffect(() => {
+    if (!puuid) {
+      setRows([]);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    const url = `/api/champion_stats?puuid=${encodeURIComponent(puuid)}&queue=${queue}`;
+    fetch(url)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && Array.isArray(data?.rows)) setRows(data.rows);
+      })
+      .catch(() => {
+        if (!cancelled) setRows([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [puuid, queue]);
 
   return (
     <div className="profile-rank-card champion-stats-card">
@@ -44,7 +65,9 @@ export default function ChampionStatsCard(props: {
             Ranked Flex
           </button>
         </div>
-        {rows.length === 0 ? (
+        {loading ? (
+          <span className="profile-ranked-loading">Loading…</span>
+        ) : rows.length === 0 ? (
           <span className="left_card_muted">No ranked matches found</span>
         ) : (
           <div className="champ_list">

@@ -28,6 +28,7 @@ import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
 import { numberToRankLabel, rankToNumber } from "@/lib/rankMapping";
 import ChampionStatsCard from "@/components/profile/ChampionStatsCard";
+import type { MatchRow } from "@/lib/matchesDb";
 import type { AccountDto, LeagueEntryDto, SummonerDto, MatchDto } from "@/types/riot";
 
 /** Badge name -> profile CSS class for chip styling */
@@ -316,18 +317,11 @@ function roleLabel(pos: string | undefined): string {
   return pos;
 }
 
-/** Most frequent teamPosition in matches for the given puuid */
-function primaryRole(matches: MatchDto[], puuid: string): string {
-  const counts: Record<string, number> = {};
-  matches.forEach((m) => {
-    const p = m.info?.participants?.find((x) => x.puuid === puuid);
-    const pos = p?.teamPosition ?? "";
-    if (pos) counts[pos] = (counts[pos] ?? 0) + 1;
-  });
-  const entries = Object.entries(counts);
-  if (entries.length === 0) return "";
-  entries.sort((a, b) => b[1] - a[1]);
-  return roleLabel(entries[0][0]);
+/** Queue label from matches table queue_id (420 = Solo, 440 = Flex) */
+function queueLabelFromQueueId(queueId: number): string {
+  if (queueId === 420) return "Ranked Solo";
+  if (queueId === 440) return "Ranked Flex";
+  return `Queue ${queueId}`;
 }
 
 function profileBundleFetcher([, riotId, region, queue]: [string, string, string, string]) {
@@ -469,39 +463,16 @@ export default function SummonerProfileBeige({
     );
   }
 
-  const participant = (m: MatchDto) =>
-    m.info?.participants?.find((p) => p.puuid === account.puuid);
-  const wins = matches.filter((m) => participant(m)?.win).length;
+  const wins = matches.filter((m) => (m as MatchRow).win).length;
   const total = matches.length;
   const winRate = total ? Math.round((wins / total) * 100) : 0;
 
   const matchCount = bundle?.computed.matchCount ?? matches.length;
-  const avgKdaDisplay = bundle?.computed.avgKda ?? (() => {
-    const n = matches.length || 1;
-    let k = 0, d = 0, a = 0;
-    matches.forEach((m) => {
-      const p = participant(m);
-      if (p) { k += p.kills ?? 0; d += p.deaths ?? 0; a += p.assists ?? 0; }
-    });
-    return `${Math.round((k / n) * 10) / 10}/${Math.round((d / n) * 10) / 10}/${Math.round((a / n) * 10) / 10}`;
-  })();
-  const avgDurationMin = bundle?.computed.avgDuration ?? (() => {
-    const n = matches.length || 1;
-    const totalSec = matches.reduce((s, m) => s + (m.info?.gameDuration ?? 0), 0);
-    return totalSec / 60 / n;
-  })();
-  const avgCsPerMin = bundle?.computed.csPerMin ?? (() => {
-    const n = matches.length || 1;
-    const totalSec = matches.reduce((s, m) => s + (m.info?.gameDuration ?? 0), 0);
-    let totalCs = 0;
-    matches.forEach((m) => {
-      const p = participant(m);
-      if (p) totalCs += (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
-    });
-    return totalSec > 0 ? totalCs / (totalSec / 60) : 0;
-  })();
+  const avgKdaDisplay = bundle?.computed.avgKda ?? "0/0/0";
+  const avgDurationMin = bundle?.computed.avgDuration ?? 0;
+  const avgCsPerMin = bundle?.computed.csPerMin ?? 0;
 
-  const role = primaryRole(matches, account.puuid);
+  const role = "";
   const level = summoner?.summonerLevel ?? 0;
 
   const leagueEntry = leagueEntries?.find((e) => e.queueType === targetQueueType) ?? null;
@@ -596,7 +567,6 @@ export default function SummonerProfileBeige({
           <ChampionStatsCard
             region={regionVal}
             puuid={account.puuid}
-            matches={matches}
             ddragonVersion={ddragonVersion}
           />
         </aside>
@@ -658,51 +628,20 @@ export default function SummonerProfileBeige({
           </div>
         </div>
         <div className="profile-matches-list">
-        {matches.map((m) => {
-          const p = participant(m);
-          if (!p) return null;
-          const win = p.win;
-          const duration = formatDuration(m.info?.gameDuration ?? 0);
-          const minutes = Math.max(1, (m.info?.gameDuration ?? 0) / 60);
-          const cs = (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
-          const csPerMin = cs / minutes;
-          const { blue, red } = getTeams(m);
-          const queue = queueLabel(m.info?.queueId);
-          const impact = account ? computeImpactScore(m, account.puuid) : null;
-          const badges = getMatchBadges(m);
-          const badgeInfo = account ? badges.get(account.puuid) : null;
-          const relative = relativeTime(m.info?.gameEndTimestamp);
-          const items = [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6].filter(
-            (id): id is number => id != null && id > 0
-          );
-
-          const portraitBaseUrl = getChampionSplashUrl(p.championName);
-          const champSquareUrl = getChampionSquareUrl(
-            p.championName,
-            ddragonVersion
-          );
-
-          const blueFive = blue.slice(0, 5);
-          const redFive = red.slice(0, 5);
-          const blueRows = [...blueFive, ...Array(5 - blueFive.length).fill(null)];
-          const redRows = [...redFive, ...Array(5 - redFive.length).fill(null)];
-          const { impactByPuuid, bestWinningPuuid, bestLosingPuuid } = getMatchImpactHighlights(m);
-          const matchId = m.metadata?.matchId ?? "";
+        {(matches as MatchRow[]).map((m) => {
+          const win = m.win;
+          const duration = formatDuration(m.game_duration ?? 0);
+          const minutes = Math.max(1, (m.game_duration ?? 0) / 60);
+          const csPerMin = minutes > 0 ? m.cs / minutes : 0;
+          const queue = queueLabelFromQueueId(m.queue_id);
+          const champName = m.champion_name ?? `Champion ${m.champion_id}`;
+          const champSquareUrl = getChampionSquareUrl(champName, ddragonVersion);
+          const portraitBaseUrl = getChampionSplashUrl(champName);
+          const matchId = m.match_id;
 
           return (
             <div key={matchId} className="profile-match-card-wrap">
-              <div
-                role="button"
-                tabIndex={0}
-                className={`profile-match-row ${win ? "win" : "loss"}${badgeInfo?.badge === "Main Character" ? " profile-match-row-main-character" : ""}`}
-                onClick={() => setExpandedMatchId((prev) => (prev === matchId ? null : matchId))}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setExpandedMatchId((prev) => (prev === matchId ? null : matchId));
-                  }
-                }}
-              >
+              <div className={`profile-match-row ${win ? "win" : "loss"}`}>
               <div className="profile-match-left-zone">
                 <div className="profile-match-left-visual">
                   <div className="profile-outcome-col">
@@ -712,9 +651,7 @@ export default function SummonerProfileBeige({
                   </div>
                   <span className={`profile-verdict-line ${win ? "win" : "loss"}`} />
                   <div className="profile-match-portrait-spells-wrap">
-                    <div
-                      className={`profile-match-portrait-wrap${badgeInfo?.badge === "Main Character" ? " profile-match-portrait-wrap-main-character" : ""}`}
-                    >
+                    <div className="profile-match-portrait-wrap">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={portraitBaseUrl}
@@ -732,319 +669,30 @@ export default function SummonerProfileBeige({
                         }}
                       />
                     </div>
-                    <div className="profile-match-spells-runes">
-                      <div className="profile-match-spells-col">
-                        {[p.summoner1Id, p.summoner2Id].map((id, i) => {
-                          const src = getSummonerSpellIconUrl(id, ddragonVersion);
-                          if (!src) return null;
-                          return (
-                            <span key={i} className="profile-match-spell">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={src}
-                                alt=""
-                                width={24}
-                                height={24}
-                                style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
-                              />
-                            </span>
-                          );
-                        })}
-                      </div>
-                      <div className="profile-match-runes-col">
-                        {(() => {
-                          const keystoneId = p.perks?.styles?.[0]?.selections?.[0]?.perk;
-                          const secondaryStyleId = p.perks?.styles?.[1]?.style;
-                          const keystoneSrc = getPerkIconUrl(keystoneId, perksById);
-                          const secondarySrc = getStyleIconUrlCd(secondaryStyleId, stylesById);
-                          const nodes: React.ReactNode[] = [];
-                          if (keystoneSrc) {
-                            nodes.push(
-                              <span key="keystone" className="profile-match-rune">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={keystoneSrc}
-                                  alt=""
-                                  width={24}
-                                  height={24}
-                                  style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
-                                />
-                              </span>
-                            );
-                          }
-                          if (secondarySrc) {
-                            nodes.push(
-                              <span key="secondary" className="profile-match-rune">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={secondarySrc}
-                                  alt=""
-                                  width={24}
-                                  height={24}
-                                  style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
-                                />
-                              </span>
-                            );
-                          }
-                          return nodes;
-                        })()}
-                      </div>
-                    </div>
                   </div>
                 </div>
                 <div className="profile-match-left-meta">
                   <div className="profile-match-line1">
                     <span className={win ? "victory-text" : "defeat-text"}>{win ? "Victory" : "Defeat"}</span>
                     {" · "}{queue} · {duration}
-                    {relative && ` · ${relative}`}
                   </div>
                   <div className="profile-match-line2">
                     <span className="profile-kda-inline">
-                      <span className="k">{p.kills}</span> /{" "}
-                      <span className="d">{p.deaths}</span> /{" "}
-                      <span className="a">{p.assists}</span>
+                      <span className="k">{m.kills}</span> /{" "}
+                      <span className="d">{m.deaths}</span> /{" "}
+                      <span className="a">{m.assists}</span>
                     </span>
                     {" · "}
-                    <span>{cs} CS ({csPerMin.toFixed(1)}/m)</span>
-                  </div>
-                  <div className="profile-chips-row badgeArea socialBadgeWrap">
-                    {impact != null && (
-                      <span className="profile-impact-chip">
-                        <span className="profile-impact-chip-label">Impact</span>
-                        <span className="profile-impact-chip-score">{impact.score}</span>
-                      </span>
-                    )}
-                    {badgeInfo && (
-                      badgeInfo.badge === "Main Character" ? (
-                        <span className="profile-badge-chip-mc-wrap" title={badgeInfo.reason}>
-                          <span className="profile-badge-chip profile-badge-chip-main-character socialBadge">
-                            <span className="profile-badge-chip-mc-inner">
-                              <span className="profile-badge-chip-crown" aria-hidden>
-                                <svg width="14" height="16" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M12 2l2.5 6h4L14 11l1 7-3-4-3 4 1-7-4.5-3h4L12 2z" fill="#b8860b" />
-                                </svg>
-                              </span>
-                              <span className="profile-badge-chip-text profile-badge-chip-text-main-character">
-                                MAIN CHARACTER
-                              </span>
-                            </span>
-                          </span>
-                        </span>
-                      ) : (
-                        <span
-                          className={`profile-badge-chip socialBadge ${getBadgeCategoryClass(badgeInfo.badge)}`}
-                          title={badgeInfo.reason}
-                        >
-                          <span className="profile-badge-chip-text socialBadgeText">
-                            {badgeInfo.badge}
-                          </span>
-                        </span>
-                      )
-                    )}
-                  </div>
-                  <div className="profile-match-items-row">
-                    {([p.item0, p.item1, p.item2, p.item3, p.item4, p.item5] as (number | undefined)[]).map((itemId, idx) => {
-                      const timesBySlot = m.itemPurchaseTimesBySlot;
-                      const timeStr = timesBySlot?.[idx] ?? null;
-                      const captionText = isValidItemId(itemId) && timeStr ? timeStr : null;
-                      const itemVersion = ddragonVersion ?? DEFAULT_DDRAGON_VERSION;
-                      return (
-                        <div key={`item-${idx}`} className="profile-match-item-tile">
-                          <span className="profile-match-item">
-                            {isValidItemId(itemId) ? (
-                              /* eslint-disable-next-line @next/next/no-img-element */
-                              <img
-                                src={`https://ddragon.leagueoflegends.com/cdn/${itemVersion}/img/item/${itemId}.png`}
-                                alt={`Item ${itemId}`}
-                                loading="lazy"
-                                decoding="async"
-                                width={22}
-                                height={22}
-                                onError={(e) => {
-                                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                                }}
-                              />
-                            ) : (
-                              <div className="item-slot-empty" />
-                            )}
-                          </span>
-                          <span className="profile-match-item-caption" style={{ fontSize: 12 }}>
-                            {captionText}
-                          </span>
-                        </div>
-                      );
-                    })}
-                    {isValidItemId(p.item6) ? (
-                      <span className="profile-match-item profile-match-item-trinket">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={`https://ddragon.leagueoflegends.com/cdn/${ddragonVersion ?? DEFAULT_DDRAGON_VERSION}/img/item/${p.item6}.png`}
-                          alt={`Item ${p.item6}`}
-                          loading="lazy"
-                          decoding="async"
-                          width={22}
-                          height={22}
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).style.display = "none";
-                          }}
-                        />
-                      </span>
-                    ) : null}
+                    <span>{m.cs} CS ({csPerMin.toFixed(1)}/m)</span>
                   </div>
                 </div>
               </div>
-              <div className="profile-match-teams-block">
+              <div className="profile-match-teams-block" style={{ display: "none" }}>
                 <div className="profile-match-team-col" aria-label="Blue team">
-                  {blueRows.map((part, i) =>
-                    part ? (
-                      <div
-                        key={part.puuid}
-                        className={`profile-match-team-row ${part.puuid === account?.puuid ? "profile-match-team-row-highlight" : ""}`}
-                      >
-                        <span
-                          className={`profile-match-team-impact ${
-                            part.puuid === bestWinningPuuid
-                              ? "profile-match-team-impact-gold"
-                              : part.puuid === bestLosingPuuid
-                                ? "profile-match-team-impact-purple"
-                                : ""
-                          }`}
-                        >
-                          {impactByPuuid.get(part.puuid) ?? 0}
-                        </span>
-                        <ChampIcon
-                          championName={part.championName}
-                          summonerName={part.summonerName}
-                          ddragonVersion={ddragonVersion}
-                          highlight={part.puuid === account?.puuid}
-                        />
-                        <span className="profile-match-team-name-line">
-                          <Link
-                            className="profile-match-team-name summoner-name player-link"
-                            href={buildProfileHref({
-                              riotId: part.riotIdGameName && part.riotIdTagline
-                                ? `${part.riotIdGameName}#${part.riotIdTagline}`
-                                : `${part.summonerName ?? ""}#${part.riotIdTagline ?? "NA1"}`,
-                              region: regionVal,
-                              queue: queue === "flex" ? "flex" : "solo",
-                            })}
-                            prefetch={false}
-                            onClick={(e) => e.stopPropagation()}
-                            onMouseEnter={() => {
-                              const riotId = part.riotIdGameName && part.riotIdTagline
-                                ? `${part.riotIdGameName}#${part.riotIdTagline}`
-                                : `${part.summonerName ?? ""}#${part.riotIdTagline ?? "NA1"}`;
-                              if (!riotId.includes("#")) return;
-                              const keySolo: [string, string, string, string] = ["profileBundle", riotId, regionVal, "solo"];
-                              const keyFlex: [string, string, string, string] = ["profileBundle", riotId, regionVal, "flex"];
-                              globalMutate(keySolo, () => profileBundleFetcher(keySolo));
-                              globalMutate(keyFlex, () => profileBundleFetcher(keyFlex));
-                            }}
-                            title={part.riotIdGameName ?? part.summonerName}
-                          >
-                            {part.riotIdGameName ?? part.summonerName}
-                            {(() => {
-                              const badge = formatRankBadge(leagueBySummonerId[part.summonerId ?? ""], activeQueueType);
-                              return badge ? <span className="rank-badge">{badge}</span> : null;
-                            })()}
-                          </Link>
-                        </span>
-                        <span className="profile-match-team-extra" aria-hidden />
-                      </div>
-                    ) : (
-                      <div key={`blue-placeholder-${i}`} className="profile-match-team-row profile-match-team-row-placeholder" aria-hidden>
-                        <span className="profile-match-team-impact" aria-hidden />
-                        <span className="profile-match-team-champ profile-match-team-champ-fallback">
-                          <span className="profile-match-team-champ-placeholder" />
-                        </span>
-                        <span className="profile-match-team-name" />
-                        <span className="profile-match-team-extra" aria-hidden />
-                      </div>
-                    )
-                  )}
                 </div>
-                <div className="profile-match-team-col" aria-label="Red team">
-                  {redRows.map((part, i) =>
-                    part ? (
-                      <div
-                        key={part.puuid}
-                        className={`profile-match-team-row ${part.puuid === account?.puuid ? "profile-match-team-row-highlight" : ""}`}
-                      >
-                        <span
-                          className={`profile-match-team-impact ${
-                            part.puuid === bestWinningPuuid
-                              ? "profile-match-team-impact-gold"
-                              : part.puuid === bestLosingPuuid
-                                ? "profile-match-team-impact-purple"
-                                : ""
-                          }`}
-                        >
-                          {impactByPuuid.get(part.puuid) ?? 0}
-                        </span>
-                        <ChampIcon
-                          championName={part.championName}
-                          summonerName={part.summonerName}
-                          ddragonVersion={ddragonVersion}
-                          highlight={part.puuid === account?.puuid}
-                        />
-                        <span className="profile-match-team-name-line">
-                          <Link
-                            className="profile-match-team-name summoner-name player-link"
-                            href={buildProfileHref({
-                              riotId: part.riotIdGameName && part.riotIdTagline
-                                ? `${part.riotIdGameName}#${part.riotIdTagline}`
-                                : `${part.summonerName ?? ""}#${part.riotIdTagline ?? "NA1"}`,
-                              region: regionVal,
-                              queue: queue === "flex" ? "flex" : "solo",
-                            })}
-                            prefetch={false}
-                            onClick={(e) => e.stopPropagation()}
-                            onMouseEnter={() => {
-                              const riotId = part.riotIdGameName && part.riotIdTagline
-                                ? `${part.riotIdGameName}#${part.riotIdTagline}`
-                                : `${part.summonerName ?? ""}#${part.riotIdTagline ?? "NA1"}`;
-                              if (!riotId.includes("#")) return;
-                              const keySolo: [string, string, string, string] = ["profileBundle", riotId, regionVal, "solo"];
-                              const keyFlex: [string, string, string, string] = ["profileBundle", riotId, regionVal, "flex"];
-                              globalMutate(keySolo, () => profileBundleFetcher(keySolo));
-                              globalMutate(keyFlex, () => profileBundleFetcher(keyFlex));
-                            }}
-                            title={part.riotIdGameName ?? part.summonerName}
-                          >
-                            {part.riotIdGameName ?? part.summonerName}
-                            {(() => {
-                              const badge = formatRankBadge(leagueBySummonerId[part.summonerId ?? ""], activeQueueType);
-                              return badge ? <span className="rank-badge">{badge}</span> : null;
-                            })()}
-                          </Link>
-                        </span>
-                        <span className="profile-match-team-extra" aria-hidden />
-                      </div>
-                    ) : (
-                      <div key={`red-placeholder-${i}`} className="profile-match-team-row profile-match-team-row-placeholder" aria-hidden>
-                        <span className="profile-match-team-impact" aria-hidden />
-                        <span className="profile-match-team-champ profile-match-team-champ-fallback">
-                          <span className="profile-match-team-champ-placeholder" />
-                        </span>
-                        <span className="profile-match-team-name" />
-                        <span className="profile-match-team-extra" aria-hidden />
-                      </div>
-                    )
-                  )}
-                </div>
+                <div className="profile-match-team-col" aria-label="Red team" />
               </div>
               </div>
-              {expandedMatchId === matchId ? (
-                <MatchDetails
-                  match={m}
-                  puuidOfSearchedPlayer={account.puuid}
-                  region={regionVal}
-                  queue={queue === "flex" ? "flex" : "solo"}
-                  ddragonVersion={ddragonVersion}
-                  perksById={perksById}
-                  stylesById={stylesById}
-                />
-              ) : null}
             </div>
           );
         })}
