@@ -1,13 +1,10 @@
 import { NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-export async function POST(req: Request) {
-  const body = await req.json();
-  const matches = body.matches || [];
-  const queue = body.queue;
+const SOLO = 420;
+const FLEX = 440;
 
-  const SOLO = 420;
-  const FLEX = 440;
-
+function aggregateChampRows(matches: unknown[], puuid: string, queue: string) {
   const agg = new Map<
     number,
     {
@@ -22,23 +19,21 @@ export async function POST(req: Request) {
   >();
 
   for (const match of matches) {
-    if (!match?.info?.participants) continue;
-
-    const info = match.info;
-
+    if (!match || typeof match !== "object") continue;
+    const info = (match as { info?: { queueId?: number; participants?: unknown[] } }).info;
+    if (!info?.participants || !Array.isArray(info.participants)) continue;
     if (queue === "solo" && info.queueId !== SOLO) continue;
     if (queue === "flex" && info.queueId !== FLEX) continue;
 
-    const me = info.participants.find((p: { puuid?: string }) => p.puuid === body.puuid);
+    const me = info.participants.find((p: unknown) => (p as { puuid?: string })?.puuid === puuid) as
+      | { championId?: number; championName?: string; win?: boolean; kills?: number; deaths?: number; assists?: number }
+      | undefined;
     if (!me) continue;
 
     const champ = Number(me.championId ?? 0);
     if (!champ) continue;
-
     const championName =
-      typeof (me as { championName?: string }).championName === "string"
-        ? (me as { championName: string }).championName
-        : `Champion ${champ}`;
+      typeof me.championName === "string" ? me.championName : `Champion ${champ}`;
 
     if (!agg.has(champ)) {
       agg.set(champ, {
@@ -51,11 +46,8 @@ export async function POST(req: Request) {
         assists: 0,
       });
     }
-
     const c = agg.get(champ)!;
-    if (!c.championName || c.championName.startsWith("Champion "))
-      c.championName = championName;
-
+    if (!c.championName || c.championName.startsWith("Champion ")) c.championName = championName;
     c.games++;
     if (me.win) c.wins++;
     c.kills += Number(me.kills ?? 0);
@@ -66,7 +58,6 @@ export async function POST(req: Request) {
   const rows = [...agg.values()].map((c) => {
     const kda = (c.kills + c.assists) / Math.max(1, c.deaths);
     const winRate = c.games ? (c.wins / c.games) * 100 : 0;
-
     return {
       championId: c.championId,
       championName: c.championName,
@@ -79,8 +70,37 @@ export async function POST(req: Request) {
       assists: c.assists / c.games,
     };
   });
-
   rows.sort((a, b) => b.games - a.games);
+  return rows;
+}
 
+/** GET: read from profile_bundle_cache (region, puuid, queue_key), aggregate from payload.matches. No Riot calls. */
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const region = searchParams.get("region") ?? "na1";
+  const puuid = searchParams.get("puuid") ?? "";
+  const queue = (searchParams.get("queue") ?? "solo") === "flex" ? "flex" : "solo";
+  if (!puuid) return NextResponse.json({ rows: [] }, { status: 200 });
+
+  const { data: row } = await supabaseAdmin
+    .from("profile_bundle_cache")
+    .select("payload")
+    .eq("region", region)
+    .eq("puuid", puuid)
+    .eq("queue_key", queue)
+    .maybeSingle();
+
+  const payload = row?.payload as { matches?: unknown[] } | null;
+  const matches = Array.isArray(payload?.matches) ? payload.matches : [];
+  const rows = aggregateChampRows(matches, puuid, queue);
+  return NextResponse.json({ rows }, { status: 200 });
+}
+
+export async function POST(req: Request) {
+  const body = await req.json();
+  const matches = body.matches || [];
+  const queue = (body.queue === "flex" ? "flex" : "solo") as string;
+  const puuid = body.puuid ?? "";
+  const rows = aggregateChampRows(matches, puuid, queue);
   return NextResponse.json({ rows });
 }
