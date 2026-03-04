@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { supabaseServer } from "@/lib/supabaseServer";
+import { getRoutingRegion } from "@/lib/riot-regions";
+import { mapLimit, queueToRiotQueueId } from "@/lib/riotCacheUtils";
 import { rankToNumber, numberToRankLabel } from "@/lib/rankMapping";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 
@@ -91,9 +94,9 @@ async function fetchBundleFromRiot(
   const startTime = Date.now();
   console.log("PROFILE FETCH START");
 
-  // Riot match-v5: Solo or Duo = 420, Flex SR = 440
-  const queueId = queue === "flex" ? 440 : 420;
   const platform = region;
+  const regionRouting = getRoutingRegion(region);
+  const riotQueueId = queueToRiotQueueId(queue);
 
   const accountRes = await fetch(
     `${baseUrl}/api/riot/account?gameName=${encodeURIComponent(parsed.gameName)}&tagLine=${encodeURIComponent(parsed.tagLine)}&region=${region}`
@@ -105,20 +108,26 @@ async function fetchBundleFromRiot(
   const account = (await accountRes.json()) as AccountDto;
   console.log("[profileBundle] puuid", account.puuid);
 
-  const [summoner, matchIdList, leagueEntries] = await Promise.all([
+  const matchIdsUrl =
+    `https://${regionRouting}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(account.puuid)}/ids` +
+    `?start=0&count=20&queue=${riotQueueId}`;
+  const matchIdsRes = await fetch(matchIdsUrl, {
+    headers: { "X-Riot-Token": process.env.RIOT_API_KEY ?? "" },
+    cache: "no-store",
+  });
+  if (!matchIdsRes.ok) {
+    const text = await matchIdsRes.text().catch(() => "");
+    throw new Error(`Match list failed: ${matchIdsRes.status} ${text.slice(0, 200)}`);
+  }
+  const matchIdList: string[] = (await matchIdsRes.json()) as string[];
+
+  const [summoner, leagueEntries] = await Promise.all([
     fetch(`${baseUrl}/api/riot/summoner?puuid=${encodeURIComponent(account.puuid)}&region=${region}`).then(
       async (r) => {
         if (!r.ok) throw new Error("Summoner lookup failed");
         return r.json() as Promise<SummonerDto>;
       }
     ),
-    fetch(
-      `${baseUrl}/api/riot/match-ids?puuid=${encodeURIComponent(account.puuid)}&region=${region}&count=20&queueId=${queueId}`
-    ).then(async (r) => {
-      if (!r.ok) throw new Error("Match list failed");
-      const data = (await r.json()) as { matchIds: string[] };
-      return (data.matchIds ?? []).slice(0, 20);
-    }),
     fetch(`${baseUrl}/api/riot/league?puuid=${encodeURIComponent(account.puuid)}&platform=${platform}`).then(
       async (r) => {
         if (!r.ok) return [] as LeagueEntryDto[];
@@ -139,23 +148,61 @@ async function fetchBundleFromRiot(
   const soloEntry = leagueEntries.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null;
   const flexEntry = leagueEntries.find((e) => e.queueType === "RANKED_FLEX_SR") ?? null;
 
-  const matches: MatchDto[] = [];
-  const concurrency = 3;
-  for (let i = 0; i < matchIdList.length; i += concurrency) {
-    const chunk = matchIdList.slice(i, i + concurrency);
-    const results = await Promise.all(
-      chunk.map((matchId) =>
-        fetch(
-          `${baseUrl}/api/riot/match?matchId=${encodeURIComponent(matchId)}&region=${region}&puuid=${encodeURIComponent(account.puuid)}&gameName=${encodeURIComponent(account.gameName)}&tagLine=${encodeURIComponent(account.tagLine)}`
-        )
-          .then((r) => (r.ok ? r.json() : null))
-          .catch(() => null)
-      )
-    );
-    results.forEach((m) => {
-      if (m) matches.push(m as MatchDto);
-    });
-  }
+  const sb = supabaseServer();
+  const nowMs = Date.now();
+  const concurrency = 4;
+
+  const matchesRaw = await mapLimit(
+    matchIdList.slice(0, 20),
+    concurrency,
+    async (matchId): Promise<MatchDto | null> => {
+      const { data: cached } = await sb
+        .from("match_snapshots")
+        .select("data, fetched_at, stale_after_sec")
+        .eq("region", region)
+        .eq("queue", queue)
+        .eq("match_id", matchId)
+        .maybeSingle();
+
+      type CachedRow = { data: unknown; fetched_at: string; stale_after_sec?: number };
+      const row = cached as CachedRow | null;
+      if (row?.data) {
+        const fetchedAtMs = new Date(row.fetched_at).getTime();
+        const staleAfterMs = (row.stale_after_sec ?? 86400) * 1000;
+        if (nowMs - fetchedAtMs < staleAfterMs) {
+          return row.data as MatchDto;
+        }
+      }
+
+      const matchUrl = `https://${regionRouting}.api.riotgames.com/lol/match/v5/matches/${encodeURIComponent(matchId)}`;
+      const matchRes = await fetch(matchUrl, {
+        headers: { "X-Riot-Token": process.env.RIOT_API_KEY ?? "" },
+        cache: "no-store",
+      });
+
+      if (!matchRes.ok) {
+        return null;
+      }
+
+      const matchDto = (await matchRes.json()) as MatchDto;
+      await sb
+        .from("match_snapshots")
+        .upsert(
+          {
+            region,
+            queue,
+            match_id: matchId,
+            data: matchDto as unknown as Record<string, unknown>,
+            fetched_at: new Date().toISOString(),
+            stale_after_sec: 86400,
+          },
+          { onConflict: "region,queue,match_id" }
+        );
+      return matchDto;
+    }
+  );
+
+  const matches = matchesRaw.filter((m): m is MatchDto => m != null);
   console.log("[profileBundle] matchesBuilt", matches.length);
 
   const summonerIds = new Set<string>();
