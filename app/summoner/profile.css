@@ -276,6 +276,115 @@
   margin-top: 4px;
 }
 
+/* Champion Stats card (same stack as rank cards) */
+.profile-page .champion-stats-card .profile-rank-card-content {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.profile-page .champion-stats-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.profile-page .champion-stats-filters .profile-queue-tab {
+  padding: 6px 12px;
+  font-size: 12px;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.profile-page .champion-stats-filters .profile-queue-tab-active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.profile-page .champ_list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-page .champ_row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-page .champ_row:last-child {
+  border-bottom: none;
+}
+
+.profile-page .champ_left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.profile-page .champ_icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.profile-page .champ_meta {
+  min-width: 0;
+}
+
+.profile-page .champ_name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-page .champ_mid {
+  margin-left: auto;
+  text-align: right;
+}
+
+.profile-page .champ_mid .kda_big {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.profile-page .champ_mid .left_card_small {
+  font-size: 11px;
+}
+
+.profile-page .champ_right {
+  text-align: right;
+  min-width: 48px;
+}
+
+.profile-page .champ_right .wr {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--win);
+}
+
+.profile-page .champ_right .left_card_small {
+  font-size: 11px;
+}
+
+.profile-page .left_card_muted {
+  color: var(--muted);
+}
+
 /* LP History placeholder */
 .profile-page .profile-lp-history {
   background: var(--surface2);

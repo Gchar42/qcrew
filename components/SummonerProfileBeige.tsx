@@ -9,6 +9,7 @@ import { buildProfileHref } from "@/lib/routes";
 import type { ProfileBundle } from "@/app/api/riot/profileBundle/route";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
 import { MatchDetails } from "@/components/MatchDetails";
+import ChampionStatsCard from "@/components/ChampionStatsCard";
 import {
   getChampionSplashUrl,
   getChampionSquareUrl,
@@ -590,6 +591,9 @@ export default function SummonerProfileBeige({
         <aside className="profile-body-left">
           {renderRankCard("Ranked Solo", soloEntry, rankLoading, rankError ?? null)}
           {renderRankCard("Ranked Flex", flexEntry, rankLoading, null)}
+          {account?.puuid && (
+            <ChampionStatsCard puuid={account.puuid} ddragonVersion={ddragonVersion} />
+          )}
         </aside>
         <div className="profile-body-right">
       <div className="recent-matches-section">
