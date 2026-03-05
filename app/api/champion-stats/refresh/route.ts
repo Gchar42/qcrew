@@ -8,9 +8,12 @@ import type { ChampionStatRow } from "../route";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const MATCH_IDS_LIMIT = 60;
-/** Max new matches to fetch and cache per refresh; match count for champion stats is capped by this until multiple refreshes run. */
-const MAX_NEW_MATCH_FETCHES = 60;
+/** Riot returns up to 100 match IDs per request; we paginate to get all in-season. */
+const MATCH_IDS_PAGE_SIZE = 100;
+/** Max total match IDs to consider per queue per season (Riot caps at ~1000; we cap to keep refresh time reasonable). */
+const MAX_MATCH_IDS_TOTAL = 500;
+/** Max new matches to fetch and cache per refresh (delay * this ≈ refresh time; ~300 * 150ms ≈ 45s). */
+const MAX_NEW_MATCH_FETCHES = 300;
 const QUEUE_SOLO = 420;
 const QUEUE_FLEX = 440;
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
@@ -54,19 +57,27 @@ export async function refreshChampionStats(
   const riotQueueId = queueToRiotId(queue);
 
   const seasonStartSec = Math.floor(SEASON_START_MS / 1000);
-  const matchIdsUrl =
+  const baseUrl =
     `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(puuid)}/ids` +
-    `?start=0&count=${MATCH_IDS_LIMIT}&queue=${riotQueueId}&start_time=${seasonStartSec}`;
+    `?queue=${riotQueueId}&start_time=${seasonStartSec}`;
 
-  const res = await fetch(matchIdsUrl, {
-    headers: { "X-Riot-Token": key },
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Match list failed: ${res.status} ${text.slice(0, 200)}`);
+  const matchIds: string[] = [];
+  for (let start = 0; start < MAX_MATCH_IDS_TOTAL; start += MATCH_IDS_PAGE_SIZE) {
+    const count = Math.min(MATCH_IDS_PAGE_SIZE, MAX_MATCH_IDS_TOTAL - start);
+    const url = `${baseUrl}&start=${start}&count=${count}`;
+    const res = await fetch(url, {
+      headers: { "X-Riot-Token": key },
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`Match list failed: ${res.status} ${text.slice(0, 200)}`);
+    }
+    const page = (await res.json()) as string[];
+    if (!Array.isArray(page) || page.length === 0) break;
+    matchIds.push(...page);
+    if (page.length < MATCH_IDS_PAGE_SIZE) break;
   }
-  const matchIds = (await res.json()) as string[];
 
   if (!Array.isArray(matchIds) || matchIds.length === 0) {
     const empty = buildEmptyAggregate(puuid, queue);
