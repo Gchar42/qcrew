@@ -36,8 +36,8 @@ export async function GET(request: Request) {
     const dataMap = data.data ?? {};
     const items: Record<string, { name: string; plaintext?: string }> = {};
     for (const [id, entry] of Object.entries(dataMap)) {
-      const name = (entry?.name ?? "").trim();
-      if (!name) continue;
+      const rawName = (entry?.name ?? "").trim();
+      const name = rawName || `Item ${id}`;
       const plaintext = entry?.plaintext?.trim() ?? (entry?.description ? stripTags(entry.description) : undefined);
       items[id] = { name, plaintext: plaintext || undefined };
     }

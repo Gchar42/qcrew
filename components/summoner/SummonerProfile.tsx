@@ -45,7 +45,9 @@ export function SummonerProfile({
         const byId: Record<number, { name: string; plaintext?: string }> = {};
         Object.entries(items).forEach(([id, entry]) => {
           const num = Number(id);
-          if (Number.isFinite(num) && entry?.name) byId[num] = { name: entry.name, plaintext: entry.plaintext };
+          if (!Number.isFinite(num) || num <= 0) return;
+          const name = (entry?.name ?? "").trim() || `Item ${id}`;
+          byId[num] = { name, plaintext: entry?.plaintext };
         });
         setItemDataById(byId);
       })

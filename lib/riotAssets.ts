@@ -10,12 +10,16 @@ export const isValidItemId = (v: unknown): v is number =>
 /** Item tooltip data map (id can be number or string from different API sources). */
 export type ItemTooltipData = Record<number, { name: string; plaintext?: string }>;
 
-/** Look up item name/plaintext for tooltips; tries both number and string key so lookups always work. */
+/** Look up item name/plaintext for tooltips; tries number and string key so lookups always work. */
 export function getItemTooltip(
   itemDataById: ItemTooltipData | undefined,
-  itemId: number
+  itemId: number | string
 ): { title: string; body?: string } {
-  const data = itemDataById?.[itemId] ?? (itemDataById as Record<string, { name: string; plaintext?: string }> | undefined)?.[String(itemId)];
+  const numId = typeof itemId === "string" ? parseInt(itemId, 10) : itemId;
+  const id = Number.isFinite(numId) ? numId : itemId;
+  const data =
+    itemDataById?.[id as number] ??
+    (itemDataById as Record<string, { name: string; plaintext?: string }> | undefined)?.[String(itemId)];
   const title = (data?.name || `Item ${itemId}`).trim() || `Item ${itemId}`;
   return { title, body: data?.plaintext };
 }
