@@ -89,7 +89,7 @@ export function MatchDetailSlideOver({
                   isValidItemId(itemId) ? (
                     <LeagueTooltip
                       key={itemId}
-                      title={itemDataById[itemId]?.name ?? `Item ${itemId}`}
+                      title={(itemDataById[itemId]?.name || `Item ${itemId}`).trim() || `Item ${itemId}`}
                       body={itemDataById[itemId]?.plaintext}
                     >
                       <img

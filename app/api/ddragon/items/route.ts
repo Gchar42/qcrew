@@ -6,7 +6,15 @@ const DDragonBase = "https://ddragon.leagueoflegends.com/cdn";
 
 type ItemEntry = { name?: string; plaintext?: string; description?: string };
 
-/** GET /api/ddragon/items?version=14.6.1 — returns item id -> { name, plaintext, description } for League-style tooltips */
+/** Strip HTML-like tags for a plain-text fallback when plaintext is missing */
+function stripTags(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** GET /api/ddragon/items?version=14.6.1 — returns item id -> { name, plaintext } for League-style tooltips */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const version = searchParams.get("version")?.trim();
@@ -26,15 +34,12 @@ export async function GET(request: Request) {
       data?: Record<string, ItemEntry>;
     };
     const dataMap = data.data ?? {};
-    const items: Record<string, { name: string; plaintext?: string; description?: string }> = {};
+    const items: Record<string, { name: string; plaintext?: string }> = {};
     for (const [id, entry] of Object.entries(dataMap)) {
-      const name = entry?.name ?? "";
+      const name = (entry?.name ?? "").trim();
       if (!name) continue;
-      items[id] = {
-        name,
-        plaintext: entry.plaintext,
-        description: entry.description,
-      };
+      const plaintext = entry?.plaintext?.trim() ?? (entry?.description ? stripTags(entry.description) : undefined);
+      items[id] = { name, plaintext: plaintext || undefined };
     }
     return Response.json({ items });
   } catch (e) {

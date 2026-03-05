@@ -18,11 +18,16 @@ type Props = {
 
 export function LeagueTooltip({ title, body, bodyHtml, children }: Props) {
   const [visible, setVisible] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
   const [position, setPosition] = React.useState({ top: 0, left: 0 });
   const [placeAbove, setPlaceAbove] = React.useState(false);
   const wrapperRef = React.useRef<HTMLSpanElement>(null);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const hideTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const updatePosition = React.useCallback(() => {
     const el = wrapperRef.current;
@@ -66,10 +71,11 @@ export function LeagueTooltip({ title, body, bodyHtml, children }: Props) {
 
   React.useEffect(() => {
     if (!visible) return;
+    updatePosition();
     const hideOnScroll = () => setVisible(false);
     window.addEventListener("scroll", hideOnScroll, true);
     return () => window.removeEventListener("scroll", hideOnScroll, true);
-  }, [visible]);
+  }, [visible, updatePosition]);
 
   React.useEffect(() => {
     return () => {
@@ -116,7 +122,7 @@ export function LeagueTooltip({ title, body, bodyHtml, children }: Props) {
       >
         {children}
       </span>
-      {typeof document !== "undefined" && tooltipContent
+      {mounted && typeof document !== "undefined" && tooltipContent
         ? createPortal(tooltipContent, document.body)
         : null}
     </>

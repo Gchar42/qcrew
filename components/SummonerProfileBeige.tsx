@@ -820,7 +820,7 @@ export default function SummonerProfileBeige({
                             nodes.push(
                               <span key="keystone" className="profile-match-rune">
                                 <LeagueTooltip
-                                  title={keystoneData?.name ?? (keystoneId != null ? `Rune ${keystoneId}` : "")}
+                                  title={(keystoneData?.name || (keystoneId != null ? `Rune ${keystoneId}` : "")).trim() || (keystoneId != null ? `Rune ${keystoneId}` : "Rune")}
                                   body={keystoneData?.shortDesc}
                                 >
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -839,7 +839,7 @@ export default function SummonerProfileBeige({
                             const styleName = secondaryStyleId != null ? styleNamesById.get(secondaryStyleId) : undefined;
                             nodes.push(
                               <span key="secondary" className="profile-match-rune">
-                                <LeagueTooltip title={styleName ?? (secondaryStyleId != null ? `Style ${secondaryStyleId}` : "")}>
+                                <LeagueTooltip title={(styleName || (secondaryStyleId != null ? `Style ${secondaryStyleId}` : "")).trim() || (secondaryStyleId != null ? `Style ${secondaryStyleId}` : "Style")}>
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
                                     src={secondarySrc}
@@ -919,7 +919,7 @@ export default function SummonerProfileBeige({
                           <span className="profile-match-item">
                             {isValidItemId(itemId) ? (
                               <LeagueTooltip
-                                title={itemDataById[itemId]?.name ?? `Item ${itemId}`}
+                                title={(itemDataById[itemId]?.name || `Item ${itemId}`).trim() || `Item ${itemId}`}
                                 body={itemDataById[itemId]?.plaintext}
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -948,7 +948,7 @@ export default function SummonerProfileBeige({
                     {isValidItemId(p.item6) ? (
                       <span className="profile-match-item profile-match-item-trinket">
                         <LeagueTooltip
-                          title={itemDataById[p.item6]?.name ?? `Item ${p.item6}`}
+                          title={(itemDataById[p.item6]?.name || `Item ${p.item6}`).trim() || `Item ${p.item6}`}
                           body={itemDataById[p.item6]?.plaintext}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}

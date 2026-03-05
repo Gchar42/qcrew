@@ -144,7 +144,7 @@ select {
 
 .league-tooltip {
   position: fixed;
-  z-index: 9999;
+  z-index: 99999;
   min-width: 120px;
   max-width: 320px;
   padding: 10px 12px;

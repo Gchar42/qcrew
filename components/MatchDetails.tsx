@@ -263,7 +263,7 @@ width={18}
                         <div className="md-runes">
                           {keystoneSrc && (
                             <LeagueTooltip
-                              title={primaryKeystoneId != null ? (perkDataById?.get(primaryKeystoneId)?.name ?? `Rune ${primaryKeystoneId}`) : ""}
+                              title={(primaryKeystoneId != null ? (perkDataById?.get(primaryKeystoneId)?.name || `Rune ${primaryKeystoneId}`) : "Rune").trim() || `Rune ${primaryKeystoneId ?? ""}`}
                               body={primaryKeystoneId != null ? perkDataById?.get(primaryKeystoneId)?.shortDesc : undefined}
                             >
                               <img
@@ -277,7 +277,7 @@ width={18}
                           )}
                           {secondarySrc && (
                             <LeagueTooltip
-                              title={secondaryStyleId != null ? (styleNamesById?.get(secondaryStyleId) ?? `Style ${secondaryStyleId}`) : ""}
+                              title={(secondaryStyleId != null ? (styleNamesById?.get(secondaryStyleId) || `Style ${secondaryStyleId}`) : "Style").trim() || `Style ${secondaryStyleId ?? ""}`}
                             >
                               <img
                                 src={secondarySrc}
@@ -329,7 +329,7 @@ width={18}
                             isValidItemId(itemId) ? (
                               <LeagueTooltip
                                 key={`${p.puuid}-item-${i}`}
-                                title={itemDataById[itemId]?.name ?? `Item ${itemId}`}
+                                title={(itemDataById[itemId]?.name || `Item ${itemId}`).trim() || `Item ${itemId}`}
                                 body={itemDataById[itemId]?.plaintext}
                               >
                                 <img
@@ -346,7 +346,7 @@ width={18}
                       {isValidItemId(p.item6) ? (
                         <div className="md-trinket">
                           <LeagueTooltip
-                            title={itemDataById[p.item6]?.name ?? `Item ${p.item6}`}
+                            title={(itemDataById[p.item6]?.name || `Item ${p.item6}`).trim() || `Item ${p.item6}`}
                             body={itemDataById[p.item6]?.plaintext}
                           >
                             <img
