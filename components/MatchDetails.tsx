@@ -264,7 +264,7 @@ width={18}
                             <img
                               src={keystoneSrc}
                               alt=""
-                              title={perkNamesById?.get(primaryKeystoneId)}
+                              title={primaryKeystoneId != null ? perkNamesById?.get(primaryKeystoneId) : undefined}
                               width={18}
                               height={18}
                               className="md-rune-icon rune-icon"
@@ -274,7 +274,7 @@ width={18}
                             <img
                               src={secondarySrc}
                               alt=""
-                              title={styleNamesById?.get(secondaryStyleId)}
+                              title={secondaryStyleId != null ? styleNamesById?.get(secondaryStyleId) : undefined}
                               width={18}
                               height={18}
                               className="md-rune-icon rune-icon"
