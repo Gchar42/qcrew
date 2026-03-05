@@ -724,7 +724,7 @@ export default function SummonerProfileBeige({
             Flex
           </button>
         </div>
-        {!matches?.length ? (
+        {!displayedMatches?.length ? (
           <div className="profile-matches-empty">
             <p>No matches loaded yet</p>
             <button type="button" onClick={() => mutate()} className="mt-4 underline">
