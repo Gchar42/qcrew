@@ -812,7 +812,7 @@ export default function SummonerProfileBeige({
                           const nodes: React.ReactNode[] = [];
                           if (keystoneSrc) {
                             nodes.push(
-                              <span key="keystone" className="profile-match-rune" title={perkNamesById.get(keystoneId) ?? undefined}>
+                              <span key="keystone" className="profile-match-rune" title={keystoneId != null ? perkNamesById.get(keystoneId) : undefined}>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={keystoneSrc}
@@ -826,7 +826,7 @@ export default function SummonerProfileBeige({
                           }
                           if (secondarySrc) {
                             nodes.push(
-                              <span key="secondary" className="profile-match-rune" title={styleNamesById.get(secondaryStyleId) ?? undefined}>
+                              <span key="secondary" className="profile-match-rune" title={secondaryStyleId != null ? styleNamesById.get(secondaryStyleId) : undefined}>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={secondarySrc}
