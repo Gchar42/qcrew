@@ -332,10 +332,9 @@ export async function GET(request: Request) {
       const ageSec = (Date.now() - new Date(row.fetched_at).getTime()) / 1000;
       const stale = ageSec > (row.stale_after_sec ?? STALE_AFTER_SEC);
 
-      const bundleToReturn =
-        cached.championStats != null
-          ? cached
-          : { ...cached, championStats: await fetchChampionStatsForBundle(cached.profile.account.puuid) };
+      // Always load champion stats fresh from DB so Refresh updates are visible without invalidating the whole cache
+      const championStats = await fetchChampionStatsForBundle(cached.profile.account.puuid);
+      const bundleToReturn = { ...cached, championStats };
 
       if (!stale) {
         return NextResponse.json(bundleToReturn, {

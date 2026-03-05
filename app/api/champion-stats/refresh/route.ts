@@ -14,6 +14,12 @@ const MAX_NEW_MATCH_FETCHES = 60;
 const QUEUE_SOLO = 420;
 const QUEUE_FLEX = 440;
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
+/** Delay between each match fetch to avoid Riot rate limits (429). */
+const DELAY_BETWEEN_MATCH_FETCHES_MS = 150;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function queueToRiotId(queue: "solo" | "flex"): number {
   return queue === "flex" ? QUEUE_FLEX : QUEUE_SOLO;
@@ -47,9 +53,10 @@ export async function refreshChampionStats(
   const routing = getRoutingRegion(region);
   const riotQueueId = queueToRiotId(queue);
 
+  const seasonStartSec = Math.floor(SEASON_START_MS / 1000);
   const matchIdsUrl =
     `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(puuid)}/ids` +
-    `?start=0&count=${MATCH_IDS_LIMIT}&queue=${riotQueueId}`;
+    `?start=0&count=${MATCH_IDS_LIMIT}&queue=${riotQueueId}&start_time=${seasonStartSec}`;
 
   const res = await fetch(matchIdsUrl, {
     headers: { "X-Riot-Token": key },
@@ -80,14 +87,25 @@ export async function refreshChampionStats(
   const existingIds = new Set((existing.data ?? []).map((r) => r.match_id));
   const toFetch = matchIds.filter((id) => !existingIds.has(id)).slice(0, MAX_NEW_MATCH_FETCHES);
 
-  for (const matchId of toFetch) {
+  for (let i = 0; i < toFetch.length; i++) {
+    const matchId = toFetch[i];
+    if (i > 0) await sleep(DELAY_BETWEEN_MATCH_FETCHES_MS);
     try {
       const matchUrl = `https://${routing}.api.riotgames.com/lol/match/v5/matches/${encodeURIComponent(matchId)}`;
-      const matchRes = await fetch(matchUrl, {
+      let matchRes = await fetch(matchUrl, {
         headers: { "X-Riot-Token": key },
         cache: "no-store",
       });
-      if (matchRes.status === 429 || !matchRes.ok) continue;
+      if (matchRes.status === 429) {
+        const retryAfter = matchRes.headers.get("Retry-After");
+        const waitMs = retryAfter ? Math.min(Number(retryAfter) * 1000, 10000) : 2000;
+        await sleep(waitMs);
+        matchRes = await fetch(matchUrl, {
+          headers: { "X-Riot-Token": key },
+          cache: "no-store",
+        });
+      }
+      if (!matchRes.ok) continue;
       const dto = (await matchRes.json()) as MatchDto;
       const info = dto?.info;
       const gameStartTs =

@@ -332,7 +332,7 @@ function primaryRole(matches: MatchDto[], puuid: string): string {
 
 function profileBundleFetcher([, riotId, region, queue]: [string, string, string, string]) {
   const url = `/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}&queue=${encodeURIComponent(queue)}`;
-  return fetch(url).then((r) => {
+  return fetch(url, { cache: "no-store" }).then((r) => {
     if (!r.ok) return r.json().then((body) => Promise.reject(new Error((body as { error?: string }).error ?? "Failed to load profile")));
     return r.json() as Promise<ProfileBundle>;
   });
