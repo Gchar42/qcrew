@@ -31,6 +31,10 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <head>
         <link rel="stylesheet" href={profileFontsUrl} />
+        <link rel="preconnect" href="https://ddragon.leagueoflegends.com" />
+        <link rel="dns-prefetch" href="https://ddragon.leagueoflegends.com" />
+        <link rel="preconnect" href="https://raw.communitydragon.org" />
+        <link rel="dns-prefetch" href="https://raw.communitydragon.org" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-[var(--background)] text-[var(--foreground)]`}

@@ -533,12 +533,9 @@ export default function SummonerProfileBeige({
 
     if (needSolo) refresh("solo");
     if (needFlex) refresh("flex");
-    const t1 = setTimeout(() => mutate(), 50000);
-    const t2 = setTimeout(() => mutate(), 90000);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    const delays = [15000, 35000, 55000, 85000, 120000];
+    const timers = delays.map((ms) => setTimeout(() => mutate(), ms));
+    return () => timers.forEach((t) => clearTimeout(t));
   }, [bundle?.profile?.account?.puuid, bundle?.championStats, regionVal, mutate]);
 
   if (!riotIdParam) {
@@ -651,7 +648,7 @@ export default function SummonerProfileBeige({
           {tier && (
             <span className="profile-ranked-emblem-wrap">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={getRankEmblemUrl(tier)} alt="" className="profile-rank-card-emblem profile-ranked-emblem" width={48} height={48} />
+              <img src={getRankEmblemUrl(tier)} alt="" className="profile-rank-card-emblem profile-ranked-emblem" width={48} height={48} loading="eager" fetchPriority="high" />
             </span>
           )}
           <div className="profile-ranked-summary">
@@ -679,6 +676,8 @@ export default function SummonerProfileBeige({
                   className="profile-hero-icon"
                   width={56}
                   height={56}
+                  fetchPriority="high"
+                  loading="eager"
                 />
               </span>
             )}
@@ -770,9 +769,10 @@ export default function SummonerProfileBeige({
           </div>
         </div>
         <div className="profile-matches-list">
-        {displayedMatches.map((m) => {
+        {displayedMatches.map((m, matchIndex) => {
           const p = participant(m);
           if (!p) return null;
+          const isFirstRow = matchIndex === 0;
           const win = p.win;
           const duration = formatDuration(m.info?.gameDuration ?? 0);
           const minutes = Math.max(1, (m.info?.gameDuration ?? 0) / 60);
@@ -834,6 +834,8 @@ export default function SummonerProfileBeige({
                         className="profile-match-portrait"
                         width={64}
                         height={64}
+                        loading={isFirstRow ? "eager" : "lazy"}
+                        fetchPriority={isFirstRow ? "high" : undefined}
                         onError={(e) => {
                           const target = e.currentTarget;
                           if (target.src !== champSquareUrl) {
@@ -857,6 +859,8 @@ export default function SummonerProfileBeige({
                                 alt=""
                                 width={24}
                                 height={24}
+                                loading={isFirstRow ? "eager" : "lazy"}
+                                fetchPriority={isFirstRow ? "high" : undefined}
                                 style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
                               />
                             </span>
@@ -884,6 +888,8 @@ export default function SummonerProfileBeige({
                                     alt=""
                                     width={24}
                                     height={24}
+                                    loading={isFirstRow ? "eager" : "lazy"}
+                                    fetchPriority={isFirstRow ? "high" : undefined}
                                     style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
                                   />
                                 </LeagueTooltip>
@@ -901,6 +907,8 @@ export default function SummonerProfileBeige({
                                     alt=""
                                     width={24}
                                     height={24}
+                                    loading={isFirstRow ? "eager" : "lazy"}
+                                    fetchPriority={isFirstRow ? "high" : undefined}
                                     style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
                                   />
                                 </LeagueTooltip>
@@ -982,7 +990,8 @@ export default function SummonerProfileBeige({
                                       src={`https://ddragon.leagueoflegends.com/cdn/${itemVersion}/img/item/${itemId}.png`}
                                       alt={`Item ${itemId}`}
                                       title={title}
-                                      loading="lazy"
+                                      loading={isFirstRow ? "eager" : "lazy"}
+                                      fetchPriority={isFirstRow ? "high" : undefined}
                                       decoding="async"
                                       width={22}
                                       height={22}
@@ -1014,7 +1023,8 @@ export default function SummonerProfileBeige({
                                 src={`https://ddragon.leagueoflegends.com/cdn/${effectiveDdragonVersion ?? DEFAULT_DDRAGON_VERSION}/img/item/${p.item6}.png`}
                                 alt={`Item ${p.item6}`}
                                 title={title}
-                                loading="lazy"
+                                loading={isFirstRow ? "eager" : "lazy"}
+                                fetchPriority={isFirstRow ? "high" : undefined}
                                 decoding="async"
                                 width={22}
                                 height={22}

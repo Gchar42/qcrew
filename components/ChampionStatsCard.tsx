@@ -90,7 +90,7 @@ export default function ChampionStatsCard(props: {
           </span>
         ) : (
           <div className="champ_list">
-            {top7.map((r) => (
+            {top7.map((r, i) => (
               <div key={r.championId} className="champ_row">
                 <div className="champ_left">
                   <img
@@ -99,6 +99,8 @@ export default function ChampionStatsCard(props: {
                     alt=""
                     width={32}
                     height={32}
+                    loading={i < 3 ? "eager" : "lazy"}
+                    fetchPriority={i === 0 ? "high" : undefined}
                   />
                   <div className="champ_meta">
                     <div className="champ_name">{r.championName}</div>

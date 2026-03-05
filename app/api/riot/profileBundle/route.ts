@@ -180,7 +180,7 @@ async function fetchBundleFromRiot(
       }
     ),
     fetch(
-      `${baseUrl}/api/riot/match-ids?puuid=${encodeURIComponent(account.puuid)}&region=${region}&count=20&queueId=${queueId}&startTime=${Math.floor(SEASON_START_MS / 1000)}`
+      `${baseUrl}/api/riot/match-ids?puuid=${encodeURIComponent(account.puuid)}&region=${region}&count=20&queueId=${queueId}`
     ).then(async (r) => {
       if (!r.ok) throw new Error("Match list failed");
       const data = (await r.json()) as { matchIds: string[] };
