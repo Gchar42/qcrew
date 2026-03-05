@@ -4,7 +4,6 @@ import { rankToNumber, numberToRankLabel } from "@/lib/rankMapping";
 import { SEASON_KEY } from "@/lib/season";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 import type { ChampionStatRow } from "@/app/api/champion-stats/route";
-import { refreshChampionStats } from "@/app/api/champion-stats/refresh/route";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -107,8 +106,8 @@ async function fetchChampionStatsForBundle(puuid: string): Promise<{
   };
 }
 
-/** When a profile has no champion stats yet, trigger background refresh so next load or manual Refresh shows data. */
-function triggerChampionStatsRefreshIfEmpty(bundle: ProfileBundle, region: string): void {
+/** When a profile has no champion stats yet, trigger refresh via API so it runs in a separate invocation and writes to champion_aggregates. */
+function triggerChampionStatsRefreshIfEmpty(bundle: ProfileBundle, region: string, baseUrl: string): void {
   const cs = bundle?.championStats;
   if (!cs) return;
   const soloEmpty = !cs.solo?.champions?.length;
@@ -117,8 +116,10 @@ function triggerChampionStatsRefreshIfEmpty(bundle: ProfileBundle, region: strin
   const puuid = bundle.profile?.account?.puuid;
   if (!puuid) return;
   const r = region || "na1";
-  if (soloEmpty) refreshChampionStats(puuid, "solo", r).catch(() => {});
-  if (flexEmpty) refreshChampionStats(puuid, "flex", r).catch(() => {});
+  const url = `${baseUrl.replace(/\/$/, "")}/api/champion-stats/refresh`;
+  const body = (q: "solo" | "flex") => JSON.stringify({ puuid, queue: q, region: r });
+  if (soloEmpty) fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: body("solo") }).catch(() => {});
+  if (flexEmpty) fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: body("flex") }).catch(() => {});
 }
 
 function getBaseUrl(request: Request): string {
@@ -351,15 +352,14 @@ export async function GET(request: Request) {
       const championStats = await fetchChampionStatsForBundle(cached.profile.account.puuid);
       const bundleToReturn = { ...cached, championStats };
 
-      triggerChampionStatsRefreshIfEmpty(bundleToReturn, region);
+      const baseUrl = getBaseUrl(request);
+      triggerChampionStatsRefreshIfEmpty(bundleToReturn, region, baseUrl);
 
       if (!stale) {
         return NextResponse.json(bundleToReturn, {
           headers: CACHE_HEADERS,
         });
       }
-
-      const baseUrl = getBaseUrl(request);
       refreshSnapshot(baseUrl, region, queue, normRiotId).catch(() => {});
 
       return NextResponse.json(bundleToReturn, {
@@ -383,7 +383,7 @@ export async function GET(request: Request) {
 
   console.log("bundle keys", Object.keys(bundle), "matches", bundle.matches?.length);
 
-  triggerChampionStatsRefreshIfEmpty(bundle, region);
+  triggerChampionStatsRefreshIfEmpty(bundle, region, baseUrl);
 
   await supabaseAdmin.from("profile_snapshots").upsert(
     {
