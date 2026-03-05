@@ -4,6 +4,7 @@ import { rankToNumber, numberToRankLabel } from "@/lib/rankMapping";
 import { SEASON_KEY } from "@/lib/season";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 import type { ChampionStatRow } from "@/app/api/champion-stats/route";
+import { refreshChampionStats } from "@/app/api/champion-stats/refresh/route";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -104,6 +105,20 @@ async function fetchChampionStatsForBundle(puuid: string): Promise<{
       ? { champions: parseChampionsJson(flexRes.data.champions), updatedAt: flexRes.data.updated_at ?? "" }
       : empty(),
   };
+}
+
+/** When a profile has no champion stats yet, trigger background refresh so next load or manual Refresh shows data. */
+function triggerChampionStatsRefreshIfEmpty(bundle: ProfileBundle, region: string): void {
+  const cs = bundle?.championStats;
+  if (!cs) return;
+  const soloEmpty = !cs.solo?.champions?.length;
+  const flexEmpty = !cs.flex?.champions?.length;
+  if (!soloEmpty && !flexEmpty) return;
+  const puuid = bundle.profile?.account?.puuid;
+  if (!puuid) return;
+  const r = region || "na1";
+  if (soloEmpty) refreshChampionStats(puuid, "solo", r).catch(() => {});
+  if (flexEmpty) refreshChampionStats(puuid, "flex", r).catch(() => {});
 }
 
 function getBaseUrl(request: Request): string {
@@ -336,6 +351,8 @@ export async function GET(request: Request) {
       const championStats = await fetchChampionStatsForBundle(cached.profile.account.puuid);
       const bundleToReturn = { ...cached, championStats };
 
+      triggerChampionStatsRefreshIfEmpty(bundleToReturn, region);
+
       if (!stale) {
         return NextResponse.json(bundleToReturn, {
           headers: CACHE_HEADERS,
@@ -365,6 +382,8 @@ export async function GET(request: Request) {
   }
 
   console.log("bundle keys", Object.keys(bundle), "matches", bundle.matches?.length);
+
+  triggerChampionStatsRefreshIfEmpty(bundle, region);
 
   await supabaseAdmin.from("profile_snapshots").upsert(
     {
