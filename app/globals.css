@@ -152,7 +152,7 @@ select {
   border: 1px solid rgba(212, 175, 55, 0.4);
   border-radius: 6px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
-  pointer-events: none;
+  pointer-events: auto;
   font-family: "Inter", system-ui, sans-serif;
   font-size: 12px;
   line-height: 1.45;

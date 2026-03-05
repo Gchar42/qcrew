@@ -4,7 +4,8 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 
 const TOOLTIP_OFFSET = 10;
-const HOVER_DELAY_MS = 300;
+const HOVER_DELAY_MS = 400;
+const HIDE_DELAY_MS = 150;
 const TOOLTIP_MAX_HEIGHT = 280;
 
 type Props = {
@@ -21,6 +22,7 @@ export function LeagueTooltip({ title, body, bodyHtml, children }: Props) {
   const [placeAbove, setPlaceAbove] = React.useState(false);
   const wrapperRef = React.useRef<HTMLSpanElement>(null);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hideTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const updatePosition = React.useCallback(() => {
     const el = wrapperRef.current;
@@ -49,7 +51,17 @@ export function LeagueTooltip({ title, body, bodyHtml, children }: Props) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    setVisible(false);
+    hideTimeoutRef.current = setTimeout(() => {
+      setVisible(false);
+      hideTimeoutRef.current = null;
+    }, HIDE_DELAY_MS);
+  }, []);
+
+  const cancelHide = React.useCallback(() => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
   }, []);
 
   React.useEffect(() => {
@@ -62,6 +74,7 @@ export function LeagueTooltip({ title, body, bodyHtml, children }: Props) {
   React.useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     };
   }, []);
 
@@ -75,6 +88,8 @@ export function LeagueTooltip({ title, body, bodyHtml, children }: Props) {
           top: position.top,
           transform: placeAbove ? "translate(-50%, -100%)" : "translate(-50%, 0)",
         }}
+        onMouseEnter={cancelHide}
+        onMouseLeave={hide}
       >
         <div className="league-tooltip-title">{title}</div>
         {body ? (
@@ -93,7 +108,10 @@ export function LeagueTooltip({ title, body, bodyHtml, children }: Props) {
       <span
         ref={wrapperRef}
         className="league-tooltip-trigger"
-        onMouseEnter={show}
+        onMouseEnter={() => {
+          cancelHide();
+          show();
+        }}
         onMouseLeave={hide}
       >
         {children}

@@ -104,7 +104,6 @@ export function MatchCard({
                 loading="lazy"
                 decoding="async"
                 className="w-8 h-8 rounded bg-white/5"
-                title={`Item ${id}`}
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).style.display = "none";
                 }}
