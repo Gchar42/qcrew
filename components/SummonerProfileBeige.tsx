@@ -18,6 +18,7 @@ import {
   getRankEmblemUrl,
   getSummonerSpellIconUrl,
   isValidItemId,
+  getItemTooltip,
   DEFAULT_DDRAGON_VERSION,
 } from "@/lib/riotAssets";
 import {
@@ -918,23 +919,26 @@ export default function SummonerProfileBeige({
                         <div key={`item-${idx}`} className="profile-match-item-tile">
                           <span className="profile-match-item">
                             {isValidItemId(itemId) ? (
-                              <LeagueTooltip
-                                title={(itemDataById[itemId]?.name || `Item ${itemId}`).trim() || `Item ${itemId}`}
-                                body={itemDataById[itemId]?.plaintext}
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={`https://ddragon.leagueoflegends.com/cdn/${itemVersion}/img/item/${itemId}.png`}
-                                  alt={`Item ${itemId}`}
-                                  loading="lazy"
-                                  decoding="async"
-                                  width={22}
-                                  height={22}
-                                  onError={(e) => {
-                                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                                  }}
-                                />
-                              </LeagueTooltip>
+                              (() => {
+                                const { title, body } = getItemTooltip(itemDataById, itemId);
+                                return (
+                                  <LeagueTooltip title={title} body={body}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={`https://ddragon.leagueoflegends.com/cdn/${itemVersion}/img/item/${itemId}.png`}
+                                      alt={`Item ${itemId}`}
+                                      title={title}
+                                      loading="lazy"
+                                      decoding="async"
+                                      width={22}
+                                      height={22}
+                                      onError={(e) => {
+                                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                                      }}
+                                    />
+                                  </LeagueTooltip>
+                                );
+                              })()
                             ) : (
                               <div className="item-slot-empty" />
                             )}
@@ -946,25 +950,28 @@ export default function SummonerProfileBeige({
                       );
                     })}
                     {isValidItemId(p.item6) ? (
-                      <span className="profile-match-item profile-match-item-trinket">
-                        <LeagueTooltip
-                          title={(itemDataById[p.item6]?.name || `Item ${p.item6}`).trim() || `Item ${p.item6}`}
-                          body={itemDataById[p.item6]?.plaintext}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={`https://ddragon.leagueoflegends.com/cdn/${ddragonVersion ?? DEFAULT_DDRAGON_VERSION}/img/item/${p.item6}.png`}
-                            alt={`Item ${p.item6}`}
-                            loading="lazy"
-                            decoding="async"
-                            width={22}
-                            height={22}
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).style.display = "none";
-                            }}
-                          />
-                        </LeagueTooltip>
-                      </span>
+                      (() => {
+                        const { title, body } = getItemTooltip(itemDataById, p.item6);
+                        return (
+                          <span className="profile-match-item profile-match-item-trinket">
+                            <LeagueTooltip title={title} body={body}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={`https://ddragon.leagueoflegends.com/cdn/${ddragonVersion ?? DEFAULT_DDRAGON_VERSION}/img/item/${p.item6}.png`}
+                                alt={`Item ${p.item6}`}
+                                title={title}
+                                loading="lazy"
+                                decoding="async"
+                                width={22}
+                                height={22}
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                                }}
+                              />
+                            </LeagueTooltip>
+                          </span>
+                        );
+                      })()
                     ) : null}
                   </div>
                 </div>

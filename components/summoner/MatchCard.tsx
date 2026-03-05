@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { getChampionSplashUrl, isValidItemId, DEFAULT_DDRAGON_VERSION } from "@/lib/riotAssets";
+import { getChampionSplashUrl, isValidItemId, getItemTooltip, DEFAULT_DDRAGON_VERSION } from "@/lib/riotAssets";
 import { getBadgeCategory } from "@/lib/matchBadges";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
 
@@ -100,22 +100,24 @@ export function MatchCard({
         <div className="flex gap-1 shrink-0">
           {items.slice(0, 6).map((id, idx) =>
             isValidItemId(id) ? (
-              <LeagueTooltip
-                key={id}
-                title={(itemDataById?.[id]?.name || `Item ${id}`).trim() || `Item ${id}`}
-                body={itemDataById?.[id]?.plaintext}
-              >
-                <img
-                  src={`https://ddragon.leagueoflegends.com/cdn/${DEFAULT_DDRAGON_VERSION}/img/item/${id}.png`}
-                  alt={`Item ${id}`}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-8 h-8 rounded bg-white/5"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                  }}
-                />
-              </LeagueTooltip>
+              (() => {
+                const { title, body } = getItemTooltip(itemDataById, id);
+                return (
+                  <LeagueTooltip key={id} title={title} body={body}>
+                    <img
+                      src={`https://ddragon.leagueoflegends.com/cdn/${DEFAULT_DDRAGON_VERSION}/img/item/${id}.png`}
+                      alt={`Item ${id}`}
+                      title={title}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-8 h-8 rounded bg-white/5"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  </LeagueTooltip>
+                );
+              })()
             ) : (
               <div key={idx} className="item-slot-empty w-8 h-8 rounded bg-white/5" />
             )

@@ -4,8 +4,8 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 
 const TOOLTIP_OFFSET = 10;
-const HOVER_DELAY_MS = 400;
-const HIDE_DELAY_MS = 150;
+const HOVER_DELAY_MS = 200;
+const HIDE_DELAY_MS = 350;
 const TOOLTIP_MAX_HEIGHT = 280;
 
 type Props = {

@@ -8,6 +8,7 @@ import {
   getChampionSquareUrl,
   getSummonerSpellIconUrl,
   isValidItemId,
+  getItemTooltip,
   DEFAULT_DDRAGON_VERSION,
 } from "@/lib/riotAssets";
 import { getPerkIconUrl, getStyleIconUrlCd } from "@/lib/runesCd";
@@ -327,37 +328,42 @@ width={18}
                         {[p.item0, p.item1, p.item2, p.item3, p.item4, p.item5].map(
                           (itemId, i) =>
                             isValidItemId(itemId) ? (
-                              <LeagueTooltip
-                                key={`${p.puuid}-item-${i}`}
-                                title={(itemDataById[itemId]?.name || `Item ${itemId}`).trim() || `Item ${itemId}`}
-                                body={itemDataById[itemId]?.plaintext}
-                              >
-                                <img
-                                  src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
-                                  alt=""
-                                  width={32}
-                                  height={32}
-                                  className="md-item-icon item-icon"
-                                />
-                              </LeagueTooltip>
+                              (() => {
+                                const { title, body } = getItemTooltip(itemDataById, itemId);
+                                return (
+                                  <LeagueTooltip key={`${p.puuid}-item-${i}`} title={title} body={body}>
+                                    <img
+                                      src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
+                                      alt=""
+                                      title={title}
+                                      width={32}
+                                      height={32}
+                                      className="md-item-icon item-icon"
+                                    />
+                                  </LeagueTooltip>
+                                );
+                              })()
                             ) : null
                         )}
                       </div>
                       {isValidItemId(p.item6) ? (
-                        <div className="md-trinket">
-                          <LeagueTooltip
-                            title={(itemDataById[p.item6]?.name || `Item ${p.item6}`).trim() || `Item ${p.item6}`}
-                            body={itemDataById[p.item6]?.plaintext}
-                          >
-                            <img
-                              src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${p.item6}.png`}
-                              alt=""
-                              width={28}
-                              height={28}
-                              className="md-item-icon item-icon trinket-icon"
-                            />
-                          </LeagueTooltip>
-                        </div>
+                        (() => {
+                          const { title, body } = getItemTooltip(itemDataById, p.item6);
+                          return (
+                            <div className="md-trinket">
+                              <LeagueTooltip title={title} body={body}>
+                                <img
+                                  src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${p.item6}.png`}
+                                  alt=""
+                                  title={title}
+                                  width={28}
+                                  height={28}
+                                  className="md-item-icon item-icon trinket-icon"
+                                />
+                              </LeagueTooltip>
+                            </div>
+                          );
+                        })()
                       ) : null}
                     </div>
                   </td>

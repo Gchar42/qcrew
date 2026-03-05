@@ -140,6 +140,7 @@ select {
 .league-tooltip-trigger {
   display: inline-block;
   cursor: default;
+  pointer-events: auto;
 }
 
 .league-tooltip {
