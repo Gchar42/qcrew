@@ -373,6 +373,10 @@ export default function SummonerProfileBeige({
     }
   );
 
+  const [additionalMatchesByQueue, setAdditionalMatchesByQueue] = useState<Record<string, MatchDto[]>>({});
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMoreByQueue, setHasMoreByQueue] = useState<Record<string, boolean>>({});
+
   const account = bundle?.profile.account ?? null;
   const summoner = bundle?.profile.summoner ?? null;
   const bundleMatches = bundle?.matches ?? [];
@@ -403,9 +407,6 @@ export default function SummonerProfileBeige({
   const [styleNamesById, setStyleNamesById] = useState<Map<number, string>>(new Map());
   const [itemDataById, setItemDataById] = useState<Record<number, { name: string; plaintext?: string }>>({});
   const [mainTab, setMainTab] = useState<"overview" | "champion-pool">("overview");
-  const [additionalMatchesByQueue, setAdditionalMatchesByQueue] = useState<Record<string, MatchDto[]>>({});
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMoreByQueue, setHasMoreByQueue] = useState<Record<string, boolean>>({});
   const lastChampionStatsRefreshTrigger = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
