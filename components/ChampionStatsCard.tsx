@@ -9,17 +9,54 @@ type QueueKey = "solo" | "flex";
 export default function ChampionStatsCard(props: {
   championStats: { solo: ChampionStatsSlice; flex: ChampionStatsSlice };
   ddragonVersion?: string | null;
+  puuid?: string | null;
+  region?: string | null;
+  onRefresh?: () => void;
 }) {
-  const { championStats, ddragonVersion } = props;
+  const { championStats, ddragonVersion, puuid, region, onRefresh } = props;
   const [queue, setQueue] = React.useState<QueueKey>("solo");
+  const [refreshing, setRefreshing] = React.useState(false);
 
   const slice = championStats[queue];
   const champions = slice?.champions ?? [];
   const top7 = champions.slice(0, 7);
 
+  const handleRefresh = React.useCallback(() => {
+    if (!puuid || !onRefresh) return;
+    setRefreshing(true);
+    const r = region ?? "na1";
+    Promise.all([
+      fetch("/api/champion-stats/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ puuid, queue: "solo", region: r }),
+      }),
+      fetch("/api/champion-stats/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ puuid, queue: "flex", region: r }),
+      }),
+    ])
+      .then(() => onRefresh())
+      .finally(() => setRefreshing(false));
+  }, [puuid, region, onRefresh]);
+
   return (
     <div className="profile-rank-card champion-stats-card">
-      <div className="profile-rank-card-title">Champion Stats</div>
+      <div className="profile-rank-card-title">
+        Champion Stats
+        {puuid && onRefresh && (
+          <button
+            type="button"
+            className="champion-stats-refresh-btn"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            title="Refresh champion stats (up to 60 games)"
+          >
+            {refreshing ? "…" : "Refresh"}
+          </button>
+        )}
+      </div>
       <div className="profile-rank-card-content champion-stats-content">
         <div className="champion-stats-filters">
           <button
