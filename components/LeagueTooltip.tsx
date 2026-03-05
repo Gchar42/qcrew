@@ -3,8 +3,9 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 
-const TOOLTIP_OFFSET = 8;
+const TOOLTIP_OFFSET = 10;
 const HOVER_DELAY_MS = 300;
+const TOOLTIP_MAX_HEIGHT = 280;
 
 type Props = {
   title: string;
@@ -17,6 +18,7 @@ type Props = {
 export function LeagueTooltip({ title, body, bodyHtml, children }: Props) {
   const [visible, setVisible] = React.useState(false);
   const [position, setPosition] = React.useState({ top: 0, left: 0 });
+  const [placeAbove, setPlaceAbove] = React.useState(false);
   const wrapperRef = React.useRef<HTMLSpanElement>(null);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -24,9 +26,13 @@ export function LeagueTooltip({ title, body, bodyHtml, children }: Props) {
     const el = wrapperRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const spaceBelow = typeof window !== "undefined" ? window.innerHeight - rect.bottom - TOOLTIP_OFFSET : 300;
+    const above = spaceBelow < TOOLTIP_MAX_HEIGHT;
+    setPlaceAbove(above);
     setPosition({
-      left: rect.left + rect.width / 2,
-      top: rect.bottom + TOOLTIP_OFFSET,
+      left: centerX,
+      top: above ? rect.top - TOOLTIP_OFFSET : rect.bottom + TOOLTIP_OFFSET,
     });
   }, []);
 
@@ -60,17 +66,17 @@ export function LeagueTooltip({ title, body, bodyHtml, children }: Props) {
   }, []);
 
   const tooltipContent =
-    visible && (title || body) ? (
+    visible && title ? (
       <div
         className="league-tooltip"
         role="tooltip"
         style={{
           left: position.left,
           top: position.top,
-          transform: "translate(-50%, 0)",
+          transform: placeAbove ? "translate(-50%, -100%)" : "translate(-50%, 0)",
         }}
       >
-        {title ? <div className="league-tooltip-title">{title}</div> : null}
+        <div className="league-tooltip-title">{title}</div>
         {body ? (
           <div
             className="league-tooltip-body"

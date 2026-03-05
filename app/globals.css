@@ -145,12 +145,13 @@ select {
 .league-tooltip {
   position: fixed;
   z-index: 9999;
+  min-width: 120px;
   max-width: 320px;
   padding: 10px 12px;
   background: #1a1a1e;
-  border: 1px solid rgba(212, 175, 55, 0.35);
+  border: 1px solid rgba(212, 175, 55, 0.4);
   border-radius: 6px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
   pointer-events: none;
   font-family: "Inter", system-ui, sans-serif;
   font-size: 12px;
@@ -161,9 +162,12 @@ select {
   color: #d4af37;
   font-weight: 700;
   font-size: 13px;
+}
+
+.league-tooltip:has(.league-tooltip-body) .league-tooltip-title {
   margin-bottom: 6px;
   padding-bottom: 4px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.25);
 }
 
 .league-tooltip-body {
