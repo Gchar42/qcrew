@@ -448,8 +448,8 @@ export default function SummonerProfileBeige({
   }, []);
 
   useEffect(() => {
-    const version = ddragonVersion ?? DEFAULT_DDRAGON_VERSION;
-    fetch(`/api/ddragon/items?version=${encodeURIComponent(version)}`)
+    if (!ddragonVersion) return;
+    fetch(`/api/ddragon/items?version=${encodeURIComponent(ddragonVersion)}`)
       .then((r) => r.json())
       .then((data: { items?: Record<string, { name?: string; plaintext?: string }> }) => {
         const items = data.items ?? {};
