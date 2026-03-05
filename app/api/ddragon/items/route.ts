@@ -4,9 +4,9 @@ export const dynamic = "force-dynamic";
 
 const DDragonBase = "https://ddragon.leagueoflegends.com/cdn";
 
-type ItemEntry = { name?: string; plaintext?: string };
+type ItemEntry = { name?: string; plaintext?: string; description?: string };
 
-/** GET /api/ddragon/items?version=14.6.1 — returns item id -> { name, plaintext } for tooltips */
+/** GET /api/ddragon/items?version=14.6.1 — returns item id -> { name, plaintext, description } for League-style tooltips */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const version = searchParams.get("version")?.trim();
@@ -26,11 +26,15 @@ export async function GET(request: Request) {
       data?: Record<string, ItemEntry>;
     };
     const dataMap = data.data ?? {};
-    const items: Record<string, { name: string; plaintext?: string }> = {};
+    const items: Record<string, { name: string; plaintext?: string; description?: string }> = {};
     for (const [id, entry] of Object.entries(dataMap)) {
       const name = entry?.name ?? "";
       if (!name) continue;
-      items[id] = { name, plaintext: entry.plaintext };
+      items[id] = {
+        name,
+        plaintext: entry.plaintext,
+        description: entry.description,
+      };
     }
     return Response.json({ items });
   } catch (e) {

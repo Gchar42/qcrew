@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { mutate as globalMutate } from "swr";
 import type { MatchDto } from "@/types/riot";
+import { LeagueTooltip } from "@/components/LeagueTooltip";
 import {
   getChampionSquareUrl,
   getSummonerSpellIconUrl,
@@ -76,8 +77,8 @@ export function MatchDetails({
   perksById,
   stylesById,
   rankBadgesByPuuid,
-  itemNamesById = {},
-  perkNamesById,
+  itemDataById = {},
+  perkDataById,
   styleNamesById,
 }: {
   match: MatchDto;
@@ -88,8 +89,8 @@ export function MatchDetails({
   perksById: Map<number, string>;
   stylesById: Map<number, string>;
   rankBadgesByPuuid?: Record<string, string | null>;
-  itemNamesById?: Record<number, string>;
-  perkNamesById?: Map<number, string>;
+  itemDataById?: Record<number, { name: string; plaintext?: string }>;
+  perkDataById?: Map<number, { name?: string; shortDesc?: string }>;
   styleNamesById?: Map<number, string>;
 }) {
   const parts = match.info?.participants ?? [];
@@ -261,24 +262,31 @@ width={18}
                         </div>
                         <div className="md-runes">
                           {keystoneSrc && (
-                            <img
-                              src={keystoneSrc}
-                              alt=""
-                              title={primaryKeystoneId != null ? perkNamesById?.get(primaryKeystoneId) : undefined}
-                              width={18}
-                              height={18}
-                              className="md-rune-icon rune-icon"
-                            />
+                            <LeagueTooltip
+                              title={primaryKeystoneId != null ? (perkDataById?.get(primaryKeystoneId)?.name ?? `Rune ${primaryKeystoneId}`) : ""}
+                              body={primaryKeystoneId != null ? perkDataById?.get(primaryKeystoneId)?.shortDesc : undefined}
+                            >
+                              <img
+                                src={keystoneSrc}
+                                alt=""
+                                width={18}
+                                height={18}
+                                className="md-rune-icon rune-icon"
+                              />
+                            </LeagueTooltip>
                           )}
                           {secondarySrc && (
-                            <img
-                              src={secondarySrc}
-                              alt=""
-                              title={secondaryStyleId != null ? styleNamesById?.get(secondaryStyleId) : undefined}
-                              width={18}
-                              height={18}
-                              className="md-rune-icon rune-icon"
-                            />
+                            <LeagueTooltip
+                              title={secondaryStyleId != null ? (styleNamesById?.get(secondaryStyleId) ?? `Style ${secondaryStyleId}`) : ""}
+                            >
+                              <img
+                                src={secondarySrc}
+                                alt=""
+                                width={18}
+                                height={18}
+                                className="md-rune-icon rune-icon"
+                              />
+                            </LeagueTooltip>
                           )}
                         </div>
                       </div>
@@ -319,28 +327,36 @@ width={18}
                         {[p.item0, p.item1, p.item2, p.item3, p.item4, p.item5].map(
                           (itemId, i) =>
                             isValidItemId(itemId) ? (
-                              <img
+                              <LeagueTooltip
                                 key={`${p.puuid}-item-${i}`}
-                                src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
-                                alt=""
-                                title={itemNamesById[itemId] ?? `Item ${itemId}`}
-                                width={32}
-                                height={32}
-                                className="md-item-icon item-icon"
-                              />
+                                title={itemDataById[itemId]?.name ?? `Item ${itemId}`}
+                                body={itemDataById[itemId]?.plaintext}
+                              >
+                                <img
+                                  src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
+                                  alt=""
+                                  width={32}
+                                  height={32}
+                                  className="md-item-icon item-icon"
+                                />
+                              </LeagueTooltip>
                             ) : null
                         )}
                       </div>
                       {isValidItemId(p.item6) ? (
                         <div className="md-trinket">
-                          <img
-                            src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${p.item6}.png`}
-                            alt=""
-                            title={itemNamesById[p.item6] ?? `Item ${p.item6}`}
-                            width={28}
-                            height={28}
-                            className="md-item-icon item-icon trinket-icon"
-                          />
+                          <LeagueTooltip
+                            title={itemDataById[p.item6]?.name ?? `Item ${p.item6}`}
+                            body={itemDataById[p.item6]?.plaintext}
+                          >
+                            <img
+                              src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${p.item6}.png`}
+                              alt=""
+                              width={28}
+                              height={28}
+                              className="md-item-icon item-icon trinket-icon"
+                            />
+                          </LeagueTooltip>
                         </div>
                       ) : null}
                     </div>

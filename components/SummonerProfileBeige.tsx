@@ -10,6 +10,7 @@ import type { ProfileBundle } from "@/app/api/riot/profileBundle/route";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
 import { MatchDetails } from "@/components/MatchDetails";
 import ChampionStatsCard from "@/components/ChampionStatsCard";
+import { LeagueTooltip } from "@/components/LeagueTooltip";
 import {
   getChampionSplashUrl,
   getChampionSquareUrl,
@@ -394,9 +395,10 @@ export default function SummonerProfileBeige({
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [perkNamesById, setPerkNamesById] = useState<Map<number, string>>(new Map());
+  const [perkDataById, setPerkDataById] = useState<Map<number, { name?: string; shortDesc?: string }>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
   const [styleNamesById, setStyleNamesById] = useState<Map<number, string>>(new Map());
-  const [itemNamesById, setItemNamesById] = useState<Record<number, string>>({});
+  const [itemDataById, setItemDataById] = useState<Record<number, { name: string; plaintext?: string }>>({});
   const [mainTab, setMainTab] = useState<"overview" | "champion-pool">("overview");
   const championStatsRefreshDone = useRef<Set<string>>(new Set());
 
@@ -414,12 +416,15 @@ export default function SummonerProfileBeige({
         const list = data.perks ?? [];
         const iconMap = new Map<number, string>();
         const nameMap = new Map<number, string>();
+        const dataMap = new Map<number, { name?: string; shortDesc?: string }>();
         list.forEach((p) => {
           iconMap.set(p.id, p.iconPath);
           if (p.name) nameMap.set(p.id, p.name);
+          dataMap.set(p.id, { name: p.name, shortDesc: p.shortDesc });
         });
         setPerksById(iconMap);
         setPerkNamesById(nameMap);
+        setPerkDataById(dataMap);
       })
       .catch(() => {});
   }, []);
@@ -445,14 +450,14 @@ export default function SummonerProfileBeige({
     if (!ddragonVersion) return;
     fetch(`/api/ddragon/items?version=${encodeURIComponent(ddragonVersion)}`)
       .then((r) => r.json())
-      .then((data: { items?: Record<string, { name?: string }> }) => {
+      .then((data: { items?: Record<string, { name?: string; plaintext?: string }> }) => {
         const items = data.items ?? {};
-        const byId: Record<number, string> = {};
+        const byId: Record<number, { name: string; plaintext?: string }> = {};
         Object.entries(items).forEach(([id, entry]) => {
           const num = Number(id);
-          if (Number.isFinite(num) && entry?.name) byId[num] = entry.name;
+          if (Number.isFinite(num) && entry?.name) byId[num] = { name: entry.name, plaintext: entry.plaintext };
         });
-        setItemNamesById(byId);
+        setItemDataById(byId);
       })
       .catch(() => {});
   }, [ddragonVersion]);
@@ -811,30 +816,39 @@ export default function SummonerProfileBeige({
                           const secondarySrc = getStyleIconUrlCd(secondaryStyleId, stylesById);
                           const nodes: React.ReactNode[] = [];
                           if (keystoneSrc) {
+                            const keystoneData = keystoneId != null ? perkDataById.get(keystoneId) : undefined;
                             nodes.push(
-                              <span key="keystone" className="profile-match-rune" title={keystoneId != null ? perkNamesById.get(keystoneId) : undefined}>
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={keystoneSrc}
-                                  alt=""
-                                  width={24}
-                                  height={24}
-                                  style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
-                                />
+                              <span key="keystone" className="profile-match-rune">
+                                <LeagueTooltip
+                                  title={keystoneData?.name ?? (keystoneId != null ? `Rune ${keystoneId}` : "")}
+                                  body={keystoneData?.shortDesc}
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={keystoneSrc}
+                                    alt=""
+                                    width={24}
+                                    height={24}
+                                    style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
+                                  />
+                                </LeagueTooltip>
                               </span>
                             );
                           }
                           if (secondarySrc) {
+                            const styleName = secondaryStyleId != null ? styleNamesById.get(secondaryStyleId) : undefined;
                             nodes.push(
-                              <span key="secondary" className="profile-match-rune" title={secondaryStyleId != null ? styleNamesById.get(secondaryStyleId) : undefined}>
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={secondarySrc}
-                                  alt=""
-                                  width={24}
-                                  height={24}
-                                  style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
-                                />
+                              <span key="secondary" className="profile-match-rune">
+                                <LeagueTooltip title={styleName ?? (secondaryStyleId != null ? `Style ${secondaryStyleId}` : "")}>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={secondarySrc}
+                                    alt=""
+                                    width={24}
+                                    height={24}
+                                    style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
+                                  />
+                                </LeagueTooltip>
                               </span>
                             );
                           }
@@ -904,19 +918,23 @@ export default function SummonerProfileBeige({
                         <div key={`item-${idx}`} className="profile-match-item-tile">
                           <span className="profile-match-item">
                             {isValidItemId(itemId) ? (
-                              /* eslint-disable-next-line @next/next/no-img-element */
-                              <img
-                                src={`https://ddragon.leagueoflegends.com/cdn/${itemVersion}/img/item/${itemId}.png`}
-                                alt={`Item ${itemId}`}
-                                title={itemNamesById[itemId] ?? `Item ${itemId}`}
-                                loading="lazy"
-                                decoding="async"
-                                width={22}
-                                height={22}
-                                onError={(e) => {
-                                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                                }}
-                              />
+                              <LeagueTooltip
+                                title={itemDataById[itemId]?.name ?? `Item ${itemId}`}
+                                body={itemDataById[itemId]?.plaintext}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={`https://ddragon.leagueoflegends.com/cdn/${itemVersion}/img/item/${itemId}.png`}
+                                  alt={`Item ${itemId}`}
+                                  loading="lazy"
+                                  decoding="async"
+                                  width={22}
+                                  height={22}
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                                  }}
+                                />
+                              </LeagueTooltip>
                             ) : (
                               <div className="item-slot-empty" />
                             )}
@@ -929,19 +947,23 @@ export default function SummonerProfileBeige({
                     })}
                     {isValidItemId(p.item6) ? (
                       <span className="profile-match-item profile-match-item-trinket">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={`https://ddragon.leagueoflegends.com/cdn/${ddragonVersion ?? DEFAULT_DDRAGON_VERSION}/img/item/${p.item6}.png`}
-                          alt={`Item ${p.item6}`}
-                          title={itemNamesById[p.item6] ?? `Item ${p.item6}`}
-                          loading="lazy"
-                          decoding="async"
-                          width={22}
-                          height={22}
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).style.display = "none";
-                          }}
-                        />
+                        <LeagueTooltip
+                          title={itemDataById[p.item6]?.name ?? `Item ${p.item6}`}
+                          body={itemDataById[p.item6]?.plaintext}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`https://ddragon.leagueoflegends.com/cdn/${ddragonVersion ?? DEFAULT_DDRAGON_VERSION}/img/item/${p.item6}.png`}
+                            alt={`Item ${p.item6}`}
+                            loading="lazy"
+                            decoding="async"
+                            width={22}
+                            height={22}
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                        </LeagueTooltip>
                       </span>
                     ) : null}
                   </div>
@@ -1097,8 +1119,8 @@ export default function SummonerProfileBeige({
                   ddragonVersion={ddragonVersion}
                   perksById={perksById}
                   stylesById={stylesById}
-                  itemNamesById={itemNamesById}
-                  perkNamesById={perkNamesById}
+                  itemDataById={itemDataById}
+                  perkDataById={perkDataById}
                   styleNamesById={styleNamesById}
                 />
               ) : null}
@@ -1117,7 +1139,7 @@ export default function SummonerProfileBeige({
           match={detailMatch}
           puuid={account.puuid}
           onClose={() => setDetailMatch(null)}
-          itemNamesById={itemNamesById}
+          itemDataById={itemDataById}
           ddragonVersion={ddragonVersion}
         />
       )}
