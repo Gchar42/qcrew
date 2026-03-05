@@ -417,12 +417,16 @@ export default function SummonerProfileBeige({
 
   const championStatsToShow = useMemo(() => {
     const empty = { champions: [], updatedAt: "" };
-    const solo = queue === "solo" && championStatsFromDisplayed
-      ? championStatsFromDisplayed
-      : (bundle?.championStats?.solo ?? empty);
-    const flex = queue === "flex" && championStatsFromDisplayed
-      ? championStatsFromDisplayed
-      : (bundle?.championStats?.flex ?? empty);
+    const bundleSolo = bundle?.championStats?.solo ?? empty;
+    const bundleFlex = bundle?.championStats?.flex ?? empty;
+    const solo =
+      bundleSolo.champions?.length > 0
+        ? bundleSolo
+        : (queue === "solo" && championStatsFromDisplayed ? championStatsFromDisplayed : bundleSolo);
+    const flex =
+      bundleFlex.champions?.length > 0
+        ? bundleFlex
+        : (queue === "flex" && championStatsFromDisplayed ? championStatsFromDisplayed : bundleFlex);
     return { solo, flex };
   }, [queue, championStatsFromDisplayed, bundle?.championStats]);
 
