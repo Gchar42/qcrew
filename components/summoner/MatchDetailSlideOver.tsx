@@ -13,10 +13,14 @@ export function MatchDetailSlideOver({
   match,
   puuid,
   onClose,
+  itemNamesById = {},
+  ddragonVersion,
 }: {
   match: MatchDto;
   puuid: string;
   onClose: () => void;
+  itemNamesById?: Record<number, string>;
+  ddragonVersion?: string | null;
 }) {
   const p = match.info?.participants?.find((x) => x.puuid === puuid);
   if (!p) return null;
@@ -84,8 +88,9 @@ export function MatchDetailSlideOver({
                   isValidItemId(itemId) ? (
                     <img
                       key={itemId}
-                      src={`https://ddragon.leagueoflegends.com/cdn/${DEFAULT_DDRAGON_VERSION}/img/item/${itemId}.png`}
+                      src={`https://ddragon.leagueoflegends.com/cdn/${ddragonVersion ?? DEFAULT_DDRAGON_VERSION}/img/item/${itemId}.png`}
                       alt={`Item ${itemId}`}
+                      title={itemNamesById[itemId] ?? `Item ${itemId}`}
                       loading="lazy"
                       decoding="async"
                       className="w-10 h-10 rounded bg-white/5"

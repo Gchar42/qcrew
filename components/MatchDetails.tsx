@@ -76,6 +76,9 @@ export function MatchDetails({
   perksById,
   stylesById,
   rankBadgesByPuuid,
+  itemNamesById = {},
+  perkNamesById,
+  styleNamesById,
 }: {
   match: MatchDto;
   puuidOfSearchedPlayer: string;
@@ -85,6 +88,9 @@ export function MatchDetails({
   perksById: Map<number, string>;
   stylesById: Map<number, string>;
   rankBadgesByPuuid?: Record<string, string | null>;
+  itemNamesById?: Record<number, string>;
+  perkNamesById?: Map<number, string>;
+  styleNamesById?: Map<number, string>;
 }) {
   const parts = match.info?.participants ?? [];
   const team100 = parts.filter((p) => p.teamId === 100);
@@ -258,6 +264,7 @@ width={18}
                             <img
                               src={keystoneSrc}
                               alt=""
+                              title={perkNamesById?.get(primaryKeystoneId)}
                               width={18}
                               height={18}
                               className="md-rune-icon rune-icon"
@@ -267,6 +274,7 @@ width={18}
                             <img
                               src={secondarySrc}
                               alt=""
+                              title={styleNamesById?.get(secondaryStyleId)}
                               width={18}
                               height={18}
                               className="md-rune-icon rune-icon"
@@ -315,6 +323,7 @@ width={18}
                                 key={`${p.puuid}-item-${i}`}
                                 src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
                                 alt=""
+                                title={itemNamesById[itemId] ?? `Item ${itemId}`}
                                 width={32}
                                 height={32}
                                 className="md-item-icon item-icon"
@@ -327,6 +336,7 @@ width={18}
                           <img
                             src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${p.item6}.png`}
                             alt=""
+                            title={itemNamesById[p.item6] ?? `Item ${p.item6}`}
                             width={28}
                             height={28}
                             className="md-item-icon item-icon trinket-icon"

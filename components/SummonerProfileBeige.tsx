@@ -393,7 +393,10 @@ export default function SummonerProfileBeige({
 
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
+  const [perkNamesById, setPerkNamesById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
+  const [styleNamesById, setStyleNamesById] = useState<Map<number, string>>(new Map());
+  const [itemNamesById, setItemNamesById] = useState<Record<number, string>>({});
   const [mainTab, setMainTab] = useState<"overview" | "champion-pool">("overview");
   const championStatsRefreshDone = useRef<Set<string>>(new Set());
 
@@ -409,9 +412,14 @@ export default function SummonerProfileBeige({
       .then((r) => r.json())
       .then((data: { perks?: PerkEntry[] }) => {
         const list = data.perks ?? [];
-        const map = new Map<number, string>();
-        list.forEach((p) => map.set(p.id, p.iconPath));
-        setPerksById(map);
+        const iconMap = new Map<number, string>();
+        const nameMap = new Map<number, string>();
+        list.forEach((p) => {
+          iconMap.set(p.id, p.iconPath);
+          if (p.name) nameMap.set(p.id, p.name);
+        });
+        setPerksById(iconMap);
+        setPerkNamesById(nameMap);
       })
       .catch(() => {});
   }, []);
@@ -421,12 +429,33 @@ export default function SummonerProfileBeige({
       .then((r) => r.json())
       .then((data: { styles?: PerkStyleEntry[] }) => {
         const list = data.styles ?? [];
-        const map = new Map<number, string>();
-        list.forEach((s) => map.set(s.id, s.iconPath));
-        setStylesById(map);
+        const iconMap = new Map<number, string>();
+        const nameMap = new Map<number, string>();
+        list.forEach((s) => {
+          iconMap.set(s.id, s.iconPath);
+          if (s.name) nameMap.set(s.id, s.name);
+        });
+        setStylesById(iconMap);
+        setStyleNamesById(nameMap);
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!ddragonVersion) return;
+    fetch(`/api/ddragon/items?version=${encodeURIComponent(ddragonVersion)}`)
+      .then((r) => r.json())
+      .then((data: { items?: Record<string, { name?: string }> }) => {
+        const items = data.items ?? {};
+        const byId: Record<number, string> = {};
+        Object.entries(items).forEach(([id, entry]) => {
+          const num = Number(id);
+          if (Number.isFinite(num) && entry?.name) byId[num] = entry.name;
+        });
+        setItemNamesById(byId);
+      })
+      .catch(() => {});
+  }, [ddragonVersion]);
 
   // When profile has no champion stats yet, trigger background refresh once then revalidate bundle
   useEffect(() => {
@@ -783,7 +812,7 @@ export default function SummonerProfileBeige({
                           const nodes: React.ReactNode[] = [];
                           if (keystoneSrc) {
                             nodes.push(
-                              <span key="keystone" className="profile-match-rune">
+                              <span key="keystone" className="profile-match-rune" title={perkNamesById.get(keystoneId) ?? undefined}>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={keystoneSrc}
@@ -797,7 +826,7 @@ export default function SummonerProfileBeige({
                           }
                           if (secondarySrc) {
                             nodes.push(
-                              <span key="secondary" className="profile-match-rune">
+                              <span key="secondary" className="profile-match-rune" title={styleNamesById.get(secondaryStyleId) ?? undefined}>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={secondarySrc}
@@ -879,6 +908,7 @@ export default function SummonerProfileBeige({
                               <img
                                 src={`https://ddragon.leagueoflegends.com/cdn/${itemVersion}/img/item/${itemId}.png`}
                                 alt={`Item ${itemId}`}
+                                title={itemNamesById[itemId] ?? `Item ${itemId}`}
                                 loading="lazy"
                                 decoding="async"
                                 width={22}
@@ -903,6 +933,7 @@ export default function SummonerProfileBeige({
                         <img
                           src={`https://ddragon.leagueoflegends.com/cdn/${ddragonVersion ?? DEFAULT_DDRAGON_VERSION}/img/item/${p.item6}.png`}
                           alt={`Item ${p.item6}`}
+                          title={itemNamesById[p.item6] ?? `Item ${p.item6}`}
                           loading="lazy"
                           decoding="async"
                           width={22}
@@ -1066,6 +1097,9 @@ export default function SummonerProfileBeige({
                   ddragonVersion={ddragonVersion}
                   perksById={perksById}
                   stylesById={stylesById}
+                  itemNamesById={itemNamesById}
+                  perkNamesById={perkNamesById}
+                  styleNamesById={styleNamesById}
                 />
               ) : null}
             </div>
@@ -1083,6 +1117,8 @@ export default function SummonerProfileBeige({
           match={detailMatch}
           puuid={account.puuid}
           onClose={() => setDetailMatch(null)}
+          itemNamesById={itemNamesById}
+          ddragonVersion={ddragonVersion}
         />
       )}
     </>
