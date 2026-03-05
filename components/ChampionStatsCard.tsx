@@ -25,20 +25,23 @@ export default function ChampionStatsCard(props: {
     if (!puuid || !onRefresh) return;
     setRefreshing(true);
     const r = region ?? "na1";
-    Promise.all([
-      fetch("/api/champion-stats/refresh", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ puuid, queue: "solo", region: r }),
-      }),
-      fetch("/api/champion-stats/refresh", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ puuid, queue: "flex", region: r }),
-      }),
-    ])
-      .then(() => onRefresh())
-      .finally(() => setRefreshing(false));
+    // Fire refresh for both queues; don't await (can take 45+ s and timeout). Refetch bundle after a short delay.
+    fetch("/api/champion-stats/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ puuid, queue: "solo", region: r }),
+    }).catch(() => {});
+    fetch("/api/champion-stats/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ puuid, queue: "flex", region: r }),
+    }).catch(() => {});
+
+    const delayMs = 8000;
+    setTimeout(() => {
+      onRefresh();
+      setRefreshing(false);
+    }, delayMs);
   }, [puuid, region, onRefresh]);
 
   return (
