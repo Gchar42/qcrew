@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MATCH_IDS_LIMIT = 60;
-const MAX_NEW_MATCH_FETCHES = 15;
+/** Max new matches to fetch and cache per refresh; match count for champion stats is capped by this until multiple refreshes run. */
+const MAX_NEW_MATCH_FETCHES = 60;
 const QUEUE_SOLO = 420;
 const QUEUE_FLEX = 440;
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
