@@ -1199,7 +1199,9 @@ export default function SummonerProfileBeige({
                     ...prev,
                     [queue]: [...(prev[queue] ?? []), ...more],
                   }));
-                  if (more.length < 20) setHasMoreByQueue((prev) => ({ ...prev, [queue]: false }));
+                  if (res.ok && more.length < 20) setHasMoreByQueue((prev) => ({ ...prev, [queue]: false }));
+                } catch {
+                  // keep button clickable on error
                 } finally {
                   setLoadingMore(false);
                 }
