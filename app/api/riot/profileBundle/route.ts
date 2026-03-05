@@ -107,7 +107,11 @@ async function fetchChampionStatsForBundle(puuid: string): Promise<{
 }
 
 /** When a profile has no champion stats yet, trigger refresh via API so it runs in a separate invocation and writes to champion_aggregates. */
-function triggerChampionStatsRefreshIfEmpty(bundle: ProfileBundle, region: string, baseUrl: string): void {
+async function triggerChampionStatsRefreshIfEmpty(
+  bundle: ProfileBundle,
+  region: string,
+  baseUrl: string
+): Promise<void> {
   const cs = bundle?.championStats;
   if (!cs) return;
   const soloEmpty = !cs.solo?.champions?.length;
@@ -120,6 +124,7 @@ function triggerChampionStatsRefreshIfEmpty(bundle: ProfileBundle, region: strin
   const body = (q: "solo" | "flex") => JSON.stringify({ puuid, queue: q, region: r });
   if (soloEmpty) fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: body("solo") }).catch(() => {});
   if (flexEmpty) fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: body("flex") }).catch(() => {});
+  await new Promise((resolve) => setTimeout(resolve, 200));
 }
 
 function getBaseUrl(request: Request): string {
@@ -353,7 +358,7 @@ export async function GET(request: Request) {
       const bundleToReturn = { ...cached, championStats };
 
       const baseUrl = getBaseUrl(request);
-      triggerChampionStatsRefreshIfEmpty(bundleToReturn, region, baseUrl);
+      await triggerChampionStatsRefreshIfEmpty(bundleToReturn, region, baseUrl);
 
       if (!stale) {
         return NextResponse.json(bundleToReturn, {
@@ -383,7 +388,7 @@ export async function GET(request: Request) {
 
   console.log("bundle keys", Object.keys(bundle), "matches", bundle.matches?.length);
 
-  triggerChampionStatsRefreshIfEmpty(bundle, region, baseUrl);
+  await triggerChampionStatsRefreshIfEmpty(bundle, region, baseUrl);
 
   await supabaseAdmin.from("profile_snapshots").upsert(
     {

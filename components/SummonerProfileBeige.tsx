@@ -465,7 +465,7 @@ export default function SummonerProfileBeige({
       .catch(() => {});
   }, [ddragonVersion]);
 
-  // When profile has no champion stats yet, trigger background refresh once then revalidate bundle
+  // When profile has no champion stats yet, trigger refresh then revalidate after it has time to complete (~50s)
   useEffect(() => {
     const puuid = bundle?.profile?.account?.puuid;
     const championStats = bundle?.championStats;
@@ -486,8 +486,13 @@ export default function SummonerProfileBeige({
 
     if (soloEmpty) refresh("solo");
     if (flexEmpty) refresh("flex");
-    const t = setTimeout(() => mutate(), 4000);
-    return () => clearTimeout(t);
+    // Refresh can take 30–60s; revalidate bundle so champion stats appear without leaving the page
+    const t1 = setTimeout(() => mutate(), 50000);
+    const t2 = setTimeout(() => mutate(), 90000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [bundle?.profile?.account?.puuid, bundle?.championStats, regionVal, mutate]);
 
   if (!riotIdParam) {

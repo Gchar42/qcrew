@@ -86,7 +86,7 @@ export default function ChampionStatsCard(props: {
         </div>
         {top7.length === 0 ? (
           <span className="profile-ranked-unranked left_card_muted">
-            No ranked matches found for this season yet.
+            No ranked matches found for this season yet. Stats are calculated in the background—click Refresh in about a minute or wait for auto-update.
           </span>
         ) : (
           <div className="champ_list">
