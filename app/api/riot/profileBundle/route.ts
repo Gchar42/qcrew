@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { rankToNumber, numberToRankLabel } from "@/lib/rankMapping";
+import { SEASON_KEY } from "@/lib/season";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
+import type { ChampionStatRow } from "@/app/api/champion-stats/route";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -46,6 +48,11 @@ type ProfileSnapshotRow = {
   stale_after_sec: number;
 };
 
+export type ChampionStatsSlice = {
+  champions: ChampionStatRow[];
+  updatedAt: string;
+};
+
 export type ProfileBundle = {
   profile: { account: AccountDto; summoner: SummonerDto };
   ranked: { solo: LeagueEntryDto | null; flex: LeagueEntryDto | null };
@@ -60,7 +67,44 @@ export type ProfileBundle = {
     avgRankRankedCount: number;
   };
   leagueEntriesBySummonerId: Record<string, LeagueEntryDto[]>;
+  championStats: { solo: ChampionStatsSlice; flex: ChampionStatsSlice };
 };
+
+function parseChampionsJson(champions: unknown): ChampionStatRow[] {
+  if (!Array.isArray(champions)) return [];
+  return champions as ChampionStatRow[];
+}
+
+async function fetchChampionStatsForBundle(puuid: string): Promise<{
+  solo: ChampionStatsSlice;
+  flex: ChampionStatsSlice;
+}> {
+  const empty = (): ChampionStatsSlice => ({ champions: [], updatedAt: "" });
+  const [soloRes, flexRes] = await Promise.all([
+    supabaseAdmin
+      .from("champion_aggregates")
+      .select("updated_at, champions")
+      .eq("puuid", puuid)
+      .eq("queue", "solo")
+      .eq("season_key", SEASON_KEY)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("champion_aggregates")
+      .select("updated_at, champions")
+      .eq("puuid", puuid)
+      .eq("queue", "flex")
+      .eq("season_key", SEASON_KEY)
+      .maybeSingle(),
+  ]);
+  return {
+    solo: soloRes.data
+      ? { champions: parseChampionsJson(soloRes.data.champions), updatedAt: soloRes.data.updated_at ?? "" }
+      : empty(),
+    flex: flexRes.data
+      ? { champions: parseChampionsJson(flexRes.data.champions), updatedAt: flexRes.data.updated_at ?? "" }
+      : empty(),
+  };
+}
 
 function getBaseUrl(request: Request): string {
   const host = request.headers.get("host") ?? process.env.VERCEL_URL ?? "localhost:3000";
@@ -198,6 +242,8 @@ async function fetchBundleFromRiot(
   const avgRankPlayedAgainst =
     values.length > 0 ? numberToRankLabel(values.reduce((a, b) => a + b, 0) / values.length) : "Unranked";
 
+  const championStats = await fetchChampionStatsForBundle(account.puuid);
+
   const bundle: ProfileBundle = {
     profile: { account, summoner },
     ranked: { solo: soloEntry, flex: flexEntry },
@@ -212,6 +258,7 @@ async function fetchBundleFromRiot(
       avgRankRankedCount: values.length,
     },
     leagueEntriesBySummonerId,
+    championStats,
   };
 
   console.log("bundle keys", Object.keys(bundle), "matches", bundle.matches?.length);
@@ -280,8 +327,13 @@ export async function GET(request: Request) {
     const ageSec = (Date.now() - new Date(row.fetched_at).getTime()) / 1000;
     const stale = ageSec > (row.stale_after_sec ?? STALE_AFTER_SEC);
 
+    const bundleToReturn =
+      cached.championStats != null
+        ? cached
+        : { ...cached, championStats: await fetchChampionStatsForBundle(cached.profile.account.puuid) };
+
     if (!stale) {
-      return NextResponse.json(cached, {
+      return NextResponse.json(bundleToReturn, {
         headers: CACHE_HEADERS,
       });
     }
@@ -289,7 +341,7 @@ export async function GET(request: Request) {
     const baseUrl = getBaseUrl(request);
     refreshSnapshot(baseUrl, region, queue, normRiotId).catch(() => {});
 
-    return NextResponse.json(cached, {
+    return NextResponse.json(bundleToReturn, {
       headers: CACHE_HEADERS,
     });
   }

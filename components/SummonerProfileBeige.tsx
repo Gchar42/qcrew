@@ -591,8 +591,8 @@ export default function SummonerProfileBeige({
         <aside className="profile-body-left">
           {renderRankCard("Ranked Solo", soloEntry, rankLoading, rankError ?? null)}
           {renderRankCard("Ranked Flex", flexEntry, rankLoading, null)}
-          {account?.puuid && (
-            <ChampionStatsCard puuid={account.puuid} ddragonVersion={ddragonVersion} />
+          {bundle?.championStats && (
+            <ChampionStatsCard championStats={bundle.championStats} ddragonVersion={ddragonVersion} />
           )}
         </aside>
         <div className="profile-body-right">

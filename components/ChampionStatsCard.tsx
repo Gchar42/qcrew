@@ -2,55 +2,19 @@
 
 import * as React from "react";
 import { getChampionSquareUrl } from "@/lib/riotAssets";
-import type { ChampionStatRow } from "@/app/api/champion-stats/route";
+import type { ChampionStatsSlice } from "@/app/api/riot/profileBundle/route";
 
 type QueueKey = "solo" | "flex";
 
 export default function ChampionStatsCard(props: {
-  puuid: string;
+  championStats: { solo: ChampionStatsSlice; flex: ChampionStatsSlice };
   ddragonVersion?: string | null;
 }) {
-  const { puuid, ddragonVersion } = props;
+  const { championStats, ddragonVersion } = props;
   const [queue, setQueue] = React.useState<QueueKey>("solo");
-  const [data, setData] = React.useState<{
-    champions: ChampionStatRow[];
-    updatedAt: string;
-  } | null>(null);
-  const [loading, setLoading] = React.useState(true);
 
-  React.useEffect(() => {
-    if (!puuid) {
-      setData(null);
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    const url = `/api/champion-stats?puuid=${encodeURIComponent(puuid)}&queue=${queue}`;
-    fetch(url)
-      .then((r) => r.json())
-      .then((json) => {
-        if (!cancelled && Array.isArray(json?.champions)) {
-          setData({
-            champions: json.champions,
-            updatedAt: json.updatedAt ?? "",
-          });
-        } else if (!cancelled) {
-          setData({ champions: [], updatedAt: "" });
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setData({ champions: [], updatedAt: "" });
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [puuid, queue]);
-
-  const champions = data?.champions ?? [];
+  const slice = championStats[queue];
+  const champions = slice?.champions ?? [];
   const top7 = champions.slice(0, 7);
 
   return (
@@ -73,9 +37,7 @@ export default function ChampionStatsCard(props: {
             Ranked Flex
           </button>
         </div>
-        {loading ? (
-          <span className="profile-ranked-loading">Loading…</span>
-        ) : top7.length === 0 ? (
+        {top7.length === 0 ? (
           <span className="profile-ranked-unranked left_card_muted">
             No ranked matches found for this season yet.
           </span>
