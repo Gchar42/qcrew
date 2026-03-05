@@ -15,10 +15,12 @@ export function MatchList({
   matches,
   puuid,
   onMatchClick,
+  itemDataById,
 }: {
   matches: MatchDto[];
   puuid: string;
   onMatchClick: (m: MatchDto) => void;
+  itemDataById?: Record<number, { name: string; plaintext?: string }>;
 }) {
   if (matches.length === 0) {
     return (
@@ -54,6 +56,7 @@ export function MatchList({
             badge={badgeInfo?.badge}
             badgeReason={badgeInfo?.reason}
             onClick={() => onMatchClick(m)}
+            itemDataById={itemDataById}
           />
         );
       })}

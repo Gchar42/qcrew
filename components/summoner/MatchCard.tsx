@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { getChampionSplashUrl, isValidItemId, DEFAULT_DDRAGON_VERSION } from "@/lib/riotAssets";
 import { getBadgeCategory } from "@/lib/matchBadges";
+import { LeagueTooltip } from "@/components/LeagueTooltip";
 
 function badgeChipClass(badge: string): string {
   const cat = getBadgeCategory(badge);
@@ -30,6 +31,7 @@ export function MatchCard({
   badge,
   badgeReason,
   onClick,
+  itemDataById,
 }: {
   champion: string;
   role: string;
@@ -42,6 +44,7 @@ export function MatchCard({
   badge?: string;
   badgeReason?: string;
   onClick: () => void;
+  itemDataById?: Record<number, { name: string; plaintext?: string }>;
 }) {
   const splash = getChampionSplashUrl(champion);
 
@@ -97,17 +100,22 @@ export function MatchCard({
         <div className="flex gap-1 shrink-0">
           {items.slice(0, 6).map((id, idx) =>
             isValidItemId(id) ? (
-              <img
+              <LeagueTooltip
                 key={id}
-                src={`https://ddragon.leagueoflegends.com/cdn/${DEFAULT_DDRAGON_VERSION}/img/item/${id}.png`}
-                alt={`Item ${id}`}
-                loading="lazy"
-                decoding="async"
-                className="w-8 h-8 rounded bg-white/5"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                }}
-              />
+                title={(itemDataById?.[id]?.name || `Item ${id}`).trim() || `Item ${id}`}
+                body={itemDataById?.[id]?.plaintext}
+              >
+                <img
+                  src={`https://ddragon.leagueoflegends.com/cdn/${DEFAULT_DDRAGON_VERSION}/img/item/${id}.png`}
+                  alt={`Item ${id}`}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-8 h-8 rounded bg-white/5"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              </LeagueTooltip>
             ) : (
               <div key={idx} className="item-slot-empty w-8 h-8 rounded bg-white/5" />
             )
