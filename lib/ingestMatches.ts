@@ -1,11 +1,11 @@
 /**
  * Ingest match list for a player: use match_cache and matches tables first,
  * fetch from Riot only when missing. Cap Riot detail fetches at 8 per request.
+ * Does not throw on Riot 429; returns whatever is in cache + any details fetched.
  */
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getRoutingRegion } from "@/lib/riot-regions";
 import { queueToRiotQueueId } from "@/lib/riotCacheUtils";
-import { riotFetchJson } from "@/lib/riotFetch";
 import { matchDtoToRow } from "@/lib/matchesDb";
 import type { MatchDto } from "@/types/riot";
 
@@ -18,9 +18,16 @@ export type IngestResult = {
   needsMore: boolean;
 };
 
+function getRiotKey(): string {
+  const key = process.env.RIOT_API_KEY;
+  if (!key) throw new Error("Missing RIOT_API_KEY");
+  return key;
+}
+
 /**
  * Get last 20 match ids from Riot for the given queue, then fill details from
  * match_cache or Riot. Returns match payloads in list order; needsMore if not all 20 could be filled this request.
+ * Never throws on 429; returns partial result.
  */
 export async function ingestMatches(
   region: string,
@@ -29,6 +36,7 @@ export async function ingestMatches(
 ): Promise<IngestResult> {
   const regionRouting = getRoutingRegion(region);
   const riotQueueId = queueToRiotQueueId(queue);
+  const riotKey = getRiotKey();
 
   const matchIdsUrl =
     `https://${regionRouting}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(puuid)}/ids` +
@@ -36,7 +44,15 @@ export async function ingestMatches(
 
   let matchIdList: string[];
   try {
-    matchIdList = await riotFetchJson<string[]>(matchIdsUrl, regionRouting);
+    const res = await fetch(matchIdsUrl, {
+      headers: { "X-Riot-Token": riotKey },
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      if (res.status === 429) return { matchPayloads: [], matchIds: [], needsMore: true };
+      return { matchPayloads: [], matchIds: [], needsMore: false };
+    }
+    matchIdList = (await res.json()) as string[];
   } catch {
     return { matchPayloads: [], matchIds: [], needsMore: false };
   }
@@ -70,7 +86,12 @@ export async function ingestMatches(
   for (const matchId of toFetch) {
     const matchUrl = `https://${regionRouting}.api.riotgames.com/lol/match/v5/matches/${encodeURIComponent(matchId)}`;
     try {
-      const matchDto = await riotFetchJson<MatchDto>(matchUrl, regionRouting);
+      const matchRes = await fetch(matchUrl, {
+        headers: { "X-Riot-Token": riotKey },
+        cache: "no-store",
+      });
+      if (matchRes.status === 429 || !matchRes.ok) continue;
+      const matchDto = (await matchRes.json()) as MatchDto;
       payloadMap.set(matchId, matchDto);
 
       await sb.from("match_cache").upsert(
@@ -106,7 +127,7 @@ export async function ingestMatches(
         );
       }
     } catch {
-      // skip failed fetch (e.g. 429)
+      // skip failed fetch
     }
   }
 

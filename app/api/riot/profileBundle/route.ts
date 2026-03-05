@@ -1,41 +1,64 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { getRoutingRegion } from "@/lib/riot-regions";
-import { queueToRiotQueueId } from "@/lib/riotCacheUtils";
-import { rankToNumber, numberToRankLabel } from "@/lib/rankMapping";
-import { tryLock } from "@/lib/lock";
-import {
-  getCached as getSharedCached,
-  setCached as setSharedCached,
-  tryAcquireLock,
-  releaseLock,
-  PROFILE_BUNDLE_TTL_SEC,
-  LOCK_TTL_SEC,
-} from "@/lib/sharedCache";
-import { riotFetchJson, RiotRateLimitError } from "@/lib/riotFetch";
 import { ingestMatches } from "@/lib/ingestMatches";
+import { rankToNumber, numberToRankLabel } from "@/lib/rankMapping";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const FRESH_SEC = 120; // 2 minutes
+const STALE_AFTER_SEC = 120;
 const NO_CACHE_HEADERS = {
   "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
 };
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
 
+/** Cache is valid only if it contains matches (not rank-only blobs). */
 function hasUsableMatches(data: unknown): boolean {
-  const matches = (data as { matches?: unknown[] })?.matches;
-  return Array.isArray(matches) && matches.length > 0;
+  const matches = (data as { matches?: unknown[]; matchIds?: unknown[] })?.matches;
+  if (Array.isArray(matches)) return matches.length > 0;
+  return false;
 }
+
+async function refreshSnapshot(
+  baseUrl: string,
+  region: string,
+  queue: "solo" | "flex",
+  normRiotId: string
+): Promise<void> {
+  const [gameName, tagLine] = normRiotId.split("#").map((s) => s.trim());
+  if (!gameName || !tagLine) return;
+  const parsed = { gameName, tagLine };
+  const bundle = await fetchBundleFromRiot(baseUrl, region, queue, parsed);
+  await supabaseAdmin.from("profile_snapshots").upsert(
+    {
+      region,
+      queue,
+      riot_id: normRiotId,
+      puuid: bundle.profile.account.puuid,
+      data: bundle as unknown as Record<string, unknown>,
+      fetched_at: new Date().toISOString(),
+      stale_after_sec: STALE_AFTER_SEC,
+    },
+    { onConflict: "region,queue,riot_id" }
+  );
+}
+
+type ProfileSnapshotRow = {
+  region: string;
+  queue: string;
+  riot_id: string;
+  puuid: string;
+  data: ProfileBundle;
+  fetched_at: string;
+  stale_after_sec: number;
+};
 
 export type ProfileBundle = {
   profile: { account: AccountDto; summoner: SummonerDto };
   ranked: { solo: LeagueEntryDto | null; flex: LeagueEntryDto | null };
   matchIds: string[];
   matches: MatchDto[];
-  partialMatches?: boolean;
   computed: {
     matchCount: number;
     avgKda: string;
@@ -45,6 +68,8 @@ export type ProfileBundle = {
     avgRankRankedCount: number;
   };
   leagueEntriesBySummonerId: Record<string, LeagueEntryDto[]>;
+  /** True when not all match details could be filled this request (e.g. rate limited). */
+  partialMatches?: boolean;
 };
 
 function getBaseUrl(request: Request): string {
@@ -60,14 +85,83 @@ function normalizeRiotId(riotId: string): string {
   return `${(name ?? "").toLowerCase()}#${(tag ?? "").toLowerCase()}`;
 }
 
-function computedFromMatches(matches: MatchDto[], puuid: string) {
+async function fetchBundleFromRiot(
+  baseUrl: string,
+  region: string,
+  queue: "solo" | "flex",
+  parsed: { gameName: string; tagLine: string }
+): Promise<ProfileBundle> {
+  const startTime = Date.now();
+  console.log("PROFILE FETCH START");
+
+  const platform = region;
+
+  const accountRes = await fetch(
+    `${baseUrl}/api/riot/account?gameName=${encodeURIComponent(parsed.gameName)}&tagLine=${encodeURIComponent(parsed.tagLine)}&region=${region}`
+  );
+  if (!accountRes.ok) {
+    const err = await accountRes.json().catch(() => ({}));
+    throw new Error((err as { error?: string }).error ?? "Account lookup failed");
+  }
+  const account = (await accountRes.json()) as AccountDto;
+  console.log("[profileBundle] puuid", account.puuid);
+
+  const [summoner, leagueEntries, ingest] = await Promise.all([
+    fetch(`${baseUrl}/api/riot/summoner?puuid=${encodeURIComponent(account.puuid)}&region=${region}`).then(
+      async (r) => {
+        if (!r.ok) throw new Error("Summoner lookup failed");
+        return r.json() as Promise<SummonerDto>;
+      }
+    ),
+    fetch(`${baseUrl}/api/riot/league?puuid=${encodeURIComponent(account.puuid)}&platform=${platform}`).then(
+      async (r) => {
+        if (!r.ok) return [] as LeagueEntryDto[];
+        try {
+          const arr = JSON.parse(await r.text()) as LeagueEntryDto[];
+          return Array.isArray(arr) ? arr : [];
+        } catch {
+          return [] as LeagueEntryDto[];
+        }
+      }
+    ),
+    ingestMatches(region, account.puuid, queue),
+  ]);
+
+  console.log("RANK FETCH END", Date.now() - startTime);
+  console.log("[profileBundle] matchIds", ingest.matchIds?.length, "matches", ingest.matchPayloads?.length, "needsMore", ingest.needsMore);
+
+  const soloEntry = leagueEntries.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null;
+  const flexEntry = leagueEntries.find((e) => e.queueType === "RANKED_FLEX_SR") ?? null;
+
+  const matches = ingest.matchPayloads;
+  const matchIdList = ingest.matchIds;
+  console.log("[profileBundle] matchesBuilt", matches.length);
+
+  const summonerIds = new Set<string>();
+  matches.forEach((m) =>
+    m.info?.participants?.forEach((p) => {
+      if (p.summonerId) summonerIds.add(p.summonerId);
+    })
+  );
+  const idList = [...summonerIds].slice(0, 100);
+  let leagueEntriesBySummonerId: Record<string, LeagueEntryDto[]> = {};
+  if (idList.length > 0) {
+    const batchRes = await fetch(
+      `${baseUrl}/api/riot/league-batch?summonerIds=${idList.map((id) => encodeURIComponent(id)).join(",")}&platform=${platform}`
+    );
+    if (batchRes.ok) {
+      const data = (await batchRes.json()) as { entries?: Record<string, LeagueEntryDto[]> };
+      leagueEntriesBySummonerId = data.entries ?? {};
+    }
+  }
+
   const n = matches.length || 1;
-  const participant = (m: MatchDto) => m.info?.participants?.find((p) => p.puuid === puuid);
   let avgKills = 0,
     avgDeaths = 0,
     avgAssists = 0,
     totalCs = 0,
     totalDurationSec = 0;
+  const participant = (m: MatchDto) => m.info?.participants?.find((p) => p.puuid === account.puuid);
   matches.forEach((m) => {
     const p = participant(m);
     if (p) {
@@ -83,72 +177,44 @@ function computedFromMatches(matches: MatchDto[], puuid: string) {
   avgAssists = Math.round((avgAssists / n) * 10) / 10;
   const avgDurationMin = totalDurationSec / 60 / n;
   const avgCsPerMin = totalDurationSec > 0 ? totalCs / (totalDurationSec / 60) : 0;
-  return {
-    matchCount: matches.length,
-    avgKda: `${avgKills}/${avgDeaths}/${avgAssists}`,
-    csPerMin: Math.round(avgCsPerMin * 10) / 10,
-    avgDuration: Math.round(avgDurationMin * 10) / 10,
-    avgRankPlayedAgainst: "Unranked" as string,
-    avgRankRankedCount: 0,
-  };
-}
 
-async function fetchBundleFromRiot(
-  baseUrl: string,
-  region: string,
-  queue: "solo" | "flex",
-  parsed: { gameName: string; tagLine: string }
-): Promise<ProfileBundle> {
-  const platform = region;
-
-  const accountRes = await fetch(
-    `${baseUrl}/api/riot/account?gameName=${encodeURIComponent(parsed.gameName)}&tagLine=${encodeURIComponent(parsed.tagLine)}&region=${region}`
-  );
-  if (!accountRes.ok) {
-    const err = await accountRes.json().catch(() => ({}));
-    throw new Error((err as { error?: string }).error ?? "Account lookup failed");
-  }
-  const account = (await accountRes.json()) as AccountDto;
-  const puuid = account.puuid;
-
-  const [summoner, leagueEntries, ingest] = await Promise.all([
-    fetch(`${baseUrl}/api/riot/summoner?puuid=${encodeURIComponent(puuid)}&region=${region}`).then(async (r) => {
-      if (!r.ok) throw new Error("Summoner lookup failed");
-      return r.json() as Promise<SummonerDto>;
-    }),
-    fetch(`${baseUrl}/api/riot/league?puuid=${encodeURIComponent(puuid)}&platform=${platform}`).then(async (r) => {
-      if (!r.ok) return [] as LeagueEntryDto[];
-      try {
-        const arr = JSON.parse(await r.text()) as LeagueEntryDto[];
-        return Array.isArray(arr) ? arr : [];
-      } catch {
-        return [] as LeagueEntryDto[];
-      }
-    }),
-    ingestMatches(region, puuid, queue),
-  ]);
-
-  const soloEntry = leagueEntries.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null;
-  const flexEntry = leagueEntries.find((e) => e.queueType === "RANKED_FLEX_SR") ?? null;
-
-  const matches = ingest.matchPayloads;
-  const computed = computedFromMatches(matches, puuid);
+  const values: number[] = [];
+  const targetSolo = "RANKED_SOLO_5x5";
+  idList.forEach((id) => {
+    const list = leagueEntriesBySummonerId[id] ?? [];
+    const solo = list.find((e) => e.queueType === targetSolo && e.tier && e.rank);
+    if (!solo?.tier || !solo?.rank) return;
+    const numeric = rankToNumber(solo.tier, solo.rank);
+    if (numeric != null && Number.isFinite(numeric)) values.push(numeric);
+  });
+  const avgRankPlayedAgainst =
+    values.length > 0 ? numberToRankLabel(values.reduce((a, b) => a + b, 0) / values.length) : "Unranked";
 
   const bundle: ProfileBundle = {
     profile: { account, summoner },
     ranked: { solo: soloEntry, flex: flexEntry },
-    matchIds: ingest.matchIds,
+    matchIds: matchIdList,
     matches,
+    computed: {
+      matchCount: matches.length,
+      avgKda: `${avgKills}/${avgDeaths}/${avgAssists}`,
+      csPerMin: Math.round(avgCsPerMin * 10) / 10,
+      avgDuration: Math.round(avgDurationMin * 10) / 10,
+      avgRankPlayedAgainst,
+      avgRankRankedCount: values.length,
+    },
+    leagueEntriesBySummonerId,
     partialMatches: ingest.needsMore,
-    computed,
-    leagueEntriesBySummonerId: {},
   };
 
+  console.log("bundle keys", Object.keys(bundle), "matches", bundle.matches?.length);
+  console.log("PROFILE FETCH END", Date.now() - startTime);
   return bundle;
 }
 
 export async function GET(request: Request) {
-  if (!process.env.RIOT_API_KEY) {
+  const riotApiKey = process.env.RIOT_API_KEY;
+  if (!riotApiKey) {
     return NextResponse.json(
       { error: "Riot API key not configured", status: 500 },
       { status: 500, headers: NO_CACHE }
@@ -159,7 +225,6 @@ export async function GET(request: Request) {
   const riotIdParam = searchParams.get("riotId");
   const region = searchParams.get("region") ?? "na1";
   const queue = (searchParams.get("queue") ?? "solo") === "flex" ? "flex" : "solo";
-  const queueKey = queue;
 
   if (!riotIdParam || !riotIdParam.trim()) {
     return NextResponse.json(
@@ -184,118 +249,57 @@ export async function GET(request: Request) {
     );
   }
   const parsed = { gameName, tagLine };
-  const baseUrl = getBaseUrl(request);
-  const cacheKey = `profileBundle:${region}:${normRiotId}:${queue}`;
-  const lockKey = `lock:profileBundle:${region}:${normRiotId}:${queue}`;
 
-  const cached = await getSharedCached(cacheKey);
-  if (cached) return Response.json(cached, { status: 200, headers: NO_CACHE_HEADERS });
+  console.log("[profileBundle] riotId", riotIdParam, "queue", queue, "region", region);
 
-  const lockAcquired = await tryAcquireLock(lockKey, LOCK_TTL_SEC);
-  if (!lockAcquired) {
-    const stale = await getSharedCached(cacheKey);
-    if (stale) return Response.json(stale, { status: 200, headers: NO_CACHE_HEADERS });
+  const { data: snapshot, error: selectError } = await supabaseAdmin
+    .from("profile_snapshots")
+    .select("*")
+    .eq("region", region)
+    .eq("queue", queue)
+    .eq("riot_id", normRiotId)
+    .maybeSingle();
+
+  if (selectError) {
+    console.error("[profileBundle] Supabase select error:", selectError);
     return NextResponse.json(
-      { error: "Profile busy; retry shortly", status: 202, retryAfter: 1 },
-      { status: 202, headers: { "Retry-After": "1", ...NO_CACHE } }
+      { error: "Cache lookup failed", status: 500 },
+      { status: 500, headers: NO_CACHE }
     );
   }
 
-  let puuid: string | null = null;
-  const { data: summonerRow } = await supabaseAdmin
-    .from("summoner_cache")
-    .select("puuid")
-    .eq("region", region)
-    .eq("riot_id", normRiotId)
-    .maybeSingle();
-  if (summonerRow?.puuid) puuid = summonerRow.puuid as string;
+  const row = snapshot as ProfileSnapshotRow | null;
+  console.log("[profileBundle] cache hit", !!row?.data, "cache matches", (row?.data as ProfileBundle | undefined)?.matches?.length);
 
-  if (puuid) {
-    const profileCacheKey = `profile:${puuid}:${queue}`;
-    const profileCached = await getSharedCached(profileCacheKey);
-    if (profileCached) return Response.json(profileCached, { status: 200, headers: NO_CACHE_HEADERS });
-  }
+  if (row?.data && hasUsableMatches(row.data)) {
+    const cached = row.data as ProfileBundle;
+    const ageSec = (Date.now() - new Date(row.fetched_at).getTime()) / 1000;
+    const stale = ageSec > (row.stale_after_sec ?? STALE_AFTER_SEC);
 
-  if (puuid) {
-    const { data: bundleRow } = await supabaseAdmin
-      .from("profile_bundle_cache")
-      .select("payload, fetched_at")
-      .eq("region", region)
-      .eq("puuid", puuid)
-      .eq("queue_key", queueKey)
-      .maybeSingle();
-
-    if (bundleRow?.payload) {
-      const payload = bundleRow.payload as ProfileBundle;
-      const fetchedAt = new Date((bundleRow as { fetched_at: string }).fetched_at).getTime();
-      const ageSec = (Date.now() - fetchedAt) / 1000;
-
-      if (hasUsableMatches(payload)) {
-        if (ageSec < FRESH_SEC) {
-          await setSharedCached(`profile:${puuid}:${queue}`, payload, PROFILE_BUNDLE_TTL_SEC);
-          return NextResponse.json(payload, { headers: NO_CACHE_HEADERS });
-        }
-        const refreshLockKey = `profile_refresh:${region}:${puuid}:${queueKey}`;
-        tryLock(refreshLockKey, 120).then((ok) => {
-          if (ok) {
-            fetchBundleFromRiot(baseUrl, region, queue, parsed)
-              .then(async (bundle) => {
-                const p = bundle.profile.account.puuid;
-                await setSharedCached(cacheKey, bundle, PROFILE_BUNDLE_TTL_SEC);
-                return Promise.all([
-                  supabaseAdmin.from("summoner_cache").upsert(
-                    { region, riot_id: normRiotId, puuid: p, payload: { puuid: p }, fetched_at: new Date().toISOString() },
-                    { onConflict: "region,riot_id" }
-                  ),
-                  supabaseAdmin.from("profile_bundle_cache").upsert(
-                    {
-                      region,
-                      puuid: p,
-                      queue_key: queueKey,
-                      payload: bundle as unknown as Record<string, unknown>,
-                      fetched_at: new Date().toISOString(),
-                    },
-                    { onConflict: "region,puuid,queue_key" }
-                  ),
-                ]);
-              })
-              .catch(() => {});
-          }
-        });
-        await setSharedCached(`profile:${puuid}:${queue}`, payload, PROFILE_BUNDLE_TTL_SEC);
-        return NextResponse.json(payload, { headers: NO_CACHE_HEADERS });
-      }
+    if (!stale) {
+      return NextResponse.json(cached, {
+        headers: NO_CACHE_HEADERS,
+      });
     }
+
+    const baseUrl = getBaseUrl(request);
+    refreshSnapshot(baseUrl, region, queue, normRiotId).catch(() => {});
+
+    return NextResponse.json(cached, {
+      headers: NO_CACHE_HEADERS,
+    });
   }
 
+  /* Cache miss or cache has no usable matches (rank-only blob): fetch full bundle and overwrite cache. */
+  const baseUrl = getBaseUrl(request);
   let bundle: ProfileBundle;
   try {
     bundle = await fetchBundleFromRiot(baseUrl, region, queue, parsed);
-    await setSharedCached(cacheKey, bundle, PROFILE_BUNDLE_TTL_SEC);
-    await setSharedCached(`profile:${bundle.profile.account.puuid}:${queue}`, bundle, PROFILE_BUNDLE_TTL_SEC);
   } catch (e) {
-    await releaseLock(lockKey);
-    const { data: summonerCacheRow } = await supabaseAdmin.from("summoner_cache").select("puuid").eq("region", region).eq("riot_id", normRiotId).maybeSingle();
-    const cachedPuuid = puuid ?? (summonerCacheRow?.puuid as string | undefined);
-    if (cachedPuuid) {
-      const { data: bundleRow } = await supabaseAdmin
-        .from("profile_bundle_cache")
-        .select("payload")
-        .eq("region", region)
-        .eq("puuid", cachedPuuid)
-        .eq("queue_key", queueKey)
-        .maybeSingle();
-      if (bundleRow?.payload && hasUsableMatches(bundleRow.payload)) {
-        const cached = bundleRow.payload as ProfileBundle;
-        return NextResponse.json({ ...cached, partialMatches: true }, { status: 200, headers: NO_CACHE_HEADERS });
-      }
-    }
-    if (e instanceof RiotRateLimitError) {
-      const retrySec = Math.ceil(e.retryAfterMs / 1000);
-      return NextResponse.json(
-        { error: "Rate limited; retry soon", status: 503, retryAfter: retrySec },
-        { status: 503, headers: { "Retry-After": String(retrySec), ...NO_CACHE } }
-      );
+    if (row?.data && hasUsableMatches(row.data)) {
+      return NextResponse.json(row.data as ProfileBundle, {
+        headers: NO_CACHE_HEADERS,
+      });
     }
     const message = e instanceof Error ? e.message : "Failed to load profile";
     return NextResponse.json(
@@ -304,23 +308,23 @@ export async function GET(request: Request) {
     );
   }
 
-  await releaseLock(lockKey);
+  console.log("bundle keys", Object.keys(bundle), "matches", bundle.matches?.length);
 
-  const puuidForUpsert = bundle.profile.account.puuid;
-  await supabaseAdmin.from("summoner_cache").upsert(
-    { region, riot_id: normRiotId, puuid: puuidForUpsert, payload: { puuid: puuidForUpsert }, fetched_at: new Date().toISOString() },
-    { onConflict: "region,riot_id" }
-  );
-  await supabaseAdmin.from("profile_bundle_cache").upsert(
+  await supabaseAdmin.from("profile_snapshots").upsert(
     {
       region,
-      puuid: puuidForUpsert,
-      queue_key: queueKey,
-      payload: bundle as unknown as Record<string, unknown>,
+      queue,
+      riot_id: normRiotId,
+      puuid: bundle.profile.account.puuid,
+      data: bundle as unknown as Record<string, unknown>,
       fetched_at: new Date().toISOString(),
+      stale_after_sec: STALE_AFTER_SEC,
     },
-    { onConflict: "region,puuid,queue_key" }
+    { onConflict: "region,queue,riot_id" }
   );
 
-  return NextResponse.json(bundle, { status: 200, headers: NO_CACHE_HEADERS });
+  return NextResponse.json(bundle, {
+    status: 200,
+    headers: NO_CACHE_HEADERS,
+  });
 }
