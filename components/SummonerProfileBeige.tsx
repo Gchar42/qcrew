@@ -409,6 +409,23 @@ export default function SummonerProfileBeige({
   const [mainTab, setMainTab] = useState<"overview" | "champion-pool">("overview");
   const lastChampionStatsRefreshTrigger = useRef<Map<string, number>>(new Map());
 
+  const championStatsFromDisplayed = useMemo(() => {
+    if (!account?.puuid || displayedMatches.length === 0) return null;
+    const champions = computeChampionStatsFromMatches(displayedMatches, account.puuid);
+    return { champions, updatedAt: new Date().toISOString() };
+  }, [displayedMatches, account?.puuid]);
+
+  const championStatsToShow = useMemo(() => {
+    const empty = { champions: [], updatedAt: "" };
+    const solo = queue === "solo" && championStatsFromDisplayed
+      ? championStatsFromDisplayed
+      : (bundle?.championStats?.solo ?? empty);
+    const flex = queue === "flex" && championStatsFromDisplayed
+      ? championStatsFromDisplayed
+      : (bundle?.championStats?.flex ?? empty);
+    return { solo, flex };
+  }, [queue, championStatsFromDisplayed, bundle?.championStats]);
+
   useEffect(() => {
     setAdditionalMatchesByQueue({});
     setHasMoreByQueue({});
@@ -589,22 +606,6 @@ export default function SummonerProfileBeige({
 
   const role = primaryRole(displayedMatches, account.puuid);
 
-  const championStatsFromDisplayed = useMemo(() => {
-    if (!account?.puuid || displayedMatches.length === 0) return null;
-    const champions = computeChampionStatsFromMatches(displayedMatches, account.puuid);
-    return { champions, updatedAt: new Date().toISOString() };
-  }, [displayedMatches, account?.puuid]);
-
-  const championStatsToShow = useMemo(() => {
-    const empty = { champions: [], updatedAt: "" };
-    const solo = queue === "solo" && championStatsFromDisplayed
-      ? championStatsFromDisplayed
-      : (bundle?.championStats?.solo ?? empty);
-    const flex = queue === "flex" && championStatsFromDisplayed
-      ? championStatsFromDisplayed
-      : (bundle?.championStats?.flex ?? empty);
-    return { solo, flex };
-  }, [queue, championStatsFromDisplayed, bundle?.championStats]);
   const level = summoner?.summonerLevel ?? 0;
 
   const leagueEntry = leagueEntries?.find((e) => e.queueType === targetQueueType) ?? null;
