@@ -376,6 +376,7 @@ export default function SummonerProfileBeige({
   const [additionalMatchesByQueue, setAdditionalMatchesByQueue] = useState<Record<string, MatchDto[]>>({});
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMoreByQueue, setHasMoreByQueue] = useState<Record<string, boolean>>({});
+  const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
 
   const account = bundle?.profile.account ?? null;
   const summoner = bundle?.profile.summoner ?? null;
@@ -400,7 +401,6 @@ export default function SummonerProfileBeige({
 
   const activeQueueType = queue === "flex" ? "RANKED_FLEX_SR" : "RANKED_SOLO_5x5";
 
-  const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [perkNamesById, setPerkNamesById] = useState<Map<number, string>>(new Map());
   const [perkDataById, setPerkDataById] = useState<Map<number, { name?: string; shortDesc?: string }>>(new Map());
