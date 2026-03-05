@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { rankToNumber, numberToRankLabel } from "@/lib/rankMapping";
 import { getCachedDdragonVersion } from "@/lib/ddragonVersion";
+import { getRoutingRegion } from "@/lib/riot-regions";
 import { SEASON_KEY, SEASON_START_MS } from "@/lib/season";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 import type { ChampionStatRow } from "@/app/api/champion-stats/route";
@@ -152,6 +153,27 @@ function normalizeRiotId(riotId: string): string {
   return `${(name ?? "").toLowerCase()}#${(tag ?? "").toLowerCase()}`;
 }
 
+const RIOT_ACCOUNT_BASE = "https://{region}.api.riotgames.com/riot/account/v1";
+
+async function fetchAccountFromRiot(
+  gameName: string,
+  tagLine: string,
+  region: string
+): Promise<AccountDto> {
+  const key = process.env.RIOT_API_KEY;
+  if (!key) throw new Error("Riot API key not configured");
+  const routing = getRoutingRegion(region);
+  const base = RIOT_ACCOUNT_BASE.replace("{region}", routing);
+  const url = `${base}/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`;
+  const res = await fetch(url, { cache: "no-store", headers: { "X-Riot-Token": key } });
+  const text = await res.text();
+  if (!res.ok) {
+    const msg = text || "Account lookup failed";
+    throw new Error(msg.length > 120 ? "Account lookup failed" : msg);
+  }
+  return JSON.parse(text) as AccountDto;
+}
+
 async function fetchBundleFromRiot(
   baseUrl: string,
   region: string,
@@ -164,14 +186,18 @@ async function fetchBundleFromRiot(
   const queueId = queue === "flex" ? 440 : 420;
   const platform = region;
 
-  const accountRes = await fetch(
-    `${baseUrl}/api/riot/account?gameName=${encodeURIComponent(parsed.gameName)}&tagLine=${encodeURIComponent(parsed.tagLine)}&region=${region}`
-  );
-  if (!accountRes.ok) {
-    const err = await accountRes.json().catch(() => ({}));
-    throw new Error((err as { error?: string }).error ?? "Account lookup failed");
+  let account: AccountDto;
+  try {
+    account = await fetchAccountFromRiot(parsed.gameName, parsed.tagLine, region);
+  } catch (e) {
+    await new Promise((r) => setTimeout(r, 800));
+    try {
+      account = await fetchAccountFromRiot(parsed.gameName, parsed.tagLine, region);
+    } catch (e2) {
+      const err = e2 instanceof Error ? e2 : new Error("Account lookup failed");
+      throw err;
+    }
   }
-  const account = (await accountRes.json()) as AccountDto;
 
   const [summoner, matchIdList, leagueEntries] = await Promise.all([
     fetch(`${baseUrl}/api/riot/summoner?puuid=${encodeURIComponent(account.puuid)}&region=${region}`).then(
