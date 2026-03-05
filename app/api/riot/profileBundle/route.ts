@@ -324,26 +324,33 @@ export async function GET(request: Request) {
 
   if (row?.data) {
     const cached = row.data as ProfileBundle;
-    const ageSec = (Date.now() - new Date(row.fetched_at).getTime()) / 1000;
-    const stale = ageSec > (row.stale_after_sec ?? STALE_AFTER_SEC);
+    const matchIdsCount = cached.matchIds?.length ?? 0;
+    const matchesCount = cached.matches?.length ?? 0;
+    const cacheHasEmptyMatches = matchIdsCount > 0 && matchesCount === 0;
 
-    const bundleToReturn =
-      cached.championStats != null
-        ? cached
-        : { ...cached, championStats: await fetchChampionStatsForBundle(cached.profile.account.puuid) };
+    if (!cacheHasEmptyMatches) {
+      const ageSec = (Date.now() - new Date(row.fetched_at).getTime()) / 1000;
+      const stale = ageSec > (row.stale_after_sec ?? STALE_AFTER_SEC);
 
-    if (!stale) {
+      const bundleToReturn =
+        cached.championStats != null
+          ? cached
+          : { ...cached, championStats: await fetchChampionStatsForBundle(cached.profile.account.puuid) };
+
+      if (!stale) {
+        return NextResponse.json(bundleToReturn, {
+          headers: CACHE_HEADERS,
+        });
+      }
+
+      const baseUrl = getBaseUrl(request);
+      refreshSnapshot(baseUrl, region, queue, normRiotId).catch(() => {});
+
       return NextResponse.json(bundleToReturn, {
         headers: CACHE_HEADERS,
       });
     }
-
-    const baseUrl = getBaseUrl(request);
-    refreshSnapshot(baseUrl, region, queue, normRiotId).catch(() => {});
-
-    return NextResponse.json(bundleToReturn, {
-      headers: CACHE_HEADERS,
-    });
+    // cacheHasEmptyMatches: skip cache and fall through to fresh fetch
   }
 
   const baseUrl = getBaseUrl(request);

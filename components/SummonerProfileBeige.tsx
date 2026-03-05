@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import useSWR, { mutate as globalMutate } from "swr";
 import { buildProfileHref } from "@/lib/routes";
@@ -395,6 +395,7 @@ export default function SummonerProfileBeige({
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
   const [mainTab, setMainTab] = useState<"overview" | "champion-pool">("overview");
+  const championStatsRefreshDone = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     fetch("/api/ddragon/version")
@@ -426,6 +427,31 @@ export default function SummonerProfileBeige({
       })
       .catch(() => {});
   }, []);
+
+  // When profile has no champion stats yet, trigger background refresh once then revalidate bundle
+  useEffect(() => {
+    const puuid = bundle?.profile?.account?.puuid;
+    const championStats = bundle?.championStats;
+    if (!puuid || !championStats) return;
+    if (championStatsRefreshDone.current.has(puuid)) return;
+    const soloEmpty = !championStats.solo?.champions?.length;
+    const flexEmpty = !championStats.flex?.champions?.length;
+    if (!soloEmpty && !flexEmpty) return;
+
+    championStatsRefreshDone.current.add(puuid);
+    const region = regionVal ?? "na1";
+    const refresh = (q: "solo" | "flex") =>
+      fetch("/api/champion-stats/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ puuid, queue: q, region }),
+      }).catch(() => {});
+
+    if (soloEmpty) refresh("solo");
+    if (flexEmpty) refresh("flex");
+    const t = setTimeout(() => mutate(), 4000);
+    return () => clearTimeout(t);
+  }, [bundle?.profile?.account?.puuid, bundle?.championStats, regionVal, mutate]);
 
   if (!riotIdParam) {
     return (
