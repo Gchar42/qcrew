@@ -762,6 +762,34 @@
   gap: 3px;
 }
 
+.profile-page .profile-matches-show-more-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0 8px;
+}
+
+.profile-page .profile-matches-show-more {
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.profile-page .profile-matches-show-more:hover:not(:disabled) {
+  background: var(--surface3);
+  border-color: var(--muted);
+}
+
+.profile-page .profile-matches-show-more:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 /* Match row – dark card (Blitz-style) */
 .profile-page .profile-match-row {
   display: grid;

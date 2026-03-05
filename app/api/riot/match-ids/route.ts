@@ -25,6 +25,8 @@ export async function GET(request: Request) {
   const puuid = searchParams.get("puuid");
   const count = searchParams.get("count") ?? "20";
   const start = searchParams.get("start") ?? "0";
+  /** Optional: epoch seconds - only return matches on or after this time (e.g. season start). */
+  const startTime = searchParams.get("startTime");
   /** 420 = Solo or Duo, 440 = Flex */
   const queueId = searchParams.get("queueId") ?? "420";
   if (!puuid) {
@@ -36,7 +38,10 @@ export async function GET(request: Request) {
 
   const routing = getRoutingRegion(region);
   const base = RIOT_MATCH_BASE.replace("{region}", routing);
-  const riotUrl = `${base}/by-puuid/${encodeURIComponent(puuid)}/ids?start=${encodeURIComponent(start)}&count=${encodeURIComponent(count)}&queue=${encodeURIComponent(queueId)}`;
+  let riotUrl = `${base}/by-puuid/${encodeURIComponent(puuid)}/ids?start=${encodeURIComponent(start)}&count=${encodeURIComponent(count)}&queue=${encodeURIComponent(queueId)}`;
+  if (startTime != null && startTime !== "") {
+    riotUrl += `&startTime=${encodeURIComponent(startTime)}`;
+  }
 
   const upstream = await cachedRiotFetch(riotUrl);
   const text = await upstream.text();

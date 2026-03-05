@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { rankToNumber, numberToRankLabel } from "@/lib/rankMapping";
-import { SEASON_KEY } from "@/lib/season";
+import { SEASON_KEY, SEASON_START_MS } from "@/lib/season";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 import type { ChampionStatRow } from "@/app/api/champion-stats/route";
 
@@ -178,7 +178,7 @@ async function fetchBundleFromRiot(
       }
     ),
     fetch(
-      `${baseUrl}/api/riot/match-ids?puuid=${encodeURIComponent(account.puuid)}&region=${region}&count=20&queueId=${queueId}`
+      `${baseUrl}/api/riot/match-ids?puuid=${encodeURIComponent(account.puuid)}&region=${region}&count=20&queueId=${queueId}&startTime=${Math.floor(SEASON_START_MS / 1000)}`
     ).then(async (r) => {
       if (!r.ok) throw new Error("Match list failed");
       const data = (await r.json()) as { matchIds: string[] };

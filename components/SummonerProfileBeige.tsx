@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import useSWR, { mutate as globalMutate } from "swr";
 import { buildProfileHref } from "@/lib/routes";
@@ -30,6 +30,7 @@ import {
 import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
 import { numberToRankLabel, rankToNumber } from "@/lib/rankMapping";
+import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
 import type { AccountDto, LeagueEntryDto, SummonerDto, MatchDto } from "@/types/riot";
 
 /** Badge name -> profile CSS class for chip styling */
@@ -374,7 +375,8 @@ export default function SummonerProfileBeige({
 
   const account = bundle?.profile.account ?? null;
   const summoner = bundle?.profile.summoner ?? null;
-  const matches = bundle?.matches ?? [];
+  const bundleMatches = bundle?.matches ?? [];
+  const displayedMatches = bundleMatches.concat(additionalMatchesByQueue[queue] ?? []);
   const leagueEntries = bundle
     ? ([bundle.ranked.solo, bundle.ranked.flex].filter(Boolean) as LeagueEntryDto[])
     : [];
@@ -401,7 +403,15 @@ export default function SummonerProfileBeige({
   const [styleNamesById, setStyleNamesById] = useState<Map<number, string>>(new Map());
   const [itemDataById, setItemDataById] = useState<Record<number, { name: string; plaintext?: string }>>({});
   const [mainTab, setMainTab] = useState<"overview" | "champion-pool">("overview");
+  const [additionalMatchesByQueue, setAdditionalMatchesByQueue] = useState<Record<string, MatchDto[]>>({});
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMoreByQueue, setHasMoreByQueue] = useState<Record<string, boolean>>({});
   const lastChampionStatsRefreshTrigger = useRef<Map<string, number>>(new Map());
+
+  useEffect(() => {
+    setAdditionalMatchesByQueue({});
+    setHasMoreByQueue({});
+  }, [riotIdParam, regionVal]);
   const CHAMPION_STATS_STALE_MS = 5 * 60 * 1000;
   const CHAMPION_STATS_REFRESH_THROTTLE_MS = 4 * 60 * 1000;
 
@@ -546,37 +556,54 @@ export default function SummonerProfileBeige({
 
   const participant = (m: MatchDto) =>
     m.info?.participants?.find((p) => p.puuid === account.puuid);
-  const wins = matches.filter((m) => participant(m)?.win).length;
-  const total = matches.length;
+  const wins = displayedMatches.filter((m) => participant(m)?.win).length;
+  const total = displayedMatches.length;
   const winRate = total ? Math.round((wins / total) * 100) : 0;
 
-  const matchCount = bundle?.computed.matchCount ?? matches.length;
-  const avgKdaDisplay = bundle?.computed.avgKda ?? (() => {
-    const n = matches.length || 1;
+  const matchCount = displayedMatches.length;
+  const avgKdaDisplay = (() => {
+    const n = displayedMatches.length || 1;
     let k = 0, d = 0, a = 0;
-    matches.forEach((m) => {
+    displayedMatches.forEach((m) => {
       const p = participant(m);
       if (p) { k += p.kills ?? 0; d += p.deaths ?? 0; a += p.assists ?? 0; }
     });
     return `${Math.round((k / n) * 10) / 10}/${Math.round((d / n) * 10) / 10}/${Math.round((a / n) * 10) / 10}`;
   })();
-  const avgDurationMin = bundle?.computed.avgDuration ?? (() => {
-    const n = matches.length || 1;
-    const totalSec = matches.reduce((s, m) => s + (m.info?.gameDuration ?? 0), 0);
+  const avgDurationMin = (() => {
+    const n = displayedMatches.length || 1;
+    const totalSec = displayedMatches.reduce((s, m) => s + (m.info?.gameDuration ?? 0), 0);
     return totalSec / 60 / n;
   })();
-  const avgCsPerMin = bundle?.computed.csPerMin ?? (() => {
-    const n = matches.length || 1;
-    const totalSec = matches.reduce((s, m) => s + (m.info?.gameDuration ?? 0), 0);
+  const avgCsPerMin = (() => {
+    const n = displayedMatches.length || 1;
+    const totalSec = displayedMatches.reduce((s, m) => s + (m.info?.gameDuration ?? 0), 0);
     let totalCs = 0;
-    matches.forEach((m) => {
+    displayedMatches.forEach((m) => {
       const p = participant(m);
       if (p) totalCs += (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
     });
     return totalSec > 0 ? totalCs / (totalSec / 60) : 0;
   })();
 
-  const role = primaryRole(matches, account.puuid);
+  const role = primaryRole(displayedMatches, account.puuid);
+
+  const championStatsFromDisplayed = useMemo(() => {
+    if (!account?.puuid || displayedMatches.length === 0) return null;
+    const champions = computeChampionStatsFromMatches(displayedMatches, account.puuid);
+    return { champions, updatedAt: new Date().toISOString() };
+  }, [displayedMatches, account?.puuid]);
+
+  const championStatsToShow = useMemo(() => {
+    const empty = { champions: [], updatedAt: "" };
+    const solo = queue === "solo" && championStatsFromDisplayed
+      ? championStatsFromDisplayed
+      : (bundle?.championStats?.solo ?? empty);
+    const flex = queue === "flex" && championStatsFromDisplayed
+      ? championStatsFromDisplayed
+      : (bundle?.championStats?.flex ?? empty);
+    return { solo, flex };
+  }, [queue, championStatsFromDisplayed, bundle?.championStats]);
   const level = summoner?.summonerLevel ?? 0;
 
   const leagueEntry = leagueEntries?.find((e) => e.queueType === targetQueueType) ?? null;
@@ -668,9 +695,9 @@ export default function SummonerProfileBeige({
         <aside className="profile-body-left">
           {renderRankCard("Ranked Solo", soloEntry, rankLoading, rankError ?? null)}
           {renderRankCard("Ranked Flex", flexEntry, rankLoading, null)}
-          {bundle?.championStats && (
+          {championStatsToShow && (
             <ChampionStatsCard
-              championStats={bundle.championStats}
+              championStats={championStatsToShow}
               ddragonVersion={ddragonVersion}
               puuid={account.puuid}
               region={regionVal}
@@ -732,7 +759,7 @@ export default function SummonerProfileBeige({
           </div>
         </div>
         <div className="profile-matches-list">
-        {matches.map((m) => {
+        {displayedMatches.map((m) => {
           const p = participant(m);
           if (!p) return null;
           const win = p.win;
@@ -1150,6 +1177,36 @@ export default function SummonerProfileBeige({
             </div>
           );
         })}
+        {displayedMatches.length > 0 && hasMoreByQueue[queue] !== false && (
+          <div className="profile-matches-show-more-wrap">
+            <button
+              type="button"
+              className="profile-matches-show-more"
+              disabled={loadingMore}
+              onClick={async () => {
+                if (!account?.puuid || loadingMore) return;
+                setLoadingMore(true);
+                try {
+                  const start = displayedMatches.length;
+                  const res = await fetch(
+                    `/api/riot/more-matches?puuid=${encodeURIComponent(account.puuid)}&region=${encodeURIComponent(regionVal ?? "na1")}&queue=${encodeURIComponent(queue)}&start=${start}&count=20`
+                  );
+                  const data = res.ok ? await res.json() : { matches: [] };
+                  const more = Array.isArray(data.matches) ? data.matches : [];
+                  setAdditionalMatchesByQueue((prev) => ({
+                    ...prev,
+                    [queue]: [...(prev[queue] ?? []), ...more],
+                  }));
+                  if (more.length < 20) setHasMoreByQueue((prev) => ({ ...prev, [queue]: false }));
+                } finally {
+                  setLoadingMore(false);
+                }
+              }}
+            >
+              {loadingMore ? "Loading…" : "Show more"}
+            </button>
+          </div>
+        )}
       </div>
         </>
         )}
