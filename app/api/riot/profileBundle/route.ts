@@ -5,6 +5,7 @@ import { getCachedDdragonVersion } from "@/lib/ddragonVersion";
 import { SEASON_KEY, SEASON_START_MS } from "@/lib/season";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 import type { ChampionStatRow } from "@/app/api/champion-stats/route";
+import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -274,10 +275,21 @@ async function fetchBundleFromRiot(
   const avgRankPlayedAgainst =
     values.length > 0 ? numberToRankLabel(values.reduce((a, b) => a + b, 0) / values.length) : "Unranked";
 
-  const [championStats, ddragonVersion] = await Promise.all([
+  const [dbChampionStats, ddragonVersion] = await Promise.all([
     fetchChampionStatsForBundle(account.puuid),
     getCachedDdragonVersion(),
   ]);
+  let championStats = dbChampionStats;
+  if (matches.length > 0 && account.puuid) {
+    const soloEmpty = !championStats.solo?.champions?.length;
+    const flexEmpty = !championStats.flex?.champions?.length;
+    if (soloEmpty || flexEmpty) {
+      const instant = computeChampionStatsFromMatches(matches, account.puuid);
+      const slice = { champions: instant, updatedAt: new Date().toISOString() };
+      if (soloEmpty) championStats = { ...championStats, solo: slice };
+      if (flexEmpty) championStats = { ...championStats, flex: slice };
+    }
+  }
 
   const bundle: ProfileBundle = {
     profile: { account, summoner },
@@ -368,11 +380,24 @@ export async function GET(request: Request) {
       const ageSec = (Date.now() - new Date(row.fetched_at).getTime()) / 1000;
       const stale = ageSec > (row.stale_after_sec ?? STALE_AFTER_SEC);
 
-      // Full-season champion stats from DB; ensure ddragonVersion for icon URLs
-      const [championStats, ddragonVersion] = await Promise.all([
-        fetchChampionStatsForBundle(cached.profile.account.puuid),
+      // Full-season champion stats from DB; fill from cached matches when DB empty
+      const puuid = cached.profile.account.puuid;
+      const cachedMatches = cached.matches ?? [];
+      const [dbChampionStats, ddragonVersion] = await Promise.all([
+        fetchChampionStatsForBundle(puuid),
         getCachedDdragonVersion(),
       ]);
+      let championStats = dbChampionStats;
+      if (cachedMatches.length > 0 && puuid) {
+        const soloEmpty = !championStats.solo?.champions?.length;
+        const flexEmpty = !championStats.flex?.champions?.length;
+        if (soloEmpty || flexEmpty) {
+          const instant = computeChampionStatsFromMatches(cachedMatches, puuid);
+          const slice = { champions: instant, updatedAt: new Date().toISOString() };
+          if (soloEmpty) championStats = { ...championStats, solo: slice };
+          if (flexEmpty) championStats = { ...championStats, flex: slice };
+        }
+      }
       const bundleToReturn = { ...cached, championStats, ddragonVersion };
 
       const baseUrl = getBaseUrl(request);
