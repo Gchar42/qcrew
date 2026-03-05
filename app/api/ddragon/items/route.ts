@@ -6,7 +6,7 @@ const DDragonBase = "https://ddragon.leagueoflegends.com/cdn";
 
 type ItemEntry = { name?: string; plaintext?: string; description?: string };
 
-/** Strip HTML-like tags for a plain-text fallback when plaintext is missing */
+/** Strip HTML-like tags so we can show the full official description as plain text in tooltips */
 function stripTags(html: string): string {
   return html
     .replace(/<[^>]+>/g, " ")
@@ -38,18 +38,13 @@ export async function GET(request: Request) {
     for (const [id, entry] of Object.entries(dataMap)) {
       const rawName = (entry?.name ?? "").trim();
       const name = rawName || `Item ${id}`;
+      const desc =
+        typeof entry?.description === "string" && entry.description.trim().length > 0
+          ? stripTags(entry.description)
+          : "";
       const trimmedPlain = (entry?.plaintext ?? "").trim();
-      let plaintext: string | undefined;
-      if (trimmedPlain.length > 0) {
-        plaintext = trimmedPlain;
-      } else if (
-        typeof entry?.description === "string" &&
-        entry.description.trim().length > 0
-      ) {
-        plaintext = stripTags(entry.description) || undefined;
-      } else {
-        plaintext = undefined;
-      }
+      const plaintext =
+        desc.length > 0 ? desc : trimmedPlain.length > 0 ? trimmedPlain : undefined;
       items[id] = { name, plaintext: plaintext ?? undefined };
     }
     return Response.json({ items });
