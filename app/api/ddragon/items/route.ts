@@ -38,8 +38,19 @@ export async function GET(request: Request) {
     for (const [id, entry] of Object.entries(dataMap)) {
       const rawName = (entry?.name ?? "").trim();
       const name = rawName || `Item ${id}`;
-      const plaintext = entry?.plaintext?.trim() ?? (entry?.description ? stripTags(entry.description) : undefined);
-      items[id] = { name, plaintext: plaintext || undefined };
+      const trimmedPlain = (entry?.plaintext ?? "").trim();
+      let plaintext: string | undefined;
+      if (trimmedPlain.length > 0) {
+        plaintext = trimmedPlain;
+      } else if (
+        typeof entry?.description === "string" &&
+        entry.description.trim().length > 0
+      ) {
+        plaintext = stripTags(entry.description) || undefined;
+      } else {
+        plaintext = undefined;
+      }
+      items[id] = { name, plaintext: plaintext ?? undefined };
     }
     return Response.json({ items });
   } catch (e) {
