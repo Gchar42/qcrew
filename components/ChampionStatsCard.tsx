@@ -48,12 +48,19 @@ export default function ChampionStatsCard(props: {
         {puuid && onRefresh && (
           <button
             type="button"
-            className="champion-stats-refresh-btn"
+            className={`champion-stats-refresh-btn${refreshing ? " champion-stats-refresh-btn--loading" : ""}`}
             onClick={handleRefresh}
             disabled={refreshing}
             title="Refresh champion stats (up to 60 games)"
           >
-            {refreshing ? "…" : "Refresh"}
+            {refreshing ? (
+              <>
+                <span className="champion-stats-refresh-spinner" aria-hidden />
+                <span>Updating…</span>
+              </>
+            ) : (
+              "Refresh"
+            )}
           </button>
         )}
       </div>

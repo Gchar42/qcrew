@@ -285,6 +285,9 @@
 }
 
 .profile-page .champion-stats-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   font-weight: 500;
   text-transform: none;
@@ -305,6 +308,17 @@
 .profile-page .champion-stats-refresh-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.profile-page .champion-stats-refresh-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--border);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: profileSpin 0.8s linear infinite;
+  flex-shrink: 0;
 }
 
 .profile-page .champion-stats-card .profile-rank-card-content {
