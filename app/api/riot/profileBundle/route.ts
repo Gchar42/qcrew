@@ -4,12 +4,13 @@ import { rankToNumber, numberToRankLabel } from "@/lib/rankMapping";
 import { SEASON_KEY } from "@/lib/season";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 import type { ChampionStatRow } from "@/app/api/champion-stats/route";
-import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const STALE_AFTER_SEC = 120;
+/** If champion stats are older than this, we trigger a background refresh so they update while viewing. */
+const CHAMPION_STATS_STALE_MS = 5 * 60 * 1000; // 5 min
 const CACHE_HEADERS = {
   "Cache-Control": "s-maxage=60, stale-while-revalidate=300",
 };
@@ -107,24 +108,31 @@ async function fetchChampionStatsForBundle(puuid: string): Promise<{
   };
 }
 
-/** When a profile has no champion stats yet, trigger refresh via API so it runs in a separate invocation and writes to champion_aggregates. */
-async function triggerChampionStatsRefreshIfEmpty(
+/** When a profile has no champion stats or they're stale, trigger refresh so they update (empty or after new games). */
+async function triggerChampionStatsRefreshIfNeeded(
   bundle: ProfileBundle,
   region: string,
   baseUrl: string
 ): Promise<void> {
   const cs = bundle?.championStats;
   if (!cs) return;
+  const now = Date.now();
+  const isStale = (updatedAt: string | undefined) =>
+    !updatedAt || now - new Date(updatedAt).getTime() > CHAMPION_STATS_STALE_MS;
   const soloEmpty = !cs.solo?.champions?.length;
   const flexEmpty = !cs.flex?.champions?.length;
-  if (!soloEmpty && !flexEmpty) return;
+  const soloStale = isStale(cs.solo?.updatedAt);
+  const flexStale = isStale(cs.flex?.updatedAt);
+  const needSolo = soloEmpty || soloStale;
+  const needFlex = flexEmpty || flexStale;
+  if (!needSolo && !needFlex) return;
   const puuid = bundle.profile?.account?.puuid;
   if (!puuid) return;
   const r = region || "na1";
   const url = `${baseUrl.replace(/\/$/, "")}/api/champion-stats/refresh`;
   const body = (q: "solo" | "flex") => JSON.stringify({ puuid, queue: q, region: r });
-  if (soloEmpty) fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: body("solo") }).catch(() => {});
-  if (flexEmpty) fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: body("flex") }).catch(() => {});
+  if (needSolo) fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: body("solo") }).catch(() => {});
+  if (needFlex) fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: body("flex") }).catch(() => {});
   await new Promise((resolve) => setTimeout(resolve, 200));
 }
 
@@ -264,14 +272,7 @@ async function fetchBundleFromRiot(
   const avgRankPlayedAgainst =
     values.length > 0 ? numberToRankLabel(values.reduce((a, b) => a + b, 0) / values.length) : "Unranked";
 
-  const dbChampionStats = await fetchChampionStatsForBundle(account.puuid);
-  const instantChampions = computeChampionStatsFromMatches(matches, account.puuid);
-  const now = new Date().toISOString();
-  const instantSlice = { champions: instantChampions, updatedAt: now };
-  const championStats = {
-    solo: queue === "solo" ? instantSlice : dbChampionStats.solo,
-    flex: queue === "flex" ? instantSlice : dbChampionStats.flex,
-  };
+  const championStats = await fetchChampionStatsForBundle(account.puuid);
 
   const bundle: ProfileBundle = {
     profile: { account, summoner },
@@ -361,26 +362,12 @@ export async function GET(request: Request) {
       const ageSec = (Date.now() - new Date(row.fetched_at).getTime()) / 1000;
       const stale = ageSec > (row.stale_after_sec ?? STALE_AFTER_SEC);
 
-      // Always load champion stats fresh from DB so Refresh updates are visible without invalidating the whole cache
-      let championStats = await fetchChampionStatsForBundle(cached.profile.account.puuid);
-      const puuid = cached.profile?.account?.puuid;
-      const cachedMatches = cached.matches ?? [];
-      if (puuid && cachedMatches.length > 0) {
-        const instantChampions = computeChampionStatsFromMatches(cachedMatches, puuid);
-        const now = new Date().toISOString();
-        const instantSlice = { champions: instantChampions, updatedAt: now };
-        const soloEmpty = !championStats.solo?.champions?.length;
-        const flexEmpty = !championStats.flex?.champions?.length;
-        if (queue === "solo" && soloEmpty) {
-          championStats = { ...championStats, solo: instantSlice };
-        } else if (queue === "flex" && flexEmpty) {
-          championStats = { ...championStats, flex: instantSlice };
-        }
-      }
+      // Full-season champion stats from DB (populated by refresh job)
+      const championStats = await fetchChampionStatsForBundle(cached.profile.account.puuid);
       const bundleToReturn = { ...cached, championStats };
 
       const baseUrl = getBaseUrl(request);
-      await triggerChampionStatsRefreshIfEmpty(bundleToReturn, region, baseUrl);
+      await triggerChampionStatsRefreshIfNeeded(bundleToReturn, region, baseUrl);
 
       if (!stale) {
         return NextResponse.json(bundleToReturn, {
@@ -410,7 +397,7 @@ export async function GET(request: Request) {
 
   console.log("bundle keys", Object.keys(bundle), "matches", bundle.matches?.length);
 
-  await triggerChampionStatsRefreshIfEmpty(bundle, region, baseUrl);
+  await triggerChampionStatsRefreshIfNeeded(bundle, region, baseUrl);
 
   await supabaseAdmin.from("profile_snapshots").upsert(
     {

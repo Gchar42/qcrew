@@ -401,7 +401,9 @@ export default function SummonerProfileBeige({
   const [styleNamesById, setStyleNamesById] = useState<Map<number, string>>(new Map());
   const [itemDataById, setItemDataById] = useState<Record<number, { name: string; plaintext?: string }>>({});
   const [mainTab, setMainTab] = useState<"overview" | "champion-pool">("overview");
-  const championStatsRefreshDone = useRef<Set<string>>(new Set());
+  const lastChampionStatsRefreshTrigger = useRef<Map<string, number>>(new Map());
+  const CHAMPION_STATS_STALE_MS = 5 * 60 * 1000;
+  const CHAMPION_STATS_REFRESH_THROTTLE_MS = 4 * 60 * 1000;
 
   useEffect(() => {
     fetch("/api/ddragon/version")
@@ -465,17 +467,25 @@ export default function SummonerProfileBeige({
       .catch(() => {});
   }, [ddragonVersion]);
 
-  // When profile has no champion stats yet, trigger refresh then revalidate after it has time to complete (~50s)
+  // When champion stats are missing or stale, trigger refresh then revalidate so they update without leaving the page
   useEffect(() => {
     const puuid = bundle?.profile?.account?.puuid;
     const championStats = bundle?.championStats;
     if (!puuid || !championStats) return;
-    if (championStatsRefreshDone.current.has(puuid)) return;
+    const now = Date.now();
+    const isStale = (updatedAt: string | undefined) =>
+      !updatedAt || now - new Date(updatedAt).getTime() > CHAMPION_STATS_STALE_MS;
     const soloEmpty = !championStats.solo?.champions?.length;
     const flexEmpty = !championStats.flex?.champions?.length;
-    if (!soloEmpty && !flexEmpty) return;
+    const soloStale = isStale(championStats.solo?.updatedAt);
+    const flexStale = isStale(championStats.flex?.updatedAt);
+    const needSolo = soloEmpty || soloStale;
+    const needFlex = flexEmpty || flexStale;
+    if (!needSolo && !needFlex) return;
+    const last = lastChampionStatsRefreshTrigger.current.get(puuid) ?? 0;
+    if (now - last < CHAMPION_STATS_REFRESH_THROTTLE_MS) return;
+    lastChampionStatsRefreshTrigger.current.set(puuid, now);
 
-    championStatsRefreshDone.current.add(puuid);
     const region = regionVal ?? "na1";
     const refresh = (q: "solo" | "flex") =>
       fetch("/api/champion-stats/refresh", {
@@ -484,9 +494,8 @@ export default function SummonerProfileBeige({
         body: JSON.stringify({ puuid, queue: q, region }),
       }).catch(() => {});
 
-    if (soloEmpty) refresh("solo");
-    if (flexEmpty) refresh("flex");
-    // Refresh can take 30–60s; revalidate bundle so champion stats appear without leaving the page
+    if (needSolo) refresh("solo");
+    if (needFlex) refresh("flex");
     const t1 = setTimeout(() => mutate(), 50000);
     const t2 = setTimeout(() => mutate(), 90000);
     return () => {
