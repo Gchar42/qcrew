@@ -362,7 +362,21 @@ export async function GET(request: Request) {
       const stale = ageSec > (row.stale_after_sec ?? STALE_AFTER_SEC);
 
       // Always load champion stats fresh from DB so Refresh updates are visible without invalidating the whole cache
-      const championStats = await fetchChampionStatsForBundle(cached.profile.account.puuid);
+      let championStats = await fetchChampionStatsForBundle(cached.profile.account.puuid);
+      const puuid = cached.profile?.account?.puuid;
+      const cachedMatches = cached.matches ?? [];
+      if (puuid && cachedMatches.length > 0) {
+        const instantChampions = computeChampionStatsFromMatches(cachedMatches, puuid);
+        const now = new Date().toISOString();
+        const instantSlice = { champions: instantChampions, updatedAt: now };
+        const soloEmpty = !championStats.solo?.champions?.length;
+        const flexEmpty = !championStats.flex?.champions?.length;
+        if (queue === "solo" && soloEmpty) {
+          championStats = { ...championStats, solo: instantSlice };
+        } else if (queue === "flex" && flexEmpty) {
+          championStats = { ...championStats, flex: instantSlice };
+        }
+      }
       const bundleToReturn = { ...cached, championStats };
 
       const baseUrl = getBaseUrl(request);
