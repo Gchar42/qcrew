@@ -4,6 +4,7 @@ import { rankToNumber, numberToRankLabel } from "@/lib/rankMapping";
 import { SEASON_KEY } from "@/lib/season";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 import type { ChampionStatRow } from "@/app/api/champion-stats/route";
+import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -263,7 +264,14 @@ async function fetchBundleFromRiot(
   const avgRankPlayedAgainst =
     values.length > 0 ? numberToRankLabel(values.reduce((a, b) => a + b, 0) / values.length) : "Unranked";
 
-  const championStats = await fetchChampionStatsForBundle(account.puuid);
+  const dbChampionStats = await fetchChampionStatsForBundle(account.puuid);
+  const instantChampions = computeChampionStatsFromMatches(matches, account.puuid);
+  const now = new Date().toISOString();
+  const instantSlice = { champions: instantChampions, updatedAt: now };
+  const championStats = {
+    solo: queue === "solo" ? instantSlice : dbChampionStats.solo,
+    flex: queue === "flex" ? instantSlice : dbChampionStats.flex,
+  };
 
   const bundle: ProfileBundle = {
     profile: { account, summoner },
