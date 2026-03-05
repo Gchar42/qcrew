@@ -231,15 +231,15 @@ function getMatchImpactHighlights(m: MatchDto): {
 function ChampIcon({
   championName,
   summonerName,
-  ddragonVersion,
+  effectiveDdragonVersion,
   highlight,
 }: {
   championName: string;
   summonerName: string;
-  ddragonVersion: string | null;
+  effectiveDdragonVersion: string | null;
   highlight?: boolean;
 }) {
-  const squareUrl = getChampionSquareUrl(championName, ddragonVersion);
+  const squareUrl = getChampionSquareUrl(championName, effectiveDdragonVersion);
   const [failed, setFailed] = useState(false);
   const champClass = highlight
     ? "profile-match-team-champ profile-match-team-champ-highlight"
@@ -381,6 +381,7 @@ export default function SummonerProfileBeige({
   const summoner = bundle?.profile.summoner ?? null;
   const bundleMatches = bundle?.matches ?? [];
   const displayedMatches = bundleMatches.concat(additionalMatchesByQueue[queue] ?? []);
+  const effectiveDdragonVersion = bundle?.ddragonVersion ?? ddragonVersion;
   const leagueEntries = bundle
     ? ([bundle.ranked.solo, bundle.ranked.flex].filter(Boolean) as LeagueEntryDto[])
     : [];
@@ -438,10 +439,14 @@ export default function SummonerProfileBeige({
   const CHAMPION_STATS_REFRESH_THROTTLE_MS = 4 * 60 * 1000;
 
   useEffect(() => {
+    if (bundle?.ddragonVersion != null) setDdragonVersion(bundle.ddragonVersion);
+  }, [bundle?.ddragonVersion]);
+
+  useEffect(() => {
     fetch("/api/ddragon/version")
       .then((r) => r.json())
-      .then((data: { version?: string }) => setDdragonVersion(data.version ?? null))
-      .catch(() => setDdragonVersion(null));
+      .then((data: { version?: string }) => setDdragonVersion((prev) => prev ?? data.version ?? null))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -669,7 +674,7 @@ export default function SummonerProfileBeige({
             {summoner?.profileIconId != null && (
               <span className="profile-hero-icon-wrap">
                 <img
-                  src={getProfileIconUrl(summoner.profileIconId, ddragonVersion)}
+                  src={getProfileIconUrl(summoner.profileIconId, effectiveDdragonVersion)}
                   alt=""
                   className="profile-hero-icon"
                   width={56}
@@ -704,7 +709,7 @@ export default function SummonerProfileBeige({
           {championStatsToShow && (
             <ChampionStatsCard
               championStats={championStatsToShow}
-              ddragonVersion={ddragonVersion}
+              ddragonVersion={effectiveDdragonVersion}
               puuid={account.puuid}
               region={regionVal}
               onRefresh={() => mutate()}
@@ -786,7 +791,7 @@ export default function SummonerProfileBeige({
           const portraitBaseUrl = getChampionSplashUrl(p.championName);
           const champSquareUrl = getChampionSquareUrl(
             p.championName,
-            ddragonVersion
+            effectiveDdragonVersion
           );
 
           const blueFive = blue.slice(0, 5);
@@ -842,7 +847,7 @@ export default function SummonerProfileBeige({
                     <div className="profile-match-spells-runes">
                       <div className="profile-match-spells-col">
                         {[p.summoner1Id, p.summoner2Id].map((id, i) => {
-                          const src = getSummonerSpellIconUrl(id, ddragonVersion);
+                          const src = getSummonerSpellIconUrl(id, effectiveDdragonVersion);
                           if (!src) return null;
                           return (
                             <span key={i} className="profile-match-spell">
@@ -963,7 +968,7 @@ export default function SummonerProfileBeige({
                       const timesBySlot = m.itemPurchaseTimesBySlot;
                       const timeStr = timesBySlot?.[idx] ?? null;
                       const captionText = isValidItemId(itemId) && timeStr ? timeStr : null;
-                      const itemVersion = ddragonVersion ?? DEFAULT_DDRAGON_VERSION;
+                      const itemVersion = effectiveDdragonVersion ?? DEFAULT_DDRAGON_VERSION;
                       return (
                         <div key={`item-${idx}`} className="profile-match-item-tile">
                           <span className="profile-match-item">
@@ -1006,7 +1011,7 @@ export default function SummonerProfileBeige({
                             <LeagueTooltip title={title} body={body}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
-                                src={`https://ddragon.leagueoflegends.com/cdn/${ddragonVersion ?? DEFAULT_DDRAGON_VERSION}/img/item/${p.item6}.png`}
+                                src={`https://ddragon.leagueoflegends.com/cdn/${effectiveDdragonVersion ?? DEFAULT_DDRAGON_VERSION}/img/item/${p.item6}.png`}
                                 alt={`Item ${p.item6}`}
                                 title={title}
                                 loading="lazy"
@@ -1047,7 +1052,7 @@ export default function SummonerProfileBeige({
                         <ChampIcon
                           championName={part.championName}
                           summonerName={part.summonerName}
-                          ddragonVersion={ddragonVersion}
+                          effectiveDdragonVersion={effectiveDdragonVersion}
                           highlight={part.puuid === account?.puuid}
                         />
                         <span className="profile-match-team-name-line">
@@ -1116,7 +1121,7 @@ export default function SummonerProfileBeige({
                         <ChampIcon
                           championName={part.championName}
                           summonerName={part.summonerName}
-                          ddragonVersion={ddragonVersion}
+                          effectiveDdragonVersion={effectiveDdragonVersion}
                           highlight={part.puuid === account?.puuid}
                         />
                         <span className="profile-match-team-name-line">
@@ -1172,7 +1177,7 @@ export default function SummonerProfileBeige({
                   puuidOfSearchedPlayer={account.puuid}
                   region={regionVal}
                   queue={queue === "flex" ? "flex" : "solo"}
-                  ddragonVersion={ddragonVersion}
+                  ddragonVersion={effectiveDdragonVersion}
                   perksById={perksById}
                   stylesById={stylesById}
                   itemDataById={itemDataById}
@@ -1228,7 +1233,7 @@ export default function SummonerProfileBeige({
           puuid={account.puuid}
           onClose={() => setDetailMatch(null)}
           itemDataById={itemDataById}
-          ddragonVersion={ddragonVersion}
+          ddragonVersion={effectiveDdragonVersion}
         />
       )}
     </>

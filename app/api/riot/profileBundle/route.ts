@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { rankToNumber, numberToRankLabel } from "@/lib/rankMapping";
+import { getCachedDdragonVersion } from "@/lib/ddragonVersion";
 import { SEASON_KEY, SEASON_START_MS } from "@/lib/season";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 import type { ChampionStatRow } from "@/app/api/champion-stats/route";
@@ -70,6 +71,7 @@ export type ProfileBundle = {
   };
   leagueEntriesBySummonerId: Record<string, LeagueEntryDto[]>;
   championStats: { solo: ChampionStatsSlice; flex: ChampionStatsSlice };
+  ddragonVersion: string | null;
 };
 
 function parseChampionsJson(champions: unknown): ChampionStatRow[] {
@@ -272,7 +274,10 @@ async function fetchBundleFromRiot(
   const avgRankPlayedAgainst =
     values.length > 0 ? numberToRankLabel(values.reduce((a, b) => a + b, 0) / values.length) : "Unranked";
 
-  const championStats = await fetchChampionStatsForBundle(account.puuid);
+  const [championStats, ddragonVersion] = await Promise.all([
+    fetchChampionStatsForBundle(account.puuid),
+    getCachedDdragonVersion(),
+  ]);
 
   const bundle: ProfileBundle = {
     profile: { account, summoner },
@@ -289,6 +294,7 @@ async function fetchBundleFromRiot(
     },
     leagueEntriesBySummonerId,
     championStats,
+    ddragonVersion,
   };
 
   console.log("bundle keys", Object.keys(bundle), "matches", bundle.matches?.length);
@@ -362,9 +368,12 @@ export async function GET(request: Request) {
       const ageSec = (Date.now() - new Date(row.fetched_at).getTime()) / 1000;
       const stale = ageSec > (row.stale_after_sec ?? STALE_AFTER_SEC);
 
-      // Full-season champion stats from DB (populated by refresh job)
-      const championStats = await fetchChampionStatsForBundle(cached.profile.account.puuid);
-      const bundleToReturn = { ...cached, championStats };
+      // Full-season champion stats from DB; ensure ddragonVersion for icon URLs
+      const [championStats, ddragonVersion] = await Promise.all([
+        fetchChampionStatsForBundle(cached.profile.account.puuid),
+        getCachedDdragonVersion(),
+      ]);
+      const bundleToReturn = { ...cached, championStats, ddragonVersion };
 
       const baseUrl = getBaseUrl(request);
       await triggerChampionStatsRefreshIfNeeded(bundleToReturn, region, baseUrl);
