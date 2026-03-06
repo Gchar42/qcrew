@@ -1024,38 +1024,15 @@
   color: #8b6914;
 }
 
-/* Main Character: understated prestige – refined crown, depth, ~12% scale, no flash */
+/* Main Character: pill badge – dark indigo bg, gold border, crown + stars + text, soft gold glow */
 
-/* Wrapper: scale ~12% above Impact, faint radial light behind badge */
 .profile-page .profile-badge-chip-mc-wrap {
   position: relative;
   display: inline-flex;
   z-index: 3;
-  transform: scale(1.12);
   transform-origin: left center;
-  margin-top: -4px;
-  margin-bottom: -2px;
-}
-.profile-page .profile-badge-chip-mc-wrap::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 180%;
-  height: 200%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(
-    ellipse at center,
-    rgba(218, 165, 32, 0.06) 0%,
-    rgba(184, 134, 11, 0.03) 50%,
-    transparent 72%
-  );
-  filter: blur(14px);
-  pointer-events: none;
-  z-index: -1;
 }
 
-/* Hexagon crest – deeper bottom gradient, strong top highlight, subtle drop shadow; same effective size as other badges */
 .profile-page .profile-badge-chip-main-character {
   position: relative;
   display: inline-flex;
@@ -1063,49 +1040,54 @@
   justify-content: center;
   min-width: 110px;
   height: 28px;
-  padding: 0 12px;
-  clip-path: polygon(50% 0%, 100% 22%, 100% 78%, 50% 100%, 0% 78%, 0% 22%);
-  border: 2px solid #3d3206;
-  background: linear-gradient(
-    180deg,
-    #c9a227 0%,
-    #a67c10 20%,
-    #8b6914 50%,
-    #5c4a0a 82%,
-    #3d3206 100%
-  );
+  padding: 0 12px 0 10px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(212, 175, 55, 0.85);
+  background: #1e293b;
+  color: #d4af37;
   box-shadow:
-    0 2px 0 0 rgba(255, 255, 255, 0.32) inset,
-    0 5px 14px rgba(0, 0, 0, 0.4);
-  color: #fffef7;
+    0 0 0 1px rgba(212, 175, 55, 0.2),
+    0 0 12px 2px rgba(218, 165, 32, 0.35);
   overflow: visible;
 }
 
-/* Inline: crown left, label right, vertically centered */
 .profile-page .profile-badge-chip-mc-inner {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   position: relative;
   z-index: 1;
 }
-/* Small refined crown – solid gold, very soft glow on crown only */
+
 .profile-page .profile-badge-chip-main-character .profile-badge-chip-crown {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  filter: drop-shadow(0 0 6px rgba(184, 134, 11, 0.45));
+  color: #d4af37;
+  filter: drop-shadow(0 0 4px rgba(218, 165, 32, 0.5));
 }
+
+.profile-page .profile-badge-chip-main-character .profile-badge-chip-mc-star {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #d4af37;
+  opacity: 0.95;
+  filter: drop-shadow(0 0 3px rgba(218, 165, 32, 0.4));
+}
+
 .profile-page .profile-badge-chip-main-character .profile-badge-chip-text-main-character {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #fffef7;
+  color: #d4af37;
   line-height: 1.2;
   white-space: nowrap;
+  text-shadow: 0 0 8px rgba(218, 165, 32, 0.4);
 }
 
 /* Animated gold ring around champion portrait when Main Character */

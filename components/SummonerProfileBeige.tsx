@@ -1086,12 +1086,22 @@ export default function SummonerProfileBeige({
                             <span className="profile-badge-chip profile-badge-chip-main-character socialBadge">
                               <span className="profile-badge-chip-mc-inner">
                                 <span className="profile-badge-chip-crown" aria-hidden>
-                                  <svg width="14" height="16" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 2l2.5 6h4L14 11l1 7-3-4-3 4 1-7-4.5-3h4L12 2z" fill="#b8860b" />
+                                  <svg width="14" height="12" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M2 18L6 8L12 12L18 8L22 18L2 18z" fill="currentColor" />
+                                  </svg>
+                                </span>
+                                <span className="profile-badge-chip-mc-star" aria-hidden>
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 2l2.5 6h4L14 11l1 7-3-4-3 4 1-7-4.5-3h4L12 2z" />
                                   </svg>
                                 </span>
                                 <span className="profile-badge-chip-text profile-badge-chip-text-main-character">
                                   MAIN CHARACTER
+                                </span>
+                                <span className="profile-badge-chip-mc-star" aria-hidden>
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 2l2.5 6h4L14 11l1 7-3-4-3 4 1-7-4.5-3h4L12 2z" />
+                                  </svg>
                                 </span>
                               </span>
                             </span>
