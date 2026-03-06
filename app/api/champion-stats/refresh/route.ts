@@ -12,13 +12,13 @@ export const revalidate = 0;
 const MATCH_IDS_PAGE_SIZE = 100;
 /** Max total match IDs to consider per queue per season (Riot caps at ~1000; we cap to keep refresh time reasonable). */
 const MAX_MATCH_IDS_TOTAL = 500;
-/** Max new matches to fetch and cache per refresh (delay * this ≈ refresh time; ~300 * 150ms ≈ 45s). */
-const MAX_NEW_MATCH_FETCHES = 300;
+/** Max new matches to fetch and cache per refresh invocation (keeps request under serverless timeout). */
+const MAX_NEW_MATCH_FETCHES = 60;
 const QUEUE_SOLO = 420;
 const QUEUE_FLEX = 440;
 const NO_CACHE = { "Cache-Control": "no-store, max-age=0" };
 /** Delay between each match fetch to avoid Riot rate limits (429). */
-const DELAY_BETWEEN_MATCH_FETCHES_MS = 150;
+const DELAY_BETWEEN_MATCH_FETCHES_MS = 220;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -49,7 +49,12 @@ export async function refreshChampionStats(
   puuid: string,
   queue: "solo" | "flex",
   region: string = "na1"
-): Promise<void> {
+): Promise<{
+  totalMatchIds: number;
+  missingBefore: number;
+  fetchedThisRun: number;
+  remainingAfterApprox: number;
+}> {
   const key = process.env.RIOT_API_KEY;
   if (!key) throw new Error("RIOT_API_KEY not configured");
 
@@ -84,7 +89,7 @@ export async function refreshChampionStats(
     await supabaseAdmin.from("champion_aggregates").upsert(empty, {
       onConflict: "puuid,queue,season_key",
     });
-    return;
+    return { totalMatchIds: 0, missingBefore: 0, fetchedThisRun: 0, remainingAfterApprox: 0 };
   }
 
   const existing = await supabaseAdmin
@@ -96,7 +101,10 @@ export async function refreshChampionStats(
     .in("match_id", matchIds);
 
   const existingIds = new Set((existing.data ?? []).map((r) => r.match_id));
-  const toFetch = matchIds.filter((id) => !existingIds.has(id)).slice(0, MAX_NEW_MATCH_FETCHES);
+  const missing = matchIds.filter((id) => !existingIds.has(id));
+  const missingBefore = missing.length;
+  const toFetch = missing.slice(0, MAX_NEW_MATCH_FETCHES);
+  let fetchedThisRun = 0;
 
   for (let i = 0; i < toFetch.length; i++) {
     const matchId = toFetch[i];
@@ -143,6 +151,7 @@ export async function refreshChampionStats(
         },
         { onConflict: "match_id" }
       );
+      fetchedThisRun++;
     } catch {
       // skip
     }
@@ -237,6 +246,15 @@ export async function refreshChampionStats(
     },
     { onConflict: "puuid,queue,season_key" }
   );
+
+  // Approximation: we fetched up to MAX_NEW_MATCH_FETCHES missing matches this run.
+  const remainingAfterApprox = Math.max(0, missingBefore - toFetch.length);
+  return {
+    totalMatchIds: matchIds.length,
+    missingBefore,
+    fetchedThisRun,
+    remainingAfterApprox,
+  };
 }
 
 /** POST /api/champion-stats/refresh — body: { puuid: string, queue: "solo" | "flex", region?: string } */
@@ -261,8 +279,8 @@ export async function POST(req: Request) {
   }
 
   try {
-    await refreshChampionStats(puuid, queue, region);
-    return NextResponse.json({ ok: true }, { status: 200, headers: NO_CACHE });
+    const result = await refreshChampionStats(puuid, queue, region);
+    return NextResponse.json({ ok: true, ...result }, { status: 200, headers: NO_CACHE });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Refresh failed";
     const is503 = message.includes("RIOT_API_KEY");

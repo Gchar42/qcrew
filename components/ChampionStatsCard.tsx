@@ -16,6 +16,7 @@ export default function ChampionStatsCard(props: {
   const { championStats, ddragonVersion, puuid, region, onRefresh } = props;
   const [queue, setQueue] = React.useState<QueueKey>("solo");
   const [refreshing, setRefreshing] = React.useState(false);
+  const refreshRunIdRef = React.useRef(0);
 
   const slice = championStats[queue];
   const champions = slice?.champions ?? [];
@@ -25,24 +26,36 @@ export default function ChampionStatsCard(props: {
     if (!puuid || !onRefresh) return;
     setRefreshing(true);
     const r = region ?? "na1";
-    // Fire refresh for both queues; don't await (can take 45+ s and timeout). Refetch bundle after a short delay.
-    fetch("/api/champion-stats/refresh", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ puuid, queue: "solo", region: r }),
-    }).catch(() => {});
-    fetch("/api/champion-stats/refresh", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ puuid, queue: "flex", region: r }),
-    }).catch(() => {});
-
-    const delayMs = 8000;
-    setTimeout(() => {
-      onRefresh();
-      setRefreshing(false);
-    }, delayMs);
-  }, [puuid, region, onRefresh]);
+    // Refresh only the currently selected queue, in small chunks, and poll until caught up (op.gg style).
+    const runId = ++refreshRunIdRef.current;
+    const run = async (attempt: number) => {
+      if (refreshRunIdRef.current !== runId) return;
+      try {
+        const res = await fetch("/api/champion-stats/refresh", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ puuid, queue, region: r }),
+        });
+        const body = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          remainingAfterApprox?: number;
+          error?: string;
+        };
+        // Always refetch the bundle after each chunk so UI updates as cache fills.
+        onRefresh();
+        const remaining = body?.remainingAfterApprox ?? 0;
+        if (res.ok && remaining > 0 && attempt < 10) {
+          setTimeout(() => run(attempt + 1), 2500);
+          return;
+        }
+      } catch {
+        // ignore
+      } finally {
+        if (refreshRunIdRef.current === runId) setRefreshing(false);
+      }
+    };
+    run(0);
+  }, [puuid, region, onRefresh, queue]);
 
   return (
     <div className="profile-rank-card champion-stats-card">
@@ -54,7 +67,7 @@ export default function ChampionStatsCard(props: {
             className={`champion-stats-refresh-btn${refreshing ? " champion-stats-refresh-btn--loading" : ""}`}
             onClick={handleRefresh}
             disabled={refreshing}
-            title="Refresh champion stats (up to 60 games)"
+            title="Refresh champion stats (runs in chunks; may take a minute)"
           >
             {refreshing ? (
               <>

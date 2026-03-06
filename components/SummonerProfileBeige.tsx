@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import useSWR, { mutate as globalMutate } from "swr";
+import useSWR from "swr";
 import { buildProfileHref } from "@/lib/routes";
 import type { ProfileBundle } from "@/app/api/riot/profileBundle/route";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
@@ -1205,16 +1205,6 @@ export default function SummonerProfileBeige({
                             })}
                             prefetch={false}
                             onClick={(e) => e.stopPropagation()}
-                            onMouseEnter={() => {
-                              const riotId = part.riotIdGameName && part.riotIdTagline
-                                ? `${part.riotIdGameName}#${part.riotIdTagline}`
-                                : `${part.summonerName ?? ""}#${part.riotIdTagline ?? "NA1"}`;
-                              if (!riotId.includes("#")) return;
-                              const keySolo: [string, string, string, string] = ["profileBundle", riotId, regionVal, "solo"];
-                              const keyFlex: [string, string, string, string] = ["profileBundle", riotId, regionVal, "flex"];
-                              globalMutate(keySolo, () => profileBundleFetcher(keySolo));
-                              globalMutate(keyFlex, () => profileBundleFetcher(keyFlex));
-                            }}
                             title={part.riotIdGameName ?? part.summonerName}
                           >
                             {part.riotIdGameName ?? part.summonerName}
@@ -1274,16 +1264,6 @@ export default function SummonerProfileBeige({
                             })}
                             prefetch={false}
                             onClick={(e) => e.stopPropagation()}
-                            onMouseEnter={() => {
-                              const riotId = part.riotIdGameName && part.riotIdTagline
-                                ? `${part.riotIdGameName}#${part.riotIdTagline}`
-                                : `${part.summonerName ?? ""}#${part.riotIdTagline ?? "NA1"}`;
-                              if (!riotId.includes("#")) return;
-                              const keySolo: [string, string, string, string] = ["profileBundle", riotId, regionVal, "solo"];
-                              const keyFlex: [string, string, string, string] = ["profileBundle", riotId, regionVal, "flex"];
-                              globalMutate(keySolo, () => profileBundleFetcher(keySolo));
-                              globalMutate(keyFlex, () => profileBundleFetcher(keyFlex));
-                            }}
                             title={part.riotIdGameName ?? part.summonerName}
                           >
                             {part.riotIdGameName ?? part.summonerName}

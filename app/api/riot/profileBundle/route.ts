@@ -6,7 +6,6 @@ import { getRoutingRegion } from "@/lib/riot-regions";
 import { SEASON_KEY, SEASON_START_MS } from "@/lib/season";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 import type { ChampionStatRow } from "@/app/api/champion-stats/route";
-import { refreshChampionStats } from "@/app/api/champion-stats/refresh/route";
 import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
 
 export const dynamic = "force-dynamic";
@@ -177,6 +176,21 @@ function getBaseUrl(request: Request): string {
   return `${proto}://${host}`;
 }
 
+/** Fetch with 429 retry: wait Retry-After (or 3s) then retry once. */
+async function fetchWith429Retry(
+  url: string,
+  headers: HeadersInit
+): Promise<Response> {
+  let res = await fetch(url, { cache: "no-store", headers });
+  if (res.status === 429) {
+    const retryAfter = res.headers.get("Retry-After");
+    const waitMs = retryAfter ? Math.min(Number(retryAfter) * 1000, 12000) : 3000;
+    await new Promise((r) => setTimeout(r, waitMs));
+    res = await fetch(url, { cache: "no-store", headers });
+  }
+  return res;
+}
+
 function normalizeRiotId(riotId: string): string {
   const decoded = decodeURIComponent(riotId.trim());
   if (!decoded.includes("#")) return decoded.toLowerCase();
@@ -197,7 +211,7 @@ async function fetchSummonerFromRiot(puuid: string, platform: string): Promise<S
   if (!key) throw new Error("Riot API key not configured");
   const base = RIOT_SUMMONER_BASE.replace("{platform}", platform);
   const url = `${base}/by-puuid/${encodeURIComponent(puuid)}`;
-  const res = await fetch(url, { cache: "no-store", headers: { "X-Riot-Token": key } });
+  const res = await fetchWith429Retry(url, { "X-Riot-Token": key });
   const text = await res.text();
   if (!res.ok) throw new Error(text || "Summoner lookup failed");
   const data = JSON.parse(text) as Record<string, unknown>;
@@ -219,7 +233,7 @@ async function fetchLeagueFromRiot(puuid: string, platform: string): Promise<Lea
   if (!key) throw new Error("Riot API key not configured");
   const base = RIOT_LEAGUE_BASE.replace("{platform}", platform);
   const url = `${base}/by-puuid/${encodeURIComponent(puuid)}`;
-  const res = await fetch(url, { cache: "no-store", headers: { "X-Riot-Token": key } });
+  const res = await fetchWith429Retry(url, { "X-Riot-Token": key });
   const text = await res.text();
   if (!res.ok) return [];
   try {
@@ -237,7 +251,7 @@ async function fetchMatchFromRiot(matchId: string, region: string): Promise<Matc
   const routing = getRoutingRegion(region);
   const base = RIOT_MATCH_BASE.replace("{region}", routing);
   const url = `${base}/${encodeURIComponent(matchId)}`;
-  const res = await fetch(url, { cache: "no-store", headers: { "X-Riot-Token": key } });
+  const res = await fetchWith429Retry(url, { "X-Riot-Token": key });
   if (!res.ok) return null;
   try {
     return (await res.json()) as MatchDto;
@@ -260,7 +274,7 @@ async function fetchMatchIdsFromRiot(
   const base = RIOT_MATCH_BASE.replace("{region}", routing);
   const seasonStartSec = Math.floor(SEASON_START_MS / 1000);
   const url = `${base}/by-puuid/${encodeURIComponent(puuid)}/ids?start=${start}&count=${count}&queue=${queueId}&startTime=${seasonStartSec}`;
-  const res = await fetch(url, { cache: "no-store", headers: { "X-Riot-Token": key } });
+  const res = await fetchWith429Retry(url, { "X-Riot-Token": key });
   const text = await res.text();
   if (!res.ok) throw new Error(text || "Match list failed");
   const arr = JSON.parse(text) as unknown;
@@ -277,7 +291,7 @@ async function fetchAccountFromRiot(
   const routing = getRoutingRegion(region);
   const base = RIOT_ACCOUNT_BASE.replace("{region}", routing);
   const url = `${base}/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`;
-  const res = await fetch(url, { cache: "no-store", headers: { "X-Riot-Token": key } });
+  const res = await fetchWith429Retry(url, { "X-Riot-Token": key });
   const text = await res.text();
   if (!res.ok) {
     const msg = text || "Account lookup failed";
@@ -316,15 +330,17 @@ async function fetchBundleFromRiot(
     }
   }
 
-  refreshChampionStats(account.puuid, queue, region).catch(() => {});
+  // Do not trigger champion-stats refresh here: it would stack with this profile fetch and hit rate limits.
+  // Champion stats are refreshed when serving from cache (triggerChampionStatsRefreshIfNeeded).
 
+  const INITIAL_MATCH_COUNT = 15;
   const matchIdListPromise = (async (): Promise<string[]> => {
     try {
-      return await fetchMatchIdsFromRiot(account.puuid, queueId, region, 20, 0).then((ids) => ids.slice(0, 20));
+      return await fetchMatchIdsFromRiot(account.puuid, queueId, region, INITIAL_MATCH_COUNT, 0).then((ids) => ids.slice(0, INITIAL_MATCH_COUNT));
     } catch (e) {
       await new Promise((r) => setTimeout(r, 1000));
       try {
-        return await fetchMatchIdsFromRiot(account.puuid, queueId, region, 20, 0).then((ids) => ids.slice(0, 20));
+        return await fetchMatchIdsFromRiot(account.puuid, queueId, region, INITIAL_MATCH_COUNT, 0).then((ids) => ids.slice(0, INITIAL_MATCH_COUNT));
       } catch {
         console.warn("[profileBundle] Match list failed after retry, returning empty:", e instanceof Error ? e.message : e);
         return [];
@@ -354,9 +370,9 @@ async function fetchBundleFromRiot(
   const flexEntry = leagueEntries.find((e) => e.queueType === "RANKED_FLEX_SR") ?? null;
 
   const matches: MatchDto[] = [];
-  const concurrency = 3;
-  for (let i = 0; i < matchIdList.length; i += concurrency) {
-    const chunk = matchIdList.slice(i, i + concurrency);
+  const matchConcurrency = 8;
+  for (let i = 0; i < matchIdList.length; i += matchConcurrency) {
+    const chunk = matchIdList.slice(i, i + matchConcurrency);
     const results = await Promise.all(chunk.map((matchId) => fetchMatchFromRiot(matchId, region)));
     results.forEach((m) => {
       if (m) matches.push(m as MatchDto);
@@ -555,14 +571,10 @@ export async function GET(request: Request) {
           headers: CACHE_HEADERS,
         });
       }
-      // Stale: don't return old cache; fetch fresh so user sees latest matches
-      const fresh = await refreshSnapshotAndReturn(baseUrl, region, queue, normRiotId);
-      if (fresh) {
-        return NextResponse.json(fresh, { status: 200, headers: CACHE_HEADERS });
-      }
-      // Fallback: return stale cache if refresh failed (e.g. timeout)
+      // Stale: return cached data immediately so user isn't stuck on loading; refresh in background
+      refreshSnapshotAndReturn(baseUrl, region, queue, normRiotId).then(() => {}).catch(() => {});
       return NextResponse.json(bundleToReturn, {
-        headers: CACHE_HEADERS,
+        headers: { ...CACHE_HEADERS, "X-Profile-Stale": "1" },
       });
     }
     // cacheHasEmptyMatches: skip cache and fall through to fresh fetch
