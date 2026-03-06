@@ -231,7 +231,7 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
                               ?
                             </div>
                           </div>
-                          <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                          <div className="min-w-0 flex-1 break-words">
                             <span className="text-sm font-medium text-red-400">
                               {r.gameName ?? id.split("#")[0]}
                             </span>
