@@ -9,8 +9,8 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
-      // Riot verification expects https://www.statgap.gg//riot.txt (double slash)
-      { source: "//riot.txt", destination: "/riot.txt" },
+      { source: "/riot.txt", destination: "/api/riot-verify" },
+      { source: "//riot.txt", destination: "/api/riot-verify" },
     ];
   },
 };
