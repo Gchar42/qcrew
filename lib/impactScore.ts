@@ -120,16 +120,16 @@ export function computeImpactScore(match: MatchDto, puuid: string): ImpactResult
     isSupport && SUPPORT_ENGAGE_CHAMPS.has(p.championName ?? "");
 
   // ---- CombatScore (0–100) ----
-  let combatKdaWeight = 30;
-  let combatTakedownsWeight = 15;
-  let combatKillsWeight = 10;
+  const combatKdaWeight = 30;
+  const combatTakedownsWeight = 15;
+  const combatKillsWeight = 10;
   let combatDpmWeight = 35;
-  let combatCcWeight = 10;
+  const combatCcWeight = 10;
   let combatUtilityWeight = 0;
 
   let csCap = 9.5;
   let objDpmCap = 800;
-  let turretCap = 450;
+  const turretCap = 450;
   let visionWeight = 15;
   let objDpmWeight = 30;
   let turretWeight = 20;
@@ -257,7 +257,7 @@ export function computeImpactScore(match: MatchDto, puuid: string): ImpactResult
   } else {
     baseImpact = Math.max(combatScore, macroScore) / 100;
   }
-  let rawScore = baseImpact * efficiencyModifier * 100;
+  const rawScore = baseImpact * efficiencyModifier * 100;
 
   const eliteMarkers = [
     csPerMin >= 9,

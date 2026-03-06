@@ -60,7 +60,7 @@ function AuthForm() {
           href="/"
           className="inline-block text-xl font-bold text-white mb-8 hover:text-indigo-400 transition-colors"
         >
-          Qcrew
+          Statgap
         </Link>
         <div className="glass rounded-2xl p-8 hover-lift">
           <h1 className="text-2xl font-bold text-white mb-2">

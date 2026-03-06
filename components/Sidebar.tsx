@@ -11,7 +11,7 @@ export function Sidebar() {
         href="/dashboard"
         className="p-4 text-lg font-bold text-white border-b border-white/10 hover:text-indigo-400 transition-colors"
       >
-        Qcrew
+        Statgap
       </Link>
       <nav className="p-2 flex flex-col gap-1">
         {nav.map((item) => (

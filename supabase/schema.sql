@@ -1,4 +1,4 @@
--- Qcrew Phase 1 – Supabase schema (no Riot/Discord)
+-- Statgap Phase 1 – Supabase schema (no Riot/Discord)
 -- Run this in Supabase SQL Editor.
 
 -- Enable UUID extension

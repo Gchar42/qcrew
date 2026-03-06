@@ -1,4 +1,4 @@
-# Qcrew Riot Match History Setup
+# Statgap.gg Riot Match History Setup
 
 This app uses the Riot Developer API through Next.js server routes so the Riot API key stays server-side.
 

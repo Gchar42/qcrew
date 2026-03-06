@@ -1,4 +1,4 @@
-/* Qcrew Profile Page — Blitz-style dark theme */
+/* Statgap Profile Page — Blitz-style dark theme */
 
 .profile-page {
   --bg: #1c1c1e;
@@ -1607,8 +1607,8 @@
   color: var(--muted);
 }
 
-/* QCREW Team Impact Summary (above Team 2) */
-.profile-page .qcrew-summary {
+/* Statgap Team Impact Summary (above Team 2) */
+.profile-page .statgap-summary {
   margin: 12px 0 14px 0;
   padding: 12px 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1616,7 +1616,7 @@
   background: rgba(0, 0, 0, 0.1);
 }
 
-.profile-page .qcrew-summary-adv {
+.profile-page .statgap-summary-adv {
   font-size: 11px;
   opacity: 0.85;
   display: flex;
@@ -1625,7 +1625,7 @@
   margin-bottom: 10px;
 }
 
-.profile-page .qcrew-summary-row {
+.profile-page .statgap-summary-row {
   display: grid;
   grid-template-columns: 70px 1fr 140px;
   align-items: center;
@@ -1633,13 +1633,13 @@
   padding: 6px 0;
 }
 
-.profile-page .qcrew-summary-label {
+.profile-page .statgap-summary-label {
   font-size: 11px;
   opacity: 0.7;
   letter-spacing: 0.3px;
 }
 
-.profile-page .qcrew-summary-bar {
+.profile-page .statgap-summary-bar {
   height: 8px;
   border-radius: 999px;
   overflow: hidden;
@@ -1647,26 +1647,26 @@
   display: flex;
 }
 
-.profile-page .qcrew-summary-bar .left {
+.profile-page .statgap-summary-bar .left {
   background: rgba(70, 200, 150, 0.85);
 }
 
-.profile-page .qcrew-summary-bar .right {
+.profile-page .statgap-summary-bar .right {
   background: rgba(230, 90, 90, 0.65);
 }
 
-.profile-page .qcrew-summary-values {
+.profile-page .statgap-summary-values {
   display: flex;
   justify-content: space-between;
   font-size: 11px;
   opacity: 0.9;
 }
 
-.profile-page .qcrew-summary-values .leftVal {
+.profile-page .statgap-summary-values .leftVal {
   color: rgba(70, 200, 150, 0.95);
 }
 
-.profile-page .qcrew-summary-values .rightVal {
+.profile-page .statgap-summary-values .rightVal {
   color: rgba(230, 90, 90, 0.9);
 }
 

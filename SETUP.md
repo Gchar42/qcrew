@@ -1,13 +1,13 @@
-# Qcrew Phase 1 – Setup
+# Statgap Phase 1 – Setup
 
 ## 1. Use this project
 
-Phase 1 was built in **`C:\Users\gamer\qcrew-build`** because the repo under `C:\Windows\System32\qcrew` is not writable from this environment.
+Phase 1 was built in **`C:\Users\gamer\statgap-build`** because the repo under `C:\Windows\System32\statgap` is not writable from this environment.
 
 To use it:
 
-- **Option A:** Use `C:\Users\gamer\qcrew-build` as your project folder (open it in Cursor and run `npm run dev` there).
-- **Option B:** Copy everything from `C:\Users\gamer\qcrew-build` into your real repo (e.g. after moving the repo to a writable path like `C:\Users\gamer\projects\qcrew`), then run `npm install` and `npm run dev`.
+- **Option A:** Use `C:\Users\gamer\statgap-build` as your project folder (open it in Cursor and run `npm run dev` there).
+- **Option B:** Copy everything from `C:\Users\gamer\statgap-build` into your real repo (e.g. after moving the repo to a writable path like `C:\Users\gamer\projects\statgap`), then run `npm install` and `npm run dev`.
 
 ## 2. Supabase configuration
 

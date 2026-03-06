@@ -11,7 +11,7 @@ export default function Home() {
             href="/"
             className="text-xl font-bold text-white hover:text-indigo-400 transition-colors"
           >
-            Qcrew
+            Statgap
           </Link>
           <nav className="flex items-center gap-4">
             <span className="text-sm text-zinc-500">Search</span>

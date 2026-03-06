@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getChampionSplashUrl,
   getProfileIconUrl,
@@ -107,7 +107,23 @@ function dashboardBadgeChipClass(badge: string): string {
 }
 
 export default function DashboardRiotSearchPage() {
-  const [riotId, setRiotId] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const riotIdFromUrl = searchParams.get("riotId");
+  const parsedRiotIdFromUrl = (() => {
+    if (!riotIdFromUrl) return null;
+    try {
+      const decoded = decodeURIComponent(riotIdFromUrl);
+      if (!decoded.includes("#")) return null;
+      return parseRiotId(decoded);
+    } catch {
+      return null;
+    }
+  })();
+  const invalidQueryRiotId = Boolean(riotIdFromUrl) && !parsedRiotIdFromUrl;
+
+  const [riotId, setRiotId] = useState(() => parsedRiotIdFromUrl?.riotId ?? "");
   const [state, setState] = useState<SearchState>({ status: "idle" });
 
   const [account, setAccount] = useState<AccountDto | null>(null);
@@ -120,9 +136,6 @@ export default function DashboardRiotSearchPage() {
   const debounceRef = useRef<number | null>(null);
   const activeFetchRef = useRef(0);
   const hasRunQueryRef = useRef(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [invalidQueryRiotId, setInvalidQueryRiotId] = useState(false);
 
   const winStats = useMemo(() => {
     if (!account || matches.length === 0) return null;
@@ -137,38 +150,133 @@ export default function DashboardRiotSearchPage() {
     return { wins, total, rate };
   }, [account, matches]);
 
-  const riotIdFromUrl = searchParams.get("riotId");
+  const trackSuccessfulSearch = useCallback(
+    async (
+      parsed: { riotId: string; gameName: string; tagLine: string },
+      puuid: string,
+      profileIconId?: number,
+      summonerLevel?: number
+    ) => {
+      try {
+        const res = await fetch("/api/search/suggestions", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          cache: "no-store",
+          body: JSON.stringify({
+            riotId: parsed.riotId,
+            gameName: parsed.gameName,
+            tagLine: parsed.tagLine,
+            puuid,
+            profileIconId,
+            summonerLevel,
+          }),
+        });
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        if (!res.ok) {
+          console.warn(
+            "[dashboard] Failed to save search to history:",
+            res.status,
+            body
+          );
+          setSaveHistoryError(body?.error ?? `HTTP ${res.status}`);
+        } else {
+          setSaveHistoryError(null);
+        }
+      } catch (err) {
+        console.warn("[dashboard] Error saving search to history:", err);
+        setSaveHistoryError(err instanceof Error ? err.message : "Network error");
+      }
+    },
+    []
+  );
+
+  const doSearch = useCallback(
+    async (riotIdInput: string) => {
+      const parsed = parseRiotId(riotIdInput);
+      if (!parsed) {
+        setState({ status: "error", message: "Enter both name and tag" });
+        return;
+      }
+
+      setShowSuggestions(false);
+      setSaveHistoryError(null);
+      setState({ status: "loading" });
+      setAccount(null);
+      setSummoner(null);
+      setMatches([]);
+
+      try {
+        const accountJson = await fetchJsonWithRetry<AccountDto>(
+          `/api/riot/account?gameName=${encodeURIComponent(parsed.gameName)}&tagLine=${encodeURIComponent(parsed.tagLine)}`,
+          2
+        );
+        setAccount(accountJson);
+
+        const summonerJson = await fetchJsonWithRetry<SummonerDto>(
+          `/api/riot/summoner?puuid=${encodeURIComponent(accountJson.puuid)}`,
+          2
+        );
+        setSummoner(summonerJson);
+
+        const matchListJson = await fetchJsonWithRetry<MatchListDto>(
+          `/api/riot/matches?puuid=${encodeURIComponent(accountJson.puuid)}&count=20`,
+          2
+        );
+
+        const matchDetails = await mapWithConcurrency(
+          matchListJson.matchIds,
+          3,
+          async (matchId) => {
+            return await fetchJsonWithRetry<MatchDto>(
+              `/api/riot/match?matchId=${encodeURIComponent(matchId)}`,
+              3
+            );
+          }
+        );
+
+        setMatches(matchDetails);
+
+        await trackSuccessfulSearch(
+          parsed,
+          accountJson.puuid,
+          summonerJson.profileIconId,
+          summonerJson.summonerLevel
+        );
+
+        setState({ status: "ready" });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        const statusCode = (err as Error & { status?: number })?.status;
+        setState({
+          status: "error",
+          message,
+          statusCode,
+        });
+      }
+    },
+    [trackSuccessfulSearch]
+  );
+
   useEffect(() => {
     if (!riotIdFromUrl) {
       hasRunQueryRef.current = false;
-      setInvalidQueryRiotId(false);
       return;
     }
     if (hasRunQueryRef.current) return;
+    if (!parsedRiotIdFromUrl) return;
     hasRunQueryRef.current = true;
-    setInvalidQueryRiotId(false);
-    try {
-      const decoded = decodeURIComponent(riotIdFromUrl);
-      if (!decoded.includes("#")) {
-        setInvalidQueryRiotId(true);
-        return;
-      }
-      const parsed = parseRiotId(decoded);
-      if (!parsed) {
-        setInvalidQueryRiotId(true);
-        return;
-      }
-      setRiotId(decoded);
-      void doSearch(decoded);
-    } catch {
-      setInvalidQueryRiotId(true);
-    }
-  }, [riotIdFromUrl]);
+    const id = parsedRiotIdFromUrl.riotId;
+    const t = window.setTimeout(() => {
+      void doSearch(id);
+    }, 0);
+    return () => window.clearTimeout(t);
+  }, [riotIdFromUrl, parsedRiotIdFromUrl, doSearch]);
 
   useEffect(() => {
     const trimmed = riotId.trim();
     if (trimmed.length < 2) {
-      setSuggestions([]);
+      activeFetchRef.current += 1;
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
       return;
     }
 
@@ -202,107 +310,6 @@ export default function DashboardRiotSearchPage() {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
   }, [riotId]);
-
-  async function trackSuccessfulSearch(
-    parsed: { riotId: string; gameName: string; tagLine: string },
-    puuid: string,
-    profileIconId?: number,
-    summonerLevel?: number
-  ) {
-    try {
-      const res = await fetch("/api/search/suggestions", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        cache: "no-store",
-        body: JSON.stringify({
-          riotId: parsed.riotId,
-          gameName: parsed.gameName,
-          tagLine: parsed.tagLine,
-          puuid,
-          profileIconId,
-          summonerLevel,
-        }),
-      });
-      const body = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) {
-        console.warn(
-          "[dashboard] Failed to save search to history:",
-          res.status,
-          body
-        );
-        setSaveHistoryError(body?.error ?? `HTTP ${res.status}`);
-      } else {
-        setSaveHistoryError(null);
-      }
-    } catch (err) {
-      console.warn("[dashboard] Error saving search to history:", err);
-      setSaveHistoryError(err instanceof Error ? err.message : "Network error");
-    }
-  }
-
-  async function doSearch(riotIdInput: string) {
-    const parsed = parseRiotId(riotIdInput);
-    if (!parsed) {
-      setState({ status: "error", message: "Enter both name and tag" });
-      return;
-    }
-
-    setShowSuggestions(false);
-    setSaveHistoryError(null);
-    setState({ status: "loading" });
-    setAccount(null);
-    setSummoner(null);
-    setMatches([]);
-
-    try {
-      const accountJson = await fetchJsonWithRetry<AccountDto>(
-        `/api/riot/account?gameName=${encodeURIComponent(parsed.gameName)}&tagLine=${encodeURIComponent(parsed.tagLine)}`,
-        2
-      );
-      setAccount(accountJson);
-
-      const summonerJson = await fetchJsonWithRetry<SummonerDto>(
-        `/api/riot/summoner?puuid=${encodeURIComponent(accountJson.puuid)}`,
-        2
-      );
-      setSummoner(summonerJson);
-
-      const matchListJson = await fetchJsonWithRetry<MatchListDto>(
-        `/api/riot/matches?puuid=${encodeURIComponent(accountJson.puuid)}&count=20`,
-        2
-      );
-
-      const matchDetails = await mapWithConcurrency(
-        matchListJson.matchIds,
-        3,
-        async (matchId) => {
-          return await fetchJsonWithRetry<MatchDto>(
-            `/api/riot/match?matchId=${encodeURIComponent(matchId)}`,
-            3
-          );
-        }
-      );
-
-      setMatches(matchDetails);
-
-      await trackSuccessfulSearch(
-        parsed,
-        accountJson.puuid,
-        summonerJson.profileIconId,
-        summonerJson.summonerLevel
-      );
-
-      setState({ status: "ready" });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      const statusCode = (err as Error & { status?: number })?.status;
-      setState({
-        status: "error",
-        message,
-        statusCode,
-      });
-    }
-  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -24,5 +24,5 @@ export async function generateMetadata({
   params: Promise<{ region: string; name: string; tag: string }>;
 }) {
   await params;
-  return { title: "Summoner · Qcrew" };
+  return { title: "Summoner · Statgap" };
 }

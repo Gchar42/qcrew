@@ -420,41 +420,41 @@ width={18}
         maxDamage,
         maxImpact
       )}
-      <div className="qcrew-summary">
-        <div className="qcrew-summary-adv">
+      <div className="statgap-summary">
+        <div className="statgap-summary-adv">
           <span>{damageEdgeText}</span>
           <span>{goldEdgeText}</span>
           <span>{impactEdgeText}</span>
         </div>
-        <div className="qcrew-summary-row">
-          <div className="qcrew-summary-label">Damage</div>
-          <div className="qcrew-summary-bar">
+        <div className="statgap-summary-row">
+          <div className="statgap-summary-label">Damage</div>
+          <div className="statgap-summary-bar">
             <div className="left" style={{ width: `${winDmgPct * 100}%` }} />
             <div className="right" style={{ width: `${loseDmgPct * 100}%` }} />
           </div>
-          <div className="qcrew-summary-values">
+          <div className="statgap-summary-values">
             <span className="leftVal">{formatShortNum(winDmg)}</span>
             <span className="rightVal">{formatShortNum(loseDmg)}</span>
           </div>
         </div>
-        <div className="qcrew-summary-row">
-          <div className="qcrew-summary-label">Gold</div>
-          <div className="qcrew-summary-bar">
+        <div className="statgap-summary-row">
+          <div className="statgap-summary-label">Gold</div>
+          <div className="statgap-summary-bar">
             <div className="left" style={{ width: `${winGoldPct * 100}%` }} />
             <div className="right" style={{ width: `${loseGoldPct * 100}%` }} />
           </div>
-          <div className="qcrew-summary-values">
+          <div className="statgap-summary-values">
             <span className="leftVal">{formatShortNum(winGold)}</span>
             <span className="rightVal">{formatShortNum(loseGold)}</span>
           </div>
         </div>
-        <div className="qcrew-summary-row">
-          <div className="qcrew-summary-label">Avg Impact</div>
-          <div className="qcrew-summary-bar">
+        <div className="statgap-summary-row">
+          <div className="statgap-summary-label">Avg Impact</div>
+          <div className="statgap-summary-bar">
             <div className="left" style={{ width: `${winImpactPct * 100}%` }} />
             <div className="right" style={{ width: `${loseImpactPct * 100}%` }} />
           </div>
-          <div className="qcrew-summary-values">
+          <div className="statgap-summary-values">
             <span className="leftVal">{Math.round(winImpactAvg)}</span>
             <span className="rightVal">{Math.round(loseImpactAvg)}</span>
           </div>

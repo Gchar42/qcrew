@@ -11,7 +11,7 @@ export default function SummonerLayout({
       <div className="profile-page">
         <nav className="profile-nav">
           <Link href="/" className="profile-nav-logo">
-            QCREW
+            STATGAP
           </Link>
           <Link href="/search" className="profile-nav-search">
             Search summoner

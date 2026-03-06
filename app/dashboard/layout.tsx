@@ -14,7 +14,7 @@ export default function DashboardLayout({
             href="/"
             className="text-lg font-bold text-white hover:text-indigo-400 transition-colors"
           >
-            Qcrew
+            Statgap
           </Link>
           <Link
             href="/"

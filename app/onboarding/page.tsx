@@ -29,7 +29,7 @@ export default async function OnboardingPage() {
           href="/"
           className="inline-block text-xl font-bold text-white mb-8 hover:text-indigo-400 transition-colors"
         >
-          Qcrew
+          Statgap
         </Link>
         <div className="glass rounded-2xl p-8">
           <h1 className="text-xl font-bold text-white mb-2">Choose a username</h1>

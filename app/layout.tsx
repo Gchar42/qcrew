@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Qcrew – League of Legends stats",
-  description: "Search Riot ID and region. View match history and stats.",
+  title: "Statgap.gg – League of Legends stats",
+  description: "Search Riot ID and region. View match history and stats on Statgap.gg.",
 };
 
 export default function RootLayout({
