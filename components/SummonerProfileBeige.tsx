@@ -29,6 +29,7 @@ import {
 } from "@/lib/runesCd";
 import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
+import { getTeamVerdict } from "@/lib/teamVerdict";
 import { numberToRankLabel, rankToNumber } from "@/lib/rankMapping";
 import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
 import { addRecent, addFavorite, removeFavorite, isFavorite } from "@/lib/savedSummoners";
@@ -857,6 +858,12 @@ export default function SummonerProfileBeige({
           <div className="profile-matches-header-left">
             <h2 className="profile-matches-title">Recent Matches</h2>
             <span className="profile-matches-count">({matchCount})</span>
+            <Link
+              href="/team-verdict"
+              className="text-sm text-zinc-500 hover:text-indigo-400 transition-colors ml-2"
+            >
+              What is Team Verdict?
+            </Link>
             <button
               type="button"
               onClick={handleRefreshMatchHistory}
@@ -911,6 +918,7 @@ export default function SummonerProfileBeige({
           const impact = account ? computeImpactScore(m, account.puuid) : null;
           const badges = getMatchBadges(m);
           const badgeInfo = account ? badges.get(account.puuid) : null;
+          const teamVerdict = account ? getTeamVerdict(m, account.puuid) : null;
           const relative = relativeTime(m.info?.gameEndTimestamp);
           const items = [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6].filter(
             (id): id is number => id != null && id > 0
@@ -1097,6 +1105,14 @@ export default function SummonerProfileBeige({
                           </span>
                         </span>
                       )
+                    )}
+                    {teamVerdict && (
+                      <span
+                        className={`profile-badge-chip team-verdict-badge team-verdict-${teamVerdict.verdict.toLowerCase()}`}
+                        title={teamVerdict.reason}
+                      >
+                        <span className="profile-badge-chip-text">{teamVerdict.verdict}</span>
+                      </span>
                     )}
                   </div>
                   <div className="profile-match-items-row">

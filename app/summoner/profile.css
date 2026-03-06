@@ -1106,6 +1106,39 @@
   color: #b91c1c;
 }
 
+/* Team Verdict inline badges (match history) */
+.profile-page .team-verdict-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid;
+}
+.profile-page .team-verdict-badge.team-verdict-carried {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(251, 191, 36, 0.5);
+  color: #fbbf24;
+}
+.profile-page .team-verdict-badge.team-verdict-solid {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #10b981;
+}
+.profile-page .team-verdict-badge.team-verdict-neutral {
+  background: rgba(113, 113, 122, 0.15);
+  border-color: rgba(113, 113, 122, 0.5);
+  color: #a1a1aa;
+}
+.profile-page .team-verdict-badge.team-verdict-deadweight {
+  background: rgba(249, 115, 22, 0.15);
+  border-color: rgba(249, 115, 22, 0.5);
+  color: #f97316;
+}
+.profile-page .team-verdict-badge.team-verdict-anchored {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+}
+
 /* (temp overrides removed; using inline-style verification instead) */
 
 .profile-page .profile-outcome-pill {
