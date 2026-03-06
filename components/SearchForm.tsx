@@ -2,11 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-/** Same-origin URL so the icon always loads (avoids cross-origin/referrer issues) */
-function getProfileIconProxyUrl(iconId: number): string {
-  return `/api/asset/profile-icon/${iconId}`;
-}
+import { getProfileIconUrl } from "@/lib/riotAssets";
 import { addRecent } from "@/lib/savedSummoners";
+
+const PROFILE_ICON_DDRAGON_VERSION = "14.6.1";
 
 type Region = { value: string; label: string };
 
@@ -183,7 +182,7 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
                       r.profileIconId != null && r.profileIconId > 0
                         ? r.profileIconId
                         : DEFAULT_ICON_ID;
-                    const iconUrl = getProfileIconProxyUrl(iconId);
+                    const iconUrl = getProfileIconUrl(iconId, PROFILE_ICON_DDRAGON_VERSION);
                     const level =
                       r.summonerLevel != null
                         ? `Level ${r.summonerLevel}`
@@ -203,17 +202,25 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
                                 alt=""
                                 width={40}
                                 height={40}
-                                className="relative z-10 h-full w-full object-cover"
+                                className="relative z-10 h-full w-full object-cover bg-zinc-800"
                                 loading="eager"
                                 referrerPolicy="no-referrer"
                                 onError={(e) => {
-                                  e.currentTarget.style.display = "none";
-                                  const fallback = e.currentTarget.nextElementSibling;
+                                  const img = e.currentTarget;
+                                  const fallback = img.nextElementSibling;
+                                  const proxyUrl = `/api/asset/profile-icon/${iconId}`;
+                                  if (img.src !== proxyUrl && !img.dataset.retried) {
+                                    img.dataset.retried = "1";
+                                    img.src = proxyUrl;
+                                    img.style.display = "";
+                                    return;
+                                  }
                                   if (fallback instanceof HTMLElement) {
                                     fallback.style.display = "flex";
                                     fallback.style.position = "absolute";
                                     fallback.style.inset = "0";
                                   }
+                                  img.style.display = "none";
                                 }}
                               />
                             ) : null}

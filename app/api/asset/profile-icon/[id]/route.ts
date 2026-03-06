@@ -12,14 +12,14 @@ export async function GET(
     return new Response("Invalid icon id", { status: 400 });
   }
   const url = `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/profileicon/${num}.png`;
-  const res = await fetch(url, { cache: "force-cache", next: { revalidate: 86400 } });
+  const res = await fetch(url, { cache: "default" });
   if (!res.ok) {
     return new Response("Icon not found", { status: 404 });
   }
-  const blob = await res.blob();
-  return new Response(blob, {
+  const buffer = await res.arrayBuffer();
+  return new Response(buffer, {
     headers: {
-      "content-type": res.headers.get("content-type") ?? "image/png",
+      "content-type": "image/png",
       "cache-control": "public, max-age=86400",
     },
   });
