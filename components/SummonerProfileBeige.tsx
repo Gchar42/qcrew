@@ -119,7 +119,7 @@ function getMatchRankBadges(
   for (const p of participants) {
     const entries: LeagueEntry[] = p.puuid === accountPuuid && (rankedSolo || rankedFlex)
       ? ([rankedSolo, rankedFlex].filter(Boolean) as LeagueEntry[])
-      : (leagueEntriesBySummonerId[p.summonerId] ?? []);
+      : (p.summonerId != null ? leagueEntriesBySummonerId[p.summonerId] ?? [] : []);
     const badge = formatRankBadge(entries, targetQueueType);
     const entry = entries.find((e) => e.queueType === targetQueueType);
     const tier = entry?.tier ?? "";
