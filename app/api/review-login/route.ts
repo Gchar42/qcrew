@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getReviewCookieName, getReviewCookieValueNode } from "@/lib/reviewGate";
+import { getReviewCookieName, getReviewCookieValue } from "@/lib/reviewGate";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid password" }, { status: 401 });
   }
 
-  const value = await getReviewCookieValueNode(password);
+  const value = await getReviewCookieValue(password);
   const response = NextResponse.json({ ok: true });
   response.cookies.set(getReviewCookieName(), value, {
     httpOnly: true,

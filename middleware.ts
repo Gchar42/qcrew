@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { getReviewCookieName, getReviewCookieValueEdge } from "@/lib/reviewGate";
+import { getReviewCookieName, getReviewCookieValue } from "@/lib/reviewGate";
 
 const RIOT_VERIFICATION_CODE = "68551e54-8f32-4ca9-86c3-2861d94704e8";
 
@@ -16,7 +16,7 @@ export async function middleware(request: NextRequest) {
   const reviewPassword = process.env.REVIEW_GATE_PASSWORD;
   const isReviewLogin = pathname === "/review-login" || pathname === "/api/review-login";
   if (reviewPassword && !isReviewLogin) {
-    const expected = await getReviewCookieValueEdge(reviewPassword);
+    const expected = await getReviewCookieValue(reviewPassword);
     const cookie = request.cookies.get(getReviewCookieName())?.value;
     if (cookie !== expected) {
       const url = request.nextUrl.clone();

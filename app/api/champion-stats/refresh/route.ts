@@ -171,7 +171,12 @@ export async function refreshChampionStats(
     await supabaseAdmin.from("champion_aggregates").upsert(empty, {
       onConflict: "puuid,queue,season_key",
     });
-    return;
+    return {
+      totalMatchIds: matchIds.length,
+      missingBefore: 0,
+      fetchedThisRun: 0,
+      remainingAfterApprox: matchIds.length,
+    };
   }
 
   const matchIdsInSeason = indexRows.map((r) => r.match_id);
