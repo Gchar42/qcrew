@@ -123,8 +123,8 @@ function getMatchRankBadges(
     const badge = formatRankBadge(entries, targetQueueType);
     const entry = entries.find((e) => e.queueType === targetQueueType);
     const tier = entry?.tier ?? "";
-    rankBadgesByPuuid[p.puuid] = badge ?? "—";
-    rankTierByPuuid[p.puuid] = tier || "unranked";
+    if (badge) rankBadgesByPuuid[p.puuid] = badge;
+    if (tier) rankTierByPuuid[p.puuid] = tier;
   }
   return { rankBadgesByPuuid, rankTierByPuuid };
 }

@@ -223,7 +223,7 @@ export function MatchDetails({
                 stylesById
               );
 
-              const badge = rankBadgesByPuuid?.[p.puuid] ?? "—";
+              const badge = rankBadgesByPuuid?.[p.puuid];
               const tierKey = (rankTierByPuuid?.[p.puuid] ?? "unranked").toLowerCase();
 
               return (
@@ -318,7 +318,9 @@ width={18}
                         title={participantDisplayName(p)}
                       >
                         {participantDisplayName(p)}
-                        <span className={`md-rank-badge md-rank-badge-${tierKey}`}>{badge}</span>
+                        {badge ? (
+                          <span className={`md-rank-badge md-rank-badge-${tierKey}`}>{badge}</span>
+                        ) : null}
                       </Link>
                     </div>
                   </td>
