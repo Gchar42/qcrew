@@ -82,7 +82,7 @@ function SearchContent() {
         <p className="text-zinc-400 text-sm mb-6">
           Enter a Riot ID (GameName#Tag) or at least 2 characters to search.
         </p>
-        <div className="rounded-xl border border-white/10 bg-black/30 p-6">
+        <div className="rounded-xl border border-white/10 bg-black/30 p-6 overflow-visible">
           <SearchForm regions={REGIONS} />
         </div>
       </div>

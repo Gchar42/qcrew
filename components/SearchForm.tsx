@@ -119,7 +119,7 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
     router.push(summonerProfileUrl(id, region));
   };
 
-  const displaySuggestions = queryMinLength && (suggestions.length > 0 || loadingSuggestions);
+  const displaySuggestions = queryMinLength;
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
