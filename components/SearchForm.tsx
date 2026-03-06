@@ -235,7 +235,7 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
                             <span className="text-sm font-medium text-red-400">
                               {r.gameName ?? id.split("#")[0]}
                             </span>
-                            <span className="ml-1 text-sm text-zinc-500">
+                            <span className="whitespace-nowrap text-sm text-zinc-500">
                               #{r.tagLine ?? id.split("#")[1] ?? ""}
                             </span>
                           </div>
