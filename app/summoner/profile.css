@@ -288,8 +288,15 @@
 .profile-page .profile-rank-card-content {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.profile-page .profile-rank-card-left {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .profile-page .profile-rank-card-emblem {
@@ -306,15 +313,24 @@
   color: var(--ink);
 }
 
+.profile-page .profile-rank-card-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 .profile-page .profile-rank-card-lp {
   font-size: 13px;
   color: var(--muted);
 }
 
-.profile-page .profile-rank-card-wr {
+.profile-page .profile-rank-card-wr,
+.profile-page .profile-rank-card-wl,
+.profile-page .profile-rank-card-games {
   font-size: 12px;
   color: var(--muted);
-  margin-top: 4px;
 }
 
 /* Champion Stats card (same stack as rank cards) */

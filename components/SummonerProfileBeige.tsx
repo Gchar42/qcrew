@@ -761,18 +761,22 @@ export default function SummonerProfileBeige({
       <div className={`profile-rank-card ${tierBorderClass}`}>
         <div className="profile-rank-card-title">{title}</div>
         <div className="profile-rank-card-content">
-          {tier && (
-            <span className="profile-ranked-emblem-wrap">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={getRankEmblemUrl(tier)} alt="" className="profile-rank-card-emblem profile-ranked-emblem" width={48} height={48} loading="eager" fetchPriority="high" />
-            </span>
-          )}
-          <div className="profile-ranked-summary">
+          <div className="profile-rank-card-left">
+            {tier && (
+              <span className="profile-ranked-emblem-wrap">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={getRankEmblemUrl(tier)} alt="" className="profile-rank-card-emblem profile-ranked-emblem" width={48} height={48} loading="eager" fetchPriority="high" />
+              </span>
+            )}
             <span className={`profile-rank-card-tier profile-ranked-tier-line ${tierColorClass}`.trim()}>
               {formatRankTier(tier, entry.rank ?? "")}
             </span>
+          </div>
+          <div className="profile-rank-card-stats">
             <span className="profile-rank-card-lp profile-ranked-lp">{entry.leaguePoints ?? 0} LP</span>
-            <span className="profile-rank-card-wr profile-ranked-winrate">{winRatePct}% WR · {entry.wins}W - {entry.losses}L</span>
+            <span className="profile-rank-card-wr profile-ranked-winrate">{winRatePct}% WR</span>
+            <span className="profile-rank-card-wl profile-ranked-winrate">{entry.wins}W - {entry.losses}L</span>
+            <span className="profile-rank-card-games profile-ranked-winrate">{gamesPlayed} games</span>
           </div>
         </div>
       </div>
