@@ -1,7 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const RIOT_VERIFICATION_CODE = "68551e54-8f32-4ca9-86c3-2861d94704e8";
+
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  if (pathname === "/riot.txt" || pathname === "//riot.txt") {
+    return new Response(RIOT_VERIFICATION_CODE, {
+      headers: { "Content-Type": "text/plain" },
+    });
+  }
+
   const response = NextResponse.next({
     request: { headers: request.headers },
   });
@@ -29,7 +38,6 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const pathname = request.nextUrl.pathname;
   const isAuthCallback = pathname === "/auth/callback";
 
   if (isAuthCallback) {
@@ -41,5 +49,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/auth", "/auth/callback"],
+  matcher: ["/auth", "/auth/callback", "/riot.txt", "//riot.txt"],
 };
