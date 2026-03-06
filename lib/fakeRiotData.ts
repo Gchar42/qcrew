@@ -13,7 +13,11 @@ import type {
 export const DEMO_GAME_NAME = "Demo";
 export const DEMO_TAG_LINE = "NA1";
 export const DEMO_RIOT_ID = `${DEMO_GAME_NAME}#${DEMO_TAG_LINE}`;
-const FAKE_PUUID = "00000000-0000-0000-0000-000000000000";
+export const FAKE_PUUID = "00000000-0000-0000-0000-000000000000";
+
+export function isDemoPuuid(puuid: string): boolean {
+  return (puuid ?? "").trim() === FAKE_PUUID;
+}
 
 export function isDemoRiotId(riotId: string): boolean {
   const n = riotId.trim().replace(/\s+/g, " ");
@@ -267,6 +271,8 @@ function buildLeagueEntriesForOpponents(): Record<string, LeagueEntryDto[]> {
   return out;
 }
 
+const INITIAL_DEMO_MATCHES = 20;
+
 function buildFakeMatches(
   queue: "solo" | "flex",
   summonerId: string,
@@ -274,6 +280,23 @@ function buildFakeMatches(
 ): MatchDto[] {
   const matches: MatchDto[] = [];
   for (let i = 0; i < TOTAL_DEMO_MATCHES; i++) {
+    matches.push(buildFakeMatch(i, queue, summonerId, leagueEntriesBySummonerId));
+  }
+  return matches;
+}
+
+/** Returns a slice of fake matches for "Show more" (indices [start, start+count)). */
+export function getFakeMatchesSlice(
+  region: string,
+  queue: "solo" | "flex",
+  start: number,
+  count: number
+): MatchDto[] {
+  const leagueEntriesBySummonerId = buildLeagueEntriesForOpponents();
+  const summonerId = "fake-summoner-id";
+  const matches: MatchDto[] = [];
+  const end = Math.min(start + count, TOTAL_DEMO_MATCHES);
+  for (let i = start; i < end; i++) {
     matches.push(buildFakeMatch(i, queue, summonerId, leagueEntriesBySummonerId));
   }
   return matches;
@@ -321,11 +344,12 @@ export function getFakeProfileBundle(
       : null;
 
   const leagueEntriesBySummonerId = buildLeagueEntriesForOpponents();
-  const matches = buildFakeMatches(queue, summoner.id, leagueEntriesBySummonerId);
-  const matchIds = matches.map((m) => m.metadata.matchId);
+  const allMatches = buildFakeMatches(queue, summoner.id, leagueEntriesBySummonerId);
+  const matchIds = allMatches.map((m) => m.metadata.matchId);
+  const matches = allMatches.slice(0, INITIAL_DEMO_MATCHES);
 
   let totalK = 0, totalD = 0, totalA = 0, totalCs = 0, totalSec = 0;
-  matches.forEach((m) => {
+  allMatches.forEach((m) => {
     const p = m.info.participants.find((x) => x.puuid === FAKE_PUUID);
     if (p) {
       totalK += p.kills ?? 0;
@@ -335,7 +359,7 @@ export function getFakeProfileBundle(
     }
     totalSec += m.info.gameDuration ?? 0;
   });
-  const n = matches.length || 1;
+  const n = allMatches.length || 1;
   const avgK = Math.round((totalK / n) * 10) / 10;
   const avgD = Math.round((totalD / n) * 10) / 10;
   const avgA = Math.round((totalA / n) * 10) / 10;
@@ -348,7 +372,7 @@ export function getFakeProfileBundle(
     matchIds,
     matches,
     computed: {
-      matchCount: matches.length,
+      matchCount: allMatches.length,
       avgKda: `${avgK}/${avgD}/${avgA}`,
       csPerMin: Math.round(avgCsPerMin * 10) / 10,
       avgDuration: Math.round(avgDurationMin * 10) / 10,

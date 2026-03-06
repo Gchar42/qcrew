@@ -1337,7 +1337,7 @@ export default function SummonerProfileBeige({
                     ...prev,
                     [queue]: [...(prev[queue] ?? []), ...more],
                   }));
-                  if (res.ok && more.length < 20) {
+                  if (res.ok && more.length === 0) {
                     setHasMoreByQueue((prev) => ({ ...prev, [queue]: false }));
                   }
                 } catch {

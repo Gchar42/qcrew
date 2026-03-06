@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getRoutingRegion } from "@/lib/riot-regions";
 import { getCached, setCache } from "@/lib/supabase/route";
 import { SEASON_START_MS } from "@/lib/season";
+import { isDemoPuuid, getFakeMatchesSlice } from "@/lib/fakeRiotData";
 import type { MatchDto } from "@/types/riot";
 
 export const dynamic = "force-dynamic";
@@ -23,8 +24,28 @@ async function riotFetch(url: string): Promise<Response> {
 /**
  * GET /api/riot/more-matches?puuid=&region=&queue=solo|flex&start=20&count=20
  * Returns the next page of match details for profile "Show more". Calls Riot directly (no cache).
+ * For demo profile (Demo#NA1), returns fake matches slice without API key.
  */
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const puuid = searchParams.get("puuid");
+  const region = searchParams.get("region") ?? "na1";
+  const queueParam = (searchParams.get("queue") ?? "solo").toLowerCase();
+  const queue = queueParam === "flex" ? "flex" : "solo";
+  const startStr = searchParams.get("start") ?? "20";
+  const countStr = searchParams.get("count") ?? "20";
+  const start = Math.max(0, parseInt(startStr, 10) || 20);
+  const count = Math.min(25, Math.max(1, parseInt(countStr, 10) || 20));
+
+  if (!puuid) {
+    return NextResponse.json({ error: "Missing puuid", status: 400 }, { status: 400, headers: NO_CACHE });
+  }
+
+  if (isDemoPuuid(puuid)) {
+    const matches = getFakeMatchesSlice(region, queue, start, count);
+    return NextResponse.json({ matches }, { headers: NO_CACHE });
+  }
+
   const key = process.env.RIOT_API_KEY;
   if (!key) {
     return NextResponse.json(
@@ -33,17 +54,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const { searchParams } = new URL(request.url);
-  const puuid = searchParams.get("puuid");
-  const region = searchParams.get("region") ?? "na1";
-  const queue = searchParams.get("queue") ?? "solo";
-  const start = searchParams.get("start") ?? "20";
-  const count = searchParams.get("count") ?? "20";
   const queueId = queue === "flex" ? "440" : "420";
-
-  if (!puuid) {
-    return NextResponse.json({ error: "Missing puuid", status: 400 }, { status: 400, headers: NO_CACHE });
-  }
 
   const routing = getRoutingRegion(region);
   const base = RIOT_MATCH_BASE.replace("{region}", routing);
