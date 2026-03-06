@@ -373,13 +373,13 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
-  min-width: 110px;
+  min-width: 150px;
 }
 
 .profile-page .profile-rank-card .emblem-icon {
   position: relative;
-  width: 90px;
-  height: 90px;
+  width: 140px;
+  height: 140px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -388,8 +388,8 @@
 .profile-page .profile-rank-card .emblem-img {
   position: relative;
   z-index: 1;
-  width: 88px;
-  height: 88px;
+  width: 140px;
+  height: 140px;
   object-fit: contain;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
 }
@@ -543,6 +543,7 @@
 .profile-page .profile-rank-card .stat-value .win { color: #4eca8b; }
 .profile-page .profile-rank-card .stat-value .loss { color: #e05656; }
 .profile-page .profile-rank-card .stat-value .sep { color: rgba(255,255,255,0.2); margin: 0 2px; }
+.profile-page .profile-rank-card .stat-value.record { white-space: nowrap; }
 .profile-page .profile-rank-card .stat-value.wr { font-size: 15px; font-weight: 800; }
 .profile-page .profile-rank-card-gold .stat-value.wr { color: #f0d878; }
 .profile-page .profile-rank-card-silver .stat-value.wr { color: #d4dce6; }
