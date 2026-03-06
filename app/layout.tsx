@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { Toaster } from "@/components/Toast";
+import { Footer } from "@/components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,9 +38,10 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://raw.communitydragon.org" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-[var(--background)] text-[var(--foreground)]`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-[var(--background)] text-[var(--foreground)] flex flex-col min-h-screen`}
       >
-        {children}
+        <div className="flex-1 flex flex-col">{children}</div>
+        <Footer />
         <Toaster />
         <SpeedInsights />
       </body>
