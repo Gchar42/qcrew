@@ -187,6 +187,31 @@ function normalizeRiotId(riotId: string): string {
 const RIOT_ACCOUNT_BASE = "https://{region}.api.riotgames.com/riot/account/v1";
 const RIOT_MATCH_BASE = "https://{region}.api.riotgames.com/lol/match/v5/matches";
 
+/** Summoner v4 uses platform (na1, euw1, etc.), not routing region. */
+const RIOT_SUMMONER_BASE = "https://{platform}.api.riotgames.com/lol/summoner/v4/summoners";
+
+/** Fetch summoner directly from Riot (no self-request) so refresh avoids timeouts. */
+async function fetchSummonerFromRiot(puuid: string, platform: string): Promise<SummonerDto> {
+  const key = process.env.RIOT_API_KEY;
+  if (!key) throw new Error("Riot API key not configured");
+  const base = RIOT_SUMMONER_BASE.replace("{platform}", platform);
+  const url = `${base}/by-puuid/${encodeURIComponent(puuid)}`;
+  const res = await fetch(url, { cache: "no-store", headers: { "X-Riot-Token": key } });
+  const text = await res.text();
+  if (!res.ok) throw new Error(text || "Summoner lookup failed");
+  const data = JSON.parse(text) as Record<string, unknown>;
+  return {
+    id: String(data.id ?? ""),
+    encryptedSummonerId: data.id != null ? String(data.id) : undefined,
+    accountId: String(data.accountId ?? ""),
+    puuid: String(data.puuid ?? puuid),
+    name: String(data.name ?? ""),
+    profileIconId: Number(data.profileIconId) || 0,
+    summonerLevel: Number(data.summonerLevel) || 0,
+    revisionDate: typeof data.revisionDate === "number" ? data.revisionDate : undefined,
+  } as SummonerDto;
+}
+
 /** Fetch match IDs directly from Riot (no cache) so refresh always gets latest list. */
 async function fetchMatchIdsFromRiot(
   puuid: string,
@@ -273,13 +298,24 @@ async function fetchBundleFromRiot(
         return (data.matchIds ?? []).slice(0, 20);
       });
 
+  const summonerPromise = fastRefresh
+    ? (async (): Promise<SummonerDto> => {
+        try {
+          return await fetchSummonerFromRiot(account.puuid, platform);
+        } catch (e) {
+          await new Promise((r) => setTimeout(r, 800));
+          return fetchSummonerFromRiot(account.puuid, platform);
+        }
+      })()
+    : fetch(`${baseUrl}/api/riot/summoner?puuid=${encodeURIComponent(account.puuid)}&region=${region}`).then(
+        async (r) => {
+          if (!r.ok) throw new Error("Summoner lookup failed");
+          return r.json() as Promise<SummonerDto>;
+        }
+      );
+
   const [summoner, matchIdList, leagueEntries] = await Promise.all([
-    fetch(`${baseUrl}/api/riot/summoner?puuid=${encodeURIComponent(account.puuid)}&region=${region}`).then(
-      async (r) => {
-        if (!r.ok) throw new Error("Summoner lookup failed");
-        return r.json() as Promise<SummonerDto>;
-      }
-    ),
+    summonerPromise,
     matchIdListPromise,
     fetch(`${baseUrl}/api/riot/league?puuid=${encodeURIComponent(account.puuid)}&platform=${platform}`).then(
       async (r) => {
