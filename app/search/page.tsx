@@ -6,6 +6,8 @@ import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { getProfileIconUrl } from "@/lib/riotAssets";
+import { SearchForm } from "@/components/SearchForm";
+import { REGIONS } from "@/lib/riot-regions";
 
 export type SearchResultItem = {
   riotId: string;
@@ -76,10 +78,13 @@ function SearchContent() {
   if (q.length < 2) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-8">
-        <h1 className="text-2xl font-bold text-white">Search</h1>
-        <p className="mt-2 text-sm text-amber-400">
-          Enter at least 2 characters.
+        <h1 className="text-2xl font-bold text-white mb-2">Search</h1>
+        <p className="text-zinc-400 text-sm mb-6">
+          Enter a Riot ID (GameName#Tag) or at least 2 characters to search.
         </p>
+        <div className="rounded-xl border border-white/10 bg-black/30 p-6">
+          <SearchForm regions={REGIONS} />
+        </div>
       </div>
     );
   }

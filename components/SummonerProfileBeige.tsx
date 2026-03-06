@@ -31,6 +31,7 @@ import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
 import { numberToRankLabel, rankToNumber } from "@/lib/rankMapping";
 import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
+import { REGIONS } from "@/lib/riot-regions";
 import type { AccountDto, LeagueEntryDto, SummonerDto, MatchDto } from "@/types/riot";
 
 /** Badge name -> profile CSS class for chip styling */
@@ -352,14 +353,15 @@ export default function SummonerProfileBeige({
   const router = useRouter();
   const pathname = usePathname();
   const riotIdParam = riotIdProp !== undefined && riotIdProp !== null ? riotIdProp : searchParams.get("riotId");
-  const regionVal = regionProp ?? DEFAULT_REGION;
+  const hasRegionInUrl = regionProp != null && regionProp !== "";
+  const regionVal = (hasRegionInUrl ? regionProp : DEFAULT_REGION) as string;
   const parsed = parseRiotIdFromQuery(riotIdParam);
   const queue = searchParams.get("queue") || "solo";
   const targetQueueType = queue === "flex" ? "RANKED_FLEX_SR" : "RANKED_SOLO_5x5";
   const queueIdForMatches = queue === "flex" ? 440 : 420;
 
   const swrKey =
-    riotIdParam && regionVal && parsed
+    riotIdParam && hasRegionInUrl && regionVal && parsed
       ? (["profileBundle", riotIdParam, regionVal, queue] as const)
       : null;
   const { data: bundle, error: bundleError, isLoading, mutate } = useSWR(
@@ -599,6 +601,36 @@ export default function SummonerProfileBeige({
       <div className="profile-empty">
         <p>Invalid Riot ID in URL. Use format GameName#Tag.</p>
         <Link href="/search">Go to search</Link>
+      </div>
+    );
+  }
+
+  if (!hasRegionInUrl) {
+    const onSelectRegion = (value: string) => {
+      const params = new URLSearchParams(searchParams?.toString() ?? "");
+      params.set("riotId", riotIdParam ?? "");
+      params.set("region", value);
+      if (queue && queue !== "solo") params.set("queue", queue);
+      router.replace(`${pathname ?? "/summoner"}?${params.toString()}`);
+    };
+    return (
+      <div className="profile-empty">
+        <p className="mb-2">Select region for this summoner</p>
+        <p className="text-zinc-400 text-sm mb-4">{parsed ? `${parsed.gameName}#${parsed.tagLine}` : ""}</p>
+        <select
+          className="bg-zinc-800 text-zinc-100 border border-zinc-600 rounded px-3 py-2"
+          defaultValue=""
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v) onSelectRegion(v);
+          }}
+          aria-label="Region"
+        >
+          <option value="" disabled>Region…</option>
+          {REGIONS.map((r) => (
+            <option key={r.value} value={r.value}>{r.label}</option>
+          ))}
+        </select>
       </div>
     );
   }
