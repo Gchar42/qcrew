@@ -1072,47 +1072,51 @@ export default function SummonerProfileBeige({
                     {" · "}
                     <span>{cs} CS ({csPerMin.toFixed(1)}/m)</span>
                   </div>
-                  <div className="profile-chips-row badgeArea socialBadgeWrap">
-                    {impact != null && (
-                      <span className="profile-impact-chip">
-                        <span className="profile-impact-chip-label">Impact</span>
-                        <span className="profile-impact-chip-score">{impact.score}</span>
-                      </span>
-                    )}
-                    {badgeInfo && (
-                      badgeInfo.badge === "Main Character" ? (
-                        <span className="profile-badge-chip-mc-wrap" title={badgeInfo.reason}>
-                          <span className="profile-badge-chip profile-badge-chip-main-character socialBadge">
-                            <span className="profile-badge-chip-mc-inner">
-                              <span className="profile-badge-chip-crown" aria-hidden>
-                                <svg width="14" height="16" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M12 2l2.5 6h4L14 11l1 7-3-4-3 4 1-7-4.5-3h4L12 2z" fill="#b8860b" />
-                                </svg>
-                              </span>
-                              <span className="profile-badge-chip-text profile-badge-chip-text-main-character">
-                                MAIN CHARACTER
+                  <div className="profile-badge-rows">
+                    <div className="profile-chips-row badgeArea socialBadgeWrap">
+                      {impact != null && (
+                        <span className="profile-impact-chip">
+                          <span className="profile-impact-chip-label">Impact</span>
+                          <span className="profile-impact-chip-score">{impact.score}</span>
+                        </span>
+                      )}
+                      {badgeInfo && (
+                        badgeInfo.badge === "Main Character" ? (
+                          <span className="profile-badge-chip-mc-wrap" title={badgeInfo.reason}>
+                            <span className="profile-badge-chip profile-badge-chip-main-character socialBadge">
+                              <span className="profile-badge-chip-mc-inner">
+                                <span className="profile-badge-chip-crown" aria-hidden>
+                                  <svg width="14" height="16" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 2l2.5 6h4L14 11l1 7-3-4-3 4 1-7-4.5-3h4L12 2z" fill="#b8860b" />
+                                  </svg>
+                                </span>
+                                <span className="profile-badge-chip-text profile-badge-chip-text-main-character">
+                                  MAIN CHARACTER
+                                </span>
                               </span>
                             </span>
                           </span>
-                        </span>
-                      ) : (
-                        <span
-                          className={`profile-badge-chip socialBadge ${getBadgeCategoryClass(badgeInfo.badge)}`}
-                          title={badgeInfo.reason}
-                        >
-                          <span className="profile-badge-chip-text socialBadgeText">
-                            {badgeInfo.badge}
+                        ) : (
+                          <span
+                            className={`profile-badge-chip socialBadge ${getBadgeCategoryClass(badgeInfo.badge)}`}
+                            title={badgeInfo.reason}
+                          >
+                            <span className="profile-badge-chip-text socialBadgeText">
+                              {badgeInfo.badge}
+                            </span>
                           </span>
-                        </span>
-                      )
-                    )}
+                        )
+                      )}
+                    </div>
                     {teamVerdict && (
-                      <span
-                        className={`profile-badge-chip team-verdict-badge team-verdict-${teamVerdict.verdict.toLowerCase()}`}
-                        title={teamVerdict.reason}
-                      >
-                        <span className="profile-badge-chip-text">{teamVerdict.verdict}</span>
-                      </span>
+                      <div className="profile-chips-row profile-team-verdict-row">
+                        <span
+                          className={`profile-badge-chip team-verdict-badge team-verdict-${teamVerdict.verdict.toLowerCase()}`}
+                          title={teamVerdict.reason}
+                        >
+                          <span className="profile-badge-chip-text">{teamVerdict.verdict}</span>
+                        </span>
+                      </div>
                     )}
                   </div>
                   <div className="profile-match-items-row">
