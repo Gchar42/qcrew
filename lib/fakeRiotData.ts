@@ -141,6 +141,7 @@ const ARCHETYPE_STATS: PartStats[] = [
   { kills: 5, deaths: 4, assists: 8, totalDamageDealtToChampions: 14000, damageDealtToObjectives: 8200, damageDealtToTurrets: 4200, totalMinionsKilled: 140, neutralMinionsKilled: 6, visionScore: 32, teamPosition: "UTILITY" }, // 9 Where It Counts
   { kills: 4, deaths: 5, assists: 6, totalDamageDealtToChampions: 10500, damageDealtToObjectives: 2800, damageDealtToTurrets: 1400, totalMinionsKilled: 148, neutralMinionsKilled: 7, visionScore: 24, teamPosition: "BOTTOM" }, // 10 Background Character
   { kills: 7, deaths: 11, assists: 5, totalDamageDealtToChampions: 16000, damageDealtToObjectives: 2000, damageDealtToTurrets: 1000, totalMinionsKilled: 130, neutralMinionsKilled: 6, visionScore: 22, teamPosition: "JUNGLE" }, // 11 Limit Testing
+  { kills: 11, deaths: 3, assists: 10, totalDamageDealtToChampions: 22000, damageDealtToObjectives: 5500, damageDealtToTurrets: 2800, totalMinionsKilled: 195, neutralMinionsKilled: 12, visionScore: 42, teamPosition: "MIDDLE" }, // 12 strong teammate (impact ~72+, for Carried verdict)
 ];
 
 function buildParticipant(
@@ -204,7 +205,7 @@ function buildFakeMatch(
     let archIndex: number;
     if (index === 0) {
       if (i === 0) archIndex = 3;
-      else if (i < 5) archIndex = 5;
+      else if (i < 5) archIndex = 12;
       else archIndex = 6;
     } else {
       archIndex = i === 0 ? index % 3 : 3 + ((index + i) % 9);
