@@ -224,7 +224,26 @@ export function MatchDetails({
               );
 
               const badge = rankBadgesByPuuid?.[p.puuid];
-              const tierKey = (rankTierByPuuid?.[p.puuid] ?? "unranked").toLowerCase();
+              const tierFromData = rankTierByPuuid?.[p.puuid]?.toLowerCase();
+              // Derive tier from badge text when tier missing so badge always gets a color (e.g. G2→gold, D1→diamond)
+              const tierKey =
+                tierFromData ||
+                (badge && badge.length > 0
+                  ? (() => {
+                      const c = badge.charAt(0).toUpperCase();
+                      if (c === "G") return "gold";
+                      if (c === "S") return "silver";
+                      if (c === "B") return "bronze";
+                      if (c === "I") return "iron";
+                      if (c === "P") return "platinum";
+                      if (c === "E") return "emerald";
+                      if (c === "D") return "diamond";
+                      if (c === "M") return "master";
+                      if (badge.startsWith("GM")) return "grandmaster";
+                      if (c === "C") return "challenger";
+                      return "unranked";
+                    })()
+                  : "unranked");
 
               return (
                 <tr key={p.puuid} className={isMe ? "md-me" : ""}>
