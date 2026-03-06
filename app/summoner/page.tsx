@@ -24,6 +24,6 @@ export default function SummonerPage() {
 function SummonerPageContent() {
   const searchParams = useSearchParams();
   const riotId = searchParams.get("riotId");
-  const region = searchParams.get("region") ?? undefined;
+  const region = searchParams.get("region") ?? "na1";
   return <SummonerProfileBeige riotId={riotId} region={region} />;
 }

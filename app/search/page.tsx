@@ -22,14 +22,15 @@ export type SearchResultItem = {
 const PAGE_SIZE = 25;
 const DEFAULT_ICON_ID = 29;
 
-function summonerProfileUrl(riotId: string) {
-  return `/summoner?riotId=${encodeURIComponent(riotId)}`;
+function summonerProfileUrl(riotId: string, region: string) {
+  return `/summoner?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}`;
 }
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const q = (searchParams.get("q") || "").trim();
+  const [region, setRegion] = useState("na1");
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -93,8 +94,8 @@ function SearchContent() {
     <div className="mx-auto max-w-3xl px-6 py-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <h1 className="text-xl font-bold text-white">
-          This is the search result for the summoner &quot;{q}&quot; in the
-          North America region.
+          This is the search result for the summoner &quot;{q}&quot; in the{" "}
+          {REGIONS.find((r) => r.value === region)?.label ?? region} region.
         </h1>
         <Link
           href="/dashboard"
@@ -108,13 +109,16 @@ function SearchContent() {
         <div className="flex items-center gap-2">
           <span className="text-sm text-zinc-400">Region</span>
           <select
-            defaultValue="na1"
-            disabled
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-70"
+            value={region}
+            onChange={(e) => setRegion(e.target.value)}
+            className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            aria-label="Region"
           >
-            <option value="na1" className="bg-zinc-900">
-              NA
-            </option>
+            {REGIONS.map((r) => (
+              <option key={r.value} value={r.value} className="bg-zinc-900">
+                {r.label}
+              </option>
+            ))}
           </select>
         </div>
         {!loading && (
@@ -149,7 +153,7 @@ function SearchContent() {
                   <button
                     type="button"
                     onClick={() =>
-                      router.push(summonerProfileUrl(r.riotId))
+                      router.push(summonerProfileUrl(r.riotId, region))
                     }
                     className="flex w-full cursor-pointer items-center gap-4 rounded-lg border border-white/10 bg-black/30 px-4 py-3 text-left transition-colors hover:bg-white/5"
                   >
@@ -174,7 +178,7 @@ function SearchContent() {
                       </span>
                     </div>
                     <span className="shrink-0 rounded bg-zinc-700/80 px-2 py-0.5 text-xs text-zinc-300">
-                      NA
+                      {REGIONS.find((r) => r.value === region)?.label ?? region}
                     </span>
                     <span className="shrink-0 text-zinc-500" aria-hidden>
                       <svg
