@@ -1024,70 +1024,144 @@
   color: #8b6914;
 }
 
-/* Main Character: pill badge – dark indigo bg, gold border, crown + stars + text, soft gold glow */
+/* Main Character badge – standalone design (from main-character-badge.html) */
 
-.profile-page .profile-badge-chip-mc-wrap {
-  position: relative;
-  display: inline-flex;
-  z-index: 3;
-  transform-origin: left center;
-}
-
-.profile-page .profile-badge-chip-main-character {
+.profile-page .mc-badge-wrapper {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 110px;
-  height: 28px;
-  padding: 0 12px 0 10px;
-  border-radius: 999px;
-  border: 1.5px solid rgba(212, 175, 55, 0.85);
-  background: #1e293b;
-  color: #d4af37;
-  box-shadow:
-    0 0 0 1px rgba(212, 175, 55, 0.2),
-    0 0 12px 2px rgba(218, 165, 32, 0.35);
+  z-index: 3;
+}
+
+.profile-page .mc-badge-wrapper::before {
+  content: '';
+  position: absolute;
+  width: 260px;
+  height: 60px;
+  background: radial-gradient(ellipse, rgba(201, 163, 86, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: mc-ambient-pulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes mc-ambient-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.profile-page .mc-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px 6px 12px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #1e1b2e 0%, #15132a 50%, #1a1730 100%);
+  border: 1.5px solid #c9a356;
+  overflow: visible;
+  animation: mc-badge-entrance 0.6s ease-out both;
+}
+
+.profile-page .mc-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(201, 163, 86, 0.08) 40%, rgba(245, 230, 184, 0.15) 50%, rgba(201, 163, 86, 0.08) 60%, transparent 100%);
+  animation: mc-shimmer-sweep 4s 1s ease-in-out infinite;
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+@keyframes mc-shimmer-sweep {
+  0%, 100% { left: -100%; }
+  50% { left: 100%; }
+}
+
+.profile-page .mc-badge::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 230, 184, 0.4), transparent);
+  border-radius: 1px;
+}
+
+@keyframes mc-badge-entrance {
+  from { opacity: 0; transform: scale(0.9) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.profile-page .mc-badge .mc-icon {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 4px rgba(201, 163, 86, 0.5));
+  animation: mc-crown-bob 3s ease-in-out infinite;
+}
+
+@keyframes mc-crown-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+
+.profile-page .mc-badge .mc-text {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-weight: 900;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: linear-gradient(180deg, #f5e6b8 0%, #c9a356 50%, #a07830 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  white-space: nowrap;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+
+.profile-page .mc-badge .sparkles {
+  position: absolute;
+  inset: -8px;
+  pointer-events: none;
   overflow: visible;
 }
 
-.profile-page .profile-badge-chip-mc-inner {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 5px;
-  position: relative;
-  z-index: 1;
+.profile-page .mc-badge .sparkle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #f5e6b8;
+  animation: mc-sparkle var(--dur) var(--delay) ease-in-out infinite;
+  opacity: 0;
 }
 
-.profile-page .profile-badge-chip-main-character .profile-badge-chip-crown {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+@keyframes mc-sparkle {
+  0%, 100% { opacity: 0; transform: scale(0); }
+  50% { opacity: 0.9; transform: scale(1); }
+}
+
+.profile-page .mc-badge .mc-star {
+  width: 8px;
+  height: 8px;
   flex-shrink: 0;
-  color: #d4af37;
-  filter: drop-shadow(0 0 4px rgba(218, 165, 32, 0.5));
+  opacity: 0.6;
+  animation: mc-star-twinkle 2s ease-in-out infinite;
 }
 
-.profile-page .profile-badge-chip-main-character .profile-badge-chip-mc-star {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: #d4af37;
-  opacity: 0.95;
-  filter: drop-shadow(0 0 3px rgba(218, 165, 32, 0.4));
+.profile-page .mc-badge .mc-star:last-of-type {
+  animation-delay: 1s;
 }
 
-.profile-page .profile-badge-chip-main-character .profile-badge-chip-text-main-character {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #d4af37;
-  line-height: 1.2;
-  white-space: nowrap;
-  text-shadow: 0 0 8px rgba(218, 165, 32, 0.4);
+@keyframes mc-star-twinkle {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 0.9; transform: scale(1.1); }
 }
 
 /* Animated gold ring around champion portrait when Main Character */

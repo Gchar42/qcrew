@@ -1082,29 +1082,39 @@ export default function SummonerProfileBeige({
                       )}
                       {badgeInfo && (
                         badgeInfo.badge === "Main Character" ? (
-                          <span className="profile-badge-chip-mc-wrap" title={badgeInfo.reason}>
-                            <span className="profile-badge-chip profile-badge-chip-main-character socialBadge">
-                              <span className="profile-badge-chip-mc-inner">
-                                <span className="profile-badge-chip-crown" aria-hidden>
-                                  <svg width="14" height="12" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M2 18L6 8L12 12L18 8L22 18L2 18z" fill="currentColor" />
-                                  </svg>
-                                </span>
-                                <span className="profile-badge-chip-mc-star" aria-hidden>
-                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 2l2.5 6h4L14 11l1 7-3-4-3 4 1-7-4.5-3h4L12 2z" />
-                                  </svg>
-                                </span>
-                                <span className="profile-badge-chip-text profile-badge-chip-text-main-character">
-                                  MAIN CHARACTER
-                                </span>
-                                <span className="profile-badge-chip-mc-star" aria-hidden>
-                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 2l2.5 6h4L14 11l1 7-3-4-3 4 1-7-4.5-3h4L12 2z" />
-                                  </svg>
-                                </span>
-                              </span>
-                            </span>
+                          <span className="mc-badge-wrapper" title={badgeInfo.reason}>
+                            <div className="mc-badge">
+                              <div className="sparkles" aria-hidden>
+                                <div className="sparkle" style={{ left: "5%", top: "10%", ["--dur" as string]: "2.4s", ["--delay" as string]: "0s" }} />
+                                <div className="sparkle" style={{ left: "92%", top: "15%", ["--dur" as string]: "2.8s", ["--delay" as string]: "0.6s" }} />
+                                <div className="sparkle" style={{ left: "50%", top: "-8%", ["--dur" as string]: "2.1s", ["--delay" as string]: "1.2s" }} />
+                                <div className="sparkle" style={{ left: "12%", top: "88%", ["--dur" as string]: "2.6s", ["--delay" as string]: "0.3s" }} />
+                                <div className="sparkle" style={{ left: "82%", top: "92%", ["--dur" as string]: "2.3s", ["--delay" as string]: "0.9s" }} />
+                                <div className="sparkle" style={{ left: "38%", top: "98%", ["--dur" as string]: "2.7s", ["--delay" as string]: "1.5s" }} />
+                              </div>
+                              <svg className="mc-icon" viewBox="0 0 24 24" fill="none" aria-hidden>
+                                <path d="M3 18H21V20H3V18Z" fill="#c9a356" />
+                                <path d="M3 16L5 7L9.5 11L12 4L14.5 11L19 7L21 16H3Z" fill="url(#crownGoldGradProfile)" />
+                                <circle cx="12" cy="5" r="1.5" fill="#f5e6b8" />
+                                <circle cx="5" cy="8" r="1" fill="#f5e6b8" opacity="0.7" />
+                                <circle cx="19" cy="8" r="1" fill="#f5e6b8" opacity="0.7" />
+                                <defs>
+                                  <linearGradient id="crownGoldGradProfile" x1="3" y1="4" x2="21" y2="18">
+                                    <stop offset="0%" stopColor="#f5e6b8" />
+                                    <stop offset="40%" stopColor="#c9a356" />
+                                    <stop offset="70%" stopColor="#a07830" />
+                                    <stop offset="100%" stopColor="#c9a356" />
+                                  </linearGradient>
+                                </defs>
+                              </svg>
+                              <svg className="mc-star" viewBox="0 0 12 12" aria-hidden>
+                                <polygon points="6,0 7.5,4.5 12,4.5 8.25,7.5 9.75,12 6,9 2.25,12 3.75,7.5 0,4.5 4.5,4.5" fill="#c9a356" />
+                              </svg>
+                              <span className="mc-text">Main Character</span>
+                              <svg className="mc-star" viewBox="0 0 12 12" aria-hidden>
+                                <polygon points="6,0 7.5,4.5 12,4.5 8.25,7.5 9.75,12 6,9 2.25,12 3.75,7.5 0,4.5 4.5,4.5" fill="#c9a356" />
+                              </svg>
+                            </div>
                           </span>
                         ) : (
                           <span
