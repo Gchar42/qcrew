@@ -1590,8 +1590,30 @@
   font-weight: 700;
   opacity: 0.85;
   flex-shrink: 0;
-  color: var(--ink);
 }
+
+.profile-page .rank-badge-unranked { color: var(--muted); background: rgba(255, 255, 255, 0.06); }
+.profile-page .rank-badge-iron { color: #9ca3af; background: rgba(107, 114, 128, 0.25); }
+.profile-page .rank-badge-bronze { color: #d4a574; background: rgba(184, 115, 51, 0.25); }
+.profile-page .rank-badge-silver { color: #c0c0c0; background: rgba(156, 163, 175, 0.25); }
+.profile-page .rank-badge-gold { color: #e8c547; background: rgba(201, 163, 39, 0.25); }
+.profile-page .rank-badge-platinum { color: #7eb8b8; background: rgba(126, 184, 184, 0.2); }
+.profile-page .rank-badge-emerald { color: #34d399; background: rgba(52, 211, 153, 0.2); }
+.profile-page .rank-badge-diamond { color: #60a5fa; background: rgba(96, 165, 250, 0.2); }
+.profile-page .rank-badge-master { color: #a78bfa; background: rgba(139, 92, 246, 0.2); }
+.profile-page .rank-badge-grandmaster { color: #f87171; background: rgba(248, 113, 113, 0.2); }
+.profile-page .rank-badge-challenger { color: #fbbf24; background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(229, 231, 235, 0.25) 100%); }
+.profile-page .player-link .rank-badge-unranked { color: var(--muted); background: rgba(255, 255, 255, 0.06); }
+.profile-page .player-link .rank-badge-iron { color: #9ca3af; background: rgba(107, 114, 128, 0.25); }
+.profile-page .player-link .rank-badge-bronze { color: #d4a574; background: rgba(184, 115, 51, 0.25); }
+.profile-page .player-link .rank-badge-silver { color: #c0c0c0; background: rgba(156, 163, 175, 0.25); }
+.profile-page .player-link .rank-badge-gold { color: #e8c547; background: rgba(201, 163, 39, 0.25); }
+.profile-page .player-link .rank-badge-platinum { color: #7eb8b8; background: rgba(126, 184, 184, 0.2); }
+.profile-page .player-link .rank-badge-emerald { color: #34d399; background: rgba(52, 211, 153, 0.2); }
+.profile-page .player-link .rank-badge-diamond { color: #60a5fa; background: rgba(96, 165, 250, 0.2); }
+.profile-page .player-link .rank-badge-master { color: #a78bfa; background: rgba(139, 92, 246, 0.2); }
+.profile-page .player-link .rank-badge-grandmaster { color: #f87171; background: rgba(248, 113, 113, 0.2); }
+.profile-page .player-link .rank-badge-challenger { color: #fbbf24; background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(229, 231, 235, 0.25) 100%); }
 
 .profile-page .profile-matches-debug {
   font-family: "Space Mono", monospace;

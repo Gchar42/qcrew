@@ -1267,8 +1267,20 @@ export default function SummonerProfileBeige({
                           >
                             {part.riotIdGameName ?? part.summonerName}
                             {(() => {
-                              const badge = formatRankBadge(leagueBySummonerId[part.summonerId ?? ""], activeQueueType);
-                              return badge ? <span className="rank-badge">{badge}</span> : null;
+                              const entries = part.puuid === account?.puuid && (bundle?.ranked.solo || bundle?.ranked.flex)
+                                ? ([bundle?.ranked.solo, bundle?.ranked.flex].filter(Boolean) as LeagueEntry[])
+                                : (leagueBySummonerId[part.summonerId ?? ""] ?? []);
+                              const badge = formatRankBadge(entries, activeQueueType);
+                              const entry = entries.find((e) => e.queueType === activeQueueType);
+                              const tierKey = (entry?.tier ?? "").toLowerCase() || (badge ? (() => {
+                                const c = badge.charAt(0).toUpperCase();
+                                if (c === "G") return "gold"; if (c === "S") return "silver"; if (c === "B") return "bronze";
+                                if (c === "I") return "iron"; if (c === "P") return "platinum"; if (c === "E") return "emerald";
+                                if (c === "D") return "diamond"; if (c === "M") return "master";
+                                if (badge.startsWith("GM")) return "grandmaster"; if (c === "C") return "challenger";
+                                return "unranked";
+                              })() : "unranked");
+                              return badge ? <span className={`rank-badge rank-badge-${tierKey}`}>{badge}</span> : null;
                             })()}
                           </Link>
                         </span>
@@ -1326,8 +1338,20 @@ export default function SummonerProfileBeige({
                           >
                             {part.riotIdGameName ?? part.summonerName}
                             {(() => {
-                              const badge = formatRankBadge(leagueBySummonerId[part.summonerId ?? ""], activeQueueType);
-                              return badge ? <span className="rank-badge">{badge}</span> : null;
+                              const entries = part.puuid === account?.puuid && (bundle?.ranked.solo || bundle?.ranked.flex)
+                                ? ([bundle?.ranked.solo, bundle?.ranked.flex].filter(Boolean) as LeagueEntry[])
+                                : (leagueBySummonerId[part.summonerId ?? ""] ?? []);
+                              const badge = formatRankBadge(entries, activeQueueType);
+                              const entry = entries.find((e) => e.queueType === activeQueueType);
+                              const tierKey = (entry?.tier ?? "").toLowerCase() || (badge ? (() => {
+                                const c = badge.charAt(0).toUpperCase();
+                                if (c === "G") return "gold"; if (c === "S") return "silver"; if (c === "B") return "bronze";
+                                if (c === "I") return "iron"; if (c === "P") return "platinum"; if (c === "E") return "emerald";
+                                if (c === "D") return "diamond"; if (c === "M") return "master";
+                                if (badge.startsWith("GM")) return "grandmaster"; if (c === "C") return "challenger";
+                                return "unranked";
+                              })() : "unranked");
+                              return badge ? <span className={`rank-badge rank-badge-${tierKey}`}>{badge}</span> : null;
                             })()}
                           </Link>
                         </span>
