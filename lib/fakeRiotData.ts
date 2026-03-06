@@ -204,7 +204,7 @@ function buildFakeMatch(
     let archIndex: number;
     if (index === 0) {
       if (i === 0) archIndex = 3;
-      else if (i < 5) archIndex = 4;
+      else if (i < 5) archIndex = 5;
       else archIndex = 6;
     } else {
       archIndex = i === 0 ? index % 3 : 3 + ((index + i) % 9);
