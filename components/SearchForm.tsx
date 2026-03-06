@@ -72,10 +72,12 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
 
   const handleBlur = useCallback(() => {
     setTimeout(() => {
-      const active = typeof document !== "undefined" && document.activeElement;
+      const active =
+        typeof document !== "undefined" ? document.activeElement : null;
       if (
-        dropdownRef.current?.contains(active) ||
-        inputRef.current?.contains(active)
+        active != null &&
+        (dropdownRef.current?.contains(active) ||
+          inputRef.current?.contains(active))
       )
         return;
       setShowSuggestions(false);

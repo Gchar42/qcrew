@@ -44,6 +44,36 @@ async function refreshSnapshot(
   );
 }
 
+/** Refresh profile and return the new bundle, or null if refresh failed. */
+async function refreshSnapshotAndReturn(
+  baseUrl: string,
+  region: string,
+  queue: "solo" | "flex",
+  normRiotId: string
+): Promise<ProfileBundle | null> {
+  try {
+    const [gameName, tagLine] = normRiotId.split("#").map((s) => s.trim());
+    if (!gameName || !tagLine) return null;
+    const parsed = { gameName, tagLine };
+    const bundle = await fetchBundleFromRiot(baseUrl, region, queue, parsed);
+    await supabaseAdmin.from("profile_snapshots").upsert(
+      {
+        region,
+        queue,
+        riot_id: normRiotId,
+        puuid: bundle.profile.account.puuid,
+        data: bundle as unknown as Record<string, unknown>,
+        fetched_at: new Date().toISOString(),
+        stale_after_sec: STALE_AFTER_SEC,
+      },
+      { onConflict: "region,queue,riot_id" }
+    );
+    return bundle;
+  } catch {
+    return null;
+  }
+}
+
 type ProfileSnapshotRow = {
   region: string;
   queue: string;
@@ -441,8 +471,12 @@ export async function GET(request: Request) {
           headers: CACHE_HEADERS,
         });
       }
-      refreshSnapshot(baseUrl, region, queue, normRiotId).catch(() => {});
-
+      // Stale: don't return old cache; fetch fresh so user sees latest matches
+      const fresh = await refreshSnapshotAndReturn(baseUrl, region, queue, normRiotId);
+      if (fresh) {
+        return NextResponse.json(fresh, { status: 200, headers: CACHE_HEADERS });
+      }
+      // Fallback: return stale cache if refresh failed (e.g. timeout)
       return NextResponse.json(bundleToReturn, {
         headers: CACHE_HEADERS,
       });
