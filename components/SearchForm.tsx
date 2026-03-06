@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getProfileIconUrl } from "@/lib/riotAssets";
@@ -193,20 +192,32 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
                         >
                           <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
                             {iconUrl ? (
-                              <Image
+                              <img
                                 src={iconUrl}
                                 alt=""
-                                fill
-                                className="object-cover"
-                                unoptimized
+                                width={40}
+                                height={40}
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                  const fallback = e.currentTarget.nextElementSibling;
+                                  if (fallback instanceof HTMLElement) fallback.style.display = "flex";
+                                }}
                               />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center text-xs text-zinc-500">
-                                ?
-                              </div>
-                            )}
+                            ) : null}
+                            <div
+                              className="flex h-full w-full items-center justify-center text-xs text-zinc-500"
+                              style={{
+                                display: iconUrl ? "none" : "flex",
+                                position: iconUrl ? "absolute" : undefined,
+                                inset: iconUrl ? 0 : undefined,
+                              }}
+                              aria-hidden
+                            >
+                              ?
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
                             <span className="font-medium text-red-400">
                               {r.gameName ?? id.split("#")[0]}
                             </span>
