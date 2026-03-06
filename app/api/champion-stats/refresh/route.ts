@@ -56,7 +56,9 @@ export async function refreshChampionStats(
   remainingAfterApprox: number;
 }> {
   const key = process.env.RIOT_API_KEY;
-  if (!key) throw new Error("RIOT_API_KEY not configured");
+  if (!key) {
+    return { totalMatchIds: 0, missingBefore: 0, fetchedThisRun: 0, remainingAfterApprox: 0 };
+  }
 
   const routing = getRoutingRegion(region);
   const riotQueueId = queueToRiotId(queue);

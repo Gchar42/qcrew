@@ -7,6 +7,7 @@ import { SEASON_KEY, SEASON_START_MS } from "@/lib/season";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 import type { ChampionStatRow } from "@/app/api/champion-stats/route";
 import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
+import { isDemoRiotId, getFakeProfileBundle } from "@/lib/fakeRiotData";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -477,17 +478,24 @@ async function fetchBundleFromRiot(
 
 export async function GET(request: Request) {
   const riotApiKey = process.env.RIOT_API_KEY;
-  if (!riotApiKey) {
-    return NextResponse.json(
-      { error: "Riot API key not configured", status: 500 },
-      { status: 500, headers: NO_CACHE }
-    );
-  }
-
   const { searchParams } = new URL(request.url);
   const riotIdParam = searchParams.get("riotId");
   const region = searchParams.get("region") ?? "na1";
   const queue = (searchParams.get("queue") ?? "solo") === "flex" ? "flex" : "solo";
+
+  if (!riotApiKey && riotIdParam?.trim()) {
+    const normRiotId = normalizeRiotId(riotIdParam.trim());
+    if (isDemoRiotId(normRiotId)) {
+      const bundle = getFakeProfileBundle(region, queue) as unknown as ProfileBundle;
+      return NextResponse.json(bundle, { headers: CACHE_HEADERS });
+    }
+  }
+  if (!riotApiKey) {
+    return NextResponse.json(
+      { error: "Riot API key not configured. Use Demo#NA1 for a demo profile.", status: 500 },
+      { status: 500, headers: NO_CACHE }
+    );
+  }
 
   if (!riotIdParam || !riotIdParam.trim()) {
     return NextResponse.json(

@@ -40,3 +40,5 @@ Open `http://localhost:3000`. Sign up, create a crew, open it to see the mock ma
 ## 5. Riot Match History (optional)
 
 For the Riot match history feature, add `RIOT_API_KEY` to `.env.local` and (on Vercel) to Environment Variables. See **[docs/RIOT_SETUP.md](docs/RIOT_SETUP.md)** for full setup, Vercel config, and production key notes.
+
+**Without a key:** you can still use the site with fake stats by opening the demo profile: **Demo#NA1** (e.g. `/summoner/na1/Demo/NA1`).

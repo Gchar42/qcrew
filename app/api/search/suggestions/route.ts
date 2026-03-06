@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { DEMO_RIOT_ID, DEMO_GAME_NAME, DEMO_TAG_LINE } from "@/lib/fakeRiotData";
 
 function getAdminClient() {
   const url = process.env.SUPABASE_URL;
@@ -44,6 +45,19 @@ export async function GET(req: Request) {
   if (q.length < 2) {
     return NextResponse.json({ suggestions: [], total: 0 });
   }
+
+  const hasRiotKey = !!process.env.RIOT_API_KEY;
+  const demoSuggestion = !hasRiotKey
+    ? {
+        riotId: DEMO_RIOT_ID,
+        gameName: DEMO_GAME_NAME,
+        tagLine: DEMO_TAG_LINE,
+        puuid: "00000000-0000-0000-0000-000000000000",
+        updatedAt: new Date().toISOString(),
+        profileIconId: 29 as number | undefined,
+        summonerLevel: 127 as number | undefined,
+      }
+    : null;
 
   const client = getAdminClient();
   if (!client) {
@@ -114,7 +128,7 @@ export async function GET(req: Request) {
   if (isSearchPage) {
     const start = (page - 1) * limit;
     const sliced = sorted.slice(start, start + limit);
-    const suggestions = sliced.map((r) => ({
+    let suggestions = sliced.map((r) => ({
       riotId: fullId(r),
       gameName: r.game_name,
       tagLine: r.tag_line,
@@ -123,7 +137,11 @@ export async function GET(req: Request) {
       profileIconId: r.profile_icon_id ?? undefined,
       summonerLevel: r.summoner_level ?? undefined,
     }));
-    const payload: Record<string, unknown> = { suggestions, total };
+    if (demoSuggestion && page === 1) {
+      suggestions = [demoSuggestion, ...suggestions.filter((s) => s.riotId !== DEMO_RIOT_ID)];
+    }
+    const demoCount = demoSuggestion && page === 1 && !sorted.some((r) => fullId(r) === DEMO_RIOT_ID) ? 1 : 0;
+    const payload: Record<string, unknown> = { suggestions, total: total + demoCount };
     if (debug) {
       payload.debug = {
         rowCount: total,
@@ -142,10 +160,16 @@ export async function GET(req: Request) {
   }
 
   const sliced = sorted.slice(0, limit);
-  const suggestions = sliced.map((r) => ({
+  let suggestions = sliced.map((r) => ({
     riotId: fullId(r),
     updatedAt: r.updated_at,
   }));
+  if (demoSuggestion) {
+    suggestions = [
+      { riotId: demoSuggestion.riotId, updatedAt: demoSuggestion.updatedAt },
+      ...suggestions.filter((s) => s.riotId !== DEMO_RIOT_ID),
+    ];
+  }
   return NextResponse.json({ suggestions });
 }
 
