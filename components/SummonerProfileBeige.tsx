@@ -459,6 +459,38 @@ export default function SummonerProfileBeige({
     }
   }, [riotIdParam, regionVal, account?.gameName, account?.tagLine]);
 
+  // Backfill suggestion row with profile icon so search dropdown shows the real icon next time
+  useEffect(() => {
+    if (!account?.puuid || !riotIdParam) return;
+    const gameName = account.gameName?.trim();
+    const tagLine = account.tagLine?.trim();
+    if (!gameName || !tagLine) return;
+    const payload = {
+      riotId: riotIdParam,
+      gameName,
+      tagLine,
+      puuid: account.puuid,
+      ...(summoner?.profileIconId != null &&
+        summoner.profileIconId > 0 && { profileIconId: summoner.profileIconId }),
+      ...(summoner?.summonerLevel != null && {
+        summonerLevel: summoner.summonerLevel,
+      }),
+    };
+    fetch("/api/search/suggestions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => {});
+  }, [
+    account?.puuid,
+    account?.gameName,
+    account?.tagLine,
+    riotIdParam,
+    summoner?.profileIconId,
+    summoner?.summonerLevel,
+  ]);
+
   // When bundle match list actually changes (e.g. after refresh with new data), clear "Show more" buffer so pagination stays in sync
   const bundleFirstMatchId = bundle?.matches?.[0]?.metadata?.matchId ?? null;
   useEffect(() => {

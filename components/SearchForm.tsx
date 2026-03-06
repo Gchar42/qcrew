@@ -176,7 +176,10 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
                 <ul className="max-h-72 overflow-y-auto py-1">
                   {suggestions.map((r) => {
                     const id = r.riotId ?? `${r.gameName ?? ""}#${r.tagLine ?? ""}`;
-                    const iconId = r.profileIconId ?? DEFAULT_ICON_ID;
+                    const iconId =
+                      r.profileIconId != null && r.profileIconId > 0
+                        ? r.profileIconId
+                        : DEFAULT_ICON_ID;
                     const iconUrl = getProfileIconUrl(iconId);
                     const level =
                       r.summonerLevel != null

@@ -179,7 +179,11 @@ export async function POST(req: Request) {
     puuid,
     updated_at: new Date().toISOString(),
   };
-  if (profileIconId != null && !Number.isNaN(profileIconId)) {
+  if (
+    profileIconId != null &&
+    !Number.isNaN(profileIconId) &&
+    profileIconId > 0
+  ) {
     row.profile_icon_id = profileIconId;
   }
   if (summonerLevel != null && !Number.isNaN(summonerLevel)) {

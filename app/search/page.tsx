@@ -146,7 +146,9 @@ function SearchContent() {
           <ul className="mt-6 space-y-1">
             {results.map((r) => {
               const iconId =
-                r.profileIconId != null ? r.profileIconId : DEFAULT_ICON_ID;
+                r.profileIconId != null && r.profileIconId > 0
+                  ? r.profileIconId
+                  : DEFAULT_ICON_ID;
               const iconUrl = getProfileIconUrl(iconId);
               return (
                 <li key={r.puuid}>
