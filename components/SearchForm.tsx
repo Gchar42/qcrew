@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getProfileIconUrl } from "@/lib/riotAssets";
+import { addRecent } from "@/lib/savedSummoners";
 
 type Region = { value: string; label: string };
 
@@ -105,6 +106,7 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
       return;
     }
     const encodedRiotId = `${name}#${tag}`;
+    addRecent({ riotId: encodedRiotId, region, label: encodedRiotId });
     router.push(summonerProfileUrl(encodedRiotId, region));
   };
 
@@ -113,6 +115,7 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
     if (!id || !id.includes("#")) return;
     setRiotId(id);
     setShowSuggestions(false);
+    addRecent({ riotId: id, region, label: id });
     router.push(summonerProfileUrl(id, region));
   };
 

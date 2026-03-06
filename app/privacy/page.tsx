@@ -98,8 +98,9 @@ export default function PrivacyPage() {
             <h2 className="text-white font-semibold mb-2">5. Cookies and Storage</h2>
             <p>
               We use cookies or similar storage for authentication (when you sign
-              in) and for session state. We do not use third-party advertising
-              cookies.
+              in) and for session state. We use browser local storage to save your
+              recent summoner searches and your favorites list so they persist
+              on this device. We do not use third-party advertising cookies.
             </p>
           </section>
 

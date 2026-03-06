@@ -32,6 +32,7 @@ import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
 import { numberToRankLabel, rankToNumber } from "@/lib/rankMapping";
 import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
 import { REGIONS } from "@/lib/riot-regions";
+import { addRecent, addFavorite, removeFavorite, isFavorite } from "@/lib/savedSummoners";
 import type { AccountDto, LeagueEntryDto, SummonerDto, MatchDto } from "@/types/riot";
 
 /** Badge name -> profile CSS class for chip styling */
@@ -382,6 +383,7 @@ export default function SummonerProfileBeige({
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [isFav, setIsFav] = useState(false);
 
   const account = bundle?.profile.account ?? null;
   const summoner = bundle?.profile.summoner ?? null;
@@ -449,6 +451,15 @@ export default function SummonerProfileBeige({
     setHasMoreByQueue({});
     setLoadMoreError(null);
   }, [riotIdParam, regionVal]);
+
+  useEffect(() => {
+    if (!riotIdParam || !regionVal) return;
+    setIsFav(isFavorite(riotIdParam, regionVal));
+    if (account) {
+      const label = `${account.gameName}#${account.tagLine}`;
+      addRecent({ riotId: riotIdParam, region: regionVal, label });
+    }
+  }, [riotIdParam, regionVal, account?.gameName, account?.tagLine]);
 
   // When bundle match list actually changes (e.g. after refresh with new data), clear "Show more" buffer so pagination stays in sync
   const bundleFirstMatchId = bundle?.matches?.[0]?.metadata?.matchId ?? null;
@@ -772,6 +783,27 @@ export default function SummonerProfileBeige({
             <span className="profile-badge profile-badge-na">{regionDisplayLabel(regionVal)}</span>
             {role && <span className="profile-badge profile-badge-role">{role}</span>}
             <span className="profile-badge profile-badge-level">Lv.{level}</span>
+            {riotIdParam && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (isFav) {
+                    removeFavorite(riotIdParam, regionVal);
+                    setIsFav(false);
+                  } else {
+                    addFavorite({
+                      riotId: riotIdParam,
+                      region: regionVal,
+                      label: account ? `${account.gameName}#${account.tagLine}` : riotIdParam,
+                    });
+                    setIsFav(true);
+                  }
+                }}
+                className="profile-badge border-indigo-500/50 bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 cursor-pointer"
+              >
+                {isFav ? "★ Favorited" : "☆ Add to Favorites"}
+              </button>
+            )}
           </div>
         </div>
         <nav className="profile-hero-tabs" aria-label="Profile sections">

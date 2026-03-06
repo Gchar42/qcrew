@@ -16,6 +16,9 @@ export default function SummonerLayout({
           <Link href="/search" className="profile-nav-search">
             Search summoner
           </Link>
+          <Link href="/favorites" className="profile-nav-search">
+            Favorites
+          </Link>
         </nav>
         <div className="profile-container">{children}</div>
       </div>

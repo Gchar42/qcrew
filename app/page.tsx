@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SearchForm } from "@/components/SearchForm";
+import { SavedSummonersList } from "@/components/SavedSummonersList";
 import { REGIONS } from "@/lib/riot-regions";
 
 export default function Home() {
@@ -16,10 +17,10 @@ export default function Home() {
           <nav className="flex items-center gap-4">
             <span className="text-sm text-zinc-500">Search</span>
             <Link
-              href="/"
+              href="/favorites"
               className="text-sm text-zinc-400 hover:text-white transition-colors"
             >
-              Favorites (soon)
+              Favorites
             </Link>
           </nav>
         </div>
@@ -37,6 +38,7 @@ export default function Home() {
           <div className="glass rounded-2xl p-6 sm:p-8">
             <SearchForm regions={REGIONS} />
           </div>
+          <SavedSummonersList />
         </div>
       </main>
     </div>
