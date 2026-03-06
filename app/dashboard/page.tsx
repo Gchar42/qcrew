@@ -426,25 +426,32 @@ export default function DashboardRiotSearchPage() {
       )}
       {account && summoner && (
         <div className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-white/10 glass p-5">
-          <div className="flex items-center gap-4">
-            <div className="relative h-14 w-14 overflow-hidden rounded-xl border border-white/10">
+          <Link
+            href={`/summoner?riotId=${encodeURIComponent(`${account.gameName}#${account.tagLine}`)}&region=na1`}
+            className="flex items-center gap-4 min-w-0 flex-1 hover:opacity-90 transition-opacity"
+          >
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/10">
               <Image
-                src={getProfileIconUrl(summoner.profileIconId)}
-                alt="Profile icon"
+                src={getProfileIconUrl(summoner.profileIconId || 29)}
+                alt=""
                 fill
                 className="object-cover"
+                unoptimized
               />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <div className="text-xl font-bold text-white">
                 {account.gameName}#{account.tagLine}
               </div>
               <div className="mt-1 text-sm text-zinc-400">
                 Level {summoner.summonerLevel}
               </div>
+              <div className="mt-1 text-xs text-indigo-400">
+                View full profile →
+              </div>
             </div>
-          </div>
+          </Link>
 
           {winStats && (
             <div className="text-right">
