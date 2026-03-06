@@ -201,7 +201,14 @@ function buildFakeMatch(
     const isBlue = i < 5;
     const win = isBlue === blueWins;
     const teamId = (isBlue ? 100 : 200) as 100 | 200;
-    const archIndex = i === 0 ? index % 3 : 3 + ((index + i) % 9);
+    let archIndex: number;
+    if (index === 0) {
+      if (i === 0) archIndex = 3;
+      else if (i < 5) archIndex = 4;
+      else archIndex = 6;
+    } else {
+      archIndex = i === 0 ? index % 3 : 3 + ((index + i) % 9);
+    }
     const stats = ARCHETYPE_STATS[archIndex] ?? ARCHETYPE_STATS[0];
     const champion = i === 0
       ? DEMO_CHAMPIONS[index % DEMO_CHAMPIONS.length]
