@@ -6,6 +6,7 @@ import { getRoutingRegion } from "@/lib/riot-regions";
 import { SEASON_KEY, SEASON_START_MS } from "@/lib/season";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 import type { ChampionStatRow } from "@/app/api/champion-stats/route";
+import { refreshChampionStats } from "@/app/api/champion-stats/refresh/route";
 import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
 
 export const dynamic = "force-dynamic";
@@ -199,6 +200,10 @@ async function fetchBundleFromRiot(
     }
   }
 
+  const fullSeasonRefreshPromise = refreshChampionStats(account.puuid, queue, region).catch((err) => {
+    console.warn("[profileBundle] full-season refresh failed:", err instanceof Error ? err.message : err);
+  });
+
   const [summoner, matchIdList, leagueEntries] = await Promise.all([
     fetch(`${baseUrl}/api/riot/summoner?puuid=${encodeURIComponent(account.puuid)}&region=${region}`).then(
       async (r) => {
@@ -207,7 +212,7 @@ async function fetchBundleFromRiot(
       }
     ),
     fetch(
-      `${baseUrl}/api/riot/match-ids?puuid=${encodeURIComponent(account.puuid)}&region=${region}&count=20&queueId=${queueId}`
+      `${baseUrl}/api/riot/match-ids?puuid=${encodeURIComponent(account.puuid)}&region=${region}&count=20&queueId=${queueId}&startTime=${Math.floor(SEASON_START_MS / 1000)}`
     ).then(async (r) => {
       if (!r.ok) throw new Error("Match list failed");
       const data = (await r.json()) as { matchIds: string[] };
@@ -300,6 +305,8 @@ async function fetchBundleFromRiot(
   });
   const avgRankPlayedAgainst =
     values.length > 0 ? numberToRankLabel(values.reduce((a, b) => a + b, 0) / values.length) : "Unranked";
+
+  await fullSeasonRefreshPromise;
 
   const [dbChampionStats, ddragonVersion] = await Promise.all([
     fetchChampionStatsForBundle(account.puuid),

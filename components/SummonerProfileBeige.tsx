@@ -416,18 +416,26 @@ export default function SummonerProfileBeige({
     return { champions, updatedAt: new Date().toISOString() };
   }, [displayedMatches, account?.puuid]);
 
+  // op.gg / u.gg / blitz style: champion stats are always full-season when we have them.
+  // Prefer bundle (DB full-season) for current queue; only use displayed-matches stats as fallback when bundle has no data.
   const championStatsToShow = useMemo(() => {
     const empty = { champions: [], updatedAt: "" };
     const bundleSolo = bundle?.championStats?.solo ?? empty;
     const bundleFlex = bundle?.championStats?.flex ?? empty;
+    const hasSoloFromBundle = (bundleSolo.champions?.length ?? 0) > 0;
+    const hasFlexFromBundle = (bundleFlex.champions?.length ?? 0) > 0;
     const solo =
-      bundleSolo.champions?.length > 0
-        ? bundleSolo
-        : (queue === "solo" && championStatsFromDisplayed ? championStatsFromDisplayed : bundleSolo);
+      queue === "solo"
+        ? hasSoloFromBundle
+          ? bundleSolo
+          : championStatsFromDisplayed ?? bundleSolo
+        : bundleSolo;
     const flex =
-      bundleFlex.champions?.length > 0
-        ? bundleFlex
-        : (queue === "flex" && championStatsFromDisplayed ? championStatsFromDisplayed : bundleFlex);
+      queue === "flex"
+        ? hasFlexFromBundle
+          ? bundleFlex
+          : championStatsFromDisplayed ?? bundleFlex
+        : bundleFlex;
     return { solo, flex };
   }, [queue, championStatsFromDisplayed, bundle?.championStats]);
 
