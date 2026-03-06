@@ -346,6 +346,8 @@ export function getFakeProfileBundle(
   };
 
   const leagueEntriesBySummonerId = buildLeagueEntriesForOpponents();
+  // Include main account so match details show a rank badge for Demo in every match
+  leagueEntriesBySummonerId[summoner.id] = [soloEntry, flexEntry];
   const allMatches = buildFakeMatches(queue, summoner.id, leagueEntriesBySummonerId);
   const matchIds = allMatches.map((m) => m.metadata.matchId);
   const matches = allMatches.slice(0, INITIAL_DEMO_MATCHES);

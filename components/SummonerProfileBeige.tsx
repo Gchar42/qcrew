@@ -104,6 +104,31 @@ function getRankTierColorClass(tier: string): string {
   return "";
 }
 
+/** Build rank badge and tier per puuid for a match (for match details panel). */
+function getMatchRankBadges(
+  match: MatchDto,
+  leagueEntriesBySummonerId: Record<string, LeagueEntry[]>,
+  accountPuuid: string | undefined,
+  rankedSolo: LeagueEntryDto | null,
+  rankedFlex: LeagueEntryDto | null,
+  targetQueueType: string
+): { rankBadgesByPuuid: Record<string, string>; rankTierByPuuid: Record<string, string> } {
+  const rankBadgesByPuuid: Record<string, string> = {};
+  const rankTierByPuuid: Record<string, string> = {};
+  const participants = match.info?.participants ?? [];
+  for (const p of participants) {
+    const entries: LeagueEntry[] = p.puuid === accountPuuid && (rankedSolo || rankedFlex)
+      ? ([rankedSolo, rankedFlex].filter(Boolean) as LeagueEntry[])
+      : (leagueEntriesBySummonerId[p.summonerId] ?? []);
+    const badge = formatRankBadge(entries, targetQueueType);
+    const entry = entries.find((e) => e.queueType === targetQueueType);
+    const tier = entry?.tier ?? "";
+    rankBadgesByPuuid[p.puuid] = badge ?? "—";
+    rankTierByPuuid[p.puuid] = tier || "unranked";
+  }
+  return { rankBadgesByPuuid, rankTierByPuuid };
+}
+
 const DEFAULT_REGION = "na1";
 
 /** Platform to short display label for badge/eyebrow */
@@ -1322,20 +1347,32 @@ export default function SummonerProfileBeige({
                 </div>
               </div>
               </div>
-              {expandedMatchId === matchId ? (
-                <MatchDetails
-                  match={m}
-                  puuidOfSearchedPlayer={account.puuid}
-                  region={regionVal}
-                  queue={queue === "flex" ? "flex" : "solo"}
-                  ddragonVersion={effectiveDdragonVersion}
-                  perksById={perksById}
-                  stylesById={stylesById}
-                  itemDataById={itemDataById}
-                  perkDataById={perkDataById}
-                  styleNamesById={styleNamesById}
-                />
-              ) : null}
+              {expandedMatchId === matchId ? (() => {
+                const { rankBadgesByPuuid, rankTierByPuuid } = getMatchRankBadges(
+                  m,
+                  leagueBySummonerId,
+                  account?.puuid,
+                  bundle?.ranked.solo ?? null,
+                  bundle?.ranked.flex ?? null,
+                  activeQueueType
+                );
+                return (
+                  <MatchDetails
+                    match={m}
+                    puuidOfSearchedPlayer={account.puuid}
+                    region={regionVal}
+                    queue={queue === "flex" ? "flex" : "solo"}
+                    ddragonVersion={effectiveDdragonVersion}
+                    perksById={perksById}
+                    stylesById={stylesById}
+                    itemDataById={itemDataById}
+                    perkDataById={perkDataById}
+                    styleNamesById={styleNamesById}
+                    rankBadgesByPuuid={rankBadgesByPuuid}
+                    rankTierByPuuid={rankTierByPuuid}
+                  />
+                );
+              })() : null}
             </div>
           );
         })}

@@ -78,6 +78,7 @@ export function MatchDetails({
   perksById,
   stylesById,
   rankBadgesByPuuid,
+  rankTierByPuuid,
   itemDataById = {},
   perkDataById,
   styleNamesById,
@@ -89,7 +90,8 @@ export function MatchDetails({
   ddragonVersion?: string | null;
   perksById: Map<number, string>;
   stylesById: Map<number, string>;
-  rankBadgesByPuuid?: Record<string, string | null>;
+  rankBadgesByPuuid?: Record<string, string>;
+  rankTierByPuuid?: Record<string, string>;
   itemDataById?: Record<number, { name: string; plaintext?: string }>;
   perkDataById?: Map<number, { name?: string; shortDesc?: string }>;
   styleNamesById?: Map<number, string>;
@@ -221,7 +223,8 @@ export function MatchDetails({
                 stylesById
               );
 
-              const badge = rankBadgesByPuuid?.[p.puuid] ?? null;
+              const badge = rankBadgesByPuuid?.[p.puuid] ?? "—";
+              const tierKey = (rankTierByPuuid?.[p.puuid] ?? "unranked").toLowerCase();
 
               return (
                 <tr key={p.puuid} className={isMe ? "md-me" : ""}>
@@ -315,9 +318,7 @@ width={18}
                         title={participantDisplayName(p)}
                       >
                         {participantDisplayName(p)}
-                        {badge ? (
-                          <span className="md-rank-badge">{badge}</span>
-                        ) : null}
+                        <span className={`md-rank-badge md-rank-badge-${tierKey}`}>{badge}</span>
                       </Link>
                     </div>
                   </td>
