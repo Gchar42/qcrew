@@ -377,6 +377,7 @@ export default function SummonerProfileBeige({
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMoreByQueue, setHasMoreByQueue] = useState<Record<string, boolean>>({});
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const account = bundle?.profile.account ?? null;
   const summoner = bundle?.profile.summoner ?? null;
@@ -457,6 +458,27 @@ export default function SummonerProfileBeige({
 
   const CHAMPION_STATS_STALE_MS = 5 * 60 * 1000;
   const CHAMPION_STATS_REFRESH_THROTTLE_MS = 4 * 60 * 1000;
+
+  const handleRefreshMatchHistory = useCallback(async () => {
+    if (!swrKey || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      const [, riotId, region, q] = swrKey;
+      const url = `/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}&queue=${encodeURIComponent(q)}&forceRefresh=1`;
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { error?: string }).error ?? "Refresh failed");
+      }
+      const data = (await res.json()) as ProfileBundle;
+      await mutate(data, false);
+      setAdditionalMatchesByQueue((prev) => ({ ...prev, [queue]: [] }));
+    } catch {
+      // leave cache as-is on error
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [swrKey, queue, mutate, isRefreshing]);
 
   useEffect(() => {
     if (bundle?.ddragonVersion != null) setDdragonVersion(bundle.ddragonVersion);
@@ -768,12 +790,15 @@ export default function SummonerProfileBeige({
             <span className="profile-matches-count">({matchCount})</span>
             <button
               type="button"
-              onClick={() => mutate()}
-              disabled={isLoading}
+              onClick={handleRefreshMatchHistory}
+              disabled={isLoading || isRefreshing}
               className="profile-matches-refresh"
               title="Update match history"
             >
-              {isLoading ? "Updating…" : "Refresh"}
+              {(isLoading || isRefreshing) && (
+                <span className="profile-matches-refresh-spinner" aria-hidden />
+              )}
+              {isLoading || isRefreshing ? "Updating…" : "Refresh"}
             </button>
           </div>
           <div className="profile-matches-header-stats recent-stats">

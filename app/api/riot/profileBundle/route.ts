@@ -414,7 +414,9 @@ export async function GET(request: Request) {
     );
   }
   const parsed = { gameName, tagLine };
+  const forceRefresh = searchParams.get("forceRefresh") === "1" || searchParams.get("forceRefresh") === "true";
 
+  if (!forceRefresh) {
   const { data: snapshot, error: selectError } = await supabaseAdmin
     .from("profile_snapshots")
     .select("*")
@@ -482,6 +484,7 @@ export async function GET(request: Request) {
       });
     }
     // cacheHasEmptyMatches: skip cache and fall through to fresh fetch
+  }
   }
 
   const baseUrl = getBaseUrl(request);
