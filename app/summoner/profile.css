@@ -340,86 +340,27 @@
 
 .profile-page .profile-rank-card-content {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: space-between;
-  gap: 28px;
-  min-height: 160px;
+  gap: 24px;
 }
 
 .profile-page .profile-rank-card-left {
-  position: relative;
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
   min-width: 0;
-  flex: 1;
-}
-
-/* Large tier-colored glow behind left section to fill space */
-.profile-page .profile-rank-card-left::before {
-  content: "";
-  position: absolute;
-  left: -20px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0.2;
-}
-
-.profile-page .profile-rank-card-gold .profile-rank-card-left::before {
-  background: radial-gradient(circle, rgba(232, 197, 71, 0.5) 0%, transparent 70%);
-}
-
-.profile-page .profile-rank-card-silver .profile-rank-card-left::before {
-  background: radial-gradient(circle, rgba(192, 192, 192, 0.45) 0%, transparent 70%);
-}
-
-.profile-page .profile-rank-card-iron .profile-rank-card-left::before {
-  background: radial-gradient(circle, rgba(156, 163, 175, 0.4) 0%, transparent 70%);
-}
-
-.profile-page .profile-rank-card-bronze .profile-rank-card-left::before {
-  background: radial-gradient(circle, rgba(212, 165, 116, 0.45) 0%, transparent 70%);
-}
-
-.profile-page .profile-rank-card-platinum .profile-rank-card-left::before {
-  background: radial-gradient(circle, rgba(126, 184, 184, 0.45) 0%, transparent 70%);
-}
-
-.profile-page .profile-rank-card-emerald .profile-rank-card-left::before {
-  background: radial-gradient(circle, rgba(52, 211, 153, 0.45) 0%, transparent 70%);
-}
-
-.profile-page .profile-rank-card-diamond .profile-rank-card-left::before,
-.profile-page .profile-rank-card-master .profile-rank-card-left::before {
-  background: radial-gradient(circle, rgba(96, 165, 250, 0.45) 0%, transparent 70%);
-}
-
-.profile-page .profile-rank-card-grandmaster .profile-rank-card-left::before {
-  background: radial-gradient(circle, rgba(248, 113, 113, 0.45) 0%, transparent 70%);
-}
-
-.profile-page .profile-rank-card-challenger .profile-rank-card-left::before {
-  background: radial-gradient(circle, rgba(251, 191, 36, 0.5) 0%, transparent 70%);
-}
-
-.profile-page .profile-rank-card-left > * {
-  position: relative;
-  z-index: 1;
 }
 
 .profile-page .profile-ranked-emblem-wrap {
   position: relative;
   border-radius: 50%;
-  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
 }
 
 .profile-page .profile-rank-card-emblem {
-  width: 152px;
-  height: 152px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   object-fit: contain;
   flex-shrink: 0;
@@ -433,29 +374,27 @@
 }
 
 .profile-page .profile-rank-card-tier {
-  font-size: 36px;
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.03em;
-  line-height: 1.05;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+  line-height: 1.1;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
 }
 
 .profile-page .profile-rank-card-stats {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  justify-content: center;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
-  padding: 20px 24px;
-  min-width: 140px;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 14px 18px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .profile-page .profile-rank-card-lp {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
   color: #fff;
   letter-spacing: 0.02em;
@@ -464,9 +403,9 @@
 .profile-page .profile-rank-card-wr,
 .profile-page .profile-rank-card-wl,
 .profile-page .profile-rank-card-games {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Champion Stats card (same stack as rank cards) */
