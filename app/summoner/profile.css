@@ -1941,19 +1941,34 @@
   min-width: 0;
 }
 
+/* Same circular portrait style as match row (profile-match-portrait-wrap) */
+.profile-page .md-champ {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  line-height: 0;
+}
+
 .profile-page .md-champ-icon.champ-icon,
 .profile-page .md-champ-placeholder {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  width: 56px;
+  height: 56px;
   object-fit: cover;
+  object-position: center;
+  display: block;
   flex-shrink: 0;
 }
 
 .profile-page .md-champ-placeholder {
-  display: block;
   background: var(--surface);
+}
+
+.profile-page .md-table tr.md-me .md-champ {
+  border-color: rgba(100, 160, 255, 0.9);
+  box-shadow: 0 0 0 1px rgba(100, 160, 255, 0.3);
 }
 
 .profile-page .md-spells-runes {

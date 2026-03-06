@@ -232,8 +232,8 @@ export function MatchDetails({
                           <img
                             src={champUrl}
                             alt=""
-                            width={36}
-                            height={36}
+                            width={56}
+                            height={56}
                             className="md-champ-icon champ-icon"
                           />
                         ) : (
