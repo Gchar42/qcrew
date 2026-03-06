@@ -187,8 +187,9 @@ function normalizeRiotId(riotId: string): string {
 const RIOT_ACCOUNT_BASE = "https://{region}.api.riotgames.com/riot/account/v1";
 const RIOT_MATCH_BASE = "https://{region}.api.riotgames.com/lol/match/v5/matches";
 
-/** Summoner v4 uses platform (na1, euw1, etc.), not routing region. */
+/** Summoner v4 and League v4 use platform (na1, euw1, etc.), not routing region. */
 const RIOT_SUMMONER_BASE = "https://{platform}.api.riotgames.com/lol/summoner/v4/summoners";
+const RIOT_LEAGUE_BASE = "https://{platform}.api.riotgames.com/lol/league/v4/entries";
 
 /** Fetch summoner directly from Riot (no self-request) so refresh avoids timeouts. */
 async function fetchSummonerFromRiot(puuid: string, platform: string): Promise<SummonerDto> {
@@ -210,6 +211,39 @@ async function fetchSummonerFromRiot(puuid: string, platform: string): Promise<S
     summonerLevel: Number(data.summonerLevel) || 0,
     revisionDate: typeof data.revisionDate === "number" ? data.revisionDate : undefined,
   } as SummonerDto;
+}
+
+/** Fetch league entries directly from Riot (no self-request) so refresh gets ranks. */
+async function fetchLeagueFromRiot(puuid: string, platform: string): Promise<LeagueEntryDto[]> {
+  const key = process.env.RIOT_API_KEY;
+  if (!key) throw new Error("Riot API key not configured");
+  const base = RIOT_LEAGUE_BASE.replace("{platform}", platform);
+  const url = `${base}/by-puuid/${encodeURIComponent(puuid)}`;
+  const res = await fetch(url, { cache: "no-store", headers: { "X-Riot-Token": key } });
+  const text = await res.text();
+  if (!res.ok) return [];
+  try {
+    const arr = JSON.parse(text) as unknown;
+    return Array.isArray(arr) ? (arr as LeagueEntryDto[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Fetch one match directly from Riot (no self-request) so refresh gets match history. */
+async function fetchMatchFromRiot(matchId: string, region: string): Promise<MatchDto | null> {
+  const key = process.env.RIOT_API_KEY;
+  if (!key) return null;
+  const routing = getRoutingRegion(region);
+  const base = RIOT_MATCH_BASE.replace("{region}", routing);
+  const url = `${base}/${encodeURIComponent(matchId)}`;
+  const res = await fetch(url, { cache: "no-store", headers: { "X-Riot-Token": key } });
+  if (!res.ok) return null;
+  try {
+    return (await res.json()) as MatchDto;
+  } catch {
+    return null;
+  }
 }
 
 /** Fetch match IDs directly from Riot (no cache) so refresh always gets latest list. */
@@ -314,20 +348,24 @@ async function fetchBundleFromRiot(
         }
       );
 
+  const leaguePromise = fastRefresh
+    ? fetchLeagueFromRiot(account.puuid, platform)
+    : fetch(`${baseUrl}/api/riot/league?puuid=${encodeURIComponent(account.puuid)}&platform=${platform}`).then(
+        async (r) => {
+          if (!r.ok) return [] as LeagueEntryDto[];
+          try {
+            const arr = JSON.parse(await r.text()) as LeagueEntryDto[];
+            return Array.isArray(arr) ? arr : [];
+          } catch {
+            return [] as LeagueEntryDto[];
+          }
+        }
+      );
+
   const [summoner, matchIdList, leagueEntries] = await Promise.all([
     summonerPromise,
     matchIdListPromise,
-    fetch(`${baseUrl}/api/riot/league?puuid=${encodeURIComponent(account.puuid)}&platform=${platform}`).then(
-      async (r) => {
-        if (!r.ok) return [] as LeagueEntryDto[];
-        try {
-          const arr = JSON.parse(await r.text()) as LeagueEntryDto[];
-          return Array.isArray(arr) ? arr : [];
-        } catch {
-          return [] as LeagueEntryDto[];
-        }
-      }
-    ),
+    leaguePromise,
   ]);
 
   console.log("RANK FETCH END", Date.now() - startTime);
@@ -342,9 +380,11 @@ async function fetchBundleFromRiot(
     const chunk = matchIdList.slice(i, i + concurrency);
     const results = await Promise.all(
       chunk.map((matchId) =>
-        fetch(
-          `${baseUrl}/api/riot/match?matchId=${encodeURIComponent(matchId)}&region=${region}&puuid=${encodeURIComponent(account.puuid)}&gameName=${encodeURIComponent(account.gameName)}&tagLine=${encodeURIComponent(account.tagLine)}`
-        ).then((r) => (r.ok ? r.json() : null))
+        fastRefresh
+          ? fetchMatchFromRiot(matchId, region)
+          : fetch(
+              `${baseUrl}/api/riot/match?matchId=${encodeURIComponent(matchId)}&region=${region}&puuid=${encodeURIComponent(account.puuid)}&gameName=${encodeURIComponent(account.gameName)}&tagLine=${encodeURIComponent(account.tagLine)}`
+            ).then((r) => (r.ok ? r.json() : null))
       )
     );
     results.forEach((m) => {
