@@ -323,7 +323,14 @@ async function fetchBundleFromRiot(
   }
 
   const matchIdListPromise = fastRefresh
-    ? fetchMatchIdsFromRiot(account.puuid, queueId, region, 20, 0).then((ids) => ids.slice(0, 20))
+    ? (async (): Promise<string[]> => {
+        try {
+          return await fetchMatchIdsFromRiot(account.puuid, queueId, region, 20, 0).then((ids) => ids.slice(0, 20));
+        } catch (e) {
+          await new Promise((r) => setTimeout(r, 1000));
+          return fetchMatchIdsFromRiot(account.puuid, queueId, region, 20, 0).then((ids) => ids.slice(0, 20));
+        }
+      })()
     : fetch(
         `${baseUrl}/api/riot/match-ids?puuid=${encodeURIComponent(account.puuid)}&region=${region}&count=20&queueId=${queueId}&startTime=${Math.floor(SEASON_START_MS / 1000)}`
       ).then(async (r) => {
