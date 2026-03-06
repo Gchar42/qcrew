@@ -12,7 +12,6 @@ import { MatchDetails } from "@/components/MatchDetails";
 import ChampionStatsCard from "@/components/ChampionStatsCard";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
 import {
-  getChampionSplashUrl,
   getChampionSquareUrl,
   getProfileIconUrl,
   getRankEmblemUrl,
@@ -924,7 +923,6 @@ export default function SummonerProfileBeige({
             (id): id is number => id != null && id > 0
           );
 
-          const portraitBaseUrl = getChampionSplashUrl(p.championName);
           const champSquareUrl = getChampionSquareUrl(
             p.championName,
             effectiveDdragonVersion
@@ -965,7 +963,7 @@ export default function SummonerProfileBeige({
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={portraitBaseUrl}
+                        src={champSquareUrl}
                         alt=""
                         className="profile-match-portrait"
                         width={64}
@@ -973,12 +971,7 @@ export default function SummonerProfileBeige({
                         loading={isFirstRow ? "eager" : "lazy"}
                         fetchPriority={isFirstRow ? "high" : undefined}
                         onError={(e) => {
-                          const target = e.currentTarget;
-                          if (target.src !== champSquareUrl) {
-                            target.src = champSquareUrl;
-                          } else {
-                            target.style.display = "none";
-                          }
+                          e.currentTarget.style.display = "none";
                         }}
                       />
                     </div>
