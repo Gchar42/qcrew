@@ -755,30 +755,71 @@ export default function SummonerProfileBeige({
     );
     const { gamesPlayed, winRatePct } = rankStats(entry);
     const tier = entry.tier ?? "";
-    const tierColorClass = getRankTierColorClass(tier);
-    const tierBorderClass = tier ? `profile-rank-card-${tier.toLowerCase()}` : "profile-rank-card-unranked";
+    const tierKey = tier.toLowerCase();
+    const tierBorderClass = tier ? `profile-rank-card-${tierKey}` : "profile-rank-card-unranked";
+    const lp = entry.leaguePoints ?? 0;
     return (
-      <div className={`profile-rank-card ${tierBorderClass}`}>
-        <div className="profile-rank-card-title">{title}</div>
-        <div className="profile-rank-card-content">
-          <div className="profile-rank-card-left">
-            {tier && (
-              <span className="profile-ranked-emblem-wrap">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={getRankEmblemUrl(tier)} alt="" className="profile-rank-card-emblem profile-ranked-emblem" width={120} height={120} loading="eager" fetchPriority="high" />
-              </span>
-            )}
-            <div className="profile-rank-card-tier-block">
-              <span className={`profile-rank-card-tier profile-ranked-tier-line ${tierColorClass}`.trim()}>
-                {formatRankTier(tier, entry.rank ?? "")}
-              </span>
-            </div>
+      <div className={`profile-rank-card rank-card-inner-layout ${tierBorderClass}`}>
+        <div className="card-inner">
+          <div className="card-header">
+            <span className="queue-label">{title}</span>
+            <span className="season-tag">S15</span>
           </div>
-          <div className="profile-rank-card-stats">
-            <span className="profile-rank-card-lp">{entry.leaguePoints ?? 0} LP</span>
-            <span className="profile-rank-card-wr">{winRatePct}% WR</span>
-            <span className="profile-rank-card-wl">{entry.wins}W – {entry.losses}L</span>
-            <span className="profile-rank-card-games">{gamesPlayed} games</span>
+          <div className="card-body">
+            <div className="rank-emblem">
+              <div className="emblem-icon">
+                {tier ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={getRankEmblemUrl(tier)}
+                      alt=""
+                      className="emblem-img"
+                      width={88}
+                      height={88}
+                      loading="eager"
+                      fetchPriority="high"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const fallback = e.currentTarget.nextElementSibling;
+                        if (fallback) (fallback as HTMLElement).style.display = "flex";
+                      }}
+                    />
+                    <div className="emblem-img emblem-loading-placeholder" style={{ display: "none" }} aria-hidden>
+                      {tier}
+                    </div>
+                  </>
+                ) : null}
+              </div>
+              <span className="rank-name">{formatRankTier(tier, entry.rank ?? "")}</span>
+            </div>
+            <div className="stats-panel">
+              <div className="lp-row">
+                <span className="lp-value">{lp}</span>
+                <span className="lp-label">LP</span>
+              </div>
+              <div className="lp-bar-track">
+                <div className="lp-bar-fill" style={{ width: `${Math.min(100, lp)}%` }} />
+              </div>
+              <div className="stat-grid">
+                <div className="stat-item">
+                  <span className="stat-label">Win Rate</span>
+                  <span className="stat-value wr">{winRatePct}%</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Games</span>
+                  <span className="stat-value">{gamesPlayed}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Record</span>
+                  <span className="stat-value">
+                    <span className="win">{entry.wins}W</span>
+                    <span className="sep">–</span>
+                    <span className="loss">{entry.losses}L</span>
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
