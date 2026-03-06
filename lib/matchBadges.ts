@@ -13,7 +13,7 @@ export type BadgeInfo = { badge: string; reason: string };
 export function getBadgeCategory(badge: string): "gold" | "positive" | "neutral" | "negative" {
   const gold = ["Main Character", "Team Gap"];
   const positive = ["Playmaker", "Jungle Diff", "Where It Counts", "Slippery"];
-  const negative = ["Limit Testing", "AFK", "Learning the Champ", "KS'er"];
+  const negative = ["Limit Testing", "AFK", "Struggle", "KS'er"];
   if (gold.includes(badge)) return "gold";
   if (positive.includes(badge)) return "positive";
   if (negative.includes(badge)) return "negative";
@@ -85,8 +85,8 @@ function getPersonalBadge(
   ) {
     return { badge: "AFK", reason: "Very low impact" };
   }
-  if (deaths >= 9 && score < 70) {
-    return { badge: "Limit Testing", reason: "9+ deaths" };
+  if (deaths >= 10 && score < 70) {
+    return { badge: "Limit Testing", reason: "Risky gameplay" };
   }
   if (deaths <= 2 && score >= 70) {
     return { badge: "Slippery", reason: "2 or fewer deaths" };
@@ -101,7 +101,7 @@ function getPersonalBadge(
     return { badge: "Where It Counts", reason: "High objective or turret damage" };
   }
   if (killsPerMin >= 0.35 && dpm < 600 && takedownsPerMin < 0.95) {
-    return { badge: "KS'er", reason: "Kills high, damage low" };
+    return { badge: "KS'er", reason: "Last hitting champions" };
   }
 
   // Fallback score bands
@@ -113,7 +113,7 @@ function getPersonalBadge(
   }
   if (score >= 55) return { badge: "Doing Your Job", reason: "Impact 55+" };
   if (score >= 40) return { badge: "Background Character", reason: "Impact 40+" };
-  return { badge: "Learning the Champ", reason: "Impact under 40" };
+  return { badge: "Struggle", reason: "Impact under 40" };
 }
 
 /**
