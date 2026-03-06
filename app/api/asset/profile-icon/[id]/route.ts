@@ -1,10 +1,14 @@
 import { NextRequest } from "next/server";
+import { getCachedDdragonVersion } from "@/lib/ddragonVersion";
 
-const DDRAGON_VERSION = "14.6.1";
+const FALLBACK_VERSION = "14.6.1";
 const DEFAULT_ICON_ID = 29;
 
-async function fetchIconBuffer(iconId: number): Promise<ArrayBuffer | null> {
-  const url = `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/profileicon/${iconId}.png`;
+async function fetchIconBuffer(
+  iconId: number,
+  version: string
+): Promise<ArrayBuffer | null> {
+  const url = `https://ddragon.leagueoflegends.com/cdn/${version}/img/profileicon/${iconId}.png`;
   const res = await fetch(url, { cache: "default" });
   if (!res.ok) return null;
   return res.arrayBuffer();
@@ -20,9 +24,10 @@ export async function GET(
   if (!Number.isFinite(num) || num < 0 || num > 9999) {
     return new Response("Invalid icon id", { status: 400 });
   }
-  let buffer = await fetchIconBuffer(num);
+  const version = (await getCachedDdragonVersion()) ?? FALLBACK_VERSION;
+  let buffer = await fetchIconBuffer(num, version);
   if (!buffer && num !== DEFAULT_ICON_ID) {
-    buffer = await fetchIconBuffer(DEFAULT_ICON_ID);
+    buffer = await fetchIconBuffer(DEFAULT_ICON_ID, version);
   }
   if (!buffer) {
     return new Response("Icon not found", { status: 404 });

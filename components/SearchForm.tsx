@@ -182,7 +182,7 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
                       r.profileIconId != null && r.profileIconId > 0
                         ? r.profileIconId
                         : DEFAULT_ICON_ID;
-                    const iconUrl = getProfileIconUrl(iconId, PROFILE_ICON_DDRAGON_VERSION);
+                    const iconUrl = `/api/asset/profile-icon/${iconId}`;
                     const level =
                       r.summonerLevel != null
                         ? `Level ${r.summonerLevel}`
@@ -208,10 +208,9 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
                                 onError={(e) => {
                                   const img = e.currentTarget;
                                   const fallback = img.nextElementSibling;
-                                  const proxyUrl = `/api/asset/profile-icon/${iconId}`;
-                                  if (img.src !== proxyUrl && !img.dataset.retried) {
+                                  if (!img.dataset.retried) {
                                     img.dataset.retried = "1";
-                                    img.src = proxyUrl;
+                                    img.src = getProfileIconUrl(iconId, PROFILE_ICON_DDRAGON_VERSION);
                                     img.style.display = "";
                                     return;
                                   }
@@ -232,7 +231,7 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
                               ?
                             </div>
                           </div>
-                          <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                          <div className="min-w-0 flex-1 break-words">
                             <span className="font-medium text-red-400">
                               {r.gameName ?? id.split("#")[0]}
                             </span>
