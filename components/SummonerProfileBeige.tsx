@@ -366,10 +366,10 @@ export default function SummonerProfileBeige({
     swrKey,
     profileBundleFetcher,
     {
-      revalidateOnFocus: false,
+      revalidateOnFocus: true,
       revalidateOnReconnect: false,
       shouldRetryOnError: false,
-      dedupingInterval: 60000,
+      dedupingInterval: 30000,
     }
   );
 
@@ -443,6 +443,18 @@ export default function SummonerProfileBeige({
     setAdditionalMatchesByQueue({});
     setHasMoreByQueue({});
   }, [riotIdParam, regionVal]);
+
+  // When bundle match list updates (e.g. after refresh), clear "Show more" buffer so pagination stays in sync
+  useEffect(() => {
+    if (!bundle?.matches?.length || !queue) return;
+    setAdditionalMatchesByQueue((prev) => {
+      if (!prev[queue]?.length) return prev;
+      const next = { ...prev };
+      next[queue] = [];
+      return next;
+    });
+  }, [queue, bundle?.matches?.length, bundle?.matches?.[0]?.metadata?.matchId]);
+
   const CHAMPION_STATS_STALE_MS = 5 * 60 * 1000;
   const CHAMPION_STATS_REFRESH_THROTTLE_MS = 4 * 60 * 1000;
 
@@ -754,6 +766,15 @@ export default function SummonerProfileBeige({
           <div className="profile-matches-header-left">
             <h2 className="profile-matches-title">Recent Matches</h2>
             <span className="profile-matches-count">({matchCount})</span>
+            <button
+              type="button"
+              onClick={() => mutate()}
+              disabled={isLoading}
+              className="profile-matches-refresh"
+              title="Update match history"
+            >
+              {isLoading ? "Updating…" : "Refresh"}
+            </button>
           </div>
           <div className="profile-matches-header-stats recent-stats">
             <div className="stat-chip">
@@ -1220,15 +1241,24 @@ export default function SummonerProfileBeige({
                   const res = await fetch(
                     `/api/riot/more-matches?puuid=${encodeURIComponent(account.puuid)}&region=${encodeURIComponent(regionVal ?? "na1")}&queue=${encodeURIComponent(queue)}&start=${start}&count=20`
                   );
-                  const data = res.ok ? await res.json() : { matches: [] };
-                  const more = Array.isArray(data.matches) ? data.matches : [];
+                  let more: MatchDto[] = [];
+                  if (res.ok) {
+                    try {
+                      const data = await res.json();
+                      more = Array.isArray(data?.matches) ? data.matches : [];
+                    } catch {
+                      // non-json or invalid body
+                    }
+                  }
                   setAdditionalMatchesByQueue((prev) => ({
                     ...prev,
                     [queue]: [...(prev[queue] ?? []), ...more],
                   }));
-                  if (res.ok && more.length < 20) setHasMoreByQueue((prev) => ({ ...prev, [queue]: false }));
+                  if (res.ok && more.length < 20) {
+                    setHasMoreByQueue((prev) => ({ ...prev, [queue]: false }));
+                  }
                 } catch {
-                  // keep button clickable on error
+                  // keep button clickable on error so user can retry
                 } finally {
                   setLoadingMore(false);
                 }
