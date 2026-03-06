@@ -230,9 +230,50 @@
 /* Rank card (Solo / Flex / ARAM) */
 .profile-page .profile-rank-card {
   background: var(--surface2);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: 10px;
   padding: 16px;
+}
+
+.profile-page .profile-rank-card-unranked {
+  border-color: var(--border);
+}
+
+.profile-page .profile-rank-card-iron {
+  border-color: #9ca3af;
+}
+
+.profile-page .profile-rank-card-bronze {
+  border-color: #d4a574;
+}
+
+.profile-page .profile-rank-card-silver {
+  border-color: #c0c0c0;
+}
+
+.profile-page .profile-rank-card-gold {
+  border-color: #e8c547;
+}
+
+.profile-page .profile-rank-card-platinum {
+  border-color: #7eb8b8;
+}
+
+.profile-page .profile-rank-card-emerald {
+  border-color: #34d399;
+}
+
+.profile-page .profile-rank-card-diamond,
+.profile-page .profile-rank-card-master {
+  border-color: #60a5fa;
+}
+
+.profile-page .profile-rank-card-grandmaster {
+  border-color: #f87171;
+}
+
+.profile-page .profile-rank-card-challenger {
+  border-color: #fbbf24;
 }
 
 .profile-page .profile-rank-card-title {

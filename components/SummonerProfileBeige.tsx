@@ -743,10 +743,10 @@ export default function SummonerProfileBeige({
   };
 
   const renderRankCard = (title: string, entry: LeagueEntryDto | null, loading: boolean, err: string | null) => {
-    if (loading) return <div className="profile-rank-card"><div className="profile-rank-card-title">{title}</div><div className="profile-rank-card-content"><span className="profile-ranked-loading">Loading…</span></div></div>;
-    if (err) return <div className="profile-rank-card"><div className="profile-rank-card-title">{title}</div><div className="profile-rank-card-content"><span className="profile-ranked-error">{err}</span></div></div>;
+    if (loading) return <div className="profile-rank-card profile-rank-card-unranked"><div className="profile-rank-card-title">{title}</div><div className="profile-rank-card-content"><span className="profile-ranked-loading">Loading…</span></div></div>;
+    if (err) return <div className="profile-rank-card profile-rank-card-unranked"><div className="profile-rank-card-title">{title}</div><div className="profile-rank-card-content"><span className="profile-ranked-error">{err}</span></div></div>;
     if (!entry) return (
-      <div className="profile-rank-card">
+      <div className="profile-rank-card profile-rank-card-unranked">
         <div className="profile-rank-card-title">{title}</div>
         <div className="profile-rank-card-content">
           <span className="profile-ranked-tier-line profile-ranked-unranked">Unranked</span>
@@ -756,8 +756,9 @@ export default function SummonerProfileBeige({
     const { gamesPlayed, winRatePct } = rankStats(entry);
     const tier = entry.tier ?? "";
     const tierColorClass = getRankTierColorClass(tier);
+    const tierBorderClass = tier ? `profile-rank-card-${tier.toLowerCase()}` : "profile-rank-card-unranked";
     return (
-      <div className="profile-rank-card">
+      <div className={`profile-rank-card ${tierBorderClass}`}>
         <div className="profile-rank-card-title">{title}</div>
         <div className="profile-rank-card-content">
           {tier && (
