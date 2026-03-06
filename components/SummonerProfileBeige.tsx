@@ -375,6 +375,7 @@ export default function SummonerProfileBeige({
 
   const [additionalMatchesByQueue, setAdditionalMatchesByQueue] = useState<Record<string, MatchDto[]>>({});
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [hasMoreByQueue, setHasMoreByQueue] = useState<Record<string, boolean>>({});
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -444,9 +445,11 @@ export default function SummonerProfileBeige({
   useEffect(() => {
     setAdditionalMatchesByQueue({});
     setHasMoreByQueue({});
+    setLoadMoreError(null);
   }, [riotIdParam, regionVal]);
 
-  // When bundle match list updates (e.g. after refresh), clear "Show more" buffer so pagination stays in sync
+  // When bundle match list actually changes (e.g. after refresh with new data), clear "Show more" buffer so pagination stays in sync
+  const bundleFirstMatchId = bundle?.matches?.[0]?.metadata?.matchId ?? null;
   useEffect(() => {
     if (!bundle?.matches?.length || !queue) return;
     setAdditionalMatchesByQueue((prev) => {
@@ -455,7 +458,7 @@ export default function SummonerProfileBeige({
       next[queue] = [];
       return next;
     });
-  }, [queue, bundle?.matches?.length, bundle?.matches?.[0]?.metadata?.matchId]);
+  }, [queue, bundle?.matches?.length, bundleFirstMatchId]);
 
   const CHAMPION_STATS_STALE_MS = 5 * 60 * 1000;
   const CHAMPION_STATS_REFRESH_THROTTLE_MS = 4 * 60 * 1000;
@@ -1267,11 +1270,13 @@ export default function SummonerProfileBeige({
               disabled={loadingMore}
               onClick={async () => {
                 if (!account?.puuid || loadingMore) return;
+                setLoadMoreError(null);
                 setLoadingMore(true);
                 try {
                   const start = displayedMatches.length;
                   const res = await fetch(
-                    `/api/riot/more-matches?puuid=${encodeURIComponent(account.puuid)}&region=${encodeURIComponent(regionVal ?? "na1")}&queue=${encodeURIComponent(queue)}&start=${start}&count=20`
+                    `/api/riot/more-matches?puuid=${encodeURIComponent(account.puuid)}&region=${encodeURIComponent(regionVal ?? "na1")}&queue=${encodeURIComponent(queue)}&start=${start}&count=20`,
+                    { cache: "no-store" }
                   );
                   let more: MatchDto[] = [];
                   if (res.ok) {
@@ -1281,6 +1286,8 @@ export default function SummonerProfileBeige({
                     } catch {
                       // non-json or invalid body
                     }
+                  } else {
+                    setLoadMoreError("Couldn't load more. Try again.");
                   }
                   setAdditionalMatchesByQueue((prev) => ({
                     ...prev,
@@ -1290,7 +1297,7 @@ export default function SummonerProfileBeige({
                     setHasMoreByQueue((prev) => ({ ...prev, [queue]: false }));
                   }
                 } catch {
-                  // keep button clickable on error so user can retry
+                  setLoadMoreError("Couldn't load more. Try again.");
                 } finally {
                   setLoadingMore(false);
                 }
@@ -1298,6 +1305,11 @@ export default function SummonerProfileBeige({
             >
               {loadingMore ? "Loading…" : "Show more"}
             </button>
+            {loadMoreError && (
+              <span className="profile-matches-load-more-error" role="alert">
+                {loadMoreError}
+              </span>
+            )}
           </div>
         )}
       </div>
