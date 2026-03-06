@@ -227,13 +227,13 @@
   min-width: 0;
 }
 
-/* Rank card (Solo / Flex) – filled out, tier-themed */
+/* Rank card (Solo / Flex) – bold tier-themed design */
 .profile-page .profile-rank-card {
   position: relative;
   background: var(--surface2);
   border: 2px solid var(--border);
-  border-radius: 14px;
-  padding: 20px 22px;
+  border-radius: 16px;
+  padding: 24px 26px;
   overflow: hidden;
 }
 
@@ -243,8 +243,8 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 4px;
-  border-radius: 14px 0 0 14px;
+  width: 6px;
+  border-radius: 16px 0 0 16px;
   background: var(--border);
 }
 
@@ -254,125 +254,158 @@
 
 .profile-page .profile-rank-card-iron {
   border-color: #9ca3af;
-  box-shadow: 0 0 24px rgba(156, 163, 175, 0.12);
+  background: linear-gradient(135deg, var(--surface2) 0%, rgba(156, 163, 175, 0.06) 100%);
+  box-shadow: 0 0 32px rgba(156, 163, 175, 0.15), inset 0 1px 0 rgba(255,255,255,0.04);
 }
-.profile-page .profile-rank-card-iron::before { background: #9ca3af; }
+.profile-page .profile-rank-card-iron::before { background: linear-gradient(180deg, #9ca3af, #6b7280); }
+.profile-page .profile-rank-card-iron .profile-ranked-emblem-wrap { box-shadow: 0 0 28px rgba(156, 163, 175, 0.35); }
 
 .profile-page .profile-rank-card-bronze {
   border-color: #d4a574;
-  box-shadow: 0 0 24px rgba(212, 165, 116, 0.15);
+  background: linear-gradient(135deg, var(--surface2) 0%, rgba(212, 165, 116, 0.08) 100%);
+  box-shadow: 0 0 32px rgba(212, 165, 116, 0.18), inset 0 1px 0 rgba(255,255,255,0.05);
 }
-.profile-page .profile-rank-card-bronze::before { background: #d4a574; }
+.profile-page .profile-rank-card-bronze::before { background: linear-gradient(180deg, #d4a574, #b87333); }
+.profile-page .profile-rank-card-bronze .profile-ranked-emblem-wrap { box-shadow: 0 0 32px rgba(212, 165, 116, 0.4); }
 
 .profile-page .profile-rank-card-silver {
   border-color: #c0c0c0;
-  box-shadow: 0 0 24px rgba(192, 192, 192, 0.15);
+  background: linear-gradient(135deg, var(--surface2) 0%, rgba(192, 192, 192, 0.07) 100%);
+  box-shadow: 0 0 36px rgba(192, 192, 192, 0.2), inset 0 1px 0 rgba(255,255,255,0.06);
 }
-.profile-page .profile-rank-card-silver::before { background: #c0c0c0; }
+.profile-page .profile-rank-card-silver::before { background: linear-gradient(180deg, #e8e8e8, #9ca3af); }
+.profile-page .profile-rank-card-silver .profile-ranked-emblem-wrap { box-shadow: 0 0 36px rgba(192, 192, 192, 0.4); }
 
 .profile-page .profile-rank-card-gold {
   border-color: #e8c547;
-  box-shadow: 0 0 28px rgba(232, 197, 71, 0.2);
+  background: linear-gradient(135deg, var(--surface2) 0%, rgba(232, 197, 71, 0.1) 100%);
+  box-shadow: 0 0 40px rgba(232, 197, 71, 0.25), inset 0 1px 0 rgba(255,255,255,0.08);
 }
-.profile-page .profile-rank-card-gold::before { background: #e8c547; }
+.profile-page .profile-rank-card-gold::before { background: linear-gradient(180deg, #f5e6b8, #c9a227); }
+.profile-page .profile-rank-card-gold .profile-ranked-emblem-wrap { box-shadow: 0 0 40px rgba(232, 197, 71, 0.45); }
 
 .profile-page .profile-rank-card-platinum {
   border-color: #7eb8b8;
-  box-shadow: 0 0 24px rgba(126, 184, 184, 0.18);
+  background: linear-gradient(135deg, var(--surface2) 0%, rgba(126, 184, 184, 0.08) 100%);
+  box-shadow: 0 0 36px rgba(126, 184, 184, 0.2), inset 0 1px 0 rgba(255,255,255,0.05);
 }
-.profile-page .profile-rank-card-platinum::before { background: #7eb8b8; }
+.profile-page .profile-rank-card-platinum::before { background: linear-gradient(180deg, #9ed4d4, #5a9a9a); }
+.profile-page .profile-rank-card-platinum .profile-ranked-emblem-wrap { box-shadow: 0 0 36px rgba(126, 184, 184, 0.4); }
 
 .profile-page .profile-rank-card-emerald {
   border-color: #34d399;
-  box-shadow: 0 0 24px rgba(52, 211, 153, 0.18);
+  background: linear-gradient(135deg, var(--surface2) 0%, rgba(52, 211, 153, 0.08) 100%);
+  box-shadow: 0 0 36px rgba(52, 211, 153, 0.2), inset 0 1px 0 rgba(255,255,255,0.05);
 }
-.profile-page .profile-rank-card-emerald::before { background: #34d399; }
+.profile-page .profile-rank-card-emerald::before { background: linear-gradient(180deg, #6ee7b7, #10b981); }
+.profile-page .profile-rank-card-emerald .profile-ranked-emblem-wrap { box-shadow: 0 0 36px rgba(52, 211, 153, 0.4); }
 
 .profile-page .profile-rank-card-diamond,
 .profile-page .profile-rank-card-master {
   border-color: #60a5fa;
-  box-shadow: 0 0 28px rgba(96, 165, 250, 0.2);
+  background: linear-gradient(135deg, var(--surface2) 0%, rgba(96, 165, 250, 0.1) 100%);
+  box-shadow: 0 0 40px rgba(96, 165, 250, 0.25), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .profile-page .profile-rank-card-diamond::before,
-.profile-page .profile-rank-card-master::before { background: #60a5fa; }
+.profile-page .profile-rank-card-master::before { background: linear-gradient(180deg, #93c5fd, #3b82f6); }
+.profile-page .profile-rank-card-diamond .profile-ranked-emblem-wrap,
+.profile-page .profile-rank-card-master .profile-ranked-emblem-wrap { box-shadow: 0 0 40px rgba(96, 165, 250, 0.45); }
 
 .profile-page .profile-rank-card-grandmaster {
   border-color: #f87171;
-  box-shadow: 0 0 28px rgba(248, 113, 113, 0.2);
+  background: linear-gradient(135deg, var(--surface2) 0%, rgba(248, 113, 113, 0.1) 100%);
+  box-shadow: 0 0 40px rgba(248, 113, 113, 0.25), inset 0 1px 0 rgba(255,255,255,0.05);
 }
-.profile-page .profile-rank-card-grandmaster::before { background: #f87171; }
+.profile-page .profile-rank-card-grandmaster::before { background: linear-gradient(180deg, #fca5a5, #dc2626); }
+.profile-page .profile-rank-card-grandmaster .profile-ranked-emblem-wrap { box-shadow: 0 0 40px rgba(248, 113, 113, 0.45); }
 
 .profile-page .profile-rank-card-challenger {
   border-color: #fbbf24;
-  box-shadow: 0 0 28px rgba(251, 191, 36, 0.25);
+  background: linear-gradient(135deg, var(--surface2) 0%, rgba(251, 191, 36, 0.12) 100%);
+  box-shadow: 0 0 44px rgba(251, 191, 36, 0.3), inset 0 1px 0 rgba(255,255,255,0.08);
 }
-.profile-page .profile-rank-card-challenger::before { background: #fbbf24; }
+.profile-page .profile-rank-card-challenger::before { background: linear-gradient(180deg, #fde047, #eab308); }
+.profile-page .profile-rank-card-challenger .profile-ranked-emblem-wrap { box-shadow: 0 0 44px rgba(251, 191, 36, 0.5); }
 
 .profile-page .profile-rank-card-title {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.15em;
   color: var(--muted);
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .profile-page .profile-rank-card-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 24px;
 }
 
 .profile-page .profile-rank-card-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   min-width: 0;
 }
 
 .profile-page .profile-ranked-emblem-wrap {
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35));
+  position: relative;
+  border-radius: 50%;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
 }
 
 .profile-page .profile-rank-card-emblem {
-  width: 96px;
-  height: 96px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   object-fit: contain;
   flex-shrink: 0;
   display: block;
 }
 
+.profile-page .profile-rank-card-tier-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .profile-page .profile-rank-card-tier {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  color: var(--ink);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
 }
 
 .profile-page .profile-rank-card-stats {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
+  padding: 14px 18px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .profile-page .profile-rank-card-lp {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--ink);
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
   letter-spacing: 0.02em;
 }
 
 .profile-page .profile-rank-card-wr,
 .profile-page .profile-rank-card-wl,
 .profile-page .profile-rank-card-games {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Champion Stats card (same stack as rank cards) */
