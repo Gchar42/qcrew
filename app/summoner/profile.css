@@ -759,6 +759,12 @@
   }
 }
 
+.profile-page .profile-matches-refresh-error {
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--amber-500, #f59e0b);
+}
+
 .profile-page .profile-matches-header-stats {
   display: flex;
   flex-wrap: wrap;

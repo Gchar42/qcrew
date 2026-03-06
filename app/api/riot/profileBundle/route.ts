@@ -185,6 +185,28 @@ function normalizeRiotId(riotId: string): string {
 }
 
 const RIOT_ACCOUNT_BASE = "https://{region}.api.riotgames.com/riot/account/v1";
+const RIOT_MATCH_BASE = "https://{region}.api.riotgames.com/lol/match/v5/matches";
+
+/** Fetch match IDs directly from Riot (no cache) so refresh always gets latest list. */
+async function fetchMatchIdsFromRiot(
+  puuid: string,
+  queueId: number,
+  region: string,
+  count: number = 20,
+  start: number = 0
+): Promise<string[]> {
+  const key = process.env.RIOT_API_KEY;
+  if (!key) throw new Error("Riot API key not configured");
+  const routing = getRoutingRegion(region);
+  const base = RIOT_MATCH_BASE.replace("{region}", routing);
+  const seasonStartSec = Math.floor(SEASON_START_MS / 1000);
+  const url = `${base}/by-puuid/${encodeURIComponent(puuid)}/ids?start=${start}&count=${count}&queue=${queueId}&startTime=${seasonStartSec}`;
+  const res = await fetch(url, { cache: "no-store", headers: { "X-Riot-Token": key } });
+  const text = await res.text();
+  if (!res.ok) throw new Error(text || "Match list failed");
+  const arr = JSON.parse(text) as unknown;
+  return Array.isArray(arr) ? arr as string[] : [];
+}
 
 async function fetchAccountFromRiot(
   gameName: string,
@@ -209,10 +231,12 @@ async function fetchBundleFromRiot(
   baseUrl: string,
   region: string,
   queue: "solo" | "flex",
-  parsed: { gameName: string; tagLine: string }
+  parsed: { gameName: string; tagLine: string },
+  opts?: { fastRefresh?: boolean }
 ): Promise<ProfileBundle> {
   const startTime = Date.now();
-  console.log("PROFILE FETCH START");
+  const fastRefresh = opts?.fastRefresh ?? false;
+  console.log("PROFILE FETCH START", fastRefresh ? "(fast refresh)" : "");
 
   const queueId = queue === "flex" ? 440 : 420;
   const platform = region;
@@ -230,9 +254,24 @@ async function fetchBundleFromRiot(
     }
   }
 
-  const fullSeasonRefreshPromise = refreshChampionStats(account.puuid, queue, region).catch((err) => {
-    console.warn("[profileBundle] full-season refresh failed:", err instanceof Error ? err.message : err);
-  });
+  const fullSeasonRefreshPromise = fastRefresh
+    ? Promise.resolve()
+    : refreshChampionStats(account.puuid, queue, region).catch((err) => {
+        console.warn("[profileBundle] full-season refresh failed:", err instanceof Error ? err.message : err);
+      });
+  if (fastRefresh) {
+    refreshChampionStats(account.puuid, queue, region).catch(() => {});
+  }
+
+  const matchIdListPromise = fastRefresh
+    ? fetchMatchIdsFromRiot(account.puuid, queueId, region, 20, 0).then((ids) => ids.slice(0, 20))
+    : fetch(
+        `${baseUrl}/api/riot/match-ids?puuid=${encodeURIComponent(account.puuid)}&region=${region}&count=20&queueId=${queueId}&startTime=${Math.floor(SEASON_START_MS / 1000)}`
+      ).then(async (r) => {
+        if (!r.ok) throw new Error("Match list failed");
+        const data = (await r.json()) as { matchIds: string[] };
+        return (data.matchIds ?? []).slice(0, 20);
+      });
 
   const [summoner, matchIdList, leagueEntries] = await Promise.all([
     fetch(`${baseUrl}/api/riot/summoner?puuid=${encodeURIComponent(account.puuid)}&region=${region}`).then(
@@ -241,13 +280,7 @@ async function fetchBundleFromRiot(
         return r.json() as Promise<SummonerDto>;
       }
     ),
-    fetch(
-      `${baseUrl}/api/riot/match-ids?puuid=${encodeURIComponent(account.puuid)}&region=${region}&count=20&queueId=${queueId}&startTime=${Math.floor(SEASON_START_MS / 1000)}`
-    ).then(async (r) => {
-      if (!r.ok) throw new Error("Match list failed");
-      const data = (await r.json()) as { matchIds: string[] };
-      return (data.matchIds ?? []).slice(0, 20);
-    }),
+    matchIdListPromise,
     fetch(`${baseUrl}/api/riot/league?puuid=${encodeURIComponent(account.puuid)}&platform=${platform}`).then(
       async (r) => {
         if (!r.ok) return [] as LeagueEntryDto[];
@@ -336,7 +369,7 @@ async function fetchBundleFromRiot(
   const avgRankPlayedAgainst =
     values.length > 0 ? numberToRankLabel(values.reduce((a, b) => a + b, 0) / values.length) : "Unranked";
 
-  await fullSeasonRefreshPromise;
+  if (!fastRefresh) await fullSeasonRefreshPromise;
 
   const [dbChampionStats, ddragonVersion] = await Promise.all([
     fetchChampionStatsForBundle(account.puuid),
@@ -490,7 +523,7 @@ export async function GET(request: Request) {
   const baseUrl = getBaseUrl(request);
   let bundle: ProfileBundle;
   try {
-    bundle = await fetchBundleFromRiot(baseUrl, region, queue, parsed);
+    bundle = await fetchBundleFromRiot(baseUrl, region, queue, parsed, { fastRefresh: forceRefresh });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed to load profile";
     return NextResponse.json(

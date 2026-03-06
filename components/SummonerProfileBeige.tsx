@@ -378,6 +378,7 @@ export default function SummonerProfileBeige({
   const [hasMoreByQueue, setHasMoreByQueue] = useState<Record<string, boolean>>({});
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
 
   const account = bundle?.profile.account ?? null;
   const summoner = bundle?.profile.summoner ?? null;
@@ -461,6 +462,7 @@ export default function SummonerProfileBeige({
 
   const handleRefreshMatchHistory = useCallback(async () => {
     if (!swrKey || isRefreshing) return;
+    setRefreshError(null);
     setIsRefreshing(true);
     try {
       const [, riotId, region, q] = swrKey;
@@ -473,8 +475,8 @@ export default function SummonerProfileBeige({
       const data = (await res.json()) as ProfileBundle;
       await mutate(data, false);
       setAdditionalMatchesByQueue((prev) => ({ ...prev, [queue]: [] }));
-    } catch {
-      // leave cache as-is on error
+    } catch (err) {
+      setRefreshError(err instanceof Error ? err.message : "Refresh failed");
     } finally {
       setIsRefreshing(false);
     }
@@ -800,6 +802,11 @@ export default function SummonerProfileBeige({
               )}
               {isLoading || isRefreshing ? "Updating…" : "Refresh"}
             </button>
+            {refreshError && (
+              <span className="profile-matches-refresh-error" role="alert">
+                {refreshError}
+              </span>
+            )}
           </div>
           <div className="profile-matches-header-stats recent-stats">
             <div className="stat-chip">
