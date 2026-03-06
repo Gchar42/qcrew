@@ -324,32 +324,26 @@ export function getFakeProfileBundle(
     profileIconId: 29,
     summonerLevel: 127,
   };
-  const soloEntry: LeagueEntryDto | null =
-    queue === "solo"
-      ? {
-          queueType: "RANKED_SOLO_5x5",
-          tier: "Gold",
-          rank: "II",
-          leaguePoints: 67,
-          wins: 62,
-          losses: 50,
-          summonerId: summoner.id,
-          summonerName: DEMO_GAME_NAME,
-        }
-      : null;
-  const flexEntry: LeagueEntryDto | null =
-    queue === "flex"
-      ? {
-          queueType: "RANKED_FLEX_SR",
-          tier: "Silver",
-          rank: "I",
-          leaguePoints: 42,
-          wins: 58,
-          losses: 54,
-          summonerId: summoner.id,
-          summonerName: DEMO_GAME_NAME,
-        }
-      : null;
+  const soloEntry: LeagueEntryDto = {
+    queueType: "RANKED_SOLO_5x5",
+    tier: "Gold",
+    rank: "II",
+    leaguePoints: 67,
+    wins: 62,
+    losses: 50,
+    summonerId: summoner.id,
+    summonerName: DEMO_GAME_NAME,
+  };
+  const flexEntry: LeagueEntryDto = {
+    queueType: "RANKED_FLEX_SR",
+    tier: "Silver",
+    rank: "I",
+    leaguePoints: 42,
+    wins: 58,
+    losses: 54,
+    summonerId: summoner.id,
+    summonerName: DEMO_GAME_NAME,
+  };
 
   const leagueEntriesBySummonerId = buildLeagueEntriesForOpponents();
   const allMatches = buildFakeMatches(queue, summoner.id, leagueEntriesBySummonerId);
