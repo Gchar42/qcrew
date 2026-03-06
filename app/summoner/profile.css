@@ -870,10 +870,12 @@
 
 .profile-page .profile-match-row.win {
   border-left: 3px solid var(--win);
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25), 0 0 20px 2px rgba(34, 197, 94, 0.35);
 }
 
 .profile-page .profile-match-row.loss {
   border-left: 3px solid var(--loss);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2), 0 0 20px 2px rgba(239, 68, 68, 0.3);
 }
 
 .profile-page .profile-match-row-main-character.win {
