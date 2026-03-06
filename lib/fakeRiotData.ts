@@ -90,65 +90,191 @@ function fakeChampionStatsSlice(updatedAt: string): FakeChampionStatsSlice {
 
 const TOTAL_DEMO_MATCHES = 112;
 
+/** Real item IDs (Data Dragon). 6 slots + trinket (index 6). */
+const ITEM_POOL: number[][] = [
+  [3157, 3089, 3020, 3111, 3026, 3036, 3340], // Zhonya, Rabadon, Frost, Mercs, GA, Runaan, trinket
+  [3031, 3078, 3046, 3006, 3026, 3036, 3340], // IE, Trinity, PD, Zerker, GA, Runaan
+  [3074, 3124, 3111, 3031, 3046, 3026, 3340], // Ravenous, Guinsoo, Mercs, IE, PD, GA
+  [3089, 3157, 3020, 3111, 3026, 3036, 3340], // AP
+  [3078, 3046, 3036, 3006, 3026, 3142, 3340], // ADC / Bruiser
+  [3074, 3111, 3026, 3046, 3078, 3142, 3340], // Bruiser/tanky
+  [3089, 3157, 3020, 3111, 3026, 3036, 3340], // AP
+  [3031, 3036, 3046, 3006, 3026, 3074, 3340], // Crit
+  [3074, 3078, 3111, 3026, 3046, 3142, 3340], // Bruiser
+  [3020, 3157, 3089, 3111, 3026, 3036, 3340], // Support-style
+];
+
+/** Opponent champion names and summoner names (varied, not "Champion" / "Player2"). */
+const OPPONENT_CHAMPIONS = ["Zed", "Jinx", "Thresh", "Darius", "Elise", "Orianna", "Ezreal", "Leona", "Hecarim"];
+const OPPONENT_SUMMONER_NAMES = ["ShadowBlade99", "LaneKingdom", "WardBot", "TopDiff", "JungleGap", "MidOrAFK", "ADCMain", "SupportCarry", "OneTrickPony"];
+
+/** Rank tiers for opponent badges (Iron IV through Grandmaster). */
+const RANK_TIERS: Array<{ tier: string; rank: string }> = [
+  { tier: "Iron", rank: "IV" }, { tier: "Bronze", rank: "II" }, { tier: "Silver", rank: "I" },
+  { tier: "Gold", rank: "III" }, { tier: "Platinum", rank: "II" }, { tier: "Emerald", rank: "IV" },
+  { tier: "Diamond", rank: "I" }, { tier: "Master", rank: "" }, { tier: "Grandmaster", rank: "" },
+];
+
+type PartStats = {
+  kills: number; deaths: number; assists: number;
+  totalDamageDealtToChampions: number; damageDealtToObjectives: number; damageDealtToTurrets: number;
+  totalMinionsKilled: number; neutralMinionsKilled: number; visionScore: number;
+  timeCCingOthers?: number; totalHealsOnTeammates?: number; totalDamageShieldedOnTeammates?: number;
+  teamPosition: string;
+};
+
+/** Stat lines chosen so getMatchBadges yields different badge types. [0-2] = our player variants; [3-11] = others (Main Character, Team Gap, Slippery, etc.). */
+const ARCHETYPE_STATS: PartStats[] = [
+  { kills: 10, deaths: 3, assists: 9, totalDamageDealtToChampions: 24000, damageDealtToObjectives: 6000, damageDealtToTurrets: 3500, totalMinionsKilled: 190, neutralMinionsKilled: 12, visionScore: 42, teamPosition: "MIDDLE" }, // 0 our high
+  { kills: 6, deaths: 4, assists: 8, totalDamageDealtToChampions: 15000, damageDealtToObjectives: 4000, damageDealtToTurrets: 2000, totalMinionsKilled: 165, neutralMinionsKilled: 10, visionScore: 32, teamPosition: "MIDDLE" }, // 1 our mid (Doing Your Job)
+  { kills: 2, deaths: 8, assists: 5, totalDamageDealtToChampions: 7000, damageDealtToObjectives: 1500, damageDealtToTurrets: 700, totalMinionsKilled: 100, neutralMinionsKilled: 6, visionScore: 20, teamPosition: "BOTTOM" }, // 2 our low (Struggle)
+  { kills: 14, deaths: 2, assists: 12, totalDamageDealtToChampions: 28000, damageDealtToObjectives: 7500, damageDealtToTurrets: 4000, totalMinionsKilled: 210, neutralMinionsKilled: 15, visionScore: 48, teamPosition: "TOP" }, // 3 Main Character
+  { kills: 8, deaths: 4, assists: 10, totalDamageDealtToChampions: 18000, damageDealtToObjectives: 5000, damageDealtToTurrets: 2200, totalMinionsKilled: 175, neutralMinionsKilled: 10, visionScore: 35, teamPosition: "JUNGLE" }, // 4 Doing Your Job
+  { kills: 6, deaths: 1, assists: 14, totalDamageDealtToChampions: 16500, damageDealtToObjectives: 4000, damageDealtToTurrets: 2000, totalMinionsKilled: 165, neutralMinionsKilled: 8, visionScore: 38, teamPosition: "MIDDLE" }, // 5 Slippery
+  { kills: 2, deaths: 9, assists: 4, totalDamageDealtToChampions: 6500, damageDealtToObjectives: 1200, damageDealtToTurrets: 600, totalMinionsKilled: 95, neutralMinionsKilled: 5, visionScore: 18, teamPosition: "BOTTOM" }, // 6 Struggle
+  { kills: 12, deaths: 3, assists: 10, totalDamageDealtToChampions: 26000, damageDealtToObjectives: 7200, damageDealtToTurrets: 3800, totalMinionsKilled: 200, neutralMinionsKilled: 14, visionScore: 45, teamPosition: "TOP" }, // 7 Team Gap
+  { kills: 4, deaths: 5, assists: 3, totalDamageDealtToChampions: 11000, damageDealtToObjectives: 3500, damageDealtToTurrets: 1800, totalMinionsKilled: 255, neutralMinionsKilled: 18, visionScore: 28, teamPosition: "MIDDLE" }, // 8 PVE Merchant
+  { kills: 5, deaths: 4, assists: 8, totalDamageDealtToChampions: 14000, damageDealtToObjectives: 8200, damageDealtToTurrets: 4200, totalMinionsKilled: 140, neutralMinionsKilled: 6, visionScore: 32, teamPosition: "UTILITY" }, // 9 Where It Counts
+  { kills: 4, deaths: 5, assists: 6, totalDamageDealtToChampions: 10500, damageDealtToObjectives: 2800, damageDealtToTurrets: 1400, totalMinionsKilled: 148, neutralMinionsKilled: 7, visionScore: 24, teamPosition: "BOTTOM" }, // 10 Background Character
+  { kills: 7, deaths: 11, assists: 5, totalDamageDealtToChampions: 16000, damageDealtToObjectives: 2000, damageDealtToTurrets: 1000, totalMinionsKilled: 130, neutralMinionsKilled: 6, visionScore: 22, teamPosition: "JUNGLE" }, // 11 Limit Testing
+];
+
+function buildParticipant(
+  stats: PartStats,
+  puuid: string,
+  summonerId: string,
+  summonerName: string,
+  championName: string,
+  championId: number,
+  teamId: 100 | 200,
+  win: boolean,
+  participantId: number,
+  itemIds: number[]
+): MatchDto["info"]["participants"][number] {
+  const item0 = itemIds[0] ?? 0, item1 = itemIds[1] ?? 0, item2 = itemIds[2] ?? 0;
+  const item3 = itemIds[3] ?? 0, item4 = itemIds[4] ?? 0, item5 = itemIds[5] ?? 0, item6 = itemIds[6] ?? 3340;
+  return {
+    puuid,
+    summonerId,
+    participantId,
+    summonerName,
+    championName,
+    championId,
+    kills: stats.kills,
+    deaths: stats.deaths,
+    assists: stats.assists,
+    win,
+    teamId,
+    teamPosition: stats.teamPosition,
+    individualPosition: stats.teamPosition,
+    totalMinionsKilled: stats.totalMinionsKilled,
+    neutralMinionsKilled: stats.neutralMinionsKilled,
+    totalDamageDealtToChampions: stats.totalDamageDealtToChampions,
+    damageDealtToObjectives: stats.damageDealtToObjectives,
+    damageDealtToTurrets: stats.damageDealtToTurrets,
+    visionScore: stats.visionScore,
+    timeCCingOthers: stats.timeCCingOthers ?? 0,
+    totalHealsOnTeammates: stats.totalHealsOnTeammates ?? 0,
+    totalDamageShieldedOnTeammates: stats.totalDamageShieldedOnTeammates ?? 0,
+    item0, item1, item2, item3, item4, item5, item6,
+    riotIdGameName: summonerName,
+    riotIdTagline: "NA1",
+  };
+}
+
 function buildFakeMatch(
   index: number,
   queue: "solo" | "flex",
   summonerId: string,
-  champion: { championId: number; championName: string },
-  win: boolean,
-  kda: { k: number; d: number; a: number }
+  leagueEntriesBySummonerId: Record<string, LeagueEntryDto[]>
 ): MatchDto {
   const matchId = `NA1_${1700000000 + index}_demo`;
+  const gameDuration = 1750 + (index % 400);
+  const blueWins = index % 2 === 0;
+
+  const participants: MatchDto["info"]["participants"] = [];
+  for (let i = 0; i < 10; i++) {
+    const isBlue = i < 5;
+    const win = isBlue === blueWins;
+    const teamId = (isBlue ? 100 : 200) as 100 | 200;
+    const archIndex = i === 0 ? index % 3 : 3 + ((index + i) % 9);
+    const stats = ARCHETYPE_STATS[archIndex] ?? ARCHETYPE_STATS[0];
+    const champion = i === 0
+      ? DEMO_CHAMPIONS[index % DEMO_CHAMPIONS.length]
+      : { championId: 100 + i, championName: OPPONENT_CHAMPIONS[i - 1] };
+    const oppSummonerId = `demo-opp-${i}`;
+    const puuid = i === 0 ? FAKE_PUUID : `fake-opp-${index}-${i}`;
+    const summonerName = i === 0 ? DEMO_GAME_NAME : OPPONENT_SUMMONER_NAMES[i - 1];
+    const itemIds = ITEM_POOL[(index + i) % ITEM_POOL.length] ?? ITEM_POOL[0];
+    participants.push(
+      buildParticipant(
+        stats,
+        puuid,
+        i === 0 ? summonerId : oppSummonerId,
+        summonerName,
+        champion.championName,
+        champion.championId,
+        teamId,
+        win,
+        i + 1,
+        itemIds
+      )
+    );
+  }
+
   return {
-    metadata: { matchId, participants: [FAKE_PUUID] },
+    metadata: { matchId, participants: participants.map((p) => p.puuid) },
     info: {
-      gameDuration: 1600 + (index % 600),
+      gameDuration,
       gameId: 1700000000 + index,
       queueId: queue === "flex" ? 440 : 420,
       gameVersion: "14.6.0",
-      participants: [
-        {
-          puuid: FAKE_PUUID,
-          summonerId,
-          participantId: 1,
-          summonerName: DEMO_GAME_NAME,
-          championName: champion.championName,
-          championId: champion.championId,
-          kills: kda.k,
-          deaths: kda.d,
-          assists: kda.a,
-          win,
-          teamId: 100,
-          totalMinionsKilled: 160 + (index % 40),
-          neutralMinionsKilled: 8 + (index % 8),
-        },
-        ...Array.from({ length: 9 }, (_, i) => ({
-          puuid: `fake-opponent-${index}-${i}`,
-          summonerId: `opp-${index}-${i}`,
-          participantId: i + 2,
-          summonerName: `Player${i + 2}`,
-          championName: "Champion",
-          championId: 1,
-          kills: 5,
-          deaths: 6,
-          assists: 4,
-          win: !win,
-          teamId: 200,
-          totalMinionsKilled: 150,
-          neutralMinionsKilled: 8,
-        })),
-      ] as MatchDto["info"]["participants"],
+      participants,
     },
   };
 }
 
-function buildFakeMatches(queue: "solo" | "flex", summonerId: string): MatchDto[] {
+function buildLeagueEntriesForOpponents(): Record<string, LeagueEntryDto[]> {
+  const out: Record<string, LeagueEntryDto[]> = {};
+  for (let i = 1; i <= 9; i++) {
+    const sid = `demo-opp-${i}`;
+    const { tier, rank } = RANK_TIERS[i - 1] ?? RANK_TIERS[0];
+    const wins = 40 + i * 5;
+    const losses = 45 + i * 2;
+    out[sid] = [
+      {
+        queueType: "RANKED_SOLO_5x5",
+        tier,
+        rank: rank || "I",
+        leaguePoints: 50 + i * 8,
+        wins,
+        losses,
+        summonerId: sid,
+        summonerName: OPPONENT_SUMMONER_NAMES[i - 1],
+      },
+      {
+        queueType: "RANKED_FLEX_SR",
+        tier: RANK_TIERS[9 - i]?.tier ?? "Silver",
+        rank: RANK_TIERS[9 - i]?.rank ?? "II",
+        leaguePoints: 30,
+        wins: 20,
+        losses: 22,
+        summonerId: sid,
+        summonerName: OPPONENT_SUMMONER_NAMES[i - 1],
+      },
+    ];
+  }
+  return out;
+}
+
+function buildFakeMatches(
+  queue: "solo" | "flex",
+  summonerId: string,
+  leagueEntriesBySummonerId: Record<string, LeagueEntryDto[]>
+): MatchDto[] {
   const matches: MatchDto[] = [];
   for (let i = 0; i < TOTAL_DEMO_MATCHES; i++) {
-    const champ = DEMO_CHAMPIONS[i % DEMO_CHAMPIONS.length];
-    const win = i % 3 !== 0;
-    const kda = { k: 6 + (i % 6), d: 4 + (i % 4), a: 7 + (i % 6) };
-    matches.push(buildFakeMatch(i, queue, summonerId, champ, win, kda));
+    matches.push(buildFakeMatch(i, queue, summonerId, leagueEntriesBySummonerId));
   }
   return matches;
 }
@@ -194,7 +320,8 @@ export function getFakeProfileBundle(
         }
       : null;
 
-  const matches = buildFakeMatches(queue, summoner.id);
+  const leagueEntriesBySummonerId = buildLeagueEntriesForOpponents();
+  const matches = buildFakeMatches(queue, summoner.id, leagueEntriesBySummonerId);
   const matchIds = matches.map((m) => m.metadata.matchId);
 
   let totalK = 0, totalD = 0, totalA = 0, totalCs = 0, totalSec = 0;
@@ -226,9 +353,9 @@ export function getFakeProfileBundle(
       csPerMin: Math.round(avgCsPerMin * 10) / 10,
       avgDuration: Math.round(avgDurationMin * 10) / 10,
       avgRankPlayedAgainst: "Silver II",
-      avgRankRankedCount: 0,
+      avgRankRankedCount: 9,
     },
-    leagueEntriesBySummonerId: {},
+    leagueEntriesBySummonerId,
     championStats: {
       solo: fakeChampionStatsSlice(updatedAt),
       flex: fakeChampionStatsSlice(updatedAt),
