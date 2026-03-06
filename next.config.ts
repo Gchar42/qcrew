@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "raw.communitydragon.org" },
     ],
   },
+  async rewrites() {
+    return [
+      // Riot verification expects https://www.statgap.gg//riot.txt (double slash)
+      { source: "//riot.txt", destination: "/riot.txt" },
+    ];
+  },
 };
 
 export default nextConfig;
