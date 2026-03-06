@@ -2,7 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { getProfileIconUrl } from "@/lib/riotAssets";
+/** Same-origin URL so the icon always loads (avoids cross-origin/referrer issues) */
+function getProfileIconProxyUrl(iconId: number): string {
+  return `/api/asset/profile-icon/${iconId}`;
+}
 import { addRecent } from "@/lib/savedSummoners";
 
 type Region = { value: string; label: string };
@@ -180,7 +183,7 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
                       r.profileIconId != null && r.profileIconId > 0
                         ? r.profileIconId
                         : DEFAULT_ICON_ID;
-                    const iconUrl = getProfileIconUrl(iconId);
+                    const iconUrl = getProfileIconProxyUrl(iconId);
                     const level =
                       r.summonerLevel != null
                         ? `Level ${r.summonerLevel}`
@@ -193,28 +196,30 @@ export function SearchForm({ regions }: { regions: readonly Region[] }) {
                           className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-white/10"
                           role="option"
                         >
-                          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
+                          <div className="relative h-10 w-10 min-w-10 min-h-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
                             {iconUrl ? (
                               <img
                                 src={iconUrl}
                                 alt=""
                                 width={40}
                                 height={40}
-                                className="h-full w-full object-cover"
+                                className="relative z-10 h-full w-full object-cover"
+                                loading="eager"
+                                referrerPolicy="no-referrer"
                                 onError={(e) => {
                                   e.currentTarget.style.display = "none";
                                   const fallback = e.currentTarget.nextElementSibling;
-                                  if (fallback instanceof HTMLElement) fallback.style.display = "flex";
+                                  if (fallback instanceof HTMLElement) {
+                                    fallback.style.display = "flex";
+                                    fallback.style.position = "absolute";
+                                    fallback.style.inset = "0";
+                                  }
                                 }}
                               />
                             ) : null}
                             <div
-                              className="flex h-full w-full items-center justify-center text-xs text-zinc-500"
-                              style={{
-                                display: iconUrl ? "none" : "flex",
-                                position: iconUrl ? "absolute" : undefined,
-                                inset: iconUrl ? 0 : undefined,
-                              }}
+                              className="absolute inset-0 z-0 flex h-full w-full items-center justify-center text-xs text-zinc-500"
+                              style={{ display: iconUrl ? "none" : "flex" }}
                               aria-hidden
                             >
                               ?
