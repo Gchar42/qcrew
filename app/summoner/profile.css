@@ -1282,24 +1282,27 @@
   flex-shrink: 0;
 }
 
-/* Two chips row: Impact chip + Badge chip (overflow visible so Main Character can break out) */
+/* Badge layout: row 1 = [Impact] [Social badge], row 2 = [Team verdict] */
 .profile-page .profile-chips-row {
   display: flex;
   flex-direction: row;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
-  margin-top: 6px;
+  margin-top: 4px;
   overflow: visible !important;
   position: relative;
 }
 
-/* Chip 1: Impact score – hero number, stronger border, subtle glow */
-/* Badge rows: line 1 = Impact + social badge, line 2 = Team Verdict only */
 .profile-page .profile-badge-rows {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* First row: Impact + social badge (keep side by side); second row: team verdict only */
+.profile-page .profile-chips-row.badgeArea.socialBadgeWrap {
+  flex-wrap: nowrap;
 }
 
 .profile-page .profile-team-verdict-row {
