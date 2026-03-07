@@ -158,8 +158,8 @@ export function getRuneStyleIconUrl(
   return `https://ddragon.leagueoflegends.com/cdn/${v}/img/${path}`;
 }
 
-/** Ranked tier emblem (CommunityDragon, higher-res from images/ranked-emblem). tier e.g. "EMERALD", "PLATINUM". */
+/** Ranked tier emblem (CommunityDragon shared-components: larger PNGs for crisp display at 140px). tier e.g. "EMERALD", "PLATINUM". */
 export function getRankEmblemUrl(tier: string): string {
   const key = tier.toLowerCase();
-  return `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-${key}.png`;
+  return `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/${key}.png`;
 }
