@@ -130,30 +130,31 @@
   content: "";
   position: absolute;
   left: 50%;
-  top: -4px;
-  width: 72px;
-  height: 44px;
-  margin-left: -36px;
-  border-radius: 50% 50% 40% 40% / 60% 60% 20% 20%;
+  top: -8px;
+  width: 76px;
+  height: 42px;
+  margin-left: -38px;
+  border-radius: 50% 50% 45% 45% / 55% 55% 25% 25%;
   background: radial-gradient(
-    ellipse 100% 80% at 50% 20%,
-    rgba(253, 186, 116, 0.55) 0%,
-    rgba(251, 146, 60, 0.45) 25%,
-    rgba(249, 115, 22, 0.35) 50%,
-    rgba(234, 88, 12, 0.2) 75%,
+    ellipse 100% 90% at 50% 15%,
+    rgba(253, 186, 116, 0.65) 0%,
+    rgba(251, 146, 60, 0.5) 30%,
+    rgba(249, 115, 22, 0.35) 60%,
+    rgba(234, 88, 12, 0.15) 85%,
     transparent 100%
   );
   animation: profile-hero-fire-flicker 1.2s ease-in-out infinite;
   pointer-events: none;
-  z-index: 0;
+  z-index: 2;
+  clip-path: inset(0 0 30% 0);
 }
 .profile-page .profile-hero-icon-wrap.profile-hero-icon-win-streak .profile-hero-icon {
   position: relative;
   z-index: 1;
   box-shadow:
-    0 -4px 14px rgba(251, 146, 60, 0.4),
-    0 -2px 8px rgba(253, 186, 116, 0.35),
-    inset 0 -2px 8px rgba(251, 191, 36, 0.12);
+    0 -4px 14px rgba(251, 146, 60, 0.45),
+    0 -2px 8px rgba(253, 186, 116, 0.4),
+    inset 0 -2px 8px rgba(251, 191, 36, 0.15);
 }
 @keyframes profile-hero-fire-flicker {
   0%, 100% { opacity: 1; transform: scaleY(1) translateY(0); }
