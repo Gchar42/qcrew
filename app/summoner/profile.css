@@ -450,6 +450,34 @@
   left: 20%;
   right: 20%;
   height: 1px;
+}
+.profile-page .profile-rank-card-gold .stats-panel::before {
+  background: linear-gradient(90deg, transparent, rgba(200,160,78,0.3), transparent);
+}
+.profile-page .profile-rank-card-silver .stats-panel::before {
+  background: linear-gradient(90deg, transparent, rgba(158,170,184,0.2), transparent);
+}
+.profile-page .profile-rank-card-iron .stats-panel::before {
+  background: linear-gradient(90deg, transparent, rgba(156,163,175,0.2), transparent);
+}
+.profile-page .profile-rank-card-bronze .stats-panel::before {
+  background: linear-gradient(90deg, transparent, rgba(212,165,116,0.25), transparent);
+}
+.profile-page .profile-rank-card-platinum .stats-panel::before,
+.profile-page .profile-rank-card-emerald .stats-panel::before {
+  background: linear-gradient(90deg, transparent, rgba(52,211,153,0.25), transparent);
+}
+.profile-page .profile-rank-card-diamond .stats-panel::before,
+.profile-page .profile-rank-card-master .stats-panel::before {
+  background: linear-gradient(90deg, transparent, rgba(147,197,253,0.25), transparent);
+}
+.profile-page .profile-rank-card-grandmaster .stats-panel::before {
+  background: linear-gradient(90deg, transparent, rgba(252,165,165,0.25), transparent);
+}
+.profile-page .profile-rank-card-challenger .stats-panel::before {
+  background: linear-gradient(90deg, transparent, rgba(251,191,36,0.3), transparent);
+}
+.profile-page .profile-rank-card-unranked .stats-panel::before {
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
 }
 
@@ -479,7 +507,7 @@
 .profile-page .profile-rank-card .lp-label {
   font-weight: 600;
   font-size: 13px;
-  opacity: 0.5;
+  opacity: 0.4;
   color: #fff;
   letter-spacing: 1px;
 }
