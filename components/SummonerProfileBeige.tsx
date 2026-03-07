@@ -794,12 +794,14 @@ export default function SummonerProfileBeige({
               <span className="rank-name">{formatRankTier(tier, entry.rank ?? "")}</span>
             </div>
             <div className="stats-panel">
-              <div className="lp-row">
-                <span className="lp-value">{lp}</span>
-                <span className="lp-label">LP</span>
-              </div>
-              <div className="lp-bar-track">
-                <div className="lp-bar-fill" style={{ width: `${Math.min(100, lp)}%` }} />
+              <div className="stats-panel-lp">
+                <div className="lp-row">
+                  <span className="lp-value">{lp}</span>
+                  <span className="lp-label">LP</span>
+                </div>
+                <div className="lp-bar-track">
+                  <div className="lp-bar-fill" style={{ width: `${Math.min(100, lp)}%` }} />
+                </div>
               </div>
               <div className="stat-grid">
                 <div className="stat-item">

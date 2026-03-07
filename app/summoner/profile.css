@@ -435,12 +435,21 @@
 
 .profile-page .profile-rank-card .stats-panel {
   flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
   background: #0a0a10;
   border-radius: 12px;
   padding: 18px 20px;
   border: 1px solid rgba(255,255,255,0.04);
   position: relative;
   overflow: hidden;
+}
+
+.profile-page .profile-rank-card .stats-panel-lp {
+  flex-shrink: 0;
+  min-width: 64px;
 }
 
 .profile-page .profile-rank-card .stats-panel::before {
@@ -485,7 +494,7 @@
   display: flex;
   align-items: baseline;
   gap: 6px;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 
 .profile-page .profile-rank-card .lp-value {
@@ -517,7 +526,6 @@
   height: 3px;
   background: rgba(255,255,255,0.06);
   border-radius: 3px;
-  margin-bottom: 16px;
   overflow: hidden;
 }
 
@@ -543,9 +551,11 @@
 .profile-page .profile-rank-card-challenger .lp-bar-fill { background: linear-gradient(90deg, #a16207, #fbbf24); }
 
 .profile-page .profile-rank-card .stat-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 16px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  align-items: flex-start;
 }
 
 .profile-page .profile-rank-card .stat-item {
