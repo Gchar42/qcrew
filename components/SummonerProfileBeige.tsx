@@ -883,19 +883,17 @@ export default function SummonerProfileBeige({
         <div className="profile-hero-left">
           <h1 className="profile-hero-name">
             {summoner?.profileIconId != null && (
-              <span
-                className={`profile-hero-icon-wrap${currentStreak === "win" ? " profile-hero-icon-win-streak" : ""}${currentStreak === "loss" ? " profile-hero-icon-loss-streak" : ""}`}
-              >
+              <ChampionFirePortrait>
                 <img
                   src={getProfileIconUrl(summoner.profileIconId, effectiveDdragonVersion)}
                   alt=""
-                  className="profile-hero-icon"
+                  className="profile-match-portrait"
                   width={56}
                   height={56}
                   fetchPriority="high"
                   loading="eager"
                 />
-              </span>
+              </ChampionFirePortrait>
             )}
             <span>
               <span className="profile-hero-name-text">
@@ -1095,39 +1093,23 @@ export default function SummonerProfileBeige({
                           </span>
                         </LeagueTooltip>
                       )}
-                      {badgeInfo?.badge === "Main Character" ? (
-                        <ChampionFirePortrait>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={champSquareUrl}
-                            alt=""
-                            className="profile-match-portrait"
-                            width={64}
-                            height={64}
-                            loading={isFirstRow ? "eager" : "lazy"}
-                            fetchPriority={isFirstRow ? "high" : undefined}
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        </ChampionFirePortrait>
-                      ) : (
-                        <div className="profile-match-portrait-wrap">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={champSquareUrl}
-                            alt=""
-                            className="profile-match-portrait"
-                            width={64}
-                            height={64}
-                            loading={isFirstRow ? "eager" : "lazy"}
-                            fetchPriority={isFirstRow ? "high" : undefined}
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        </div>
-                      )}
+                      <div
+                        className={`profile-match-portrait-wrap${badgeInfo?.badge === "Main Character" ? " profile-match-portrait-wrap-main-character" : ""}`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={champSquareUrl}
+                          alt=""
+                          className="profile-match-portrait"
+                          width={64}
+                          height={64}
+                          loading={isFirstRow ? "eager" : "lazy"}
+                          fetchPriority={isFirstRow ? "high" : undefined}
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      </div>
                     </div>
                     <div className="profile-match-spells-runes">
                       <div className="profile-match-spells-col">
