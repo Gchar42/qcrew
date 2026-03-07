@@ -1669,6 +1669,99 @@
   100% { border-color: #cc4400; }
 }
 
+/* Ice portrait wrap (summoner icon – e.g. loss streak): canvas + rings + glowing circle */
+.profile-page .profile-match-portrait-ice-wrap {
+  position: relative;
+  width: 66px;
+  height: 66px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-page .profile-match-portrait-ice-canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 66px;
+  height: 66px;
+  margin-left: -33px;
+  margin-top: -33px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.profile-page .profile-match-portrait-ice-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  border: 1px solid rgba(180, 225, 252, 0.22);
+  animation: profile-ice-flicker-ring 3s ease-in-out infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.profile-page .profile-match-portrait-ice-ring:nth-of-type(2) {
+  border-color: rgba(170, 218, 250, 0.18);
+  animation-duration: 3.5s;
+}
+
+.profile-page .profile-match-portrait-ice-ring:nth-of-type(3) {
+  border-color: rgba(150, 208, 248, 0.14);
+  animation-duration: 4s;
+}
+
+@keyframes profile-ice-flicker-ring {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.65; transform: scale(1.04); }
+}
+
+.profile-page .profile-match-portrait-ice-circle {
+  position: relative;
+  z-index: 2;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(180, 225, 252, 0.55);
+  animation: profile-ice-pulse 3.5s ease-in-out infinite;
+  box-shadow:
+    inset 0 0 12px 2px rgba(180, 228, 252, 0.12),
+    0 0 12px 2px rgba(150, 218, 250, 0.22),
+    0 0 28px 4px rgba(120, 198, 242, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.profile-page .profile-match-portrait-ice-circle .profile-match-portrait {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+@keyframes profile-ice-pulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 12px 2px rgba(180, 228, 252, 0.12),
+      0 0 12px 2px rgba(150, 218, 250, 0.22),
+      0 0 28px 4px rgba(120, 198, 242, 0.1),
+      0 0 45px 8px rgba(100, 182, 238, 0.06);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 18px 4px rgba(200, 240, 255, 0.18),
+      0 0 18px 4px rgba(170, 228, 254, 0.28),
+      0 0 38px 8px rgba(140, 208, 248, 0.14),
+      0 0 55px 12px rgba(120, 192, 242, 0.08);
+  }
+}
+
 /* Legacy: gold ring only when fire portrait not used (fallback) */
 .profile-page .profile-match-portrait-wrap-main-character {
   border: 2px solid #8b6914;

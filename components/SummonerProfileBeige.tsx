@@ -11,6 +11,7 @@ import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver
 import { MatchDetails } from "@/components/MatchDetails";
 import ChampionStatsCard from "@/components/ChampionStatsCard";
 import { ChampionFirePortrait } from "@/components/ChampionFirePortrait";
+import { ChampionIcePortrait } from "@/components/ChampionIcePortrait";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
 import {
   getChampionSquareUrl,
@@ -527,6 +528,22 @@ export default function SummonerProfileBeige({
     return count >= 1 ? (isWin ? "win" : "loss") : null;
   }, [displayedMatches, account?.puuid]);
 
+  /** Number of consecutive wins from most recent match; 0 if last was a loss or no matches. Used for fire icon (3+). */
+  const winStreakCount = useMemo(() => {
+    const puuid = account?.puuid;
+    if (!puuid || displayedMatches.length === 0) return 0;
+    const getParticipant = (m: MatchDto) => m.info?.participants?.find((p) => p.puuid === puuid);
+    const first = getParticipant(displayedMatches[0]);
+    if (!first || !first.win) return 0;
+    let count = 0;
+    for (const m of displayedMatches) {
+      const p = getParticipant(m);
+      if (!p || !p.win) break;
+      count += 1;
+    }
+    return count;
+  }, [displayedMatches, account?.puuid]);
+
   useEffect(() => {
     setAdditionalMatchesByQueue({});
     setHasMoreByQueue({});
@@ -882,19 +899,44 @@ export default function SummonerProfileBeige({
       <section className="profile-hero">
         <div className="profile-hero-left">
           <h1 className="profile-hero-name">
-            {summoner?.profileIconId != null && (
-              <ChampionFirePortrait>
-                <img
-                  src={getProfileIconUrl(summoner.profileIconId, effectiveDdragonVersion)}
-                  alt=""
-                  className="profile-match-portrait"
-                  width={56}
-                  height={56}
-                  fetchPriority="high"
-                  loading="eager"
-                />
-              </ChampionFirePortrait>
-            )}
+            {summoner?.profileIconId != null &&
+              (winStreakCount >= 3 ? (
+                <ChampionFirePortrait>
+                  <img
+                    src={getProfileIconUrl(summoner.profileIconId, effectiveDdragonVersion)}
+                    alt=""
+                    className="profile-match-portrait"
+                    width={56}
+                    height={56}
+                    fetchPriority="high"
+                    loading="eager"
+                  />
+                </ChampionFirePortrait>
+              ) : currentStreak === "loss" ? (
+                <ChampionIcePortrait>
+                  <img
+                    src={getProfileIconUrl(summoner.profileIconId, effectiveDdragonVersion)}
+                    alt=""
+                    className="profile-match-portrait"
+                    width={56}
+                    height={56}
+                    fetchPriority="high"
+                    loading="eager"
+                  />
+                </ChampionIcePortrait>
+              ) : (
+                <span className="profile-hero-icon-wrap">
+                  <img
+                    src={getProfileIconUrl(summoner.profileIconId, effectiveDdragonVersion)}
+                    alt=""
+                    className="profile-hero-icon"
+                    width={56}
+                    height={56}
+                    fetchPriority="high"
+                    loading="eager"
+                  />
+                </span>
+              ))}
             <span>
               <span className="profile-hero-name-text">
                 {account.gameName}
