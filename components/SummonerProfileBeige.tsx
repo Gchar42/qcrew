@@ -767,6 +767,21 @@ export default function SummonerProfileBeige({
 
   const role = primaryRole(displayedMatches, account.puuid);
 
+  /** Current streak from most recent match: "win" | "loss" | null (no matches or no streak) */
+  const currentStreak = useMemo(() => {
+    if (!account?.puuid || displayedMatches.length === 0) return null;
+    const first = participant(displayedMatches[0]);
+    if (!first) return null;
+    const isWin = first.win;
+    let count = 0;
+    for (const m of displayedMatches) {
+      const p = participant(m);
+      if (!p || p.win !== isWin) break;
+      count += 1;
+    }
+    return count >= 1 ? (isWin ? "win" : "loss") : null;
+  }, [displayedMatches, account?.puuid]);
+
   const level = summoner?.summonerLevel ?? 0;
 
   const leagueEntry = leagueEntries?.find((e) => e.queueType === targetQueueType) ?? null;
@@ -865,7 +880,9 @@ export default function SummonerProfileBeige({
         <div className="profile-hero-left">
           <h1 className="profile-hero-name">
             {summoner?.profileIconId != null && (
-              <span className="profile-hero-icon-wrap">
+              <span
+                className={`profile-hero-icon-wrap${currentStreak === "win" ? " profile-hero-icon-win-streak" : ""}${currentStreak === "loss" ? " profile-hero-icon-loss-streak" : ""}`}
+              >
                 <img
                   src={getProfileIconUrl(summoner.profileIconId, effectiveDdragonVersion)}
                   alt=""
