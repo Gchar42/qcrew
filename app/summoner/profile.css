@@ -118,36 +118,47 @@
   object-fit: cover;
 }
 
-/* Win streak: fire glow around profile icon */
+/* Win streak: fire at top of profile icon only, no bleed below */
 .profile-page .profile-hero-icon-wrap.profile-hero-icon-win-streak {
   position: relative;
   border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
 }
 .profile-page .profile-hero-icon-wrap.profile-hero-icon-win-streak::before {
   content: "";
   position: absolute;
-  inset: -6px;
-  border-radius: 50%;
+  left: 50%;
+  top: -4px;
+  width: 72px;
+  height: 44px;
+  margin-left: -36px;
+  border-radius: 50% 50% 40% 40% / 60% 60% 20% 20%;
   background: radial-gradient(
-    circle,
-    rgba(251, 146, 60, 0.4) 0%,
-    rgba(239, 68, 68, 0.25) 40%,
-    rgba(234, 88, 12, 0.15) 70%,
+    ellipse 100% 80% at 50% 20%,
+    rgba(253, 186, 116, 0.55) 0%,
+    rgba(251, 146, 60, 0.45) 25%,
+    rgba(249, 115, 22, 0.35) 50%,
+    rgba(234, 88, 12, 0.2) 75%,
     transparent 100%
   );
-  animation: profile-hero-fire-pulse 1.8s ease-in-out infinite;
+  animation: profile-hero-fire-flicker 1.2s ease-in-out infinite;
   pointer-events: none;
-  z-index: -1;
+  z-index: 0;
 }
 .profile-page .profile-hero-icon-wrap.profile-hero-icon-win-streak .profile-hero-icon {
+  position: relative;
+  z-index: 1;
   box-shadow:
-    0 0 12px rgba(251, 146, 60, 0.5),
-    0 0 24px rgba(234, 88, 12, 0.3),
-    inset 0 0 12px rgba(251, 191, 36, 0.15);
+    0 -4px 14px rgba(251, 146, 60, 0.4),
+    0 -2px 8px rgba(253, 186, 116, 0.35),
+    inset 0 -2px 8px rgba(251, 191, 36, 0.12);
 }
-@keyframes profile-hero-fire-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.05); }
+@keyframes profile-hero-fire-flicker {
+  0%, 100% { opacity: 1; transform: scaleY(1) translateY(0); }
+  33% { opacity: 0.92; transform: scaleY(1.04) translateY(-1px); }
+  66% { opacity: 0.97; transform: scaleY(0.98) translateY(1px); }
 }
 
 /* Loss streak: ice/cold effect around profile icon */
