@@ -1633,16 +1633,23 @@
   flex-shrink: 0;
 }
 
-/* Column: team verdict symbol above portrait */
+/* Column: team verdict symbol centered between top of border and portrait */
 .profile-page .profile-match-portrait-verdict-column {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 0;
   flex-shrink: 0;
+  min-height: 100px;
+}
+
+.profile-page .profile-match-verdict-spacer {
+  flex: 1;
+  min-height: 6px;
 }
 
 .profile-page .profile-match-portrait-verdict-column .team-verdict-badge-above {
+  flex-shrink: 0;
   min-width: 22px;
   width: 22px;
   height: 22px;
