@@ -12,6 +12,7 @@ export function ChampionFirePortrait({ children }: { children: React.ReactNode }
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    const context: CanvasRenderingContext2D = ctx;
     const W = canvas.width;
     const H = canvas.height;
     const cx = W / 2;
@@ -93,13 +94,13 @@ export function ChampionFirePortrait({ children }: { children: React.ReactNode }
     }
 
     function animate() {
-      ctx.clearRect(0, 0, W, H);
-      ctx.globalCompositeOperation = "lighter";
+      context.clearRect(0, 0, W, H);
+      context.globalCompositeOperation = "lighter";
       particles.forEach((p) => {
         p.update();
-        p.draw(ctx);
+        p.draw(context);
       });
-      ctx.globalCompositeOperation = "source-over";
+      context.globalCompositeOperation = "source-over";
       animId = requestAnimationFrame(animate);
     }
     animate();
