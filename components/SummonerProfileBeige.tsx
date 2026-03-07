@@ -1065,20 +1065,16 @@ export default function SummonerProfileBeige({
                   <span className={`profile-verdict-line ${win ? "win" : "loss"}`} />
                   <div className="profile-match-portrait-spells-wrap">
                     <div className="profile-match-portrait-verdict-column">
-                      {teamVerdict ? (
-                        <>
-                          <span className="profile-match-verdict-spacer" aria-hidden />
-                          <LeagueTooltip title={teamVerdict.verdict} body={teamVerdict.reason}>
-                            <span
-                              className={`profile-badge-chip team-verdict-badge team-verdict-badge-above team-verdict-${teamVerdict.verdict.toLowerCase()}`}
-                              aria-label={teamVerdict.verdict}
-                            >
-                              <TeamVerdictIcon verdict={teamVerdict.verdict} />
-                            </span>
-                          </LeagueTooltip>
-                          <span className="profile-match-verdict-spacer" aria-hidden />
-                        </>
-                      ) : null}
+                      {teamVerdict && (
+                        <LeagueTooltip title={teamVerdict.verdict} body={teamVerdict.reason}>
+                          <span
+                            className={`profile-badge-chip team-verdict-badge team-verdict-badge-above team-verdict-${teamVerdict.verdict.toLowerCase()}`}
+                            aria-label={teamVerdict.verdict}
+                          >
+                            <TeamVerdictIcon verdict={teamVerdict.verdict} />
+                          </span>
+                        </LeagueTooltip>
+                      )}
                       <div
                         className={`profile-match-portrait-wrap${badgeInfo?.badge === "Main Character" ? " profile-match-portrait-wrap-main-character" : ""}`}
                       >
