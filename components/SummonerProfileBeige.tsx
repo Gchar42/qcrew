@@ -1064,22 +1064,34 @@ export default function SummonerProfileBeige({
                   </div>
                   <span className={`profile-verdict-line ${win ? "win" : "loss"}`} />
                   <div className="profile-match-portrait-spells-wrap">
-                    <div
-                      className={`profile-match-portrait-wrap${badgeInfo?.badge === "Main Character" ? " profile-match-portrait-wrap-main-character" : ""}`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={champSquareUrl}
-                        alt=""
-                        className="profile-match-portrait"
-                        width={64}
-                        height={64}
-                        loading={isFirstRow ? "eager" : "lazy"}
-                        fetchPriority={isFirstRow ? "high" : undefined}
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
+                    <div className="profile-match-portrait-verdict-column">
+                      {teamVerdict && (
+                        <LeagueTooltip title={teamVerdict.verdict} body={teamVerdict.reason}>
+                          <span
+                            className={`profile-badge-chip team-verdict-badge team-verdict-badge-above team-verdict-${teamVerdict.verdict.toLowerCase()}`}
+                            aria-label={teamVerdict.verdict}
+                          >
+                            <TeamVerdictIcon verdict={teamVerdict.verdict} />
+                          </span>
+                        </LeagueTooltip>
+                      )}
+                      <div
+                        className={`profile-match-portrait-wrap${badgeInfo?.badge === "Main Character" ? " profile-match-portrait-wrap-main-character" : ""}`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={champSquareUrl}
+                          alt=""
+                          className="profile-match-portrait"
+                          width={64}
+                          height={64}
+                          loading={isFirstRow ? "eager" : "lazy"}
+                          fetchPriority={isFirstRow ? "high" : undefined}
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      </div>
                     </div>
                     <div className="profile-match-spells-runes">
                       <div className="profile-match-spells-col">
@@ -1227,18 +1239,6 @@ export default function SummonerProfileBeige({
                         )
                       )}
                     </div>
-                    {teamVerdict && (
-                      <div className="profile-chips-row profile-team-verdict-row">
-                        <LeagueTooltip title={teamVerdict.verdict} body={teamVerdict.reason}>
-                          <span
-                            className={`profile-badge-chip team-verdict-badge team-verdict-${teamVerdict.verdict.toLowerCase()}`}
-                            aria-label={teamVerdict.verdict}
-                          >
-                            <TeamVerdictIcon verdict={teamVerdict.verdict} />
-                          </span>
-                        </LeagueTooltip>
-                      </div>
-                    )}
                   </div>
                   <div className="profile-match-items-row">
                     {([p.item0, p.item1, p.item2, p.item3, p.item4, p.item5] as (number | undefined)[]).map((itemId, idx) => {
