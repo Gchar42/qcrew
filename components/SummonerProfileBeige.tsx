@@ -756,7 +756,6 @@ export default function SummonerProfileBeige({
     const tier = entry.tier ?? "";
     const tierKey = tier.toLowerCase();
     const lp = entry.leaguePoints ?? 0;
-    const emblemSrc = `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem/emblem-${tierKey}.png`;
     return (
       <div className={`rank-card ${tierKey}`}>
         <div className="card-inner">
@@ -766,26 +765,7 @@ export default function SummonerProfileBeige({
           </div>
           <div className="card-body">
             <div className="rank-emblem">
-              <div className="emblem-icon">
-                {tier ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      className="emblem-img"
-                      src={emblemSrc}
-                      alt={`${tier} Rank Emblem`}
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                        const fallback = e.currentTarget.nextElementSibling;
-                        if (fallback) (fallback as HTMLElement).style.display = "flex";
-                      }}
-                    />
-                    <div className="emblem-img loading-placeholder" style={{ display: "none" }}>
-                      {tier}
-                    </div>
-                  </>
-                ) : null}
-              </div>
+              <div className="emblem-icon" />
               <span className="rank-name">{formatRankTier(tier, entry.rank ?? "")}</span>
             </div>
             <div className="stats-panel">
