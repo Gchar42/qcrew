@@ -774,8 +774,8 @@ export default function SummonerProfileBeige({
                       className="emblem-img"
                       src={getRankEmblemUrl(tier)}
                       alt=""
-                      width={88}
-                      height={88}
+                      width={70}
+                      height={70}
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                         const fallback = e.currentTarget.nextElementSibling;
