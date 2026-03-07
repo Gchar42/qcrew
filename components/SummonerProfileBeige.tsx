@@ -509,6 +509,23 @@ export default function SummonerProfileBeige({
     return { solo, flex };
   }, [queue, championStatsFromDisplayed, bundle?.championStats]);
 
+  /** Current streak from most recent match: "win" | "loss" | null. Must be before any early return (hooks order). */
+  const currentStreak = useMemo(() => {
+    const puuid = account?.puuid;
+    if (!puuid || displayedMatches.length === 0) return null;
+    const getParticipant = (m: MatchDto) => m.info?.participants?.find((p) => p.puuid === puuid);
+    const first = getParticipant(displayedMatches[0]);
+    if (!first) return null;
+    const isWin = first.win;
+    let count = 0;
+    for (const m of displayedMatches) {
+      const p = getParticipant(m);
+      if (!p || p.win !== isWin) break;
+      count += 1;
+    }
+    return count >= 1 ? (isWin ? "win" : "loss") : null;
+  }, [displayedMatches, account?.puuid]);
+
   useEffect(() => {
     setAdditionalMatchesByQueue({});
     setHasMoreByQueue({});
@@ -766,21 +783,6 @@ export default function SummonerProfileBeige({
   })();
 
   const role = primaryRole(displayedMatches, account.puuid);
-
-  /** Current streak from most recent match: "win" | "loss" | null (no matches or no streak) */
-  const currentStreak = useMemo(() => {
-    if (!account?.puuid || displayedMatches.length === 0) return null;
-    const first = participant(displayedMatches[0]);
-    if (!first) return null;
-    const isWin = first.win;
-    let count = 0;
-    for (const m of displayedMatches) {
-      const p = participant(m);
-      if (!p || p.win !== isWin) break;
-      count += 1;
-    }
-    return count >= 1 ? (isWin ? "win" : "loss") : null;
-  }, [displayedMatches, account?.puuid]);
 
   const level = summoner?.summonerLevel ?? 0;
 
