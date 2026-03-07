@@ -227,7 +227,19 @@
   min-width: 0;
 }
 
-/* Rank card – exact copy of ranked-cards.html (scoped under .profile-page .rank-card) */
+/* Rank card – exact copy of ranked-cards.html (scoped under .profile-page) */
+.profile-page {
+  --gold-primary: #c8a04e;
+  --gold-bright: #f0d878;
+  --gold-dim: #8a6d2b;
+  --gold-glow: rgba(200, 160, 78, 0.35);
+  --silver-primary: #9eaab8;
+  --silver-bright: #d4dce6;
+  --silver-dim: #5e6a78;
+  --silver-glow: rgba(158, 170, 184, 0.3);
+  --stat-bg: #0a0a10;
+}
+
 .profile-page .rank-card {
   position: relative;
   border-radius: 16px;
@@ -256,8 +268,8 @@
   background: linear-gradient(160deg, #d4dce6 0%, #9eaab8 30%, #5e6a78 60%, #9eaab8 80%, #d4dce6 100%);
 }
 
-.profile-page .rank-card.gold { box-shadow: 0 0 30px -5px rgba(200, 160, 78, 0.35), 0 8px 30px rgba(0,0,0,0.5); }
-.profile-page .rank-card.silver { box-shadow: 0 0 30px -5px rgba(158, 170, 184, 0.3), 0 8px 30px rgba(0,0,0,0.5); }
+.profile-page .rank-card.gold { box-shadow: 0 0 30px -5px var(--gold-glow), 0 8px 30px rgba(0,0,0,0.5); }
+.profile-page .rank-card.silver { box-shadow: 0 0 30px -5px var(--silver-glow), 0 8px 30px rgba(0,0,0,0.5); }
 
 .profile-page .rank-card .card-inner {
   position: relative;
@@ -293,8 +305,8 @@
   text-transform: uppercase;
 }
 
-.profile-page .rank-card.gold .queue-label { color: #c8a04e; }
-.profile-page .rank-card.silver .queue-label { color: #9eaab8; }
+.profile-page .rank-card.gold .queue-label { color: var(--gold-primary); }
+.profile-page .rank-card.silver .queue-label { color: var(--silver-primary); }
 
 .profile-page .rank-card .season-tag {
   font-size: 9px;
@@ -306,8 +318,8 @@
   border: 1px solid;
 }
 
-.profile-page .rank-card.gold .season-tag { color: #8a6d2b; border-color: rgba(200,160,78,0.2); background: rgba(200,160,78,0.06); }
-.profile-page .rank-card.silver .season-tag { color: #5e6a78; border-color: rgba(158,170,184,0.2); background: rgba(158,170,184,0.06); }
+.profile-page .rank-card.gold .season-tag { color: var(--gold-dim); border-color: rgba(200,160,78,0.2); background: rgba(200,160,78,0.06); }
+.profile-page .rank-card.silver .season-tag { color: var(--silver-dim); border-color: rgba(158,170,184,0.2); background: rgba(158,170,184,0.06); }
 
 .profile-page .rank-card .card-header::after {
   content: "";
@@ -373,11 +385,9 @@
   background-clip: text;
 }
 
-/* Stats panel – exact copy from ranked-cards.html (vertical: LP row, bar, then 2-col grid) */
 .profile-page .rank-card .stats-panel {
   flex: 1;
-  display: block;
-  background: #0a0a10;
+  background: var(--stat-bg);
   border-radius: 12px;
   padding: 18px 20px;
   border: 1px solid rgba(255,255,255,0.04);
@@ -396,12 +406,7 @@
 .profile-page .rank-card.gold .stats-panel::before { background: linear-gradient(90deg, transparent, rgba(200,160,78,0.3), transparent); }
 .profile-page .rank-card.silver .stats-panel::before { background: linear-gradient(90deg, transparent, rgba(158,170,184,0.2), transparent); }
 
-.profile-page .rank-card .lp-row {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  margin-bottom: 14px;
-}
+.profile-page .rank-card .lp-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 14px; }
 
 .profile-page .rank-card .lp-value {
   font-weight: 800;
@@ -409,8 +414,8 @@
   line-height: 1;
 }
 
-.profile-page .rank-card.gold .lp-value { color: #f0d878; }
-.profile-page .rank-card.silver .lp-value { color: #d4dce6; }
+.profile-page .rank-card.gold .lp-value { color: var(--gold-bright); }
+.profile-page .rank-card.silver .lp-value { color: var(--silver-bright); }
 
 .profile-page .rank-card .lp-label {
   font-weight: 600;
@@ -435,25 +440,16 @@
 }
 
 .profile-page .rank-card.gold .lp-bar-fill {
-  background: linear-gradient(90deg, #8a6d2b, #c8a04e, #f0d878);
-  box-shadow: 0 0 8px rgba(200,160,78,0.35);
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold-primary), var(--gold-bright));
+  box-shadow: 0 0 8px var(--gold-glow);
 }
 .profile-page .rank-card.silver .lp-bar-fill {
-  background: linear-gradient(90deg, #5e6a78, #9eaab8, #d4dce6);
-  box-shadow: 0 0 8px rgba(158,170,184,0.3);
+  background: linear-gradient(90deg, var(--silver-dim), var(--silver-primary), var(--silver-bright));
+  box-shadow: 0 0 8px var(--silver-glow);
 }
 
-.profile-page .rank-card .stat-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 16px;
-}
-
-.profile-page .rank-card .stat-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+.profile-page .rank-card .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.profile-page .rank-card .stat-item { display: flex; flex-direction: column; gap: 2px; }
 
 .profile-page .rank-card .stat-label {
   font-weight: 400;
@@ -473,11 +469,8 @@
 .profile-page .rank-card .stat-value .loss { color: #e05656; }
 .profile-page .rank-card .stat-value .sep { color: rgba(255,255,255,0.2); margin: 0 2px; }
 .profile-page .rank-card .stat-value.wr { font-size: 15px; font-weight: 800; }
-.profile-page .rank-card.gold .stat-value.wr { color: #f0d878; }
-.profile-page .rank-card.silver .stat-value.wr { color: #d4dce6; }
-
-/* Record on one line (62W–50L) like HTML */
-.profile-page .rank-card .stat-value.record { white-space: nowrap; }
+.profile-page .rank-card.gold .stat-value.wr { color: var(--gold-bright); }
+.profile-page .rank-card.silver .stat-value.wr { color: var(--silver-bright); }
 
 .profile-page .rank-card .emblem-img.loading-placeholder {
   display: flex;
@@ -490,12 +483,12 @@
   border: 2px solid;
 }
 .profile-page .rank-card.gold .emblem-img.loading-placeholder {
-  color: #c8a04e;
+  color: var(--gold-primary);
   border-color: rgba(200,160,78,0.3);
   background: rgba(200,160,78,0.08);
 }
 .profile-page .rank-card.silver .emblem-img.loading-placeholder {
-  color: #9eaab8;
+  color: var(--silver-primary);
   border-color: rgba(158,170,184,0.3);
   background: rgba(158,170,184,0.08);
 }

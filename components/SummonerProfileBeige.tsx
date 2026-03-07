@@ -14,7 +14,6 @@ import { LeagueTooltip } from "@/components/LeagueTooltip";
 import {
   getChampionSquareUrl,
   getProfileIconUrl,
-  getRankEmblemUrl,
   getSummonerSpellIconUrl,
   isValidItemId,
   getItemTooltip,
@@ -757,8 +756,9 @@ export default function SummonerProfileBeige({
     const tier = entry.tier ?? "";
     const tierKey = tier.toLowerCase();
     const lp = entry.leaguePoints ?? 0;
+    const emblemSrc = `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem/emblem-${tierKey}.png`;
     return (
-      <div className={`profile-rank-card rank-card ${tierKey}`}>
+      <div className={`rank-card ${tierKey}`}>
         <div className="card-inner">
           <div className="card-header">
             <span className="queue-label">{title}</span>
@@ -771,20 +771,16 @@ export default function SummonerProfileBeige({
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={getRankEmblemUrl(tier)}
-                      alt=""
                       className="emblem-img"
-                      width={88}
-                      height={88}
-                      loading="eager"
-                      fetchPriority="high"
+                      src={emblemSrc}
+                      alt={`${tier} Rank Emblem`}
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                         const fallback = e.currentTarget.nextElementSibling;
                         if (fallback) (fallback as HTMLElement).style.display = "flex";
                       }}
                     />
-                    <div className="emblem-img loading-placeholder" style={{ display: "none" }} aria-hidden>
+                    <div className="emblem-img loading-placeholder" style={{ display: "none" }}>
                       {tier}
                     </div>
                   </>
@@ -811,11 +807,7 @@ export default function SummonerProfileBeige({
                 </div>
                 <div className="stat-item">
                   <span className="stat-label">Record</span>
-                  <span className="stat-value record">
-                    <span className="win">{entry.wins}W</span>
-                    <span className="sep">–</span>
-                    <span className="loss">{entry.losses}L</span>
-                  </span>
+                  <span className="stat-value"><span className="win">{entry.wins}W</span><span className="sep">–</span><span className="loss">{entry.losses}L</span></span>
                 </div>
               </div>
             </div>
