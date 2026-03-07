@@ -10,6 +10,7 @@ import type { ProfileBundle } from "@/app/api/riot/profileBundle/route";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
 import { MatchDetails } from "@/components/MatchDetails";
 import ChampionStatsCard from "@/components/ChampionStatsCard";
+import { ChampionFirePortrait } from "@/components/ChampionFirePortrait";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
 import {
   getChampionSquareUrl,
@@ -1094,23 +1095,39 @@ export default function SummonerProfileBeige({
                           </span>
                         </LeagueTooltip>
                       )}
-                      <div
-                        className={`profile-match-portrait-wrap${badgeInfo?.badge === "Main Character" ? " profile-match-portrait-wrap-main-character" : ""}`}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={champSquareUrl}
-                          alt=""
-                          className="profile-match-portrait"
-                          width={64}
-                          height={64}
-                          loading={isFirstRow ? "eager" : "lazy"}
-                          fetchPriority={isFirstRow ? "high" : undefined}
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                          }}
-                        />
-                      </div>
+                      {badgeInfo?.badge === "Main Character" ? (
+                        <ChampionFirePortrait>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={champSquareUrl}
+                            alt=""
+                            className="profile-match-portrait"
+                            width={64}
+                            height={64}
+                            loading={isFirstRow ? "eager" : "lazy"}
+                            fetchPriority={isFirstRow ? "high" : undefined}
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        </ChampionFirePortrait>
+                      ) : (
+                        <div className="profile-match-portrait-wrap">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={champSquareUrl}
+                            alt=""
+                            className="profile-match-portrait"
+                            width={64}
+                            height={64}
+                            loading={isFirstRow ? "eager" : "lazy"}
+                            fetchPriority={isFirstRow ? "high" : undefined}
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
                     <div className="profile-match-spells-runes">
                       <div className="profile-match-spells-col">

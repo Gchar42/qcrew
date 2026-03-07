@@ -1577,7 +1577,99 @@
   50% { opacity: 0.9; transform: scale(1.1); }
 }
 
-/* Animated gold ring around champion portrait when Main Character */
+/* Fire portrait wrap (Main Character): canvas + rings + glowing circle */
+.profile-page .profile-match-portrait-fire-wrap {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-page .profile-match-portrait-fire-canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  margin-left: -40px;
+  margin-top: -40px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.profile-page .profile-match-portrait-fire-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 100, 0, 0.25);
+  animation: profile-fire-flicker-ring 2.5s ease-in-out infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.profile-page .profile-match-portrait-fire-ring:nth-of-type(2) {
+  border-color: rgba(255, 120, 0, 0.22);
+  animation-duration: 3s;
+}
+
+.profile-page .profile-match-portrait-fire-ring:nth-of-type(3) {
+  border-color: rgba(255, 80, 0, 0.18);
+  animation-duration: 3.5s;
+}
+
+@keyframes profile-fire-flicker-ring {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+.profile-page .profile-match-portrait-fire-circle {
+  position: relative;
+  z-index: 2;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #cc4400;
+  animation: profile-fire-pulse-glow 2s ease-in-out infinite, profile-fire-border-burn 3s linear infinite;
+  box-shadow:
+    0 0 20px 4px rgba(255, 100, 0, 0.5),
+    0 0 60px 10px rgba(255, 60, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.profile-page .profile-match-portrait-fire-circle .profile-match-portrait {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+@keyframes profile-fire-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px 4px rgba(255, 100, 0, 0.5), 0 0 60px 10px rgba(255, 60, 0, 0.3), 0 0 100px 20px rgba(255, 30, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 30px 8px rgba(255, 120, 0, 0.7), 0 0 80px 15px rgba(255, 70, 0, 0.4), 0 0 120px 30px rgba(255, 40, 0, 0.2);
+  }
+}
+
+@keyframes profile-fire-border-burn {
+  0% { border-color: #cc4400; }
+  25% { border-color: #ff6600; }
+  50% { border-color: #ffaa00; }
+  75% { border-color: #ff7700; }
+  100% { border-color: #cc4400; }
+}
+
+/* Legacy: gold ring only when fire portrait not used (fallback) */
 .profile-page .profile-match-portrait-wrap-main-character {
   border: 2px solid #8b6914;
   box-shadow:
