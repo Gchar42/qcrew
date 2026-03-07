@@ -756,10 +756,9 @@ export default function SummonerProfileBeige({
     const { gamesPlayed, winRatePct } = rankStats(entry);
     const tier = entry.tier ?? "";
     const tierKey = tier.toLowerCase();
-    const tierBorderClass = tier ? `profile-rank-card-${tierKey}` : "profile-rank-card-unranked";
     const lp = entry.leaguePoints ?? 0;
     return (
-      <div className={`profile-rank-card rank-card-inner-layout ${tierBorderClass}`}>
+      <div className={`profile-rank-card rank-card ${tierKey}`}>
         <div className="card-inner">
           <div className="card-header">
             <span className="queue-label">{title}</span>
@@ -775,8 +774,8 @@ export default function SummonerProfileBeige({
                       src={getRankEmblemUrl(tier)}
                       alt=""
                       className="emblem-img"
-                      width={140}
-                      height={140}
+                      width={88}
+                      height={88}
                       loading="eager"
                       fetchPriority="high"
                       onError={(e) => {
@@ -785,7 +784,7 @@ export default function SummonerProfileBeige({
                         if (fallback) (fallback as HTMLElement).style.display = "flex";
                       }}
                     />
-                    <div className="emblem-img emblem-loading-placeholder" style={{ display: "none" }} aria-hidden>
+                    <div className="emblem-img loading-placeholder" style={{ display: "none" }} aria-hidden>
                       {tier}
                     </div>
                   </>
@@ -794,14 +793,12 @@ export default function SummonerProfileBeige({
               <span className="rank-name">{formatRankTier(tier, entry.rank ?? "")}</span>
             </div>
             <div className="stats-panel">
-              <div className="stats-panel-lp">
-                <div className="lp-row">
-                  <span className="lp-value">{lp}</span>
-                  <span className="lp-label">LP</span>
-                </div>
-                <div className="lp-bar-track">
-                  <div className="lp-bar-fill" style={{ width: `${Math.min(100, lp)}%` }} />
-                </div>
+              <div className="lp-row">
+                <span className="lp-value">{lp}</span>
+                <span className="lp-label">LP</span>
+              </div>
+              <div className="lp-bar-track">
+                <div className="lp-bar-fill" style={{ width: `${Math.min(100, lp)}%` }} />
               </div>
               <div className="stat-grid">
                 <div className="stat-item">
@@ -814,7 +811,7 @@ export default function SummonerProfileBeige({
                 </div>
                 <div className="stat-item">
                   <span className="stat-label">Record</span>
-                  <span className="stat-value record">
+                  <span className="stat-value">
                     <span className="win">{entry.wins}W</span>
                     <span className="sep">–</span>
                     <span className="loss">{entry.losses}L</span>
