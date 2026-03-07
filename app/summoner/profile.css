@@ -1648,6 +1648,10 @@
   min-height: 6px;
 }
 
+.profile-page .profile-match-portrait-verdict-column .profile-match-verdict-spacer:first-child {
+  flex: 0.5;
+}
+
 .profile-page .profile-match-portrait-verdict-column .team-verdict-badge-above {
   flex-shrink: 0;
   min-width: 22px;
