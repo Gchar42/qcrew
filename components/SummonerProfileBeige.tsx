@@ -14,6 +14,7 @@ import { LeagueTooltip } from "@/components/LeagueTooltip";
 import {
   getChampionSquareUrl,
   getProfileIconUrl,
+  getRankEmblemUrl,
   getSummonerSpellIconUrl,
   isValidItemId,
   getItemTooltip,
@@ -765,7 +766,28 @@ export default function SummonerProfileBeige({
           </div>
           <div className="card-body">
             <div className="rank-emblem">
-              <div className="emblem-icon" />
+              <div className="emblem-icon">
+                {tier ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      className="emblem-img"
+                      src={getRankEmblemUrl(tier)}
+                      alt=""
+                      width={88}
+                      height={88}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const fallback = e.currentTarget.nextElementSibling;
+                        if (fallback) (fallback as HTMLElement).style.display = "flex";
+                      }}
+                    />
+                    <div className="emblem-img loading-placeholder" style={{ display: "none" }}>
+                      {tier}
+                    </div>
+                  </>
+                ) : null}
+              </div>
               <span className="rank-name">{formatRankTier(tier, entry.rank ?? "")}</span>
             </div>
             <div className="stats-panel">

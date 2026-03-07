@@ -206,10 +206,10 @@
   display: none;
 }
 
-/* Two-column body: left stats, right match list */
+/* Two-column body: left stats (rank cards need ~380px for 2-col stat grid like HTML), right match list */
 .profile-page .profile-body {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: minmax(320px, 380px) 1fr;
   gap: 24px;
   align-items: start;
   margin-top: 20px;
@@ -387,6 +387,7 @@
 
 .profile-page .rank-card .stats-panel {
   flex: 1;
+  min-width: 0;
   background: var(--stat-bg);
   border-radius: 12px;
   padding: 18px 20px;
@@ -448,7 +449,13 @@
   box-shadow: 0 0 8px var(--silver-glow);
 }
 
-.profile-page .rank-card .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+/* HTML: 2 columns so Win Rate | Games on first row, Record on second row */
+.profile-page .rank-card .stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  min-width: 160px;
+}
 .profile-page .rank-card .stat-item { display: flex; flex-direction: column; gap: 2px; }
 
 .profile-page .rank-card .stat-label {
