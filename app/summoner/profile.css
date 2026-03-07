@@ -1577,11 +1577,11 @@
   50% { opacity: 0.9; transform: scale(1.1); }
 }
 
-/* Fire portrait wrap (Main Character): canvas + rings + glowing circle */
+/* Fire portrait wrap (summoner icon): canvas + rings + glowing circle */
 .profile-page .profile-match-portrait-fire-wrap {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 66px;
+  height: 66px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -1592,10 +1592,10 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 80px;
-  height: 80px;
-  margin-left: -40px;
-  margin-top: -40px;
+  width: 66px;
+  height: 66px;
+  margin-left: -33px;
+  margin-top: -33px;
   z-index: 0;
   pointer-events: none;
 }
@@ -1633,11 +1633,11 @@
   height: 56px;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid #cc4400;
+  border: 2px solid #cc4400;
   animation: profile-fire-pulse-glow 2s ease-in-out infinite, profile-fire-border-burn 3s linear infinite;
   box-shadow:
-    0 0 20px 4px rgba(255, 100, 0, 0.5),
-    0 0 60px 10px rgba(255, 60, 0, 0.3);
+    0 0 12px 2px rgba(255, 100, 0, 0.5),
+    0 0 28px 4px rgba(255, 60, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1654,10 +1654,10 @@
 
 @keyframes profile-fire-pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 20px 4px rgba(255, 100, 0, 0.5), 0 0 60px 10px rgba(255, 60, 0, 0.3), 0 0 100px 20px rgba(255, 30, 0, 0.15);
+    box-shadow: 0 0 12px 2px rgba(255, 100, 0, 0.5), 0 0 28px 4px rgba(255, 60, 0, 0.3), 0 0 40px 8px rgba(255, 30, 0, 0.12);
   }
   50% {
-    box-shadow: 0 0 30px 8px rgba(255, 120, 0, 0.7), 0 0 80px 15px rgba(255, 70, 0, 0.4), 0 0 120px 30px rgba(255, 40, 0, 0.2);
+    box-shadow: 0 0 16px 4px rgba(255, 120, 0, 0.6), 0 0 36px 6px rgba(255, 70, 0, 0.35), 0 0 50px 12px rgba(255, 40, 0, 0.15);
   }
 }
 

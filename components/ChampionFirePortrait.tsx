@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-const WRAP_SIZE = 80;
+const WRAP_SIZE = 66;
 
 export function ChampionFirePortrait({ children }: { children: React.ReactNode }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -34,29 +34,29 @@ export function ChampionFirePortrait({ children }: { children: React.ReactNode }
 
       constructor() {
         this.angle = Math.random() * Math.PI * 2;
-        const r = 28 + Math.random() * 6;
+        const r = 26 + Math.random() * 4;
         this.x = cx + Math.cos(this.angle) * r;
         this.y = cy + Math.sin(this.angle) * r;
-        this.speed = 0.4 + Math.random() * 1.2;
+        this.speed = 0.3 + Math.random() * 0.8;
         this.life = 1;
-        this.decay = 0.008 + Math.random() * 0.015;
-        this.size = 2 + Math.random() * 4;
-        this.vx = Math.cos(this.angle) * this.speed * (0.3 + Math.random() * 0.5);
-        this.vy = -Math.abs(Math.sin(this.angle) * this.speed) - 0.5 - Math.random() * 1.2;
+        this.decay = 0.012 + Math.random() * 0.018;
+        this.size = 1.5 + Math.random() * 2.5;
+        this.vx = Math.cos(this.angle) * this.speed * (0.2 + Math.random() * 0.4);
+        this.vy = -Math.abs(Math.sin(this.angle) * this.speed) - 0.3 - Math.random() * 0.7;
         this.hue = 15 + Math.random() * 30;
       }
 
       reset() {
         this.angle = Math.random() * Math.PI * 2;
-        const r = 28 + Math.random() * 6;
+        const r = 26 + Math.random() * 4;
         this.x = cx + Math.cos(this.angle) * r;
         this.y = cy + Math.sin(this.angle) * r;
-        this.speed = 0.4 + Math.random() * 1.2;
+        this.speed = 0.3 + Math.random() * 0.8;
         this.life = 1;
-        this.decay = 0.008 + Math.random() * 0.015;
-        this.size = 2 + Math.random() * 4;
-        this.vx = Math.cos(this.angle) * this.speed * (0.3 + Math.random() * 0.5);
-        this.vy = -Math.abs(Math.sin(this.angle) * this.speed) - 0.5 - Math.random() * 1.2;
+        this.decay = 0.012 + Math.random() * 0.018;
+        this.size = 1.5 + Math.random() * 2.5;
+        this.vx = Math.cos(this.angle) * this.speed * (0.2 + Math.random() * 0.4);
+        this.vy = -Math.abs(Math.sin(this.angle) * this.speed) - 0.3 - Math.random() * 0.7;
         this.hue = 15 + Math.random() * 30;
       }
 
@@ -89,7 +89,7 @@ export function ChampionFirePortrait({ children }: { children: React.ReactNode }
       }
     }
 
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 80; i++) {
       particles.push(new Particle());
     }
 
@@ -117,7 +117,7 @@ export function ChampionFirePortrait({ children }: { children: React.ReactNode }
         aria-hidden
       />
       {/* Flicker rings */}
-      {[64, 72, 80].map((size, i) => (
+      {[58, 62, 66].map((size, i) => (
         <div
           key={i}
           className="profile-match-portrait-fire-ring"
