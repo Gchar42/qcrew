@@ -1542,19 +1542,23 @@
   color: #b91c1c;
 }
 
-/* Team Verdict badge – same size as other badges, always on its own row */
+/* Team Verdict badge – icon only (symbol), compact size, always on its own row */
 .profile-page .team-verdict-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 110px;
+  min-width: 28px;
+  width: 28px;
   height: 28px;
-  padding: 0 10px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 0;
   border-radius: 6px;
   border: 1.5px solid;
   box-sizing: border-box;
+}
+.profile-page .profile-team-verdict-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 .profile-page .team-verdict-badge.team-verdict-carried {
   background: rgba(251, 191, 36, 0.15);

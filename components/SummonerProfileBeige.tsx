@@ -28,7 +28,7 @@ import {
 } from "@/lib/runesCd";
 import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
-import { getTeamVerdict } from "@/lib/teamVerdict";
+import { getTeamVerdict, type TeamVerdictType } from "@/lib/teamVerdict";
 import { numberToRankLabel, rankToNumber } from "@/lib/rankMapping";
 import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
 import { addRecent, addFavorite, removeFavorite, isFavorite } from "@/lib/savedSummoners";
@@ -138,6 +138,46 @@ function regionDisplayLabel(region: string): string {
   if (r.startsWith("euw")) return "EUW";
   if (r === "kr") return "KR";
   return region.toUpperCase();
+}
+
+/** Team verdict indicator icon only (symbol matches design: star, diamond, dot, triangle, X) */
+function TeamVerdictIcon({ verdict }: { verdict: TeamVerdictType }) {
+  const className = "profile-team-verdict-icon";
+  const viewBox = "0 0 24 24";
+  switch (verdict) {
+    case "Carried":
+      return (
+        <svg className={className} viewBox={viewBox} fill="currentColor" aria-hidden>
+          <polygon points="12,2 14.4,9.2 22,9.2 16,14 17.6,21.2 12,17 6.4,21.2 8,14 2,9.2 9.6,9.2" />
+        </svg>
+      );
+    case "Solid":
+      return (
+        <svg className={className} viewBox={viewBox} fill="currentColor" aria-hidden>
+          <path d="M12 2L22 12 12 22 2 12z" />
+        </svg>
+      );
+    case "Neutral":
+      return (
+        <svg className={className} viewBox={viewBox} fill="currentColor" aria-hidden>
+          <circle cx="12" cy="12" r="5" />
+        </svg>
+      );
+    case "Deadweight":
+      return (
+        <svg className={className} viewBox={viewBox} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M12 5l8 14H4L12 5z" />
+        </svg>
+      );
+    case "Anchored":
+      return (
+        <svg className={className} viewBox={viewBox} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      );
+    default:
+      return null;
+  }
 }
 
 type Participant = NonNullable<MatchDto["info"]>["participants"][number];
@@ -1189,12 +1229,14 @@ export default function SummonerProfileBeige({
                     </div>
                     {teamVerdict && (
                       <div className="profile-chips-row profile-team-verdict-row">
-                        <span
-                          className={`profile-badge-chip team-verdict-badge team-verdict-${teamVerdict.verdict.toLowerCase()}`}
-                          title={teamVerdict.reason}
-                        >
-                          <span className="profile-badge-chip-text">{teamVerdict.verdict}</span>
-                        </span>
+                        <LeagueTooltip title={teamVerdict.verdict} body={teamVerdict.reason}>
+                          <span
+                            className={`profile-badge-chip team-verdict-badge team-verdict-${teamVerdict.verdict.toLowerCase()}`}
+                            aria-label={teamVerdict.verdict}
+                          >
+                            <TeamVerdictIcon verdict={teamVerdict.verdict} />
+                          </span>
+                        </LeagueTooltip>
                       </div>
                     )}
                   </div>
