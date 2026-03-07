@@ -373,8 +373,10 @@
   background-clip: text;
 }
 
+/* Stats panel – exact copy from ranked-cards.html (vertical: LP row, bar, then 2-col grid) */
 .profile-page .rank-card .stats-panel {
   flex: 1;
+  display: block;
   background: #0a0a10;
   border-radius: 12px;
   padding: 18px 20px;
@@ -394,7 +396,12 @@
 .profile-page .rank-card.gold .stats-panel::before { background: linear-gradient(90deg, transparent, rgba(200,160,78,0.3), transparent); }
 .profile-page .rank-card.silver .stats-panel::before { background: linear-gradient(90deg, transparent, rgba(158,170,184,0.2), transparent); }
 
-.profile-page .rank-card .lp-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 14px; }
+.profile-page .rank-card .lp-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 14px;
+}
 
 .profile-page .rank-card .lp-value {
   font-weight: 800;
@@ -429,15 +436,24 @@
 
 .profile-page .rank-card.gold .lp-bar-fill {
   background: linear-gradient(90deg, #8a6d2b, #c8a04e, #f0d878);
-  box-shadow: 0 0 8px rgba(200, 160, 78, 0.35);
+  box-shadow: 0 0 8px rgba(200,160,78,0.35);
 }
 .profile-page .rank-card.silver .lp-bar-fill {
   background: linear-gradient(90deg, #5e6a78, #9eaab8, #d4dce6);
-  box-shadow: 0 0 8px rgba(158, 170, 184, 0.3);
+  box-shadow: 0 0 8px rgba(158,170,184,0.3);
 }
 
-.profile-page .rank-card .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
-.profile-page .rank-card .stat-item { display: flex; flex-direction: column; gap: 2px; }
+.profile-page .rank-card .stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+}
+
+.profile-page .rank-card .stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 
 .profile-page .rank-card .stat-label {
   font-weight: 400;
@@ -459,6 +475,9 @@
 .profile-page .rank-card .stat-value.wr { font-size: 15px; font-weight: 800; }
 .profile-page .rank-card.gold .stat-value.wr { color: #f0d878; }
 .profile-page .rank-card.silver .stat-value.wr { color: #d4dce6; }
+
+/* Record on one line (62W–50L) like HTML */
+.profile-page .rank-card .stat-value.record { white-space: nowrap; }
 
 .profile-page .rank-card .emblem-img.loading-placeholder {
   display: flex;

@@ -811,7 +811,7 @@ export default function SummonerProfileBeige({
                 </div>
                 <div className="stat-item">
                   <span className="stat-label">Record</span>
-                  <span className="stat-value">
+                  <span className="stat-value record">
                     <span className="win">{entry.wins}W</span>
                     <span className="sep">–</span>
                     <span className="loss">{entry.losses}L</span>
