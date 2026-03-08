@@ -306,6 +306,7 @@
 
 .profile-page .profile-hero-refresh {
   flex-shrink: 0;
+  margin-left: 0;
 }
 
 .profile-page .profile-hero-tab {
