@@ -91,9 +91,9 @@
   position: absolute;
   inset: 0;
   z-index: 0;
-  background-size: cover;
-  /* Upper-center so champion face/torso is visible (splash art usually has figure there) */
-  background-position: 45% 20%;
+  /* Zoom out so full champion is visible (scale to ~72% of container) */
+  background-size: 72% auto;
+  background-position: center center;
   background-repeat: no-repeat;
 }
 
