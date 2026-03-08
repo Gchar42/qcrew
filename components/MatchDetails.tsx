@@ -215,10 +215,11 @@ export function MatchDetails({
           <thead>
             <tr>
               <th className="c-player">Player</th>
-              <th className="c-ai-score">AI-Score</th>
+              <th className="c-ai-score">Impact Score</th>
               <th className="c-kda">KDA</th>
               <th className="c-damage">Damage</th>
               <th className="c-cs">CS</th>
+              <th className="c-vision">Vision</th>
               <th className="c-items">Items</th>
             </tr>
           </thead>
@@ -285,8 +286,8 @@ export function MatchDetails({
                           <img
                             src={champUrl}
                             alt=""
-                            width={48}
-                            height={48}
+                            width={38}
+                            height={38}
                             className="md-champ-icon champ-icon"
                           />
                         ) : (
@@ -299,8 +300,8 @@ export function MatchDetails({
                             <img
                               src={spell1Src}
                               alt=""
-width={18}
-                            height={18}
+width={15}
+                            height={15}
                             className="md-spell-icon spell-icon"
                             />
                           )}
@@ -308,8 +309,8 @@ width={18}
                             <img
                               src={spell2Src}
                               alt=""
-width={18}
-                            height={18}
+width={15}
+                            height={15}
                             className="md-spell-icon spell-icon"
                             />
                           )}
@@ -323,9 +324,9 @@ width={18}
                               <img
                                 src={keystoneSrc}
                                 alt=""
-                                width={18}
-                                height={18}
-                                className="md-rune-icon rune-icon"
+width={15}
+                            height={15}
+                            className="md-rune-icon rune-icon"
                               />
                             </LeagueTooltip>
                           )}
@@ -336,9 +337,9 @@ width={18}
                               <img
                                 src={secondarySrc}
                                 alt=""
-                                width={18}
-                                height={18}
-                                className="md-rune-icon rune-icon"
+width={15}
+                            height={15}
+                            className="md-rune-icon rune-icon"
                               />
                             </LeagueTooltip>
                           )}
@@ -411,6 +412,10 @@ width={18}
                     </div>
                   </td>
 
+                  <td className="c-vision">
+                    <div className="md-vision-cell">{vision}</div>
+                  </td>
+
                   <td className="c-items">
                     <div className="md-itemsWrap">
                       <div className="md-itemGrid">
@@ -425,8 +430,8 @@ width={18}
                                       src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
                                       alt=""
                                       title={title}
-                                      width={32}
-                                      height={32}
+                                      width={22}
+                                      height={22}
                                       className="md-item-icon item-icon"
                                     />
                                   </LeagueTooltip>
@@ -445,8 +450,8 @@ width={18}
                                   src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${p.item6}.png`}
                                   alt=""
                                   title={title}
-                                  width={28}
-                                  height={28}
+                                  width={18}
+                                  height={18}
                                   className="md-item-icon item-icon trinket-icon"
                                 />
                               </LeagueTooltip>

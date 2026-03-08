@@ -2411,21 +2411,21 @@
   gap: 0;
 }
 
-/* Match details: single table per team, compact for fit-without-scroll */
+/* Match details: single table per team, compact/shrunk */
 .profile-page .match-details-panel {
   border-top: 1px solid var(--border);
-  padding: 8px 12px;
+  padding: 6px 10px;
   background: var(--surface3);
   border-radius: 0 0 8px 8px;
   overflow: visible;
 }
 
 .profile-page .match-details-header-line {
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .profile-page .match-details-meta {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--muted);
 }
 
@@ -2504,8 +2504,8 @@
   justify-content: space-between;
   align-items: center;
   font-weight: 600;
-  padding: 6px 10px;
-  font-size: 11px;
+  padding: 4px 8px;
+  font-size: 10px;
   color: var(--ink);
   background: var(--surface);
 }
@@ -2542,13 +2542,13 @@
   border-collapse: collapse;
   width: 100%;
   table-layout: fixed;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--ink);
 }
 
 .profile-page .md-table th,
 .profile-page .md-table td {
-  padding: 6px 8px;
+  padding: 4px 6px;
   vertical-align: middle;
 }
 
@@ -2561,36 +2561,41 @@
 }
 
 .profile-page .md-table thead th {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 600;
   opacity: 0.7;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   color: var(--muted);
   text-align: left;
 }
 
 .profile-page .md-table .c-player {
-  width: 180px;
+  width: 150px;
   vertical-align: top;
 }
 
 .profile-page .md-table .c-ai-score {
-  width: 72px;
+  width: 58px;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-kda {
-  width: 88px;
+  width: 70px;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-damage {
-  width: 100px;
+  width: 78px;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-cs {
-  width: 72px;
+  width: 58px;
+  vertical-align: middle;
+}
+
+.profile-page .md-table .c-vision {
+  width: 44px;
   vertical-align: middle;
 }
 
@@ -2598,7 +2603,7 @@
   width: auto;
   min-width: 0;
   vertical-align: middle;
-  padding-right: 8px;
+  padding-right: 4px;
 }
 
 .profile-page .md-table tr.md-me td {
@@ -2654,30 +2659,30 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: 6px 8px;
+  gap: 4px 6px;
   min-width: 0;
 }
 
 .profile-page .md-player-inner .md-name {
   width: 100%;
-  font-size: 10px;
+  font-size: 9px;
 }
 
-/* Square champion portrait in expanded details */
+/* Square champion portrait in expanded details (shrunk) */
 .profile-page .md-champ {
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
+  width: 38px;
+  height: 38px;
+  border-radius: 5px;
   overflow: hidden;
-  border: 2px solid var(--border);
+  border: 1.5px solid var(--border);
   line-height: 0;
 }
 
 .profile-page .md-champ-icon.champ-icon,
 .profile-page .md-champ-placeholder {
-  width: 48px;
-  height: 48px;
+  width: 38px;
+  height: 38px;
   object-fit: cover;
   object-position: center;
   display: block;
@@ -2696,7 +2701,7 @@
 .profile-page .md-spells-runes {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
@@ -2704,14 +2709,14 @@
 .profile-page .md-runes {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .profile-page .md-spell-icon.spell-icon,
 .profile-page .md-rune-icon.rune-icon {
-  width: 18px;
-  height: 18px;
-  border-radius: 3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 2px;
   border: 1px solid var(--border);
   object-fit: contain;
 }
@@ -2724,19 +2729,19 @@
   font-weight: 600;
 }
 
-/* AI-Score column: score + rank (1st–10th) */
+/* Impact Score column: score + rank (1st–10th) */
 .profile-page .md-ai-score-cell {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   align-items: flex-start;
 }
 
 .profile-page .md-ai-score-val {
   font-weight: 700;
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 4px;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 3px;
   background: rgba(255, 255, 255, 0.08);
   color: var(--ink);
 }
@@ -2747,30 +2752,30 @@
 }
 
 .profile-page .md-ai-score-rank {
-  font-size: 9px;
+  font-size: 8px;
   color: var(--muted);
   font-weight: 600;
 }
 
 .profile-page .md-crown {
-  margin-right: 2px;
+  margin-right: 1px;
 }
 
 /* KDA column: ratio + efficiency */
 .profile-page .md-kda-cell {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .profile-page .md-kda-ratio {
   font-weight: 700;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--ink);
 }
 
 .profile-page .md-kda-eff {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--muted);
 }
 
@@ -2783,21 +2788,21 @@
 .profile-page .md-damage-cell {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .profile-page .md-damage-val {
   font-weight: 700;
-  font-size: 11px;
+  font-size: 10px;
   color: rgba(255, 170, 110, 0.95);
 }
 
 .profile-page .md-damage-bar-wrap {
-  height: 4px;
+  height: 3px;
   border-radius: 2px;
   background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
-  min-width: 48px;
+  min-width: 36px;
 }
 
 .profile-page .md-damage-bar {
@@ -2811,18 +2816,25 @@
 .profile-page .md-cs-cell {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .profile-page .md-cs-total {
   font-weight: 700;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--ink);
 }
 
 .profile-page .md-cs-permin {
-  font-size: 9px;
+  font-size: 8px;
   color: var(--muted);
+}
+
+/* Vision column */
+.profile-page .md-vision-cell {
+  font-weight: 700;
+  font-size: 10px;
+  color: rgba(120, 210, 255, 0.95);
 }
 
 /* Clickable summoner name (match card teams + expanded match details) */
@@ -2922,15 +2934,15 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   flex-wrap: nowrap;
 }
 
 .profile-page .md-itemGrid {
   display: grid;
-  grid-template-columns: repeat(6, 28px);
-  grid-template-rows: 28px;
-  gap: 3px;
+  grid-template-columns: repeat(6, 22px);
+  grid-template-rows: 22px;
+  gap: 2px;
   width: max-content;
 }
 
@@ -2942,17 +2954,17 @@
 }
 
 .profile-page .md-item-icon.item-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
   object-fit: cover;
   border: 1px solid var(--border);
 }
 
 .profile-page .md-item-icon.trinket-icon {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
   opacity: 0.95;
 }
 
