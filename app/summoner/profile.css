@@ -1457,6 +1457,10 @@
   border-radius: 6px;
   flex-shrink: 0;
 }
+/* Hero row: same spacing as other badges (flex gap only) */
+.profile-page .profile-hero-badges .profile-matches-refresh {
+  margin-left: 0;
+}
 .profile-page .profile-matches-refresh:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.25);
