@@ -36,6 +36,9 @@ import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches"
 import { addRecent, addFavorite, removeFavorite, isFavorite } from "@/lib/savedSummoners";
 import type { AccountDto, LeagueEntryDto, SummonerDto, MatchDto } from "@/types/riot";
 
+/** Badges allowed in performance summary (no AFK / negative). */
+const PERFORMANCE_BADGE_WHITELIST = ["Main Character", "Lane Bully", "Jungle Diff"];
+
 /** Badge name -> profile CSS class for chip styling */
 function getBadgeCategoryClass(badge: string): string {
   const cat = getBadgeCategory(badge);
@@ -544,18 +547,38 @@ export default function SummonerProfileBeige({
     return count;
   }, [displayedMatches, account?.puuid]);
 
-  /** Badge counts for performance summary. Must be before any early return (hooks order). */
+  /** Badge counts for performance summary (whitelist: Main Character, Lane Bully, Jungle Diff only; no AFK/negative). Must be before any early return (hooks order). */
   const badgeCounts = useMemo(() => {
     if (!account?.puuid || displayedMatches.length === 0) return [] as Array<{ badge: string; count: number }>;
     const counts = new Map<string, number>();
     for (const m of displayedMatches) {
       const info = getMatchBadges(m).get(account.puuid);
-      if (info?.badge) counts.set(info.badge, (counts.get(info.badge) ?? 0) + 1);
+      if (info?.badge && PERFORMANCE_BADGE_WHITELIST.includes(info.badge)) {
+        counts.set(info.badge, (counts.get(info.badge) ?? 0) + 1);
+      }
     }
     return [...counts.entries()]
       .map(([badge, count]) => ({ badge, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 6);
+      .sort((a, b) => b.count - a.count);
+  }, [displayedMatches, account?.puuid]);
+
+  /** Most common team verdict in displayed matches (for performance summary). */
+  const avgTeamVerdict = useMemo((): TeamVerdictType | null => {
+    if (!account?.puuid || displayedMatches.length === 0) return null;
+    const counts = new Map<TeamVerdictType, number>();
+    for (const m of displayedMatches) {
+      const v = getTeamVerdict(m, account.puuid);
+      if (v) counts.set(v.verdict, (counts.get(v.verdict) ?? 0) + 1);
+    }
+    let maxCount = 0;
+    let mode: TeamVerdictType | null = null;
+    counts.forEach((c, verdict) => {
+      if (c > maxCount) {
+        maxCount = c;
+        mode = verdict;
+      }
+    });
+    return mode;
   }, [displayedMatches, account?.puuid]);
 
   useEffect(() => {
@@ -1081,13 +1104,54 @@ export default function SummonerProfileBeige({
                 </div>
               </div>
             )}
-            {badgeCounts.length > 0 && (
-              <div className="profile-performance-highlights">
-                {badgeCounts.map(({ badge, count }) => (
-                  <span key={badge} className={`profile-performance-highlight ${getBadgeCategoryClass(badge)}`}>
-                    {badge} ×{count}
-                  </span>
-                ))}
+            {(badgeCounts.length > 0 || avgTeamVerdict) && (
+              <div className="profile-performance-badges-row">
+                {badgeCounts.length > 0 && (
+                  <div className="profile-performance-badges-wrap">
+                    <span className="profile-performance-picks-label">Badges</span>
+                    <div className="profile-performance-badges-list">
+                      {badgeCounts.map(({ badge, count }) =>
+                        badge === "Main Character" ? (
+                          <span key={badge} className="profile-performance-badge-mc" title={`Main Character ×${count}`}>
+                            <span className="mc-badge mc-badge-compact">
+                              <svg className="mc-icon" viewBox="0 0 24 24" fill="none" aria-hidden>
+                                <path d="M3 18H21V20H3V18Z" fill="#c9a356" />
+                                <path d="M3 16L5 7L9.5 11L12 4L14.5 11L19 7L21 16H3Z" fill="url(#crownGoldGradPerf)" />
+                                <circle cx="12" cy="5" r="1.5" fill="#f5e6b8" />
+                                <defs>
+                                  <linearGradient id="crownGoldGradPerf" x1="3" y1="4" x2="21" y2="18">
+                                    <stop offset="0%" stopColor="#f5e6b8" />
+                                    <stop offset="50%" stopColor="#c9a356" />
+                                    <stop offset="100%" stopColor="#a07830" />
+                                  </linearGradient>
+                                </defs>
+                              </svg>
+                              <span className="profile-performance-badge-count">×{count}</span>
+                            </span>
+                          </span>
+                        ) : (
+                          <span
+                            key={badge}
+                            className={`profile-badge-chip profile-performance-badge-chip ${getBadgeCategoryClass(badge)}`}
+                            title={`${badge} ×${count}`}
+                          >
+                            <span className="profile-badge-chip-text">{badge}</span>
+                            <span className="profile-performance-badge-count">×{count}</span>
+                          </span>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+                {avgTeamVerdict && (
+                  <div className="profile-performance-verdict-wrap" title={`Average team verdict: ${avgTeamVerdict}`}>
+                    <span className="profile-performance-picks-label">Avg verdict</span>
+                    <span className={`profile-badge-chip team-verdict-badge team-verdict-${avgTeamVerdict.toLowerCase()}`}>
+                      <TeamVerdictIcon verdict={avgTeamVerdict} />
+                      <span className="profile-performance-verdict-label">{avgTeamVerdict}</span>
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
