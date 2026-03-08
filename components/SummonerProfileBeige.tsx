@@ -477,8 +477,15 @@ export default function SummonerProfileBeige({
 
   const [detailMatch, setDetailMatch] = useState<MatchDto | null>(null);
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
+  const [favoriteToast, setFavoriteToast] = useState<"added" | "removed" | null>(null);
 
   const activeQueueType = queue === "flex" ? "RANKED_FLEX_SR" : "RANKED_SOLO_5x5";
+
+  useEffect(() => {
+    if (favoriteToast == null) return;
+    const t = setTimeout(() => setFavoriteToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [favoriteToast]);
 
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [perkNamesById, setPerkNamesById] = useState<Map<number, string>>(new Map());
@@ -802,9 +809,14 @@ export default function SummonerProfileBeige({
     return (
       <div className="profile-empty">
         <p>{error ?? "Failed to load summoner"}</p>
-        <button type="button" onClick={() => mutate()} className="mt-4 underline">
-          Try again
-        </button>
+        <div className="profile-empty-actions">
+          <button type="button" onClick={() => mutate()} className="profile-empty-btn">
+            Try again
+          </button>
+          <Link href="/search" className="profile-empty-link">
+            Search for another summoner
+          </Link>
+        </div>
       </div>
     );
   }
@@ -964,6 +976,11 @@ export default function SummonerProfileBeige({
 
   return (
     <>
+      {favoriteToast && (
+        <div className="profile-toast" role="status" aria-live="polite">
+          {favoriteToast === "added" ? "Added to Favorites" : "Removed from Favorites"}
+        </div>
+      )}
       <section className="profile-hero">
         {heroSplashUrl && (
           <>
@@ -1036,6 +1053,7 @@ export default function SummonerProfileBeige({
                   if (isFav) {
                     removeFavorite(riotIdParam, regionVal);
                     setIsFav(false);
+                    setFavoriteToast("removed");
                   } else {
                     addFavorite({
                       riotId: riotIdParam,
@@ -1043,6 +1061,7 @@ export default function SummonerProfileBeige({
                       label: account ? `${account.gameName}#${account.tagLine}` : riotIdParam,
                     });
                     setIsFav(true);
+                    setFavoriteToast("added");
                   }
                 }}
                 className="profile-badge border-indigo-500/50 bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 cursor-pointer"
@@ -1115,9 +1134,14 @@ export default function SummonerProfileBeige({
         {!displayedMatches?.length ? (
           <div className="profile-matches-empty">
             <p>No matches loaded yet</p>
-            <button type="button" onClick={() => mutate()} className="mt-4 underline">
-              Retry
-            </button>
+            <div className="profile-matches-empty-actions">
+              <button type="button" onClick={() => mutate()} className="profile-empty-btn">
+                Retry
+              </button>
+              <Link href="/search" className="profile-empty-link">
+                Search for another summoner
+              </Link>
+            </div>
           </div>
         ) : (
           <>
