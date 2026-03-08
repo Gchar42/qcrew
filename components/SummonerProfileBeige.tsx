@@ -1078,10 +1078,8 @@ export default function SummonerProfileBeige({
             <span className="profile-performance-kda-num">{kdaRatio} KDA</span>
             <span className="profile-performance-kda-detail">{(totalK / Math.max(1, total)).toFixed(1)} / {(totalD / Math.max(1, total)).toFixed(1)} / {(totalA / Math.max(1, total)).toFixed(1)}</span>
             <span className="profile-performance-sep" aria-hidden>·</span>
+            <span className="profile-performance-rank-label">Average enemy rank</span>
             <span className="profile-performance-rank">{avgRank.label}</span>
-            {avgRank.rankedCount > 0 && (
-              <span className="profile-performance-rank-n">({avgRank.rankedCount} ranked)</span>
-            )}
           </div>
           <div className="profile-performance-extra">
             {topChampsFromRecent.length > 0 && (
@@ -1108,7 +1106,6 @@ export default function SummonerProfileBeige({
               <div className="profile-performance-badges-row">
                 {badgeCounts.length > 0 && (
                   <div className="profile-performance-badges-wrap">
-                    <span className="profile-performance-picks-label">Badges</span>
                     <div className="profile-performance-badges-list">
                       {badgeCounts.map(({ badge, count }) =>
                         badge === "Main Character" ? (

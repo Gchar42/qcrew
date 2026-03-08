@@ -1178,14 +1178,14 @@
   line-height: 1.25;
 }
 
-.profile-page .profile-performance-rank {
-  font-weight: 600;
-}
-
-.profile-page .profile-performance-rank-n {
+.profile-page .profile-performance-rank-label {
   color: var(--muted);
   font-size: 10px;
   line-height: 1.25;
+}
+
+.profile-page .profile-performance-rank {
+  font-weight: 600;
 }
 
 .profile-page .profile-performance-extra {
