@@ -986,12 +986,11 @@ export default function SummonerProfileBeige({
                   />
                 </span>
               ))}
-            <span>
+            <span className="profile-hero-name-block">
               <span className="profile-hero-name-text">
                 {account.gameName}
                 <span className="tag-part"> #{account.tagLine}</span>
               </span>
-              <span className="profile-hero-subline">{level}</span>
             </span>
           </h1>
           <div className="profile-hero-badges">

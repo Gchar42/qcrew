@@ -98,7 +98,7 @@
 
 .profile-page .profile-hero-name {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 14px;
   font-size: 20px;
   font-weight: 700;
@@ -208,11 +208,9 @@
   font-size: 14px;
 }
 
-.profile-page .profile-hero-subline {
+.profile-page .profile-hero-name-block {
   display: block;
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 2px;
+  line-height: 1.2;
 }
 
 .profile-page .profile-hero-badges {
