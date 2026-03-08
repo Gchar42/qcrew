@@ -304,13 +304,6 @@
   color: var(--accent);
 }
 
-.profile-page .profile-hero-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: flex-start;
-}
-
 .profile-page .profile-hero-refresh {
   flex-shrink: 0;
 }

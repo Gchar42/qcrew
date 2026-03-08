@@ -1029,46 +1029,44 @@ export default function SummonerProfileBeige({
             <span className="profile-badge profile-badge-na">{regionDisplayLabel(regionVal)}</span>
             {role && <span className="profile-badge profile-badge-role">{role}</span>}
             <span className="profile-badge profile-badge-level">Lv.{level}</span>
-            <div className="profile-hero-actions">
-              {riotIdParam && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (isFav) {
-                      removeFavorite(riotIdParam, regionVal);
-                      setIsFav(false);
-                    } else {
-                      addFavorite({
-                        riotId: riotIdParam,
-                        region: regionVal,
-                        label: account ? `${account.gameName}#${account.tagLine}` : riotIdParam,
-                      });
-                      setIsFav(true);
-                    }
-                  }}
-                  className="profile-badge border-indigo-500/50 bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 cursor-pointer"
-                >
-                  {isFav ? "★ Favorited" : "☆ Add to Favorites"}
-                </button>
-              )}
+            {riotIdParam && (
               <button
                 type="button"
-                onClick={handleRefreshMatchHistory}
-                disabled={isLoading || isRefreshing}
-                className="profile-matches-refresh profile-hero-refresh"
-                title="Update match history"
+                onClick={() => {
+                  if (isFav) {
+                    removeFavorite(riotIdParam, regionVal);
+                    setIsFav(false);
+                  } else {
+                    addFavorite({
+                      riotId: riotIdParam,
+                      region: regionVal,
+                      label: account ? `${account.gameName}#${account.tagLine}` : riotIdParam,
+                    });
+                    setIsFav(true);
+                  }
+                }}
+                className="profile-badge border-indigo-500/50 bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 cursor-pointer"
               >
-                {(isLoading || isRefreshing) && (
-                  <span className="profile-matches-refresh-spinner" aria-hidden />
-                )}
-                {isLoading || isRefreshing ? "Updating…" : "Refresh"}
+                {isFav ? "★ Favorited" : "☆ Add to Favorites"}
               </button>
-              {refreshError && (
-                <span className="profile-matches-refresh-error" role="alert">
-                  {refreshError}
-                </span>
+            )}
+            <button
+              type="button"
+              onClick={handleRefreshMatchHistory}
+              disabled={isLoading || isRefreshing}
+              className="profile-matches-refresh profile-hero-refresh"
+              title="Update match history"
+            >
+              {(isLoading || isRefreshing) && (
+                <span className="profile-matches-refresh-spinner" aria-hidden />
               )}
-            </div>
+              {isLoading || isRefreshing ? "Updating…" : "Refresh"}
+            </button>
+            {refreshError && (
+              <span className="profile-matches-refresh-error" role="alert">
+                {refreshError}
+              </span>
+            )}
           </div>
         </div>
         <nav className="profile-hero-tabs" aria-label="Profile sections">
