@@ -2574,38 +2574,37 @@
 }
 
 .profile-page .md-table .c-player {
-  width: 125px;
+  width: 22%;
   vertical-align: top;
 }
 
 .profile-page .md-table .c-ai-score {
-  width: 50px;
+  width: 12%;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-kda {
-  width: 62px;
+  width: 14%;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-damage {
-  width: 68px;
+  width: 14%;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-cs {
-  width: 50px;
+  width: 10%;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-vision {
-  width: 38px;
+  width: 10%;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-items {
-  width: auto;
-  min-width: 0;
+  width: 18%;
   vertical-align: middle;
   padding-right: 0;
 }
