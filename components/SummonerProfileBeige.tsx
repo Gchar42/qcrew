@@ -1029,33 +1029,57 @@ export default function SummonerProfileBeige({
             <span className="profile-badge profile-badge-na">{regionDisplayLabel(regionVal)}</span>
             {role && <span className="profile-badge profile-badge-role">{role}</span>}
             <span className="profile-badge profile-badge-level">Lv.{level}</span>
-            {riotIdParam && (
+            <div className="profile-hero-actions">
+              {riotIdParam && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isFav) {
+                      removeFavorite(riotIdParam, regionVal);
+                      setIsFav(false);
+                    } else {
+                      addFavorite({
+                        riotId: riotIdParam,
+                        region: regionVal,
+                        label: account ? `${account.gameName}#${account.tagLine}` : riotIdParam,
+                      });
+                      setIsFav(true);
+                    }
+                  }}
+                  className="profile-badge border-indigo-500/50 bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 cursor-pointer"
+                >
+                  {isFav ? "★ Favorited" : "☆ Add to Favorites"}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => {
-                  if (isFav) {
-                    removeFavorite(riotIdParam, regionVal);
-                    setIsFav(false);
-                  } else {
-                    addFavorite({
-                      riotId: riotIdParam,
-                      region: regionVal,
-                      label: account ? `${account.gameName}#${account.tagLine}` : riotIdParam,
-                    });
-                    setIsFav(true);
-                  }
-                }}
-                className="profile-badge border-indigo-500/50 bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 cursor-pointer"
+                onClick={handleRefreshMatchHistory}
+                disabled={isLoading || isRefreshing}
+                className="profile-matches-refresh profile-hero-refresh"
+                title="Update match history"
               >
-                {isFav ? "★ Favorited" : "☆ Add to Favorites"}
+                {(isLoading || isRefreshing) && (
+                  <span className="profile-matches-refresh-spinner" aria-hidden />
+                )}
+                {isLoading || isRefreshing ? "Updating…" : "Refresh"}
               </button>
-            )}
+              {refreshError && (
+                <span className="profile-matches-refresh-error" role="alert">
+                  {refreshError}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <nav className="profile-hero-tabs" aria-label="Profile sections">
           <button type="button" className={`profile-hero-tab${mainTab === "overview" ? " profile-hero-tab-active" : ""}`} onClick={() => setMainTab("overview")}>Overview</button>
           <button type="button" className={`profile-hero-tab${mainTab === "champion-pool" ? " profile-hero-tab-active" : ""}`} onClick={() => setMainTab("champion-pool")}>Champion Pool</button>
         </nav>
+        <div className="profile-hero-team-verdict-link">
+          <Link href="/team-verdict" className="profile-hero-team-verdict-link-a">
+            What is Team Verdict?
+          </Link>
+        </div>
       </section>
 
       <div className="profile-body">
@@ -1183,55 +1207,6 @@ export default function SummonerProfileBeige({
                 )}
               </div>
             )}
-          </div>
-        </div>
-        <div className="profile-matches-header">
-          <div className="profile-matches-header-left">
-            <h2 className="profile-matches-title">Recent Matches</h2>
-            <span className="profile-matches-count">({matchCount})</span>
-            <Link
-              href="/team-verdict"
-              className="text-sm text-zinc-500 hover:text-indigo-400 transition-colors ml-2"
-            >
-              What is Team Verdict?
-            </Link>
-            <button
-              type="button"
-              onClick={handleRefreshMatchHistory}
-              disabled={isLoading || isRefreshing}
-              className="profile-matches-refresh"
-              title="Update match history"
-            >
-              {(isLoading || isRefreshing) && (
-                <span className="profile-matches-refresh-spinner" aria-hidden />
-              )}
-              {isLoading || isRefreshing ? "Updating…" : "Refresh"}
-            </button>
-            {refreshError && (
-              <span className="profile-matches-refresh-error" role="alert">
-                {refreshError}
-              </span>
-            )}
-          </div>
-          <div className="profile-matches-header-stats recent-stats">
-            <div className="stat-chip">
-              <span className="stat-value">{avgKdaDisplay}</span>
-              <span className="stat-label">KDA</span>
-            </div>
-            <div className="stat-chip">
-              <span className="stat-value">{avgCsPerMin.toFixed(1)}</span>
-              <span className="stat-label">CS/m</span>
-            </div>
-            <div className="stat-chip">
-              <span className="stat-value">{avgDurationMin.toFixed(1)}m</span>
-              <span className="stat-label">avg</span>
-            </div>
-            <div className="stat-chip">
-              <span className="stat-value">{avgRank.label}</span>
-              <span className="stat-label">
-                AVG RANK{avgRank.rankedCount > 0 ? ` (${avgRank.rankedCount} ranked)` : ""}
-              </span>
-            </div>
           </div>
         </div>
         <div className="profile-matches-list">

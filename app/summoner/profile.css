@@ -286,6 +286,35 @@
   border-bottom: 2px solid transparent;
 }
 
+.profile-page .profile-hero-team-verdict-link {
+  width: 100%;
+  margin-top: 10px;
+  position: relative;
+  z-index: 2;
+}
+
+.profile-page .profile-hero-team-verdict-link-a {
+  font-size: 12px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.profile-page .profile-hero-team-verdict-link-a:hover {
+  color: var(--accent);
+}
+
+.profile-page .profile-hero-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.profile-page .profile-hero-refresh {
+  flex-shrink: 0;
+}
+
 .profile-page .profile-hero-tab {
   padding: 14px 20px;
   font-size: 14px;
