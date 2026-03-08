@@ -15,6 +15,7 @@ import { ChampionIcePortrait } from "@/components/ChampionIcePortrait";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
 import {
   getChampionSquareUrl,
+  getChampionSplashUrl,
   getProfileIconUrl,
   getRankEmblemUrl,
   getSummonerSpellIconUrl,
@@ -849,6 +850,15 @@ export default function SummonerProfileBeige({
 
   const topChampsFromRecent = (championStatsFromDisplayed?.champions ?? []).slice(0, 3);
 
+  const mostPlayedChampion =
+    queue === "solo"
+      ? championStatsToShow?.solo?.champions?.[0]
+      : championStatsToShow?.flex?.champions?.[0];
+  const heroSplashUrl =
+    mostPlayedChampion?.championName
+      ? getChampionSplashUrl(mostPlayedChampion.championName)
+      : null;
+
   const role = primaryRole(displayedMatches, account.puuid);
 
   const level = summoner?.summonerLevel ?? 0;
@@ -946,6 +956,16 @@ export default function SummonerProfileBeige({
   return (
     <>
       <section className="profile-hero">
+        {heroSplashUrl && (
+          <>
+            <div
+              className="profile-hero-splash-bg"
+              style={{ backgroundImage: `url(${heroSplashUrl})` }}
+              aria-hidden
+            />
+            <div className="profile-hero-splash-overlay" aria-hidden />
+          </>
+        )}
         <div className="profile-hero-left">
           <h1 className="profile-hero-name">
             {summoner?.profileIconId != null &&

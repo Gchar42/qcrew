@@ -74,6 +74,7 @@
 
 /* Profile header: avatar + name + tabs (Blitz-style) */
 .profile-page .profile-hero {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -82,9 +83,34 @@
   margin-bottom: 24px;
   border-bottom: 1px solid var(--border);
   padding-bottom: 0;
+  overflow: hidden;
+}
+
+/* Most played champion splash behind hero */
+.profile-page .profile-hero-splash-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+}
+
+.profile-page .profile-hero-splash-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    135deg,
+    rgba(28, 28, 30, 0.92) 0%,
+    rgba(28, 28, 30, 0.85) 40%,
+    rgba(28, 28, 30, 0.75) 100%
+  );
 }
 
 .profile-page .profile-hero-left {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -250,6 +276,8 @@
 
 /* Tabs: Overview | Champion Pool | LP History */
 .profile-page .profile-hero-tabs {
+  position: relative;
+  z-index: 2;
   display: flex;
   gap: 0;
   border-bottom: 2px solid transparent;
