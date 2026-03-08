@@ -2574,9 +2574,19 @@
   text-align: left;
 }
 
+/* Items header: shift right so centered over the 7 item icons */
+.profile-page .md-table thead th.c-items {
+  padding-left: 28px;
+}
+
 .profile-page .md-table .c-player {
   width: 22%;
   vertical-align: top;
+  padding-left: 10px;
+}
+
+.profile-page .md-table thead th.c-player {
+  padding-left: 10px;
 }
 
 .profile-page .md-table .c-ai-score {
