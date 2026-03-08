@@ -437,9 +437,7 @@ width={12}
                                   </LeagueTooltip>
                                 );
                               })()
-                            ) : (
-                              <span key={`${p.puuid}-item-${i}`} className="md-item-slot-empty" aria-hidden />
-                            )
+                            ) : null
                         )}
                       </div>
                       {isValidItemId(p.item6) ? (
