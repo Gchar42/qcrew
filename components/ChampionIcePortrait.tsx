@@ -23,14 +23,14 @@ export function ChampionIcePortrait({ children }: { children: React.ReactNode })
     // Ice crystals – small bright dots
     const crystals: Crystal[] = [];
     class Crystal {
-      x: number;
-      y: number;
-      size: number;
-      life: number;
-      decay: number;
-      vx: number;
-      vy: number;
-      phase: number;
+      x!: number;
+      y!: number;
+      size!: number;
+      life!: number;
+      decay!: number;
+      vx!: number;
+      vy!: number;
+      phase!: number;
 
       constructor() {
         this.phase = Math.random() * Math.PI * 2;
@@ -73,18 +73,18 @@ export function ChampionIcePortrait({ children }: { children: React.ReactNode })
     // Ice shards – small diamonds
     const shards: IceShard[] = [];
     class IceShard {
-      x: number;
-      y: number;
-      w: number;
-      h: number;
-      rotation: number;
-      rotSpeed: number;
-      life: number;
-      decay: number;
-      vx: number;
-      vy: number;
-      alpha: number;
-      type: "diamond" | "shard";
+      x!: number;
+      y!: number;
+      w!: number;
+      h!: number;
+      rotation!: number;
+      rotSpeed!: number;
+      life!: number;
+      decay!: number;
+      vx!: number;
+      vy!: number;
+      alpha!: number;
+      type!: "diamond" | "shard";
 
       constructor() {
         this.reset();
@@ -147,17 +147,17 @@ export function ChampionIcePortrait({ children }: { children: React.ReactNode })
     // Snowflakes – simple 6-arm
     const snowflakes: Snowflake[] = [];
     class Snowflake {
-      x: number;
-      y: number;
-      size: number;
-      life: number;
-      decay: number;
-      vx: number;
-      vy: number;
-      rotation: number;
-      rotSpeed: number;
-      alpha: number;
-      angle: number;
+      x!: number;
+      y!: number;
+      size!: number;
+      life!: number;
+      decay!: number;
+      vx!: number;
+      vy!: number;
+      rotation!: number;
+      rotSpeed!: number;
+      alpha!: number;
+      angle!: number;
 
       constructor() {
         this.angle = Math.random() * Math.PI * 2;
@@ -216,16 +216,16 @@ export function ChampionIcePortrait({ children }: { children: React.ReactNode })
     // Soft fog ring near edge
     const ringFog: RingFog[] = [];
     class RingFog {
-      x: number;
-      y: number;
-      size: number;
-      life: number;
-      decay: number;
-      angle: number;
-      orbitSpeed: number;
-      r: number;
-      alpha: number;
-      vyUp: number;
+      x!: number;
+      y!: number;
+      size!: number;
+      life!: number;
+      decay!: number;
+      angle!: number;
+      orbitSpeed!: number;
+      r!: number;
+      alpha!: number;
+      vyUp!: number;
 
       constructor() {
         this.angle = Math.random() * Math.PI * 2;
