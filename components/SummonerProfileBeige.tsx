@@ -1115,6 +1115,21 @@ export default function SummonerProfileBeige({
                   }
                 }}
               >
+              {badgeInfo?.badge === "Main Character" && (
+                <div className="profile-match-row-sparkles" aria-hidden>
+                  <div className="sparkle" style={{ left: "0%", top: "20%", transform: "translate(-50%, -50%)", ["--dur" as string]: "2.4s", ["--delay" as string]: "0s" }} />
+                  <div className="sparkle" style={{ left: "0%", top: "50%", transform: "translate(-50%, -50%)", ["--dur" as string]: "2.8s", ["--delay" as string]: "0.5s" }} />
+                  <div className="sparkle" style={{ left: "0%", top: "80%", transform: "translate(-50%, -50%)", ["--dur" as string]: "2.2s", ["--delay" as string]: "1s" }} />
+                  <div className="sparkle" style={{ left: "100%", top: "25%", transform: "translate(50%, -50%)", ["--dur" as string]: "2.6s", ["--delay" as string]: "0.3s" }} />
+                  <div className="sparkle" style={{ left: "100%", top: "75%", transform: "translate(50%, -50%)", ["--dur" as string]: "2.3s", ["--delay" as string]: "0.8s" }} />
+                  <div className="sparkle" style={{ left: "15%", top: "0%", transform: "translate(-50%, -50%)", ["--dur" as string]: "2.5s", ["--delay" as string]: "0.2s" }} />
+                  <div className="sparkle" style={{ left: "50%", top: "0%", transform: "translate(-50%, -50%)", ["--dur" as string]: "2.7s", ["--delay" as string]: "0.6s" }} />
+                  <div className="sparkle" style={{ left: "85%", top: "0%", transform: "translate(-50%, -50%)", ["--dur" as string]: "2.1s", ["--delay" as string]: "1.2s" }} />
+                  <div className="sparkle" style={{ left: "20%", top: "100%", transform: "translate(-50%, 50%)", ["--dur" as string]: "2.9s", ["--delay" as string]: "0.4s" }} />
+                  <div className="sparkle" style={{ left: "50%", top: "100%", transform: "translate(-50%, 50%)", ["--dur" as string]: "2.4s", ["--delay" as string]: "0.9s" }} />
+                  <div className="sparkle" style={{ left: "80%", top: "100%", transform: "translate(-50%, 50%)", ["--dur" as string]: "2.6s", ["--delay" as string]: "0.1s" }} />
+                </div>
+              )}
               <div className="profile-match-left-zone">
                 <div className="profile-match-left-visual">
                   <div className="profile-outcome-col">
