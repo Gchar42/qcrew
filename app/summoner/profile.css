@@ -92,7 +92,8 @@
   inset: 0;
   z-index: 0;
   background-size: 72% auto;
-  background-position: center center;
+  /* Position so champion’s face (upper part of splash) is in view */
+  background-position: center 28%;
   background-repeat: no-repeat;
   /* Darken and slightly desaturate so splash sits in background, doesn’t compete with UI */
   filter: brightness(0.55) saturate(0.9);
