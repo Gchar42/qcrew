@@ -544,6 +544,20 @@ export default function SummonerProfileBeige({
     return count;
   }, [displayedMatches, account?.puuid]);
 
+  /** Badge counts for performance summary. Must be before any early return (hooks order). */
+  const badgeCounts = useMemo(() => {
+    if (!account?.puuid || displayedMatches.length === 0) return [] as Array<{ badge: string; count: number }>;
+    const counts = new Map<string, number>();
+    for (const m of displayedMatches) {
+      const info = getMatchBadges(m).get(account.puuid);
+      if (info?.badge) counts.set(info.badge, (counts.get(info.badge) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .map(([badge, count]) => ({ badge, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+  }, [displayedMatches, account?.puuid]);
+
   useEffect(() => {
     setAdditionalMatchesByQueue({});
     setHasMoreByQueue({});
@@ -809,19 +823,6 @@ export default function SummonerProfileBeige({
     const ratio = (k + a) / Math.max(1, d);
     return { kdaRatio: Math.round(ratio * 100) / 100, totalK: k, totalD: d, totalA: a };
   })();
-
-  const badgeCounts = useMemo(() => {
-    if (!account?.puuid || displayedMatches.length === 0) return [] as Array<{ badge: string; count: number }>;
-    const counts = new Map<string, number>();
-    for (const m of displayedMatches) {
-      const info = getMatchBadges(m).get(account.puuid);
-      if (info?.badge) counts.set(info.badge, (counts.get(info.badge) ?? 0) + 1);
-    }
-    return [...counts.entries()]
-      .map(([badge, count]) => ({ badge, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 6);
-  }, [displayedMatches, account?.puuid]);
 
   const topChampsFromRecent = (championStatsFromDisplayed?.champions ?? []).slice(0, 3);
 
