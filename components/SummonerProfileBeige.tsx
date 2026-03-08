@@ -1183,7 +1183,7 @@ export default function SummonerProfileBeige({
                                 height={24}
                                 loading={isFirstRow ? "eager" : "lazy"}
                                 fetchPriority={isFirstRow ? "high" : undefined}
-                                style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
+                                style={{ width: 20, height: 20, objectFit: "contain", imageRendering: "auto" }}
                               />
                             </span>
                           );
@@ -1212,7 +1212,7 @@ export default function SummonerProfileBeige({
                                     height={24}
                                     loading={isFirstRow ? "eager" : "lazy"}
                                     fetchPriority={isFirstRow ? "high" : undefined}
-                                    style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
+                                    style={{ width: 20, height: 20, objectFit: "contain", imageRendering: "auto" }}
                                   />
                                 </LeagueTooltip>
                               </span>
@@ -1231,7 +1231,7 @@ export default function SummonerProfileBeige({
                                     height={24}
                                     loading={isFirstRow ? "eager" : "lazy"}
                                     fetchPriority={isFirstRow ? "high" : undefined}
-                                    style={{ width: 24, height: 24, objectFit: "contain", imageRendering: "auto" }}
+                                    style={{ width: 20, height: 20, objectFit: "contain", imageRendering: "auto" }}
                                   />
                                 </LeagueTooltip>
                               </span>
