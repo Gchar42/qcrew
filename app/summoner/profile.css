@@ -1115,275 +1115,149 @@
   border-color: var(--accent);
 }
 
-/* Performance summary: winrate, top champs, KDA, rank, badges (inspired by “last N games” panels) */
+/* Performance summary: single-line strip + most played / highlights row (distinct layout) */
 .profile-page .profile-performance-summary {
   margin-bottom: 14px;
-  padding: 14px 16px;
+  padding: 10px 14px 12px;
   background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
+  border-left: 3px solid var(--accent);
 }
 
-.profile-page .profile-performance-summary-inner {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 20px 24px;
-  align-items: start;
-}
-
-@media (max-width: 768px) {
-  .profile-page .profile-performance-summary-inner {
-    grid-template-columns: 1fr;
-  }
-}
-
-.profile-page .profile-performance-winrate {
+.profile-page .profile-performance-strip {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.profile-page .profile-performance-winrate-arc-wrap {
-  position: relative;
-  width: 88px;
-  height: 46px;
-}
-
-.profile-page .profile-performance-winrate-arc {
-  position: absolute;
-  inset: 0;
-  border-radius: 44px 44px 0 0;
-  overflow: hidden;
-  background: conic-gradient(
-    from 180deg,
-    var(--win) 0 calc(var(--win-pct, 0) * 1.8deg),
-    var(--loss) calc(var(--win-pct, 0) * 1.8deg) 180deg
-  );
-}
-
-.profile-page .profile-performance-winrate-arc::before {
-  content: "";
-  position: absolute;
-  left: 5px;
-  right: 5px;
-  top: 5px;
-  bottom: 0;
-  background: var(--surface2);
-  border-radius: 39px 39px 0 0;
-}
-
-.profile-page .profile-performance-winrate-value {
-  position: absolute;
-  left: 50%;
-  bottom: 2px;
-  transform: translateX(-50%);
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 6px;
   font-family: "Space Mono", monospace;
-  font-size: 14px;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.profile-page .profile-performance-meta {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.profile-page .profile-performance-sep {
+  color: var(--border);
+  font-weight: 300;
+  user-select: none;
+}
+
+.profile-page .profile-performance-wr {
   font-weight: 700;
   color: var(--ink);
-  z-index: 1;
-}
-
-.profile-page .profile-performance-winrate-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--muted);
-  font-family: "Space Mono", monospace;
 }
 
 .profile-page .profile-performance-wl {
-  font-size: 11px;
   color: var(--muted);
-  font-family: "Space Mono", monospace;
+  font-size: 11px;
 }
 
-.profile-page .profile-performance-champs {
+.profile-page .profile-performance-kda-num {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.profile-page .profile-performance-kda-detail {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.profile-page .profile-performance-rank {
+  font-weight: 600;
+}
+
+.profile-page .profile-performance-rank-n {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.profile-page .profile-performance-extra {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
 }
 
-.profile-page .profile-performance-champs-title {
+.profile-page .profile-performance-picks {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-page .profile-performance-picks-label {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--muted);
   font-family: "Space Mono", monospace;
-  margin-bottom: 2px;
 }
 
-.profile-page .profile-performance-champs-empty {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.profile-page .profile-performance-champ-row {
+.profile-page .profile-performance-picks-icons {
   display: flex;
+  gap: 6px;
+}
+
+.profile-page .profile-performance-pick {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 2px;
 }
 
-.profile-page .profile-performance-champ-icon-wrap {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  overflow: hidden;
+.profile-page .profile-performance-pick-img {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
   border: 1px solid var(--border);
-}
-
-.profile-page .profile-performance-champ-icon {
-  width: 100%;
-  height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.profile-page .profile-performance-champ-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.profile-page .profile-performance-champ-wr {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink);
+.profile-page .profile-performance-pick-wr {
+  font-size: 9px;
   font-family: "Space Mono", monospace;
-}
-
-.profile-page .profile-performance-champ-kda {
-  font-size: 11px;
-  color: var(--muted);
-  font-family: "Space Mono", monospace;
-}
-
-.profile-page .profile-performance-right {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: flex-end;
-  text-align: right;
-}
-
-@media (max-width: 768px) {
-  .profile-page .profile-performance-right {
-    align-items: flex-start;
-    text-align: left;
-  }
-}
-
-.profile-page .profile-performance-kda-block {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.profile-page .profile-performance-kda-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--muted);
-  font-family: "Space Mono", monospace;
-}
-
-.profile-page .profile-performance-kda-value {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--accent);
-  font-family: "Space Mono", monospace;
-}
-
-.profile-page .profile-performance-kda-breakdown {
-  font-size: 11px;
-  color: var(--muted);
-  font-family: "Space Mono", monospace;
-}
-
-.profile-page .profile-performance-rank-block {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.profile-page .profile-performance-rank-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--muted);
-  font-family: "Space Mono", monospace;
-}
-
-.profile-page .profile-performance-rank-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.profile-page .profile-performance-rank-meta {
-  font-size: 11px;
   color: var(--muted);
 }
 
-.profile-page .profile-performance-badges {
+.profile-page .profile-performance-highlights {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 8px;
-  justify-content: flex-end;
-}
-
-@media (max-width: 768px) {
-  .profile-page .profile-performance-badges {
-    justify-content: flex-start;
-  }
-}
-
-.profile-page .profile-performance-badge {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 9px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  gap: 6px 10px;
+  font-size: 10px;
+  font-family: "Space Mono", monospace;
+}
+
+.profile-page .profile-performance-highlight {
+  padding: 2px 6px;
+  border-radius: 4px;
   background: var(--surface3);
   color: var(--muted);
   border: 1px solid var(--border);
 }
 
-.profile-page .profile-performance-badge-name {
-  white-space: nowrap;
-  max-width: 72px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.profile-page .profile-performance-badge-count {
-  font-size: 10px;
-  opacity: 0.9;
-}
-
-.profile-page .profile-performance-badge.profile-badge-chip-badge-gold {
-  background: rgba(234, 179, 8, 0.15);
-  border-color: var(--gold);
+.profile-page .profile-performance-highlight.profile-badge-chip-badge-gold {
+  background: rgba(234, 179, 8, 0.12);
+  border-color: rgba(234, 179, 8, 0.4);
   color: var(--gold);
 }
 
-.profile-page .profile-performance-badge.profile-badge-chip-badge-positive {
+.profile-page .profile-performance-highlight.profile-badge-chip-badge-positive {
   background: var(--win-bg);
-  border-color: var(--win);
+  border-color: rgba(34, 197, 94, 0.4);
   color: var(--win-text);
 }
 
-.profile-page .profile-performance-badge.profile-badge-chip-badge-negative {
+.profile-page .profile-performance-highlight.profile-badge-chip-badge-negative {
   background: var(--loss-bg);
-  border-color: var(--loss);
+  border-color: rgba(239, 68, 68, 0.4);
   color: var(--loss-text);
 }
 

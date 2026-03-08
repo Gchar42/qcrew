@@ -1046,70 +1046,50 @@ export default function SummonerProfileBeige({
         ) : (
           <>
         <div className="profile-performance-summary" aria-label="Last games performance">
-          <div className="profile-performance-summary-inner">
-            <div className="profile-performance-winrate">
-              <div className="profile-performance-winrate-arc-wrap">
-                <div
-                  className="profile-performance-winrate-arc"
-                  style={{
-                    ["--win-pct" as string]: `${winRate}`,
-                  }}
-                >
-                  <span className="profile-performance-winrate-value">{winRate}%</span>
-                </div>
-              </div>
-              <span className="profile-performance-winrate-label">Winrate</span>
-              <span className="profile-performance-wl">{wins}W – {total - wins}L</span>
-            </div>
-            <div className="profile-performance-champs">
-              <span className="profile-performance-champs-title">Top picks</span>
-              {topChampsFromRecent.length === 0 ? (
-                <span className="profile-performance-champs-empty">No champ data</span>
-              ) : (
-                topChampsFromRecent.map((champ) => (
-                  <div key={champ.championId} className="profile-performance-champ-row">
-                    <div className="profile-performance-champ-icon-wrap">
+          <div className="profile-performance-strip">
+            <span className="profile-performance-meta">Last {total} games</span>
+            <span className="profile-performance-sep" aria-hidden>·</span>
+            <span className="profile-performance-wr">{winRate}%</span>
+            <span className="profile-performance-wl">{wins}W – {total - wins}L</span>
+            <span className="profile-performance-sep" aria-hidden>·</span>
+            <span className="profile-performance-kda-num">{kdaRatio} KDA</span>
+            <span className="profile-performance-kda-detail">{(totalK / Math.max(1, total)).toFixed(1)} / {(totalD / Math.max(1, total)).toFixed(1)} / {(totalA / Math.max(1, total)).toFixed(1)}</span>
+            <span className="profile-performance-sep" aria-hidden>·</span>
+            <span className="profile-performance-rank">{avgRank.label}</span>
+            {avgRank.rankedCount > 0 && (
+              <span className="profile-performance-rank-n">({avgRank.rankedCount} ranked)</span>
+            )}
+          </div>
+          <div className="profile-performance-extra">
+            {topChampsFromRecent.length > 0 && (
+              <div className="profile-performance-picks">
+                <span className="profile-performance-picks-label">Most played</span>
+                <div className="profile-performance-picks-icons">
+                  {topChampsFromRecent.map((champ) => (
+                    <div key={champ.championId} className="profile-performance-pick" title={`${champ.championName} · ${champ.winRate}% · ${champ.kda.toFixed(1)} KDA`}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        className="profile-performance-champ-icon"
+                        className="profile-performance-pick-img"
                         src={getChampionSquareUrl(champ.championName, effectiveDdragonVersion)}
                         alt=""
-                        width={28}
-                        height={28}
+                        width={24}
+                        height={24}
                       />
-                    </div>
-                    <div className="profile-performance-champ-stats">
-                      <span className="profile-performance-champ-wr">{champ.winRate}% {champ.wins}W–{champ.games - champ.wins}L</span>
-                      <span className="profile-performance-champ-kda">{champ.kda.toFixed(1)} KDA</span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="profile-performance-right">
-              <div className="profile-performance-kda-block">
-                <span className="profile-performance-kda-label">KDA</span>
-                <span className="profile-performance-kda-value">{kdaRatio}</span>
-                <span className="profile-performance-kda-breakdown">{(totalK / Math.max(1, total)).toFixed(1)} / {(totalD / Math.max(1, total)).toFixed(1)} / {(totalA / Math.max(1, total)).toFixed(1)}</span>
-              </div>
-              <div className="profile-performance-rank-block">
-                <span className="profile-performance-rank-label">Average rank</span>
-                <span className="profile-performance-rank-value">{avgRank.label}</span>
-                {avgRank.rankedCount > 0 && (
-                  <span className="profile-performance-rank-meta">{avgRank.rankedCount} ranked</span>
-                )}
-              </div>
-              {badgeCounts.length > 0 && (
-                <div className="profile-performance-badges">
-                  {badgeCounts.map(({ badge, count }) => (
-                    <div key={badge} className={`profile-performance-badge ${getBadgeCategoryClass(badge)}`}>
-                      <span className="profile-performance-badge-name">{badge}</span>
-                      <span className="profile-performance-badge-count">×{count}</span>
+                      <span className="profile-performance-pick-wr">{champ.winRate}%</span>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+            {badgeCounts.length > 0 && (
+              <div className="profile-performance-highlights">
+                {badgeCounts.map(({ badge, count }) => (
+                  <span key={badge} className={`profile-performance-highlight ${getBadgeCategoryClass(badge)}`}>
+                    {badge} ×{count}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
         <div className="profile-matches-header">
