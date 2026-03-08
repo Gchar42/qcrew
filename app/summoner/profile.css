@@ -2569,8 +2569,17 @@
   text-align: center;
 }
 
-.profile-page .md-table thead th.c-player {
+.profile-page .md-table thead th.c-player,
+.profile-page .md-table thead th.c-items {
   text-align: left;
+}
+
+.profile-page .md-table thead th.c-ai-score,
+.profile-page .md-table thead th.c-kda,
+.profile-page .md-table thead th.c-damage,
+.profile-page .md-table thead th.c-cs,
+.profile-page .md-table thead th.c-vision {
+  text-align: right;
 }
 
 .profile-page .md-table .c-player {
@@ -2607,6 +2616,15 @@
   width: 18%;
   vertical-align: middle;
   padding-right: 0;
+}
+
+/* Align body cells with headers: right for numeric columns */
+.profile-page .md-table td.c-ai-score,
+.profile-page .md-table td.c-kda,
+.profile-page .md-table td.c-damage,
+.profile-page .md-table td.c-cs,
+.profile-page .md-table td.c-vision {
+  text-align: right;
 }
 
 .profile-page .md-table tr.md-me td {
@@ -2737,7 +2755,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  align-items: flex-start;
+  align-items: flex-end;
 }
 
 .profile-page .md-ai-score-val {
@@ -2769,6 +2787,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  align-items: flex-end;
 }
 
 .profile-page .md-kda-ratio {
@@ -2792,6 +2811,7 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
+  align-items: flex-end;
 }
 
 .profile-page .md-damage-val {
@@ -2820,6 +2840,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  align-items: flex-end;
 }
 
 .profile-page .md-cs-total {
