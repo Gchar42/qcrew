@@ -1277,7 +1277,7 @@
   padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.2s;
   cursor: pointer;
   animation: profileFadeUp 0.35s ease both;
   background: var(--surface2);
@@ -1294,18 +1294,30 @@
   border-color: var(--muted);
 }
 
+/* Win/loss bar blends with card by default; shows color on hover */
 .profile-page .profile-match-row.win {
-  border-left: 3px solid var(--win);
+  border-left: 3px solid var(--border);
+}
+.profile-page .profile-match-row.win:hover {
+  border-left-color: var(--win);
 }
 
 .profile-page .profile-match-row.loss {
-  border-left: 3px solid var(--loss);
+  border-left: 3px solid var(--border);
+}
+.profile-page .profile-match-row.loss:hover {
+  border-left-color: var(--loss);
 }
 
-/* Main Character match row: gold fire glow */
+/* Main Character: blends by default, gold bar + glow on hover */
 .profile-page .profile-match-row-main-character.win,
 .profile-page .profile-match-row-main-character.loss {
   border-left-width: 4px;
+  border-left-color: var(--border);
+  box-shadow: none;
+}
+.profile-page .profile-match-row-main-character.win:hover,
+.profile-page .profile-match-row-main-character.loss:hover {
   border-left-color: #b8860b;
   box-shadow:
     0 0 0 1px rgba(212, 175, 55, 0.5),
