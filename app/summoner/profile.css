@@ -92,7 +92,8 @@
   inset: 0;
   z-index: 0;
   background-size: cover;
-  background-position: center top;
+  /* Position so champion (usually center-right in splash) is visible in the banner */
+  background-position: 35% center;
   background-repeat: no-repeat;
 }
 
@@ -100,11 +101,13 @@
   position: absolute;
   inset: 0;
   z-index: 1;
+  /* Darker on left for text contrast, lighter on right so champion shows through */
   background: linear-gradient(
-    135deg,
-    rgba(28, 28, 30, 0.92) 0%,
-    rgba(28, 28, 30, 0.85) 40%,
-    rgba(28, 28, 30, 0.75) 100%
+    90deg,
+    rgba(28, 28, 30, 0.88) 0%,
+    rgba(28, 28, 30, 0.5) 45%,
+    rgba(28, 28, 30, 0.35) 70%,
+    rgba(28, 28, 30, 0.25) 100%
   );
 }
 
