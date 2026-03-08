@@ -9,6 +9,28 @@ import { computeImpactScore, type ImpactResult } from "@/lib/impactScore";
 
 export type BadgeInfo = { badge: string; reason: string };
 
+/** Tooltip description for each badge (used in performance summary and match cards). */
+const BADGE_TOOLTIPS: Record<string, string> = {
+  "Main Character": "Top Impact on winning team",
+  "Team Gap": "Top Impact on losing team",
+  "Lane Bully": "Impact 70+ in lane",
+  "Jungle Diff": "Impact 70+ in jungle",
+  "Playmaker": "Impact 85+",
+  "Where It Counts": "High objective or turret damage",
+  "Slippery": "2 or fewer deaths",
+  "Doing Your Job": "Impact 55+",
+  "Background Character": "Impact 40+",
+  "Struggle": "Impact under 40",
+  "Limit Testing": "Risky gameplay",
+  "AFK": "Very low impact",
+  "KS'er": "Last hitting champions",
+  "PVE Merchant": "High CS, low fighting",
+};
+
+export function getBadgeTooltipDescription(badge: string): string {
+  return BADGE_TOOLTIPS[badge] ?? "Performance badge";
+}
+
 /** Badge name -> Tailwind/semantic category for chip styling (gold/positive/neutral/negative) */
 export function getBadgeCategory(badge: string): "gold" | "positive" | "neutral" | "negative" {
   const gold = ["Main Character", "Team Gap"];

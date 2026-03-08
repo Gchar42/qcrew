@@ -30,8 +30,8 @@ import {
   type PerkStyleEntry,
 } from "@/lib/runesCd";
 import { computeImpactScore } from "@/lib/impactScore";
-import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
-import { getTeamVerdict, type TeamVerdictType } from "@/lib/teamVerdict";
+import { getMatchBadges, getBadgeCategory, getBadgeTooltipDescription } from "@/lib/matchBadges";
+import { getTeamVerdict, type TeamVerdictType, VERDICT_REASONS } from "@/lib/teamVerdict";
 import { numberToRankLabel, rankToNumber } from "@/lib/rankMapping";
 import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
 import { addRecent, addFavorite, removeFavorite, isFavorite } from "@/lib/savedSummoners";
@@ -1186,45 +1186,60 @@ export default function SummonerProfileBeige({
                     <div className="profile-performance-badges-list">
                       {badgeCounts.map(({ badge, count }) =>
                         badge === "Main Character" ? (
-                          <span key={badge} className="profile-performance-badge-mc" title={`Main Character ×${count}`}>
-                            <span className="mc-badge mc-badge-compact">
-                              <svg className="mc-icon" viewBox="0 0 24 24" fill="none" aria-hidden>
-                                <path d="M3 18H21V20H3V18Z" fill="#c9a356" />
-                                <path d="M3 16L5 7L9.5 11L12 4L14.5 11L19 7L21 16H3Z" fill="url(#crownGoldGradPerf)" />
-                                <circle cx="12" cy="5" r="1.5" fill="#f5e6b8" />
-                                <defs>
-                                  <linearGradient id="crownGoldGradPerf" x1="3" y1="4" x2="21" y2="18">
-                                    <stop offset="0%" stopColor="#f5e6b8" />
-                                    <stop offset="50%" stopColor="#c9a356" />
-                                    <stop offset="100%" stopColor="#a07830" />
-                                  </linearGradient>
-                                </defs>
-                              </svg>
-                              <span className="mc-badge-compact-text">Main Character</span>
+                          <LeagueTooltip
+                            key={badge}
+                            title="Main Character"
+                            body={getBadgeTooltipDescription("Main Character")}
+                          >
+                            <span className="profile-performance-badge-mc">
+                              <span className="mc-badge mc-badge-compact">
+                                <svg className="mc-icon" viewBox="0 0 24 24" fill="none" aria-hidden>
+                                  <path d="M3 18H21V20H3V18Z" fill="#c9a356" />
+                                  <path d="M3 16L5 7L9.5 11L12 4L14.5 11L19 7L21 16H3Z" fill="url(#crownGoldGradPerf)" />
+                                  <circle cx="12" cy="5" r="1.5" fill="#f5e6b8" />
+                                  <defs>
+                                    <linearGradient id="crownGoldGradPerf" x1="3" y1="4" x2="21" y2="18">
+                                      <stop offset="0%" stopColor="#f5e6b8" />
+                                      <stop offset="50%" stopColor="#c9a356" />
+                                      <stop offset="100%" stopColor="#a07830" />
+                                    </linearGradient>
+                                  </defs>
+                                </svg>
+                                <span className="mc-badge-compact-text">Main Character</span>
+                                <span className="profile-performance-badge-count">×{count}</span>
+                              </span>
+                            </span>
+                          </LeagueTooltip>
+                        ) : (
+                          <LeagueTooltip
+                            key={badge}
+                            title={badge}
+                            body={getBadgeTooltipDescription(badge)}
+                          >
+                            <span
+                              className={`profile-badge-chip profile-performance-badge-chip ${getBadgeCategoryClass(badge)}`}
+                            >
+                              <span className="profile-badge-chip-text">{badge}</span>
                               <span className="profile-performance-badge-count">×{count}</span>
                             </span>
-                          </span>
-                        ) : (
-                          <span
-                            key={badge}
-                            className={`profile-badge-chip profile-performance-badge-chip ${getBadgeCategoryClass(badge)}`}
-                            title={`${badge} ×${count}`}
-                          >
-                            <span className="profile-badge-chip-text">{badge}</span>
-                            <span className="profile-performance-badge-count">×{count}</span>
-                          </span>
+                          </LeagueTooltip>
                         )
                       )}
                     </div>
                   </div>
                 )}
                 {avgTeamVerdict && (
-                  <div className="profile-performance-verdict-wrap" title={`Average team verdict: ${avgTeamVerdict}`}>
+                  <div className="profile-performance-verdict-wrap">
                     <span className="profile-performance-picks-label">Average team verdict</span>
-                    <span className={`profile-badge-chip team-verdict-badge team-verdict-${avgTeamVerdict.toLowerCase()}`}>
-                      <TeamVerdictIcon verdict={avgTeamVerdict} />
-                      <span className="profile-performance-verdict-label">{avgTeamVerdict}</span>
-                    </span>
+                    <LeagueTooltip
+                      title={avgTeamVerdict}
+                      body={VERDICT_REASONS[avgTeamVerdict]}
+                    >
+                      <span className={`profile-badge-chip team-verdict-badge team-verdict-${avgTeamVerdict.toLowerCase()}`}>
+                        <TeamVerdictIcon verdict={avgTeamVerdict} />
+                        <span className="profile-performance-verdict-label">{avgTeamVerdict}</span>
+                      </span>
+                    </LeagueTooltip>
                   </div>
                 )}
               </div>

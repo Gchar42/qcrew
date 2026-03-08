@@ -10,7 +10,7 @@ export type TeamVerdictType = "Carried" | "Solid" | "Neutral" | "Deadweight" | "
 
 export type TeamVerdictInfo = { verdict: TeamVerdictType; reason: string };
 
-const VERDICT_REASONS: Record<TeamVerdictType, string> = {
+export const VERDICT_REASONS: Record<TeamVerdictType, string> = {
   Carried: "Teammates showed outstanding performance across the board",
   Solid: "Teammates played above average and kept the game stable",
   Neutral: "Teammates performed neither particularly well nor poorly",
