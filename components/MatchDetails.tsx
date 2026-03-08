@@ -169,6 +169,31 @@ export function MatchDetails({
     ...parts.map((p) => computeImpactScore(match, p.puuid)?.score ?? 0)
   );
 
+  /** Rank 1–10 by impact (1 = highest). */
+  const impactRankByPuuid = (() => {
+    const withScore = parts.map((p) => ({
+      puuid: p.puuid,
+      score: computeImpactScore(match, p.puuid)?.score ?? 0,
+    }));
+    withScore.sort((a, b) => b.score - a.score);
+    const map = new Map<string, number>();
+    withScore.forEach(({ puuid }, i) => map.set(puuid, i + 1));
+    return map;
+  })();
+
+  function kdaEfficiency(k: number, d: number, a: number): string {
+    if (d === 0) return "Perfect";
+    const eff = (k + a) / d;
+    return eff % 1 === 0 ? eff.toFixed(0) : eff.toFixed(2);
+  }
+
+  function rankLabel(rank: number): string {
+    if (rank === 1) return "1st";
+    if (rank === 2) return "2nd";
+    if (rank === 3) return "3rd";
+    return `${rank}th`;
+  }
+
   const renderTeamSection = (
     team: Participant[],
     teamKey: "win" | "lose",
@@ -190,8 +215,11 @@ export function MatchDetails({
           <thead>
             <tr>
               <th className="c-player">Player</th>
+              <th className="c-ai-score">AI-Score</th>
+              <th className="c-kda">KDA</th>
+              <th className="c-damage">Damage</th>
+              <th className="c-cs">CS</th>
               <th className="c-items">Items</th>
-              <th className="c-stats">Stats</th>
             </tr>
           </thead>
           <tbody>
@@ -207,10 +235,13 @@ export function MatchDetails({
                 (p as Participant & { goldEarned?: number }).goldEarned ?? 0;
               const cs =
                 (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
+              const durationMin = duration / 60 || 1;
+              const csPerMin = (cs / durationMin).toFixed(1);
               const vision =
                 (p as Participant & { visionScore?: number }).visionScore ?? 0;
               const champUrl = getChampionSquareUrl(p.championName, version);
               const impactScore = computeImpactScore(match, p.puuid)?.score ?? 0;
+              const rank = impactRankByPuuid.get(p.puuid) ?? 0;
 
               const spell1Src = getSummonerSpellIconUrl(p.summoner1Id, version);
               const spell2Src = getSummonerSpellIconUrl(p.summoner2Id, version);
@@ -254,8 +285,8 @@ export function MatchDetails({
                           <img
                             src={champUrl}
                             alt=""
-                            width={56}
-                            height={56}
+                            width={48}
+                            height={48}
                             className="md-champ-icon champ-icon"
                           />
                         ) : (
@@ -344,6 +375,42 @@ width={18}
                     </div>
                   </td>
 
+                  <td className="c-ai-score">
+                    <div className="md-ai-score-cell">
+                      <div className="md-ai-score-val">{Math.round(impactScore)}</div>
+                      <div className="md-ai-score-rank">
+                        {rank === 1 && <span className="md-crown" aria-hidden>👑</span>}
+                        {rankLabel(rank)}
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className="c-kda">
+                    <div className="md-kda-cell">
+                      <div className="md-kda-ratio">{`${k} / ${d} / ${a}`}</div>
+                      <div className={`md-kda-eff ${d === 0 ? "perfect" : ""}`}>{kdaEfficiency(k, d, a)}</div>
+                    </div>
+                  </td>
+
+                  <td className="c-damage">
+                    <div className="md-damage-cell">
+                      <div className="md-damage-val">{formatShortNum(damage)}</div>
+                      <div className="md-damage-bar-wrap">
+                        <div
+                          className="md-damage-bar"
+                          style={{ width: `${maxDmg ? (damage / maxDmg) * 100 : 0}%` }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className="c-cs">
+                    <div className="md-cs-cell">
+                      <div className="md-cs-total">{cs}</div>
+                      <div className="md-cs-permin">({csPerMin}/m)</div>
+                    </div>
+                  </td>
+
                   <td className="c-items">
                     <div className="md-itemsWrap">
                       <div className="md-itemGrid">
@@ -387,35 +454,6 @@ width={18}
                           );
                         })()
                       ) : null}
-                    </div>
-                  </td>
-
-                  <td className="c-stats">
-                    <div className="md-stats">
-                      <div className="md-stat">
-                        <div className="md-stat-label">Impact</div>
-                        <div className="md-stat-val impact">{Math.round(impactScore)}</div>
-                      </div>
-                      <div className="md-stat">
-                        <div className="md-stat-label">KDA</div>
-                        <div className="md-stat-val kda">{`${k}/${d}/${a}`}</div>
-                      </div>
-                      <div className="md-stat">
-                        <div className="md-stat-label">CS</div>
-                        <div className="md-stat-val">{cs}</div>
-                      </div>
-                      <div className="md-stat">
-                        <div className="md-stat-label">VS</div>
-                        <div className="md-stat-val vision">{vision}</div>
-                      </div>
-                      <div className="md-stat">
-                        <div className="md-stat-label">Dmg</div>
-                        <div className="md-stat-val damage">{formatShortNum(damage)}</div>
-                      </div>
-                      <div className="md-stat">
-                        <div className="md-stat-label">Gold</div>
-                        <div className="md-stat-val gold">{formatShortNum(gold)}</div>
-                      </div>
                     </div>
                   </td>
                 </tr>

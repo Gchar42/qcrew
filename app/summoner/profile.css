@@ -2570,18 +2570,35 @@
 }
 
 .profile-page .md-table .c-player {
-  width: 200px;
+  width: 180px;
+  vertical-align: top;
+}
+
+.profile-page .md-table .c-ai-score {
+  width: 72px;
+  vertical-align: middle;
+}
+
+.profile-page .md-table .c-kda {
+  width: 88px;
+  vertical-align: middle;
+}
+
+.profile-page .md-table .c-damage {
+  width: 100px;
+  vertical-align: middle;
+}
+
+.profile-page .md-table .c-cs {
+  width: 72px;
+  vertical-align: middle;
 }
 
 .profile-page .md-table .c-items {
   width: auto;
+  min-width: 0;
   vertical-align: middle;
   padding-right: 8px;
-}
-
-.profile-page .md-table .c-stats {
-  width: auto;
-  min-width: 0;
 }
 
 .profile-page .md-table tr.md-me td {
@@ -2632,20 +2649,26 @@
   color: rgba(255, 220, 120, 0.95);
 }
 
-/* Player cell content (champ + spells/runes + name) inside first td only */
+/* Player cell: champ + spells on one line, name below (deeplol-style) */
 .profile-page .md-player-inner {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px 8px;
   min-width: 0;
 }
 
-/* Same circular portrait style as match row, compact */
+.profile-page .md-player-inner .md-name {
+  width: 100%;
+  font-size: 10px;
+}
+
+/* Square champion portrait in expanded details */
 .profile-page .md-champ {
   flex-shrink: 0;
   width: 48px;
   height: 48px;
-  border-radius: 50%;
+  border-radius: 6px;
   overflow: hidden;
   border: 2px solid var(--border);
   line-height: 0;
@@ -2699,6 +2722,107 @@
   white-space: nowrap;
   min-width: 0;
   font-weight: 600;
+}
+
+/* AI-Score column: score + rank (1st–10th) */
+.profile-page .md-ai-score-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+
+.profile-page .md-ai-score-val {
+  font-weight: 700;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink);
+}
+
+.profile-page .md-table tr.md-me .md-ai-score-val {
+  background: rgba(251, 146, 60, 0.25);
+  color: #fb923c;
+}
+
+.profile-page .md-ai-score-rank {
+  font-size: 9px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.profile-page .md-crown {
+  margin-right: 2px;
+}
+
+/* KDA column: ratio + efficiency */
+.profile-page .md-kda-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-page .md-kda-ratio {
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--ink);
+}
+
+.profile-page .md-kda-eff {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.profile-page .md-kda-eff.perfect {
+  color: rgba(96, 165, 250, 0.95);
+  font-weight: 600;
+}
+
+/* Damage column: value + bar */
+.profile-page .md-damage-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-page .md-damage-val {
+  font-weight: 700;
+  font-size: 11px;
+  color: rgba(255, 170, 110, 0.95);
+}
+
+.profile-page .md-damage-bar-wrap {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  min-width: 48px;
+}
+
+.profile-page .md-damage-bar {
+  height: 100%;
+  border-radius: 2px;
+  background: rgba(180, 100, 255, 0.7);
+  transition: width 0.2s ease;
+}
+
+/* CS column: total + per min */
+.profile-page .md-cs-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-page .md-cs-total {
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--ink);
+}
+
+.profile-page .md-cs-permin {
+  font-size: 9px;
+  color: var(--muted);
 }
 
 /* Clickable summoner name (match card teams + expanded match details) */
@@ -2795,18 +2919,18 @@
 }
 
 .profile-page .md-itemsWrap {
-  display: grid;
-  grid-template-columns: max-content max-content;
-  column-gap: 6px;
+  display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: start;
+  gap: 3px;
+  flex-wrap: nowrap;
 }
 
 .profile-page .md-itemGrid {
   display: grid;
-  grid-template-columns: repeat(3, 28px);
-  grid-template-rows: repeat(2, 28px);
-  gap: 4px;
+  grid-template-columns: repeat(6, 28px);
+  grid-template-rows: 28px;
+  gap: 3px;
   width: max-content;
 }
 
@@ -2814,6 +2938,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  flex-shrink: 0;
 }
 
 .profile-page .md-item-icon.item-icon {
