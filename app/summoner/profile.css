@@ -79,10 +79,10 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 20px 32px;
-  padding: 20px 0 0;
+  padding: 24px 0 20px;
   margin-bottom: 24px;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 0;
+  min-height: 120px;
   overflow: hidden;
 }
 
@@ -92,8 +92,8 @@
   inset: 0;
   z-index: 0;
   background-size: cover;
-  /* Position so champion (usually center-right in splash) is visible in the banner */
-  background-position: 35% center;
+  /* Upper-center so champion face/torso is visible (splash art usually has figure there) */
+  background-position: 45% 20%;
   background-repeat: no-repeat;
 }
 
@@ -101,13 +101,13 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  /* Darker on left for text contrast, lighter on right so champion shows through */
+  /* Left dark for text; right lighter so champion and splash are clearly visible */
   background: linear-gradient(
     90deg,
-    rgba(28, 28, 30, 0.88) 0%,
-    rgba(28, 28, 30, 0.5) 45%,
-    rgba(28, 28, 30, 0.35) 70%,
-    rgba(28, 28, 30, 0.25) 100%
+    rgba(28, 28, 30, 0.82) 0%,
+    rgba(28, 28, 30, 0.42) 40%,
+    rgba(28, 28, 30, 0.28) 65%,
+    rgba(28, 28, 30, 0.18) 100%
   );
 }
 
