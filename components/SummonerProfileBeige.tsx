@@ -1126,6 +1126,7 @@ export default function SummonerProfileBeige({
                                   </linearGradient>
                                 </defs>
                               </svg>
+                              <span className="mc-badge-compact-text">Main Character</span>
                               <span className="profile-performance-badge-count">×{count}</span>
                             </span>
                           </span>
@@ -1145,7 +1146,7 @@ export default function SummonerProfileBeige({
                 )}
                 {avgTeamVerdict && (
                   <div className="profile-performance-verdict-wrap" title={`Average team verdict: ${avgTeamVerdict}`}>
-                    <span className="profile-performance-picks-label">Avg verdict</span>
+                    <span className="profile-performance-picks-label">Average team verdict</span>
                     <span className={`profile-badge-chip team-verdict-badge team-verdict-${avgTeamVerdict.toLowerCase()}`}>
                       <TeamVerdictIcon verdict={avgTeamVerdict} />
                       <span className="profile-performance-verdict-label">{avgTeamVerdict}</span>
