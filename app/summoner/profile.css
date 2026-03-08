@@ -2414,7 +2414,7 @@
 /* Match details: single table per team, compact/shrunk */
 .profile-page .match-details-panel {
   border-top: 1px solid var(--border);
-  padding: 6px 10px;
+  padding: 4px 8px;
   background: var(--surface3);
   border-radius: 0 0 8px 8px;
   overflow: visible;
@@ -2495,7 +2495,7 @@
 .profile-page .md-team {
   border: 1px solid var(--border);
   border-radius: 6px;
-  margin-top: 8px;
+  margin-top: 4px;
   background: var(--surface2);
 }
 
@@ -2504,8 +2504,8 @@
   justify-content: space-between;
   align-items: center;
   font-weight: 600;
-  padding: 4px 8px;
-  font-size: 10px;
+  padding: 3px 6px;
+  font-size: 9px;
   color: var(--ink);
   background: var(--surface);
 }
@@ -2525,13 +2525,13 @@
 }
 
 .profile-page .md-team-label {
-  font-size: 11px;
+  font-size: 9px;
 }
 
 .profile-page .md-team-summary {
   font-weight: 600;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 9px;
 }
 
 .profile-page .md-scroll {
@@ -2542,13 +2542,13 @@
   border-collapse: collapse;
   width: 100%;
   table-layout: fixed;
-  font-size: 10px;
+  font-size: 9px;
   color: var(--ink);
 }
 
 .profile-page .md-table th,
 .profile-page .md-table td {
-  padding: 4px 6px;
+  padding: 3px 4px;
   vertical-align: middle;
 }
 
@@ -2561,41 +2561,41 @@
 }
 
 .profile-page .md-table thead th {
-  font-size: 8px;
+  font-size: 7px;
   font-weight: 600;
   opacity: 0.7;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
   color: var(--muted);
   text-align: left;
 }
 
 .profile-page .md-table .c-player {
-  width: 150px;
+  width: 125px;
   vertical-align: top;
 }
 
 .profile-page .md-table .c-ai-score {
-  width: 58px;
+  width: 50px;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-kda {
-  width: 70px;
+  width: 62px;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-damage {
-  width: 78px;
+  width: 68px;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-cs {
-  width: 58px;
+  width: 50px;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-vision {
-  width: 44px;
+  width: 38px;
   vertical-align: middle;
 }
 
@@ -2603,7 +2603,7 @@
   width: auto;
   min-width: 0;
   vertical-align: middle;
-  padding-right: 4px;
+  padding-right: 2px;
 }
 
 .profile-page .md-table tr.md-me td {
@@ -2665,24 +2665,24 @@
 
 .profile-page .md-player-inner .md-name {
   width: 100%;
-  font-size: 9px;
+  font-size: 8px;
 }
 
 /* Square champion portrait in expanded details (shrunk) */
 .profile-page .md-champ {
   flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  border-radius: 5px;
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
   overflow: hidden;
-  border: 1.5px solid var(--border);
+  border: 1px solid var(--border);
   line-height: 0;
 }
 
 .profile-page .md-champ-icon.champ-icon,
 .profile-page .md-champ-placeholder {
-  width: 38px;
-  height: 38px;
+  width: 30px;
+  height: 30px;
   object-fit: cover;
   object-position: center;
   display: block;
@@ -2714,8 +2714,8 @@
 
 .profile-page .md-spell-icon.spell-icon,
 .profile-page .md-rune-icon.rune-icon {
-  width: 15px;
-  height: 15px;
+  width: 12px;
+  height: 12px;
   border-radius: 2px;
   border: 1px solid var(--border);
   object-fit: contain;
@@ -2739,9 +2739,9 @@
 
 .profile-page .md-ai-score-val {
   font-weight: 700;
-  font-size: 10px;
-  padding: 1px 4px;
-  border-radius: 3px;
+  font-size: 9px;
+  padding: 1px 3px;
+  border-radius: 2px;
   background: rgba(255, 255, 255, 0.08);
   color: var(--ink);
 }
@@ -2752,7 +2752,7 @@
 }
 
 .profile-page .md-ai-score-rank {
-  font-size: 8px;
+  font-size: 7px;
   color: var(--muted);
   font-weight: 600;
 }
@@ -2770,12 +2770,12 @@
 
 .profile-page .md-kda-ratio {
   font-weight: 700;
-  font-size: 10px;
+  font-size: 9px;
   color: var(--ink);
 }
 
 .profile-page .md-kda-eff {
-  font-size: 9px;
+  font-size: 8px;
   color: var(--muted);
 }
 
@@ -2793,21 +2793,21 @@
 
 .profile-page .md-damage-val {
   font-weight: 700;
-  font-size: 10px;
+  font-size: 9px;
   color: rgba(255, 170, 110, 0.95);
 }
 
 .profile-page .md-damage-bar-wrap {
-  height: 3px;
-  border-radius: 2px;
+  height: 2px;
+  border-radius: 1px;
   background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
-  min-width: 36px;
+  min-width: 28px;
 }
 
 .profile-page .md-damage-bar {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 1px;
   background: rgba(180, 100, 255, 0.7);
   transition: width 0.2s ease;
 }
@@ -2821,19 +2821,19 @@
 
 .profile-page .md-cs-total {
   font-weight: 700;
-  font-size: 10px;
+  font-size: 9px;
   color: var(--ink);
 }
 
 .profile-page .md-cs-permin {
-  font-size: 8px;
+  font-size: 7px;
   color: var(--muted);
 }
 
 /* Vision column */
 .profile-page .md-vision-cell {
   font-weight: 700;
-  font-size: 10px;
+  font-size: 9px;
   color: rgba(120, 210, 255, 0.95);
 }
 
@@ -2855,11 +2855,11 @@
 }
 
 .profile-page .md-rank-badge {
-  margin-left: 4px;
-  font-size: 10px;
+  margin-left: 3px;
+  font-size: 8px;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 1px 4px;
+  border-radius: 3px;
   display: inline-block;
 }
 
@@ -2940,9 +2940,9 @@
 
 .profile-page .md-itemGrid {
   display: grid;
-  grid-template-columns: repeat(6, 22px);
-  grid-template-rows: 22px;
-  gap: 2px;
+  grid-template-columns: repeat(6, 18px);
+  grid-template-rows: 18px;
+  gap: 1px;
   width: max-content;
 }
 
@@ -2954,17 +2954,17 @@
 }
 
 .profile-page .md-item-icon.item-icon {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
   object-fit: cover;
   border: 1px solid var(--border);
 }
 
 .profile-page .md-item-icon.trinket-icon {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
   opacity: 0.95;
 }
 
