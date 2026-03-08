@@ -1,6 +1,6 @@
 /**
  * Fake Riot data for demo mode when RIOT_API_KEY is not set.
- * Use Riot ID "Demo#NA1" to view the site with fake stats.
+ * Use Riot ID "Demo#NA1", "TestW#NA1" (win streak), or "TestL#NA1" (loss streak) to view the site with fake stats.
  */
 
 import type {
@@ -15,8 +15,24 @@ export const DEMO_TAG_LINE = "NA1";
 export const DEMO_RIOT_ID = `${DEMO_GAME_NAME}#${DEMO_TAG_LINE}`;
 export const FAKE_PUUID = "00000000-0000-0000-0000-000000000000";
 
+export const TEST_W_GAME_NAME = "TestW";
+export const TEST_W_TAG_LINE = "NA1";
+export const TEST_W_RIOT_ID = `${TEST_W_GAME_NAME}#${TEST_W_TAG_LINE}`;
+export const FAKE_PUUID_TEST_W = "00000000-0000-0000-0000-000000000001";
+
+export const TEST_L_GAME_NAME = "TestL";
+export const TEST_L_TAG_LINE = "NA1";
+export const TEST_L_RIOT_ID = `${TEST_L_GAME_NAME}#${TEST_L_TAG_LINE}`;
+export const FAKE_PUUID_TEST_L = "00000000-0000-0000-0000-000000000002";
+
 export function isDemoPuuid(puuid: string): boolean {
   return (puuid ?? "").trim() === FAKE_PUUID;
+}
+
+/** True for any fake profile (Demo, TestW, TestL). */
+export function isFakePuuid(puuid: string): boolean {
+  const p = (puuid ?? "").trim();
+  return p === FAKE_PUUID || p === FAKE_PUUID_TEST_W || p === FAKE_PUUID_TEST_L;
 }
 
 export function isDemoRiotId(riotId: string): boolean {
@@ -25,7 +41,24 @@ export function isDemoRiotId(riotId: string): boolean {
   return parts.length === 2 && parts[0] === "demo" && parts[1] === "na1";
 }
 
-export function getFakeAccount(region: string): AccountDto {
+/** True for any fake profile (Demo#NA1, TestW#NA1, TestL#NA1). */
+export function isFakeRiotId(riotId: string): boolean {
+  const n = riotId.trim().replace(/\s+/g, " ");
+  const parts = n.split("#").map((s) => s.trim().toLowerCase());
+  if (parts.length !== 2) return false;
+  const [game, tag] = parts;
+  return tag === "na1" && (game === "demo" || game === "testw" || game === "testl");
+}
+
+export function getFakeAccount(region: string, riotId?: string): AccountDto {
+  const n = (riotId ?? "").trim().toLowerCase();
+  if (n.includes("#")) {
+    const parts = n.split("#").map((s) => s.trim().toLowerCase());
+    if (parts.length === 2 && parts[1] === "na1") {
+      if (parts[0] === "testw") return { puuid: FAKE_PUUID_TEST_W, gameName: TEST_W_GAME_NAME, tagLine: TEST_W_TAG_LINE };
+      if (parts[0] === "testl") return { puuid: FAKE_PUUID_TEST_L, gameName: TEST_L_GAME_NAME, tagLine: TEST_L_TAG_LINE };
+    }
+  }
   return {
     puuid: FAKE_PUUID,
     gameName: DEMO_GAME_NAME,
@@ -187,15 +220,38 @@ function buildParticipant(
   };
 }
 
+/** "demo" = alternating wins; "win" = blue always wins (our player); "loss" = red always wins. */
+export type FakeVariant = "demo" | "win" | "loss";
+
+function getFakeVariantFromPuuid(puuid: string): FakeVariant {
+  const p = (puuid ?? "").trim();
+  if (p === FAKE_PUUID_TEST_W) return "win";
+  if (p === FAKE_PUUID_TEST_L) return "loss";
+  return "demo";
+}
+
+function getFakeVariantFromRiotId(riotId: string): FakeVariant {
+  const parts = riotId.trim().split("#").map((s) => s.trim().toLowerCase());
+  if (parts.length === 2 && parts[1] === "na1") {
+    if (parts[0] === "testw") return "win";
+    if (parts[0] === "testl") return "loss";
+  }
+  return "demo";
+}
+
 function buildFakeMatch(
   index: number,
   queue: "solo" | "flex",
   summonerId: string,
-  leagueEntriesBySummonerId: Record<string, LeagueEntryDto[]>
+  leagueEntriesBySummonerId: Record<string, LeagueEntryDto[]>,
+  ourPuuid: string,
+  ourGameName: string,
+  variant: FakeVariant
 ): MatchDto {
   const matchId = `NA1_${1700000000 + index}_demo`;
   const gameDuration = 1750 + (index % 400);
-  const blueWins = index % 2 === 0;
+  const blueWins =
+    variant === "win" ? true : variant === "loss" ? false : index % 2 === 0;
 
   const participants: MatchDto["info"]["participants"] = [];
   for (let i = 0; i < 10; i++) {
@@ -215,8 +271,8 @@ function buildFakeMatch(
       ? DEMO_CHAMPIONS[index % DEMO_CHAMPIONS.length]
       : { championId: 100 + i, championName: OPPONENT_CHAMPIONS[i - 1] };
     const oppSummonerId = `demo-opp-${i}`;
-    const puuid = i === 0 ? FAKE_PUUID : `fake-opp-${index}-${i}`;
-    const summonerName = i === 0 ? DEMO_GAME_NAME : OPPONENT_SUMMONER_NAMES[i - 1];
+    const puuid = i === 0 ? ourPuuid : `fake-opp-${index}-${i}`;
+    const summonerName = i === 0 ? ourGameName : OPPONENT_SUMMONER_NAMES[i - 1];
     const itemIds = ITEM_POOL[(index + i) % ITEM_POOL.length] ?? ITEM_POOL[0];
     participants.push(
       buildParticipant(
@@ -284,11 +340,16 @@ const INITIAL_DEMO_MATCHES = 20;
 function buildFakeMatches(
   queue: "solo" | "flex",
   summonerId: string,
-  leagueEntriesBySummonerId: Record<string, LeagueEntryDto[]>
+  leagueEntriesBySummonerId: Record<string, LeagueEntryDto[]>,
+  ourPuuid: string,
+  ourGameName: string,
+  variant: FakeVariant
 ): MatchDto[] {
   const matches: MatchDto[] = [];
   for (let i = 0; i < TOTAL_DEMO_MATCHES; i++) {
-    matches.push(buildFakeMatch(i, queue, summonerId, leagueEntriesBySummonerId));
+    matches.push(
+      buildFakeMatch(i, queue, summonerId, leagueEntriesBySummonerId, ourPuuid, ourGameName, variant)
+    );
   }
   return matches;
 }
@@ -298,29 +359,36 @@ export function getFakeMatchesSlice(
   region: string,
   queue: "solo" | "flex",
   start: number,
-  count: number
+  count: number,
+  puuid: string
 ): MatchDto[] {
+  const variant = getFakeVariantFromPuuid(puuid);
+  const account = getFakeAccount(region, variant === "win" ? TEST_W_RIOT_ID : variant === "loss" ? TEST_L_RIOT_ID : DEMO_RIOT_ID);
   const leagueEntriesBySummonerId = buildLeagueEntriesForOpponents();
   const summonerId = "fake-summoner-id";
   const matches: MatchDto[] = [];
   const end = Math.min(start + count, TOTAL_DEMO_MATCHES);
   for (let i = start; i < end; i++) {
-    matches.push(buildFakeMatch(i, queue, summonerId, leagueEntriesBySummonerId));
+    matches.push(
+      buildFakeMatch(i, queue, summonerId, leagueEntriesBySummonerId, account.puuid, account.gameName, variant)
+    );
   }
   return matches;
 }
 
 export function getFakeProfileBundle(
   region: string,
-  queue: "solo" | "flex"
+  queue: "solo" | "flex",
+  normRiotId: string
 ): FakeProfileBundle {
-  const account = getFakeAccount(region);
+  const account = getFakeAccount(region, normRiotId);
+  const variant = getFakeVariantFromRiotId(normRiotId);
   const updatedAt = new Date().toISOString();
   const summoner: SummonerDto = {
     id: "fake-summoner-id",
     accountId: "fake-account-id",
-    puuid: FAKE_PUUID,
-    name: DEMO_GAME_NAME,
+    puuid: account.puuid,
+    name: account.gameName,
     profileIconId: 29,
     summonerLevel: 127,
   };
@@ -332,7 +400,7 @@ export function getFakeProfileBundle(
     wins: 62,
     losses: 50,
     summonerId: summoner.id,
-    summonerName: DEMO_GAME_NAME,
+    summonerName: account.gameName,
   };
   const flexEntry: LeagueEntryDto = {
     queueType: "RANKED_FLEX_SR",
@@ -342,19 +410,25 @@ export function getFakeProfileBundle(
     wins: 58,
     losses: 54,
     summonerId: summoner.id,
-    summonerName: DEMO_GAME_NAME,
+    summonerName: account.gameName,
   };
 
   const leagueEntriesBySummonerId = buildLeagueEntriesForOpponents();
-  // Include main account so match details show a rank badge for Demo in every match
   leagueEntriesBySummonerId[summoner.id] = [soloEntry, flexEntry];
-  const allMatches = buildFakeMatches(queue, summoner.id, leagueEntriesBySummonerId);
+  const allMatches = buildFakeMatches(
+    queue,
+    summoner.id,
+    leagueEntriesBySummonerId,
+    account.puuid,
+    account.gameName,
+    variant
+  );
   const matchIds = allMatches.map((m) => m.metadata.matchId);
   const matches = allMatches.slice(0, INITIAL_DEMO_MATCHES);
 
   let totalK = 0, totalD = 0, totalA = 0, totalCs = 0, totalSec = 0;
   allMatches.forEach((m) => {
-    const p = m.info.participants.find((x) => x.puuid === FAKE_PUUID);
+    const p = m.info.participants.find((x) => x.puuid === account.puuid);
     if (p) {
       totalK += p.kills ?? 0;
       totalD += p.deaths ?? 0;

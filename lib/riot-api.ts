@@ -1,6 +1,6 @@
 import { getRoutingRegion } from "@/lib/riot-regions";
 import { getCached, setCache } from "@/lib/supabase/route";
-import { getFakeAccount, isDemoRiotId } from "@/lib/fakeRiotData";
+import { getFakeAccount, isFakeRiotId } from "@/lib/fakeRiotData";
 import type { MatchDto, SummonerDto } from "@/types/riot";
 
 const key = process.env.RIOT_API_KEY;
@@ -33,7 +33,7 @@ export async function getAccount(
   tagLine: string
 ): Promise<{ puuid: string; gameName: string; tagLine: string } | null> {
   const riotId = `${gameName}#${tagLine}`;
-  if (!key && isDemoRiotId(riotId)) return getFakeAccount(region);
+  if (!key && isFakeRiotId(riotId)) return getFakeAccount(region, riotId);
   if (!key) return null;
 
   const cacheKey = `account:${region}:${gameName.toLowerCase()}#${tagLine.toLowerCase()}`;

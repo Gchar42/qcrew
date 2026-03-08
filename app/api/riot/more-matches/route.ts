@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getRoutingRegion } from "@/lib/riot-regions";
 import { getCached, setCache } from "@/lib/supabase/route";
 import { SEASON_START_MS } from "@/lib/season";
-import { isDemoPuuid, getFakeMatchesSlice } from "@/lib/fakeRiotData";
+import { isFakePuuid, getFakeMatchesSlice } from "@/lib/fakeRiotData";
 import type { MatchDto } from "@/types/riot";
 
 export const dynamic = "force-dynamic";
@@ -41,8 +41,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing puuid", status: 400 }, { status: 400, headers: NO_CACHE });
   }
 
-  if (isDemoPuuid(puuid)) {
-    const matches = getFakeMatchesSlice(region, queue, start, count);
+  if (isFakePuuid(puuid)) {
+    const matches = getFakeMatchesSlice(region, queue, start, count, puuid);
     return NextResponse.json({ matches }, { headers: NO_CACHE });
   }
 

@@ -7,7 +7,7 @@ import { SEASON_KEY, SEASON_START_MS } from "@/lib/season";
 import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/riot";
 import type { ChampionStatRow } from "@/app/api/champion-stats/route";
 import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
-import { isDemoRiotId, getFakeProfileBundle } from "@/lib/fakeRiotData";
+import { isFakeRiotId, getFakeProfileBundle } from "@/lib/fakeRiotData";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -485,14 +485,14 @@ export async function GET(request: Request) {
 
   if (!riotApiKey && riotIdParam?.trim()) {
     const normRiotId = normalizeRiotId(riotIdParam.trim());
-    if (isDemoRiotId(normRiotId)) {
-      const bundle = getFakeProfileBundle(region, queue) as unknown as ProfileBundle;
+    if (isFakeRiotId(normRiotId)) {
+      const bundle = getFakeProfileBundle(region, queue, normRiotId) as unknown as ProfileBundle;
       return NextResponse.json(bundle, { headers: CACHE_HEADERS });
     }
   }
   if (!riotApiKey) {
     return NextResponse.json(
-      { error: "Riot API key not configured. Use Demo#NA1 for a demo profile.", status: 500 },
+      { error: "Riot API key not configured. Use Demo#NA1, TestW#NA1, or TestL#NA1 for a demo profile.", status: 500 },
       { status: 500, headers: NO_CACHE }
     );
   }
