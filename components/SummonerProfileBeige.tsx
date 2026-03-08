@@ -40,6 +40,9 @@ import type { AccountDto, LeagueEntryDto, SummonerDto, MatchDto } from "@/types/
 /** Badges allowed in performance summary (no AFK / negative). */
 const PERFORMANCE_BADGE_WHITELIST = ["Main Character", "Lane Bully", "Jungle Diff"];
 
+/** Optional per-champion vertical % for hero splash (face in frame). Default 28 used for all others. */
+const HERO_SPLASH_VERTICAL_BY_CHAMPION: Record<string, number> = {};
+
 /** Badge name -> profile CSS class for chip styling */
 function getBadgeCategoryClass(badge: string): string {
   const cat = getBadgeCategory(badge);
@@ -858,6 +861,12 @@ export default function SummonerProfileBeige({
     mostPlayedChampion?.championName
       ? getChampionSplashUrl(mostPlayedChampion.championName)
       : null;
+  /** Vertical position so champion face is in frame; same default for all, optional overrides per champ */
+  const HERO_SPLASH_VERTICAL_DEFAULT = 28;
+  const heroSplashVertical =
+    mostPlayedChampion?.championName != null
+      ? (HERO_SPLASH_VERTICAL_BY_CHAMPION[mostPlayedChampion.championName] ?? HERO_SPLASH_VERTICAL_DEFAULT)
+      : HERO_SPLASH_VERTICAL_DEFAULT;
 
   const role = primaryRole(displayedMatches, account.puuid);
 
@@ -960,7 +969,10 @@ export default function SummonerProfileBeige({
           <>
             <div
               className="profile-hero-splash-bg"
-              style={{ backgroundImage: `url(${heroSplashUrl})` }}
+              style={{
+                backgroundImage: `url(${heroSplashUrl})`,
+                backgroundPosition: `center ${heroSplashVertical}%`,
+              }}
               aria-hidden
             />
             <div className="profile-hero-splash-overlay" aria-hidden />
