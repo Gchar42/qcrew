@@ -42,9 +42,9 @@ export function SavedSummonersList() {
   if (favorites.length === 0 && recent.length === 0) return null;
 
   return (
-    <div className="mt-8 w-full max-w-xl space-y-6">
+    <div className="mt-8 w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-6">
       {favorites.length > 0 && (
-        <section>
+        <section className="min-w-0">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">
               Favorites
@@ -82,7 +82,7 @@ export function SavedSummonersList() {
         </section>
       )}
       {recent.length > 0 && (
-        <section>
+        <section className="min-w-0">
           <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wide mb-2">
             Recent
           </h2>
