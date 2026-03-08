@@ -832,6 +832,97 @@
   border-color: var(--accent);
 }
 
+/* Recently played with card */
+.profile-page .recently-played-with-card .profile-rank-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.profile-page .recently-played-with-view-all {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.profile-page .recently-played-with-view-all:hover {
+  color: var(--accent);
+}
+
+.profile-page .recently-played-with-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-page .recently-played-with-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.profile-page .recently-played-with-name-wrap {
+  min-width: 0;
+  flex: 1;
+}
+
+.profile-page .recently-played-with-name {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.profile-page .recently-played-with-name:hover {
+  color: var(--accent);
+}
+
+.profile-page .recently-played-with-wr {
+  font-weight: 600;
+  color: var(--ink);
+  min-width: 2.5em;
+}
+
+.profile-page .recently-played-with-role {
+  color: var(--muted);
+  font-size: 11px;
+  min-width: 2.5em;
+}
+
+.profile-page .recently-played-with-games {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.profile-page .recently-played-with-track {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface3);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.profile-page .recently-played-with-track:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.profile-page .recently-played-with-track.recently-played-with-tracked {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
 .profile-page .champ_list {
   display: flex;
   flex-direction: column;

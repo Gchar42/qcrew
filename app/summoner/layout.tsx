@@ -19,6 +19,9 @@ export default function SummonerLayout({
           <Link href="/favorites" className="profile-nav-search">
             Favorites
           </Link>
+          <Link href="/friends" className="profile-nav-search">
+            Friends
+          </Link>
         </nav>
         <div className="profile-container">{children}</div>
       </div>

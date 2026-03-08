@@ -10,6 +10,7 @@ import type { ProfileBundle } from "@/app/api/riot/profileBundle/route";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
 import { MatchDetails } from "@/components/MatchDetails";
 import ChampionStatsCard from "@/components/ChampionStatsCard";
+import RecentlyPlayedWithCard from "@/components/RecentlyPlayedWithCard";
 import { ChampionFirePortrait } from "@/components/ChampionFirePortrait";
 import { ChampionIcePortrait } from "@/components/ChampionIcePortrait";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
@@ -1110,6 +1111,13 @@ export default function SummonerProfileBeige({
               puuid={account.puuid}
               region={regionVal}
               onRefresh={() => mutate()}
+            />
+          )}
+          {Array.isArray(bundle?.recentlyPlayedWith) && bundle.recentlyPlayedWith.length > 0 && (
+            <RecentlyPlayedWithCard
+              recentlyPlayedWith={bundle.recentlyPlayedWith}
+              region={regionVal}
+              onTrackChange={() => {}}
             />
           )}
         </aside>

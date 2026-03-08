@@ -50,6 +50,12 @@ export default function FavoritesPage() {
             >
               Favorites
             </Link>
+            <Link
+              href="/friends"
+              className="text-sm text-zinc-400 hover:text-white transition-colors"
+            >
+              Friends
+            </Link>
           </nav>
         </div>
       </header>

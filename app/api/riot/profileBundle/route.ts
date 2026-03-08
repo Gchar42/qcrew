@@ -8,6 +8,7 @@ import type { AccountDto, SummonerDto, LeagueEntryDto, MatchDto } from "@/types/
 import type { ChampionStatRow } from "@/app/api/champion-stats/route";
 import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
 import { isFakeRiotId, getFakeProfileBundle } from "@/lib/fakeRiotData";
+import { computeRecentlyPlayedWith, type RecentlyPlayedWithEntry } from "@/lib/recentlyPlayedWith";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -105,6 +106,7 @@ export type ProfileBundle = {
   leagueEntriesBySummonerId: Record<string, LeagueEntryDto[]>;
   championStats: { solo: ChampionStatsSlice; flex: ChampionStatsSlice };
   ddragonVersion: string | null;
+  recentlyPlayedWith: RecentlyPlayedWithEntry[];
 };
 
 function parseChampionsJson(champions: unknown): ChampionStatRow[] {
@@ -469,6 +471,7 @@ async function fetchBundleFromRiot(
     leagueEntriesBySummonerId,
     championStats,
     ddragonVersion,
+    recentlyPlayedWith: computeRecentlyPlayedWith(matches, account.puuid),
   };
 
   console.log("bundle keys", Object.keys(bundle), "matches", bundle.matches?.length);
@@ -569,7 +572,11 @@ export async function GET(request: Request) {
           if (flexEmpty) championStats = { ...championStats, flex: slice };
         }
       }
-      const bundleToReturn = { ...cached, championStats, ddragonVersion };
+      const recentlyPlayedWith =
+        cached.recentlyPlayedWith && Array.isArray(cached.recentlyPlayedWith)
+          ? (cached.recentlyPlayedWith as RecentlyPlayedWithEntry[])
+          : computeRecentlyPlayedWith(cachedMatches, puuid);
+      const bundleToReturn = { ...cached, championStats, ddragonVersion, recentlyPlayedWith };
 
       const baseUrl = getBaseUrl(request);
       await triggerChampionStatsRefreshIfNeeded(bundleToReturn, region, baseUrl);

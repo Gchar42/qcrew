@@ -100,6 +100,15 @@ type FakeProfileBundle = {
   leagueEntriesBySummonerId: Record<string, LeagueEntryDto[]>;
   championStats: { solo: FakeChampionStatsSlice; flex: FakeChampionStatsSlice };
   ddragonVersion: string | null;
+  recentlyPlayedWith: Array<{
+    puuid: string;
+    displayName: string;
+    riotId: string | null;
+    games: number;
+    wins: number;
+    primaryRole: string;
+    roleCounts: Record<string, number>;
+  }>;
 };
 
 const DEMO_CHAMPIONS: Array<{ championId: number; championName: string }> = [
@@ -463,5 +472,6 @@ export function getFakeProfileBundle(
       flex: fakeChampionStatsSlice(updatedAt),
     },
     ddragonVersion: null,
+    recentlyPlayedWith: [],
   };
 }
