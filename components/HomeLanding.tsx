@@ -64,6 +64,10 @@ export default function HomeLanding({ regions }: { regions: readonly Region[] })
             Stat<span className="text-[#7289DA]">Gap</span>
           </span>
         </div>
+        <div className="flex items-center gap-7 text-sm text-white/55">
+          <span className="cursor-pointer transition hover:text-white">Tierlist</span>
+          <span className="cursor-pointer transition hover:text-white">Leaderboard</span>
+        </div>
       </header>
 
       <section className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-5 pb-16 pt-10 text-center">

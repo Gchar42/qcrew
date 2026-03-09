@@ -43,30 +43,30 @@ export function SavedSummonersList() {
 
   return (
     <div className="mt-8 w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-6">
-      {recent.length > 0 && (
-        <section className="min-w-0">
-          <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wide mb-2">
-            Recent
-          </h2>
-          <ul className="rounded-lg border border-white/10 bg-black/20 divide-y divide-white/5 overflow-hidden">
-            {recent.slice(0, 5).map((s) => (
-              <li key={`${s.riotId}-${s.region}`}>
-                <Link
-                  href={profileUrl(s)}
-                  className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 transition-colors"
-                >
-                  <span className="text-white truncate">
-                    {s.label || s.riotId}
-                  </span>
-                  <span className="text-zinc-500 text-xs shrink-0">{s.region}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {favorites.length > 0 && (
-        <section className="min-w-0">
+      <section className="min-w-0">
+        <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wide mb-2">
+          Recent
+        </h2>
+        <ul className="rounded-lg border border-white/10 bg-black/20 divide-y divide-white/5 overflow-hidden">
+          {recent.slice(0, 5).map((s) => (
+            <li key={`${s.riotId}-${s.region}`}>
+              <Link
+                href={profileUrl(s)}
+                className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 transition-colors"
+              >
+                <span className="text-white truncate">
+                  {s.label || s.riotId}
+                </span>
+                <span className="text-zinc-500 text-xs shrink-0">{s.region}</span>
+              </Link>
+            </li>
+          ))}
+          {recent.length === 0 && (
+            <li className="px-4 py-3 text-sm text-zinc-500">No recent searches yet.</li>
+          )}
+        </ul>
+      </section>
+      <section className="min-w-0">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">
               Favorites
@@ -100,9 +100,11 @@ export function SavedSummonersList() {
                 </Link>
               </li>
             ))}
+            {favorites.length === 0 && (
+              <li className="px-4 py-3 text-sm text-zinc-500">No favorites yet.</li>
+            )}
           </ul>
-        </section>
-      )}
+      </section>
     </div>
   );
 }
