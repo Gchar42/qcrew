@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { addRecent } from "@/lib/savedSummoners";
 import { SavedSummonersList } from "@/components/SavedSummonersList";
 
@@ -65,8 +66,8 @@ export default function HomeLanding({ regions }: { regions: readonly Region[] })
           </span>
         </div>
         <div className="flex items-center gap-7 text-sm text-white/55">
-          <span className="cursor-pointer transition hover:text-white">Tierlist</span>
-          <span className="cursor-pointer transition hover:text-white">Leaderboard</span>
+          <Link href="/tierlist" className="transition hover:text-white">Tierlist</Link>
+          <Link href="/leaderboard" className="transition hover:text-white">Leaderboard</Link>
         </div>
       </header>
 
