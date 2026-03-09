@@ -1791,6 +1791,7 @@ export default function SummonerProfileBeige({
         </>
         )}
         </div>
+        </div>
         {Array.isArray(bundle?.recentlyPlayedWith) && bundle.recentlyPlayedWith.length > 0 && (
           <aside className="profile-body-right">
             <RecentlyPlayedWithCard
