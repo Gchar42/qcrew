@@ -58,15 +58,22 @@ function tierByRank(index: number, total: number): TierKey {
 
 /** GET /api/tierlist - global role tierlist (Silver–Grandmaster aggregate) */
 export async function GET() {
-  const { data, error } = await supabaseAdmin
-    .from("champion_match_cache")
-    .select("data, game_start_ts, queue")
-    .in("queue", ["solo", "flex"])
-    .gte("game_start_ts", SEASON_START_MS)
-    .order("game_start_ts", { ascending: false })
-    .limit(MAX_MATCH_ROWS);
+  let data: { data: unknown; game_start_ts: unknown; queue: unknown }[] | null = null;
 
-  if (error || !data || data.length === 0) {
+  try {
+    const result = await supabaseAdmin
+      .from("champion_match_cache")
+      .select("data, game_start_ts, queue")
+      .in("queue", ["solo", "flex"])
+      .gte("game_start_ts", SEASON_START_MS)
+      .order("game_start_ts", { ascending: false })
+      .limit(MAX_MATCH_ROWS);
+    if (!result.error) data = result.data;
+  } catch {
+    // table may not exist — fall through to placeholder
+  }
+
+  if (!data || data.length === 0) {
     const placeholderResult = await buildPlaceholderResponse(0);
     return NextResponse.json(placeholderResult, { status: 200, headers: NO_CACHE });
   }
@@ -159,48 +166,56 @@ export async function GET() {
  */
 async function buildPlaceholderResponse(matchCount: number): Promise<TierlistResponse> {
   // 1) Try latest DB snapshot (written by /api/cron/tierlist-refresh)
-  const { data: snap } = await supabaseAdmin
-    .from("tierlist_snapshots")
-    .select("scraped_at, data")
-    .order("scraped_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  try {
+    const { data: snap } = await supabaseAdmin
+      .from("tierlist_snapshots")
+      .select("scraped_at, data")
+      .order("scraped_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  if (snap?.data) {
-    const scraped = snap.data as Record<RoleKey, ScrapedChamp[]>;
-    const rolesFromSnap: Record<RoleKey, Record<TierKey, ChampStats[]>> = {
-      top: emptyRoleBuckets(),
-      jungle: emptyRoleBuckets(),
-      mid: emptyRoleBuckets(),
-      adc: emptyRoleBuckets(),
-      support: emptyRoleBuckets(),
-    };
+    if (snap?.data) {
+      const scraped = snap.data as Record<RoleKey, ScrapedChamp[]>;
+      const rolesFromSnap: Record<RoleKey, Record<TierKey, ChampStats[]>> = {
+        top: emptyRoleBuckets(),
+        jungle: emptyRoleBuckets(),
+        mid: emptyRoleBuckets(),
+        adc: emptyRoleBuckets(),
+        support: emptyRoleBuckets(),
+      };
 
-    (Object.keys(rolesFromSnap) as RoleKey[]).forEach((role) => {
-      const champs = (scraped[role] ?? []).slice().sort((a, b) => b.score - a.score);
-      champs.forEach((c, idx) => {
-        const tier = tierByRank(idx, champs.length);
-        rolesFromSnap[role][tier].push({
-          championId: 0,
-          championName: c.championName,
-          games: 0,
-          wins: 0,
-          winRate: c.winRate,
-          pickRate: c.pickRate,
-          score: c.score,
+      (Object.keys(rolesFromSnap) as RoleKey[]).forEach((role) => {
+        const champs = (scraped[role] ?? []).slice().sort((a, b) => b.score - a.score);
+        champs.forEach((c, idx) => {
+          const tier = tierByRank(idx, champs.length);
+          rolesFromSnap[role][tier].push({
+            championId: 0,
+            championName: c.championName,
+            games: 0,
+            wins: 0,
+            winRate: c.winRate,
+            pickRate: c.pickRate,
+            score: c.score,
+          });
         });
       });
-    });
 
-    return {
-      updatedAt: snap.scraped_at,
-      matchCount,
-      source: "public-placeholder",
-      roles: rolesFromSnap,
-    };
+      return {
+        updatedAt: snap.scraped_at,
+        matchCount,
+        source: "public-placeholder",
+        roles: rolesFromSnap,
+      };
+    }
+  } catch {
+    // tierlist_snapshots table may not exist yet — fall through to hardcoded
   }
 
-  // 2) Fallback to hardcoded placeholder
+  // 2) Fallback to hardcoded placeholder — always works
+  return buildHardcodedPlaceholder(matchCount);
+}
+
+function buildHardcodedPlaceholder(matchCount: number): TierlistResponse {
   const placeholderRoles: Record<RoleKey, Record<TierKey, ChampStats[]>> = {
     top: emptyRoleBuckets(),
     jungle: emptyRoleBuckets(),
@@ -210,7 +225,9 @@ async function buildPlaceholderResponse(matchCount: number): Promise<TierlistRes
   };
 
   (Object.keys(PUBLIC_PLACEHOLDER_BY_ROLE) as RoleKey[]).forEach((role) => {
-    const champs: PublicPlaceholderChamp[] = PUBLIC_PLACEHOLDER_BY_ROLE[role].slice().sort((a, b) => b.score - a.score);
+    const champs: PublicPlaceholderChamp[] = PUBLIC_PLACEHOLDER_BY_ROLE[role]
+      .slice()
+      .sort((a, b) => b.score - a.score);
     champs.forEach((c, idx) => {
       const tier = tierByRank(idx, champs.length);
       placeholderRoles[role][tier].push(c);
