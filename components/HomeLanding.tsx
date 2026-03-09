@@ -64,10 +64,6 @@ export default function HomeLanding({ regions }: { regions: readonly Region[] })
             Stat<span className="text-[#7289DA]">Gap</span>
           </span>
         </div>
-        <div className="flex items-center gap-6 text-sm text-white/60">
-          <span>Recents</span>
-          <span>Favorites</span>
-        </div>
       </header>
 
       <section className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-5 pb-16 pt-10 text-center">
@@ -113,6 +109,24 @@ export default function HomeLanding({ regions }: { regions: readonly Region[] })
         </form>
 
         <SavedSummonersList />
+
+        <div className="mt-10 grid w-full max-w-3xl grid-cols-1 gap-3 text-left sm:grid-cols-3">
+          <div className="rounded-xl border border-white/10 bg-[#151620] p-4 transition hover:-translate-y-0.5 hover:border-[#5865F2]/40">
+            <div className="mb-2 text-lg">🎯</div>
+            <div className="text-sm font-semibold text-white">Opponent Intel</div>
+            <div className="mt-1 text-xs text-white/55">Look up anyone before the game: weaknesses, champion pool, tendencies.</div>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-[#151620] p-4 transition hover:-translate-y-0.5 hover:border-[#5865F2]/40">
+            <div className="mb-2 text-lg">📈</div>
+            <div className="text-sm font-semibold text-white">Improve Faster</div>
+            <div className="mt-1 text-xs text-white/55">Track KDA, CS/min, and climb metrics over time.</div>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-[#151620] p-4 transition hover:-translate-y-0.5 hover:border-[#5865F2]/40">
+            <div className="mb-2 text-lg">👥</div>
+            <div className="text-sm font-semibold text-white">Track Friends</div>
+            <div className="mt-1 text-xs text-white/55">Follow your friends&apos; profiles and see who&apos;s actually grinding.</div>
+          </div>
+        </div>
       </section>
     </main>
   );
