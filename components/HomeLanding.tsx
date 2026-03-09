@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { addRecent } from "@/lib/savedSummoners";
+import { SavedSummonersList } from "@/components/SavedSummonersList";
 
 type Region = { value: string; label: string };
-
-const RECENTS_KEY = "qcrew:home:recents";
-const FAVORITES_KEY = "qcrew:home:favorites";
-const MAX_RECENTS = 8;
 
 function isRiotId(input: string): boolean {
   const hash = input.indexOf("#");
@@ -30,36 +28,6 @@ export default function HomeLanding({ regions }: { regions: readonly Region[] })
   const [region, setRegion] = useState("na1");
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [recents, setRecents] = useState<string[]>([]);
-  const [favorites, setFavorites] = useState<string[]>([]);
-
-  useEffect(() => {
-    try {
-      const r = JSON.parse(localStorage.getItem(RECENTS_KEY) ?? "[]");
-      const f = JSON.parse(localStorage.getItem(FAVORITES_KEY) ?? "[]");
-      setRecents(Array.isArray(r) ? r.filter((x) => typeof x === "string") : []);
-      setFavorites(Array.isArray(f) ? f.filter((x) => typeof x === "string") : []);
-    } catch {
-      setRecents([]);
-      setFavorites([]);
-    }
-  }, []);
-
-  const toggleFavorite = (riotId: string) => {
-    setFavorites((prev) => {
-      const next = prev.includes(riotId) ? prev.filter((x) => x !== riotId) : [riotId, ...prev].slice(0, MAX_RECENTS);
-      localStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
-      return next;
-    });
-  };
-
-  const rememberRecent = (riotId: string) => {
-    setRecents((prev) => {
-      const next = [riotId, ...prev.filter((x) => x !== riotId)].slice(0, MAX_RECENTS);
-      localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
-      return next;
-    });
-  };
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -72,7 +40,7 @@ export default function HomeLanding({ regions }: { regions: readonly Region[] })
 
     if (isRiotId(trimmed)) {
       const riotId = normRiotId(trimmed);
-      rememberRecent(riotId);
+      addRecent({ riotId, region, label: riotId });
       router.push(`/summoner?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}`);
       return;
     }
@@ -83,8 +51,6 @@ export default function HomeLanding({ regions }: { regions: readonly Region[] })
     }
     router.push(`/search?q=${encodeURIComponent(trimmed)}`);
   };
-
-  const pills = useMemo(() => recents.slice(0, 6), [recents]);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0E0F15] text-[#E8E9F0]">
@@ -146,52 +112,7 @@ export default function HomeLanding({ regions }: { regions: readonly Region[] })
           {error && <p className="mt-2 text-left text-sm text-amber-400">{error}</p>}
         </form>
 
-        {(favorites.length > 0 || pills.length > 0) && (
-          <div className="mt-6 w-full max-w-3xl space-y-3 text-left">
-            {favorites.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-white/50">Favorites</span>
-                {favorites.slice(0, 6).map((r) => (
-                  <button
-                    key={`fav-${r}`}
-                    type="button"
-                    onClick={() => router.push(`/summoner?riotId=${encodeURIComponent(r)}&region=${encodeURIComponent(region)}`)}
-                    className="rounded-md border border-[#5865F2]/40 bg-[#5865F2]/10 px-2 py-1 text-xs hover:bg-[#5865F2]/20"
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-            )}
-            {pills.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-white/50">Recents</span>
-                {pills.map((r) => {
-                  const isFav = favorites.includes(r);
-                  return (
-                    <div key={`recent-${r}`} className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-[#1C1E2D] px-2 py-1">
-                      <button
-                        type="button"
-                        onClick={() => router.push(`/summoner?riotId=${encodeURIComponent(r)}&region=${encodeURIComponent(region)}`)}
-                        className="text-xs text-white/80 hover:text-white"
-                      >
-                        {r}
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={isFav ? "Remove favorite" : "Add favorite"}
-                        onClick={() => toggleFavorite(r)}
-                        className={`text-xs ${isFav ? "text-yellow-400" : "text-white/50 hover:text-white/80"}`}
-                      >
-                        ★
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+        <SavedSummonersList />
       </section>
     </main>
   );
