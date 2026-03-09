@@ -175,7 +175,7 @@ async function tryBuildFromCache(): Promise<TierlistResponse | null> {
     const champs: ChampStats[] = [...(roleChampionAgg.get(role)?.values() ?? [])].map((c) => {
       const winRate = c.games ? (c.wins / c.games) * 100 : 0;
       const pickRate = (c.games / totalRoleGames) * 100;
-      const score = winRate * 3 + pickRate * 0.2;
+      const score = winRate * 2 + Math.sqrt(pickRate) * 3;
       return {
         championId: c.championId, championName: c.championName,
         games: c.games, wins: c.wins,
