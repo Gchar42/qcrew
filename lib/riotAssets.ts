@@ -41,7 +41,8 @@ const CHAMPION_NAME_TO_KEY: Record<string, string> = {
   "Cho'Gath": "Chogath",
   "Kha'Zix": "Khazix",
   "Vel'Koz": "Velkoz",
-  "Kog'Maw": "Kogmaw",
+  "Kog'Maw": "KogMaw",
+  LeBlanc: "Leblanc",
   "Nunu & Willump": "Nunu",
   "Bel'Veth": "Belveth",
 };
