@@ -91,19 +91,28 @@ function buildHardcodedPlaceholder(): TierlistResponse {
   };
 }
 
+const DB_TIMEOUT_MS = 4000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
+  return Promise.race([
+    promise,
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
+  ]);
+}
+
 /** GET /api/tierlist */
 export async function GET() {
   try {
-    const result = await tryBuildFromCache();
+    const result = await withTimeout(tryBuildFromCache(), DB_TIMEOUT_MS);
     if (result && hasAnyChampions(result.roles)) {
       return NextResponse.json(result, { status: 200, headers: NO_CACHE });
     }
   } catch {
-    // any DB error → fall through to placeholder
+    // any DB error → fall through
   }
 
   try {
-    const snap = await tryBuildFromSnapshot();
+    const snap = await withTimeout(tryBuildFromSnapshot(), DB_TIMEOUT_MS);
     if (snap && hasAnyChampions(snap.roles)) {
       return NextResponse.json(snap, { status: 200, headers: NO_CACHE });
     }
