@@ -1797,7 +1797,6 @@ export default function SummonerProfileBeige({
             <RecentlyPlayedWithCard
               recentlyPlayedWith={bundle?.recentlyPlayedWith ?? []}
               region={regionVal}
-              onTrackChange={() => {}}
             />
           </aside>
         )}

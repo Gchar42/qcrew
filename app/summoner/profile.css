@@ -882,7 +882,7 @@
 
 .profile-page .recently-played-with-row {
   display: grid;
-  grid-template-columns: 1fr auto auto auto auto;
+  grid-template-columns: 1fr auto auto auto;
   align-items: center;
   gap: 8px;
   font-size: 12px;
@@ -923,30 +923,6 @@
   color: var(--muted);
   font-size: 11px;
   white-space: nowrap;
-}
-
-.profile-page .recently-played-with-track {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  background: var(--surface3);
-  color: var(--muted);
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.profile-page .recently-played-with-track:hover {
-  color: var(--ink);
-  border-color: var(--ink);
-}
-
-.profile-page .recently-played-with-track.recently-played-with-tracked {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-dim);
 }
 
 .profile-page .recently-played-with-empty {
