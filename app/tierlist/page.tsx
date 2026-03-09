@@ -20,6 +20,7 @@ type ChampStats = {
 type TierlistResponse = {
   updatedAt: string;
   matchCount: number;
+  source?: "cache" | "public-placeholder";
   roles: Record<RoleKey, Record<TierKey, ChampStats[]>>;
 };
 
@@ -130,7 +131,9 @@ export default function TierlistPage() {
         </div>
 
         <p className="mt-4 text-xs text-white/45">
-          Ranked model from cached match data · role tiers use weighted winrate/pickrate.
+          {data.source === "public-placeholder"
+            ? "Aggregate Silver – Grandmaster stats (MetaSRC snapshot) · refreshed weekly."
+            : "Aggregate Silver – Grandmaster · cached ranked match data · weighted winrate/pickrate."}
         </p>
       </div>
     </main>

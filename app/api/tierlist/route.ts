@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { SEASON_START_MS } from "@/lib/season";
 import type { MatchDto } from "@/types/riot";
+import { PUBLIC_PLACEHOLDER_BY_ROLE, type PublicPlaceholderChamp } from "@/lib/tierlistPublicPlaceholder";
+import type { ScrapedChamp } from "@/lib/scrapeMetaSrc";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -22,6 +24,7 @@ type ChampStats = {
 type TierlistResponse = {
   updatedAt: string;
   matchCount: number;
+  source?: "cache" | "public-placeholder";
   roles: Record<RoleKey, Record<TierKey, ChampStats[]>>;
 };
 
@@ -53,7 +56,7 @@ function tierByRank(index: number, total: number): TierKey {
   return "F";
 }
 
-/** GET /api/tierlist - global role tierlist from cached ranked matches */
+/** GET /api/tierlist - global role tierlist (Silver–Grandmaster aggregate) */
 export async function GET() {
   const { data, error } = await supabaseAdmin
     .from("champion_match_cache")
@@ -111,6 +114,12 @@ export async function GET() {
     support: emptyRoleBuckets(),
   };
 
+  const sparseData = (data ?? []).length < 200;
+  if (sparseData) {
+    const placeholderResult = await buildPlaceholderResponse((data ?? []).length);
+    return NextResponse.json(placeholderResult, { status: 200, headers: NO_CACHE });
+  }
+
   (Object.keys(roles) as RoleKey[]).forEach((role) => {
     const totalRoleGames = Math.max(1, roleGames.get(role) ?? 0);
     const champs: ChampStats[] = [...(roleChampionAgg.get(role)?.values() ?? [])].map((c) => {
@@ -140,9 +149,83 @@ export async function GET() {
     {
       updatedAt: new Date().toISOString(),
       matchCount: (data ?? []).length,
+      source: "cache",
       roles,
     } satisfies TierlistResponse,
     { status: 200, headers: NO_CACHE }
   );
+}
+
+/**
+ * When local match cache is sparse, try the most recent DB snapshot
+ * from the weekly MetaSRC scrape (Silver–Grandmaster aggregate).
+ * Falls back to the hardcoded placeholder if no snapshot exists yet.
+ */
+async function buildPlaceholderResponse(matchCount: number): Promise<TierlistResponse> {
+  // 1) Try latest DB snapshot (written by /api/cron/tierlist-refresh)
+  const { data: snap } = await supabaseAdmin
+    .from("tierlist_snapshots")
+    .select("scraped_at, data")
+    .order("scraped_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (snap?.data) {
+    const scraped = snap.data as Record<RoleKey, ScrapedChamp[]>;
+    const rolesFromSnap: Record<RoleKey, Record<TierKey, ChampStats[]>> = {
+      top: emptyRoleBuckets(),
+      jungle: emptyRoleBuckets(),
+      mid: emptyRoleBuckets(),
+      adc: emptyRoleBuckets(),
+      support: emptyRoleBuckets(),
+    };
+
+    (Object.keys(rolesFromSnap) as RoleKey[]).forEach((role) => {
+      const champs = (scraped[role] ?? []).slice().sort((a, b) => b.score - a.score);
+      champs.forEach((c, idx) => {
+        const tier = tierByRank(idx, champs.length);
+        rolesFromSnap[role][tier].push({
+          championId: 0,
+          championName: c.championName,
+          games: 0,
+          wins: 0,
+          winRate: c.winRate,
+          pickRate: c.pickRate,
+          score: c.score,
+        });
+      });
+    });
+
+    return {
+      updatedAt: snap.scraped_at,
+      matchCount,
+      source: "public-placeholder",
+      roles: rolesFromSnap,
+    };
+  }
+
+  // 2) Fallback to hardcoded placeholder
+  const placeholderRoles: Record<RoleKey, Record<TierKey, ChampStats[]>> = {
+    top: emptyRoleBuckets(),
+    jungle: emptyRoleBuckets(),
+    mid: emptyRoleBuckets(),
+    adc: emptyRoleBuckets(),
+    support: emptyRoleBuckets(),
+  };
+
+  (Object.keys(PUBLIC_PLACEHOLDER_BY_ROLE) as RoleKey[]).forEach((role) => {
+    const champs: PublicPlaceholderChamp[] = PUBLIC_PLACEHOLDER_BY_ROLE[role].slice().sort((a, b) => b.score - a.score);
+    champs.forEach((c, idx) => {
+      const tier = tierByRank(idx, champs.length);
+      placeholderRoles[role][tier].push(c);
+    });
+  });
+
+  return {
+    updatedAt: new Date().toISOString(),
+    matchCount,
+    source: "public-placeholder",
+    roles: placeholderRoles,
+  };
 }
 
