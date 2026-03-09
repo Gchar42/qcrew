@@ -46,10 +46,15 @@ export function computeRecentlyPlayedWith(matches: MatchDto[], myPuuid: string):
 
   for (const match of matches) {
     const participants = match.info?.participants ?? [];
-    const me = participants.find((p) => p.puuid === myPuuid);
-    if (!me?.teamId) continue;
+    const myIndex = participants.findIndex((p) => p.puuid === myPuuid);
+    if (myIndex < 0) continue;
 
-    const myTeam = participants.filter((p) => p.teamId === me.teamId && p.puuid !== myPuuid);
+    const me = participants[myIndex];
+    // Riot: teamId 100 = blue, 200 = red. When missing, assume order 0-4 = blue, 5-9 = red.
+    const myTeamId = me.teamId ?? (myIndex < 5 ? 100 : 200);
+    const myTeam = participants.filter(
+      (p, i) => p.puuid !== myPuuid && (p.teamId ?? (i < 5 ? 100 : 200)) === myTeamId
+    );
     for (const p of myTeam) {
       const pos = normalizePosition(p.teamPosition, p.individualPosition);
       const riotId =

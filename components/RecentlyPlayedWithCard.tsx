@@ -13,7 +13,7 @@ export default function RecentlyPlayedWithCard({
   region: string;
   onTrackChange?: () => void;
 }) {
-  if (!recentlyPlayedWith?.length) return null;
+  const hasEntries = Array.isArray(recentlyPlayedWith) && recentlyPlayedWith.length > 0;
 
   const handleTrack = (entry: RecentlyPlayedWithEntry) => {
     if (!entry.riotId) return;
@@ -36,6 +36,11 @@ export default function RecentlyPlayedWithCard({
         </Link>
       </div>
       <div className="profile-rank-card-content">
+        {!hasEntries ? (
+          <p className="recently-played-with-empty">
+            Teammates from your recent games will appear here.
+          </p>
+        ) : (
         <ul className="recently-played-with-list">
           {recentlyPlayedWith.slice(0, 10).map((entry) => {
             const winRate = entry.games > 0 ? Math.round((entry.wins / entry.games) * 100) : 0;
@@ -72,6 +77,7 @@ export default function RecentlyPlayedWithCard({
             );
           })}
         </ul>
+        )}
       </div>
     </div>
   );

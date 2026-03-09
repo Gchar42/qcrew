@@ -936,6 +936,13 @@
   background: var(--accent-dim);
 }
 
+.profile-page .recently-played-with-empty {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
 .profile-page .champ_list {
   display: flex;
   flex-direction: column;

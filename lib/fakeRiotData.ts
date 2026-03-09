@@ -472,6 +472,13 @@ export function getFakeProfileBundle(
       flex: fakeChampionStatsSlice(updatedAt),
     },
     ddragonVersion: null,
-    recentlyPlayedWith: [],
+    recentlyPlayedWith: [
+      { puuid: "fake-teammate-1", displayName: "JungleDiffKing", riotId: "JungleDiffKing#NA1", games: 12, wins: 8, primaryRole: "Jungle", roleCounts: { Jungle: 12 } },
+      { puuid: "fake-teammate-2", displayName: "SupportMain", riotId: "SupportMain#NA1", games: 9, wins: 6, primaryRole: "Support", roleCounts: { Support: 9 } },
+      { puuid: "fake-teammate-3", displayName: "TopOrFeed", riotId: "TopOrFeed#NA1", games: 7, wins: 4, primaryRole: "Top", roleCounts: { Top: 7 } },
+      { puuid: "fake-teammate-4", displayName: "ADC Carries", riotId: "ADCCarries#NA1", games: 6, wins: 5, primaryRole: "Bot", roleCounts: { Bot: 6 } },
+      { puuid: "fake-teammate-5", displayName: "MidMage", riotId: "MidMage#NA1", games: 5, wins: 3, primaryRole: "Mid", roleCounts: { Mid: 5 } },
+      { puuid: "fake-teammate-6", displayName: "FillEnjoyer", riotId: "FillEnjoyer#NA1", games: 4, wins: 2, primaryRole: "Support", roleCounts: { Support: 2, Jungle: 1, Top: 1 } },
+    ],
   };
 }
