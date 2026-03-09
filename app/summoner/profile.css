@@ -340,13 +340,17 @@
   display: none;
 }
 
-/* Two-column body: left stats (rank cards), right match list – keep left at 320px so match cards have full width */
+/* Body: left stats, center match list, optional right (recently played) */
 .profile-page .profile-body {
   display: grid;
   grid-template-columns: 320px 1fr;
   gap: 16px;
   align-items: start;
   margin-top: 12px;
+}
+
+.profile-page .profile-body.profile-body-has-right {
+  grid-template-columns: 320px 1fr 280px;
 }
 
 .profile-page .profile-body-left {
@@ -357,8 +361,17 @@
   top: 80px;
 }
 
+.profile-page .profile-body-main {
+  min-width: 0;
+}
+
 .profile-page .profile-body-right {
   min-width: 0;
+  position: sticky;
+  top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* Rank card – exact copy of ranked-cards.html (scoped under .profile-page) */
@@ -3402,7 +3415,8 @@
   .profile-page .profile-body {
     grid-template-columns: 1fr;
   }
-  .profile-page .profile-body-left {
+  .profile-page .profile-body-left,
+  .profile-page .profile-body-right {
     position: static;
   }
 }

@@ -1100,7 +1100,7 @@ export default function SummonerProfileBeige({
         </div>
       </section>
 
-      <div className="profile-body">
+      <div className={`profile-body${Array.isArray(bundle?.recentlyPlayedWith) && bundle.recentlyPlayedWith.length > 0 ? " profile-body-has-right" : ""}`}>
         <aside className="profile-body-left">
           {renderRankCard("Ranked Solo", soloEntry, rankLoading, rankError ?? null)}
           {renderRankCard("Ranked Flex", flexEntry, rankLoading, null)}
@@ -1113,15 +1113,8 @@ export default function SummonerProfileBeige({
               onRefresh={() => mutate()}
             />
           )}
-          {Array.isArray(bundle?.recentlyPlayedWith) && bundle.recentlyPlayedWith.length > 0 && (
-            <RecentlyPlayedWithCard
-              recentlyPlayedWith={bundle.recentlyPlayedWith}
-              region={regionVal}
-              onTrackChange={() => {}}
-            />
-          )}
         </aside>
-        <div className="profile-body-right">
+        <div className="profile-body-main">
       <div className="recent-matches-section">
         <div className="profile-queue-tabs">
           <button
@@ -1797,8 +1790,16 @@ export default function SummonerProfileBeige({
       </div>
         </>
         )}
-      </div>
         </div>
+        {Array.isArray(bundle?.recentlyPlayedWith) && bundle.recentlyPlayedWith.length > 0 && (
+          <aside className="profile-body-right">
+            <RecentlyPlayedWithCard
+              recentlyPlayedWith={bundle.recentlyPlayedWith}
+              region={regionVal}
+              onTrackChange={() => {}}
+            />
+          </aside>
+        )}
       </div>
 
       {detailMatch && (
