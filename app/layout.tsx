@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { Toaster } from "@/components/Toast";
 import { Footer } from "@/components/Footer";
+import { SiteHeader } from "@/components/SiteHeader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Statgap.gg – League of Legends stats",
+  title: "Statgap.gg â€“ League of Legends stats",
   description: "Search Riot ID and region. View match history and stats on Statgap.gg.",
 };
 
@@ -40,7 +41,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-[var(--background)] text-[var(--foreground)] flex flex-col min-h-screen`}
       >
-        <div className="flex-1 flex flex-col">{children}</div>
+        <div className="flex-1 flex flex-col"><SiteHeader />{children}</div>
         <Footer />
         <Toaster />
         <SpeedInsights />
@@ -48,3 +49,4 @@ export default function RootLayout({
     </html>
   );
 }
+
