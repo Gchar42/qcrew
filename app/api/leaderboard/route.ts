@@ -59,6 +59,7 @@ function buildPlaceholderResponse(
       hotStreak: e.hotStreak,
       veteran: e.veteran,
       freshBlood: e.freshBlood,
+      role: e.role,
     };
   });
 
@@ -241,6 +242,7 @@ export async function GET(request: Request) {
         hotStreak: e.hotStreak,
         veteran: e.veteran,
         freshBlood: e.freshBlood,
+        role: "",
       };
     });
 

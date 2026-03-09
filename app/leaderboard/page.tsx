@@ -19,6 +19,7 @@ type LeaderboardEntry = {
   hotStreak: boolean;
   veteran: boolean;
   freshBlood: boolean;
+  role?: string;
 };
 
 type LeaderboardResponse = {
@@ -51,6 +52,12 @@ const TIER_BG: Record<string, string> = {
   MASTER: "bg-purple-400/10 border-purple-400/30",
 };
 
+const TIER_TOOLTIP: Record<string, string> = {
+  CHALLENGER: "Challenger",
+  GRANDMASTER: "Grandmaster",
+  MASTER: "Master",
+};
+
 function tierBadge(tier: string) {
   const label =
     tier === "CHALLENGER" ? "C" : tier === "GRANDMASTER" ? "GM" : "M";
@@ -58,7 +65,8 @@ function tierBadge(tier: string) {
   const bg = TIER_BG[tier] ?? "bg-white/5 border-white/10";
   return (
     <span
-      className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 text-[11px] font-bold border ${bg} ${color}`}
+      title={TIER_TOOLTIP[tier] ?? tier}
+      className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 text-[11px] font-bold border cursor-default ${bg} ${color}`}
     >
       {label}
     </span>
@@ -215,16 +223,17 @@ export default function LeaderboardPage() {
 
         {/* Table */}
         <div className="rounded-xl border border-white/10 bg-[#151620] overflow-x-auto">
-          <div className="min-w-[600px]">
+          <div className="min-w-[660px]">
           {/* Table header */}
-          <div className="grid grid-cols-[48px_1fr_64px_72px_80px_64px_88px] gap-2 px-4 py-3 border-b border-white/10 text-xs font-semibold text-white/40 uppercase tracking-wider">
+          <div className="grid grid-cols-[48px_1fr_64px_56px_72px_80px_64px_88px] gap-2 px-4 py-3 border-b border-white/10 text-xs font-semibold text-white/40 uppercase tracking-wider">
             <div>#</div>
             <div>Summoner</div>
-            <div className="text-center">Tier</div>
-            <div className="text-right">LP</div>
+            <div className="text-center">Rank</div>
+            <div className="text-center">Role</div>
+            <div className="text-center">LP</div>
             <div className="text-center">Win Rate</div>
             <div className="text-center">Games</div>
-            <div className="text-right">W / L</div>
+            <div className="text-center">W / L</div>
           </div>
 
           {/* Loading state */}
@@ -277,7 +286,7 @@ export default function LeaderboardPage() {
               return (
                 <div
                   key={`${entry.rank}-${entry.puuid || entry.summonerName}`}
-                  className="grid grid-cols-[48px_1fr_64px_72px_80px_64px_88px] gap-2 px-4 py-2.5 border-b border-white/5 items-center hover:bg-white/[0.02] transition"
+                  className="grid grid-cols-[48px_1fr_64px_56px_72px_80px_64px_88px] gap-2 px-4 py-2.5 border-b border-white/5 items-center hover:bg-white/[0.02] transition"
                 >
                   {/* Rank */}
                   <div className="text-sm font-medium text-white/50">
@@ -296,7 +305,7 @@ export default function LeaderboardPage() {
                     )}
                     {entry.hotStreak && (
                       <span
-                        className="shrink-0 text-[10px] font-bold text-orange-400"
+                        className="shrink-0 rounded bg-orange-400/15 px-1 py-px text-[10px] font-bold text-orange-400"
                         title="On a hot streak"
                       >
                         HOT
@@ -304,7 +313,7 @@ export default function LeaderboardPage() {
                     )}
                     {entry.freshBlood && (
                       <span
-                        className="shrink-0 text-[10px] font-bold text-green-400"
+                        className="shrink-0 rounded bg-green-400/15 px-1 py-px text-[10px] font-bold text-green-400"
                         title="Recently promoted"
                       >
                         NEW
@@ -315,10 +324,14 @@ export default function LeaderboardPage() {
                   {/* Tier badge */}
                   <div className="flex justify-center">{tierBadge(entry.tier)}</div>
 
+                  {/* Role */}
+                  <div className="text-center text-xs text-white/50">
+                    {entry.role || "-"}
+                  </div>
+
                   {/* LP */}
-                  <div className="text-right text-sm font-semibold tabular-nums">
+                  <div className="text-center text-sm font-semibold tabular-nums">
                     {entry.leaguePoints.toLocaleString()}
-                    <span className="text-white/30 ml-0.5 text-xs">LP</span>
                   </div>
 
                   {/* Win Rate */}
@@ -336,7 +349,7 @@ export default function LeaderboardPage() {
                   </div>
 
                   {/* W/L */}
-                  <div className="text-right text-sm tabular-nums">
+                  <div className="text-center text-sm tabular-nums">
                     <span className="text-green-400/80">{entry.wins}</span>
                     <span className="text-white/20 mx-0.5">/</span>
                     <span className="text-red-400/80">{entry.losses}</span>
