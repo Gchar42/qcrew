@@ -109,7 +109,7 @@ export default function TierlistPage() {
                     <div
                       key={`${tier}-${c.championName}-${i}`}
                       className="group relative flex w-14 flex-col items-center"
-                      title={`${c.championName} · WR ${c.winRate}% · PR ${c.pickRate}% · ${c.games} games`}
+                      title={`${c.championName} · WR ${c.winRate}% · PR ${c.pickRate}%${c.games ? ` · ${c.games} games` : ""}`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
