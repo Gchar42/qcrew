@@ -33,6 +33,11 @@
   z-index: 1;
 }
 
+/* Widen container when recently played column is shown so match cards keep room */
+.profile-page .profile-container:has(.profile-body-has-right) {
+  max-width: 1440px;
+}
+
 /* Nav */
 .profile-page .profile-nav {
   position: sticky;
@@ -350,7 +355,7 @@
 }
 
 .profile-page .profile-body.profile-body-has-right {
-  grid-template-columns: 320px 1fr 280px;
+  grid-template-columns: 320px 1fr 260px;
 }
 
 .profile-page .profile-body-left {
@@ -3426,6 +3431,16 @@
 }
 
 /* Responsive */
+/* When recently played column is shown, stack earlier so match cards keep full width */
+@media (max-width: 1160px) {
+  .profile-page .profile-body.profile-body-has-right {
+    grid-template-columns: 1fr;
+  }
+  .profile-page .profile-body.profile-body-has-right .profile-body-right {
+    position: static;
+  }
+}
+
 @media (max-width: 900px) {
   .profile-page .profile-body {
     grid-template-columns: 1fr;
