@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import "./profile.css";
 
 export default function SummonerLayout({
@@ -19,8 +19,11 @@ export default function SummonerLayout({
           <Link href="/favorites" className="profile-nav-search">
             Favorites
           </Link>
-          <Link href="/friends" className="profile-nav-search">
-            Friends
+          <Link href="/tierlist" className="profile-nav-search">
+            Tierlist
+          </Link>
+          <Link href="/leaderboard" className="profile-nav-search">
+            Leaderboard
           </Link>
         </nav>
         <div className="profile-container">{children}</div>
