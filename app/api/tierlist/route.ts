@@ -66,13 +66,9 @@ export async function GET() {
     .order("game_start_ts", { ascending: false })
     .limit(MAX_MATCH_ROWS);
 
-  if (error) {
-    return NextResponse.json(
-      { updatedAt: new Date().toISOString(), matchCount: 0, roles: {
-        top: emptyRoleBuckets(), jungle: emptyRoleBuckets(), mid: emptyRoleBuckets(), adc: emptyRoleBuckets(), support: emptyRoleBuckets(),
-      } } satisfies TierlistResponse,
-      { status: 200, headers: NO_CACHE }
-    );
+  if (error || !data || data.length === 0) {
+    const placeholderResult = await buildPlaceholderResponse(0);
+    return NextResponse.json(placeholderResult, { status: 200, headers: NO_CACHE });
   }
 
   const roleChampionAgg = new Map<RoleKey, Map<number, { championId: number; championName: string; games: number; wins: number }>>();

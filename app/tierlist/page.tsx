@@ -20,7 +20,6 @@ type ChampStats = {
 type TierlistResponse = {
   updatedAt: string;
   matchCount: number;
-  source?: "cache" | "public-placeholder";
   roles: Record<RoleKey, Record<TierKey, ChampStats[]>>;
 };
 
@@ -106,9 +105,9 @@ export default function TierlistPage() {
               </div>
               <div className="flex flex-wrap gap-2 p-3 min-h-[72px]">
                 {roleRows[tier]?.length ? (
-                  roleRows[tier].map((c) => (
+                  roleRows[tier].map((c, i) => (
                     <div
-                      key={`${tier}-${c.championId}`}
+                      key={`${tier}-${c.championName}-${i}`}
                       className="group relative flex w-14 flex-col items-center"
                       title={`${c.championName} · WR ${c.winRate}% · PR ${c.pickRate}% · ${c.games} games`}
                     >
@@ -130,11 +129,6 @@ export default function TierlistPage() {
           ))}
         </div>
 
-        <p className="mt-4 text-xs text-white/45">
-          {data.source === "public-placeholder"
-            ? "Aggregate Silver – Grandmaster stats (MetaSRC snapshot) · refreshed weekly."
-            : "Aggregate Silver – Grandmaster · cached ranked match data · weighted winrate/pickrate."}
-        </p>
       </div>
     </main>
   );
