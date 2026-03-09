@@ -912,7 +912,11 @@
   display: block;
   color: var(--ink);
   text-decoration: none;
-  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
   line-height: 1.3;
 }
 
