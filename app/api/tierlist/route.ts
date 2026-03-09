@@ -78,7 +78,8 @@ function buildHardcodedPlaceholder(): TierlistResponse {
       .slice()
       .sort((a, b) => b.score - a.score);
     champs.forEach((c, idx) => {
-      const tier = tierByRank(idx, champs.length);
+      let tier = tierByRank(idx, champs.length);
+      if (c.winRate >= 55 && tier !== "S") tier = "A";
       roles[role][tier].push(c);
     });
   }
@@ -172,7 +173,7 @@ async function tryBuildFromCache(): Promise<TierlistResponse | null> {
     const champs: ChampStats[] = [...(roleChampionAgg.get(role)?.values() ?? [])].map((c) => {
       const winRate = c.games ? (c.wins / c.games) * 100 : 0;
       const pickRate = (c.games / totalRoleGames) * 100;
-      const score = winRate * 0.78 + pickRate * 0.22;
+      const score = winRate * 2 + pickRate * 0.3;
       return {
         championId: c.championId, championName: c.championName,
         games: c.games, wins: c.wins,
@@ -183,7 +184,8 @@ async function tryBuildFromCache(): Promise<TierlistResponse | null> {
     });
     champs.sort((a, b) => b.score - a.score || b.games - a.games || b.winRate - a.winRate);
     champs.forEach((c, idx) => {
-      const tier = c.games < 6 ? "F" : tierByRank(idx, champs.length);
+      let tier: TierKey = c.games < 6 ? "F" : tierByRank(idx, champs.length);
+      if (c.winRate >= 55 && tier !== "S") tier = "A";
       roles[role][tier].push(c);
     });
   }
