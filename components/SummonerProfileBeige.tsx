@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { buildProfileHref } from "@/lib/routes";
@@ -1100,6 +1100,11 @@ export default function SummonerProfileBeige({
         </div>
       </section>
 
+      <div className="profile-ad-slot profile-ad-slot-top" role="complementary" aria-label="Top banner ad placeholder">
+        <span className="profile-ad-slot-label">Ad sample</span>
+        <span className="profile-ad-slot-size">728x90 / 970x90</span>
+      </div>
+
       <div className={`profile-body${(displayedMatches?.length ?? 0) > 0 ? " profile-body-has-right" : ""}`}>
         <aside className="profile-body-left">
           {renderRankCard("Ranked Solo", soloEntry, rankLoading, rankError ?? null)}
@@ -1281,7 +1286,8 @@ export default function SummonerProfileBeige({
           const matchId = m.metadata?.matchId ?? "";
 
           return (
-            <div key={matchId} className="profile-match-card-wrap">
+            <Fragment key={matchId}>
+            <div className="profile-match-card-wrap">
               <div
                 role="button"
                 tabIndex={0}
@@ -1735,6 +1741,13 @@ export default function SummonerProfileBeige({
                 );
               })() : null}
             </div>
+            {matchIndex === 4 && displayedMatches.length > 7 && (
+              <div className="profile-ad-slot profile-ad-slot-inline" role="complementary" aria-label="In-feed ad placeholder">
+                <span className="profile-ad-slot-label">Sponsored sample</span>
+                <span className="profile-ad-slot-size">Native / 336x280</span>
+              </div>
+            )}
+            </Fragment>
           );
         })}
         {displayedMatches.length > 0 && hasMoreByQueue[queue] !== false && (
@@ -1798,6 +1811,10 @@ export default function SummonerProfileBeige({
               recentlyPlayedWith={bundle?.recentlyPlayedWith ?? []}
               region={regionVal}
             />
+            <div className="profile-ad-slot profile-ad-slot-rail" role="complementary" aria-label="Right rail ad placeholder">
+              <span className="profile-ad-slot-label">Ad sample</span>
+              <span className="profile-ad-slot-size">300x250 / 300x600</span>
+            </div>
           </aside>
         )}
       </div>

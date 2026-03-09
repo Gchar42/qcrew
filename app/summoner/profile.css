@@ -1254,6 +1254,46 @@
   margin-top: 0;
 }
 
+/* Ad placement samples (visual placeholders only) */
+.profile-page .profile-ad-slot {
+  border: 1px dashed rgba(139, 149, 160, 0.45);
+  border-radius: 10px;
+  background: rgba(37, 43, 51, 0.45);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.profile-page .profile-ad-slot-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.profile-page .profile-ad-slot-size {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.profile-page .profile-ad-slot-top {
+  margin: 0 0 12px;
+  min-height: 54px;
+}
+
+.profile-page .profile-ad-slot-inline {
+  margin: 8px 0;
+}
+
+.profile-page .profile-ad-slot-rail {
+  min-height: 250px;
+  align-items: flex-start;
+  flex-direction: column;
+}
+
 /* Queue tab switcher: Solo or Duo | Flex */
 .profile-page .profile-queue-tabs {
   display: flex;
