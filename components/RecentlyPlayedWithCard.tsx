@@ -48,15 +48,14 @@ export default function RecentlyPlayedWithCard({
                 </div>
                 <div className="recently-played-with-name-wrap">
                   {profileUrl ? (
-                    <Link href={profileUrl} className="recently-played-with-name">
+                    <Link href={profileUrl} className="recently-played-with-name" title={entry.displayName}>
                       {entry.displayName}
                     </Link>
                   ) : (
-                    <span className="recently-played-with-name">{entry.displayName}</span>
+                    <span className="recently-played-with-name" title={entry.displayName}>{entry.displayName}</span>
                   )}
                 </div>
                 <span className="recently-played-with-wr">{winRate}%</span>
-                <span className="recently-played-with-role">{entry.primaryRole}</span>
                 <span className="recently-played-with-games">{entry.games} games</span>
               </li>
             );

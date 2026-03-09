@@ -882,7 +882,7 @@
 
 .profile-page .recently-played-with-row {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) 2.5em 3.5em 5em;
+  grid-template-columns: 28px minmax(0, 1fr) 2.5em 5em;
   align-items: center;
   gap: 8px;
   font-size: 12px;
@@ -927,13 +927,6 @@
 .profile-page .recently-played-with-wr {
   font-weight: 600;
   color: var(--ink);
-  white-space: nowrap;
-  text-align: right;
-}
-
-.profile-page .recently-played-with-role {
-  color: var(--muted);
-  font-size: 11px;
   white-space: nowrap;
   text-align: right;
 }
