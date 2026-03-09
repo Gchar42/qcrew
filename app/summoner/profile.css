@@ -882,25 +882,38 @@
 
 .profile-page .recently-played-with-row {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: 28px minmax(0, 1fr) 2.5em 3.5em 5em;
   align-items: center;
   gap: 8px;
   font-size: 12px;
   min-height: 28px;
 }
 
+.profile-page .recently-played-with-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-page .recently-played-with-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
 .profile-page .recently-played-with-name-wrap {
   min-width: 0;
-  overflow: hidden;
 }
 
 .profile-page .recently-played-with-name {
   display: block;
   color: var(--ink);
   text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
+  line-height: 1.3;
 }
 
 .profile-page .recently-played-with-name:hover {
@@ -911,18 +924,21 @@
   font-weight: 600;
   color: var(--ink);
   white-space: nowrap;
+  text-align: right;
 }
 
 .profile-page .recently-played-with-role {
   color: var(--muted);
   font-size: 11px;
   white-space: nowrap;
+  text-align: right;
 }
 
 .profile-page .recently-played-with-games {
   color: var(--muted);
   font-size: 11px;
   white-space: nowrap;
+  text-align: right;
 }
 
 .profile-page .recently-played-with-empty {

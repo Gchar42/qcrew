@@ -12,6 +12,8 @@ export type RecentlyPlayedWithEntry = {
   primaryRole: string;
   /** Position counts for tooltip/breakdown */
   roleCounts: Record<string, number>;
+  /** Profile icon ID when available (e.g. from summoner); fallback to default in UI */
+  profileIconId?: number;
 };
 
 const POSITION_LABELS: Record<string, string> = {

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { RecentlyPlayedWithEntry } from "@/lib/recentlyPlayedWith";
+import { getProfileIconUrl } from "@/lib/riotAssets";
 
 export default function RecentlyPlayedWithCard({
   recentlyPlayedWith,
@@ -35,6 +36,16 @@ export default function RecentlyPlayedWithCard({
 
             return (
               <li key={entry.puuid} className="recently-played-with-row">
+                <div className="recently-played-with-icon-wrap">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={getProfileIconUrl(entry.profileIconId ?? 29)}
+                    alt=""
+                    className="recently-played-with-icon"
+                    width={24}
+                    height={24}
+                  />
+                </div>
                 <div className="recently-played-with-name-wrap">
                   {profileUrl ? (
                     <Link href={profileUrl} className="recently-played-with-name">
