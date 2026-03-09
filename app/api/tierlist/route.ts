@@ -46,15 +46,18 @@ function normalizeRole(raw?: string): RoleKey | null {
   return null;
 }
 
-function tierByRank(index: number, total: number): TierKey {
-  if (total <= 0) return "F";
+const MIN_GAMES_FOR_TIERLIST = 500;
+
+function tierByRank(index: number, total: number, winRate: number): TierKey {
+  if (total <= 0) return "D";
+  if (winRate < 47) return "F";
   const p = ((index + 1) / total) * 100;
   if (p <= 10) return "S";
+  if (winRate >= 55) return "S";
   if (p <= 30) return "A";
   if (p <= 55) return "B";
-  if (p <= 75) return "C";
-  if (p <= 90) return "D";
-  return "F";
+  if (p <= 80) return "C";
+  return "D";
 }
 
 function hasAnyChampions(roles: Record<RoleKey, Record<TierKey, ChampStats[]>>): boolean {
@@ -75,11 +78,10 @@ function buildHardcodedPlaceholder(): TierlistResponse {
 
   for (const role of ALL_ROLES) {
     const champs: PublicPlaceholderChamp[] = PUBLIC_PLACEHOLDER_BY_ROLE[role]
-      .slice()
+      .filter((c) => c.games >= MIN_GAMES_FOR_TIERLIST)
       .sort((a, b) => b.score - a.score);
     champs.forEach((c, idx) => {
-      let tier = tierByRank(idx, champs.length);
-      if (c.winRate >= 55 && tier !== "S") tier = "A";
+      const tier = tierByRank(idx, champs.length, c.winRate);
       roles[role][tier].push(c);
     });
   }
@@ -173,7 +175,7 @@ async function tryBuildFromCache(): Promise<TierlistResponse | null> {
     const champs: ChampStats[] = [...(roleChampionAgg.get(role)?.values() ?? [])].map((c) => {
       const winRate = c.games ? (c.wins / c.games) * 100 : 0;
       const pickRate = (c.games / totalRoleGames) * 100;
-      const score = winRate * 2 + pickRate * 0.3;
+      const score = winRate * 3 + pickRate * 0.2;
       return {
         championId: c.championId, championName: c.championName,
         games: c.games, wins: c.wins,
@@ -183,9 +185,9 @@ async function tryBuildFromCache(): Promise<TierlistResponse | null> {
       };
     });
     champs.sort((a, b) => b.score - a.score || b.games - a.games || b.winRate - a.winRate);
-    champs.forEach((c, idx) => {
-      let tier: TierKey = c.games < 6 ? "F" : tierByRank(idx, champs.length);
-      if (c.winRate >= 55 && tier !== "S") tier = "A";
+    const eligible = champs.filter((c) => c.games >= 6);
+    eligible.forEach((c, idx) => {
+      const tier = tierByRank(idx, eligible.length, c.winRate);
       roles[role][tier].push(c);
     });
   }
@@ -217,7 +219,7 @@ async function tryBuildFromSnapshot(): Promise<TierlistResponse | null> {
   for (const role of ALL_ROLES) {
     const champs = (scraped[role] ?? []).slice().sort((a, b) => b.score - a.score);
     champs.forEach((c, idx) => {
-      const tier = tierByRank(idx, champs.length);
+      const tier = tierByRank(idx, champs.length, c.winRate);
       roles[role][tier].push({
         championId: 0, championName: c.championName,
         games: 0, wins: 0,
