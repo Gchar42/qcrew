@@ -67,13 +67,13 @@ export function SavedSummonersList() {
         </ul>
       </section>
       <section className="min-w-0">
-          <div className="flex items-center justify-between mb-2">
+          <div className="relative mb-2 text-center">
             <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">
               Favorites
             </h2>
             <Link
               href="/favorites"
-              className="text-xs text-indigo-400 hover:text-indigo-300"
+              className="absolute right-0 top-1/2 -translate-y-1/2 text-xs text-indigo-400 hover:text-indigo-300"
             >
               View all
             </Link>
