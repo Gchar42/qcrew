@@ -1,5 +1,4 @@
-﻿import Link from "next/link";
-import "./profile.css";
+﻿import "./profile.css";
 
 export default function SummonerLayout({
   children,
@@ -7,27 +6,8 @@ export default function SummonerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <div className="profile-page">
-        <nav className="profile-nav">
-          <Link href="/" className="profile-nav-logo">
-            STATGAP
-          </Link>
-          <Link href="/search" className="profile-nav-search">
-            Search summoner
-          </Link>
-          <Link href="/favorites" className="profile-nav-search">
-            Favorites
-          </Link>
-          <Link href="/tierlist" className="profile-nav-search">
-            Tierlist
-          </Link>
-          <Link href="/leaderboard" className="profile-nav-search">
-            Leaderboard
-          </Link>
-        </nav>
-        <div className="profile-container">{children}</div>
-      </div>
-    </>
+    <div className="profile-page">
+      <div className="profile-container">{children}</div>
+    </div>
   );
 }

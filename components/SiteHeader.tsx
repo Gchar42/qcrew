@@ -17,6 +17,12 @@ export default function SiteHeader() {
         </span>
       </Link>
       <nav className="flex items-center gap-7 text-sm text-white/55">
+        <Link href="/search" className="transition hover:text-white">
+          Search summoner
+        </Link>
+        <Link href="/favorites" className="transition hover:text-white">
+          Favorites
+        </Link>
         <Link href="/tierlist" className="transition hover:text-white">
           Tierlist
         </Link>
