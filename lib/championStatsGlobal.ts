@@ -87,7 +87,7 @@ const JG_CLEAR_TIMES: RawEntry[] = [
   { name: "Fizz", val: 163, games: 99000, extra: { blueSide: fmt(163), redSide: fmt(164) } },
   { name: "Shaco", val: 164, games: 282000, extra: { blueSide: fmt(164), redSide: fmt(165) } },
   { name: "JarvanIV", val: 164, games: 392000, extra: { blueSide: fmt(163), redSide: fmt(166) } },
-  { name: "Ambessa", val: 165, games: 235000, extra: { blueSide: fmt(164), redSide: fmt(166) } },
+  { name: "Wukong", val: 165, games: 235000, extra: { blueSide: fmt(164), redSide: fmt(166) } },
   { name: "Shyvana", val: 165, games: 74000, extra: { blueSide: fmt(165), redSide: fmt(166) } },
   { name: "Sejuani", val: 166, games: 134000, extra: { blueSide: fmt(165), redSide: fmt(166) } },
   { name: "Diana", val: 166, games: 346000, extra: { blueSide: fmt(166), redSide: fmt(166) } },
@@ -100,7 +100,7 @@ const JG_CLEAR_TIMES: RawEntry[] = [
   { name: "Nocturne", val: 168, games: 215000, extra: { blueSide: fmt(167), redSide: fmt(169) } },
   { name: "LeeSin", val: 170, games: 890000, extra: { blueSide: fmt(169), redSide: fmt(171) } },
   { name: "Warwick", val: 170, games: 312000, extra: { blueSide: fmt(169), redSide: fmt(171) } },
-  { name: "Xinzhao", val: 170, games: 195000, extra: { blueSide: fmt(170), redSide: fmt(171) } },
+  { name: "XinZhao", val: 170, games: 195000, extra: { blueSide: fmt(170), redSide: fmt(171) } },
   { name: "Amumu", val: 171, games: 285000, extra: { blueSide: fmt(170), redSide: fmt(172) } },
   { name: "Lillia", val: 168, games: 340000, extra: { blueSide: fmt(167), redSide: fmt(169) } },
   { name: "Nidalee", val: 172, games: 178000, extra: { blueSide: fmt(171), redSide: fmt(173) } },
@@ -128,7 +128,7 @@ const OBJ_CONTROL: RawEntry[] = [
   { name: "Lillia", val: 55.4, games: 340000 },
   { name: "Karthus", val: 55.1, games: 89000 },
   { name: "RekSai", val: 54.8, games: 120000 },
-  { name: "Xinzhao", val: 54.5, games: 195000 },
+  { name: "XinZhao", val: 54.5, games: 195000 },
 ];
 
 const FIRST_DRAGON: RawEntry[] = [
@@ -151,7 +151,7 @@ const FIRST_DRAGON: RawEntry[] = [
   { name: "Lillia", val: 56.2, games: 340000 },
   { name: "RekSai", val: 55.5, games: 120000 },
   { name: "Sejuani", val: 54.9, games: 134000 },
-  { name: "Xinzhao", val: 54.1, games: 195000 },
+  { name: "XinZhao", val: 54.1, games: 195000 },
 ];
 
 const SCUTTLE: RawEntry[] = [
@@ -167,7 +167,7 @@ const SCUTTLE: RawEntry[] = [
   { name: "Diana", val: 65.4, games: 346000 },
   { name: "Warwick", val: 64.8, games: 312000 },
   { name: "Nocturne", val: 64.1, games: 215000 },
-  { name: "Xinzhao", val: 63.5, games: 195000 },
+  { name: "XinZhao", val: 63.5, games: 195000 },
   { name: "RekSai", val: 62.8, games: 120000 },
   { name: "Elise", val: 62.1, games: 165000 },
   { name: "Nidalee", val: 61.5, games: 178000 },
@@ -193,7 +193,7 @@ const COUNTER_JG: RawEntry[] = [
   { name: "JarvanIV", val: 8.8, games: 392000 },
   { name: "Nocturne", val: 8.4, games: 215000 },
   { name: "Diana", val: 8.1, games: 346000 },
-  { name: "Xinzhao", val: 7.8, games: 195000 },
+  { name: "XinZhao", val: 7.8, games: 195000 },
   { name: "Lillia", val: 7.5, games: 340000 },
   { name: "Volibear", val: 7.1, games: 189000 },
   { name: "Amumu", val: 6.5, games: 285000 },
@@ -210,7 +210,7 @@ const GANK_SUCCESS: RawEntry[] = [
   { name: "Hecarim", val: 63.2, games: 241000 },
   { name: "Amumu", val: 62.5, games: 285000 },
   { name: "Sejuani", val: 61.9, games: 134000 },
-  { name: "Xinzhao", val: 61.2, games: 195000 },
+  { name: "XinZhao", val: 61.2, games: 195000 },
   { name: "Warwick", val: 60.8, games: 312000 },
   { name: "Volibear", val: 60.1, games: 189000 },
   { name: "Viego", val: 59.5, games: 788000 },
@@ -242,7 +242,7 @@ const KDA_DATA: RawEntry[] = [
   { name: "Nocturne", val: 2.45, games: 215000 },
   { name: "Udyr", val: 2.42, games: 105000 },
   { name: "Volibear", val: 2.38, games: 189000 },
-  { name: "Xinzhao", val: 2.35, games: 195000 },
+  { name: "XinZhao", val: 2.35, games: 195000 },
   { name: "Shaco", val: 2.31, games: 282000 },
   { name: "RekSai", val: 2.28, games: 120000 },
   { name: "Nidalee", val: 2.25, games: 178000 },
@@ -267,7 +267,7 @@ const KILL_PART: RawEntry[] = [
   { name: "Volibear", val: 60.1, games: 189000 },
   { name: "Warwick", val: 59.5, games: 312000 },
   { name: "Nocturne", val: 58.8, games: 215000 },
-  { name: "Xinzhao", val: 58.1, games: 195000 },
+  { name: "XinZhao", val: 58.1, games: 195000 },
   { name: "Graves", val: 57.5, games: 437000 },
   { name: "Udyr", val: 56.8, games: 105000 },
   { name: "Shaco", val: 55.2, games: 282000 },
@@ -291,7 +291,7 @@ const SOLO_KILLS: RawEntry[] = [
   { name: "Diana", val: 1.18, games: 346000 },
   { name: "Hecarim", val: 1.15, games: 241000 },
   { name: "JarvanIV", val: 1.08, games: 392000 },
-  { name: "Xinzhao", val: 1.05, games: 195000 },
+  { name: "XinZhao", val: 1.05, games: 195000 },
   { name: "Volibear", val: 1.02, games: 189000 },
   { name: "Amumu", val: 0.85, games: 285000 },
   { name: "Sejuani", val: 0.72, games: 134000 },
@@ -306,7 +306,7 @@ const FIRST_BLOOD: RawEntry[] = [
   { name: "Nidalee", val: 23.8, games: 178000 },
   { name: "RekSai", val: 23.1, games: 120000 },
   { name: "Hecarim", val: 22.5, games: 241000 },
-  { name: "Xinzhao", val: 22.1, games: 195000 },
+  { name: "XinZhao", val: 22.1, games: 195000 },
   { name: "Warwick", val: 21.5, games: 312000 },
   { name: "Viego", val: 20.8, games: 788000 },
   { name: "Nocturne", val: 20.2, games: 215000 },
@@ -340,7 +340,7 @@ const DEATHS: RawEntry[] = [
   { name: "Sejuani", val: 6.7, games: 134000 },
   { name: "Udyr", val: 6.8, games: 105000 },
   { name: "Volibear", val: 6.9, games: 189000 },
-  { name: "Xinzhao", val: 7.0, games: 195000 },
+  { name: "XinZhao", val: 7.0, games: 195000 },
 ];
 
 const DMG_PER_MIN: RawEntry[] = [
@@ -360,14 +360,14 @@ const DMG_PER_MIN: RawEntry[] = [
   { name: "JarvanIV", val: 975, games: 392000 },
   { name: "Warwick", val: 958, games: 312000 },
   { name: "Udyr", val: 942, games: 105000 },
-  { name: "Xinzhao", val: 925, games: 195000 },
+  { name: "XinZhao", val: 925, games: 195000 },
   { name: "Volibear", val: 908, games: 189000 },
   { name: "Amumu", val: 895, games: 285000 },
   { name: "Sejuani", val: 768, games: 134000 },
 ];
 
 const WIN_RATES: RawEntry[] = [
-  { name: "Ambessa", val: 54.2, games: 235000 },
+  { name: "Wukong", val: 54.2, games: 235000 },
   { name: "Viego", val: 52.8, games: 788000 },
   { name: "Hecarim", val: 52.5, games: 241000 },
   { name: "Shyvana", val: 52.3, games: 74000 },
@@ -386,7 +386,7 @@ const WIN_RATES: RawEntry[] = [
   { name: "LeeSin", val: 49.2, games: 890000 },
   { name: "Nocturne", val: 49.0, games: 215000 },
   { name: "Karthus", val: 48.8, games: 89000 },
-  { name: "Xinzhao", val: 48.5, games: 195000 },
+  { name: "XinZhao", val: 48.5, games: 195000 },
   { name: "Shaco", val: 48.2, games: 282000 },
   { name: "RekSai", val: 48.0, games: 120000 },
   { name: "Elise", val: 47.5, games: 165000 },
@@ -407,10 +407,10 @@ const PICK_RATES: RawEntry[] = [
   { name: "Amumu", val: 5.1, games: 285000 },
   { name: "Shaco", val: 4.8, games: 282000 },
   { name: "DrMundo", val: 4.5, games: 253000 },
-  { name: "Ambessa", val: 4.2, games: 235000 },
+  { name: "Wukong", val: 4.2, games: 235000 },
   { name: "Hecarim", val: 4.0, games: 241000 },
   { name: "Nocturne", val: 3.8, games: 215000 },
-  { name: "Xinzhao", val: 3.5, games: 195000 },
+  { name: "XinZhao", val: 3.5, games: 195000 },
   { name: "Volibear", val: 3.2, games: 189000 },
   { name: "Fiddlesticks", val: 3.0, games: 184000 },
   { name: "Nidalee", val: 2.8, games: 178000 },
@@ -418,7 +418,7 @@ const PICK_RATES: RawEntry[] = [
 ];
 
 const BAN_RATES: RawEntry[] = [
-  { name: "Ambessa", val: 32.5, games: 235000 },
+  { name: "Wukong", val: 32.5, games: 235000 },
   { name: "Viego", val: 18.2, games: 788000 },
   { name: "Shaco", val: 15.8, games: 282000 },
   { name: "Kayn", val: 12.5, games: 655000 },
@@ -437,7 +437,7 @@ const BAN_RATES: RawEntry[] = [
   { name: "Udyr", val: 1.5, games: 105000 },
   { name: "Amumu", val: 1.2, games: 285000 },
   { name: "Sejuani", val: 0.8, games: 134000 },
-  { name: "Xinzhao", val: 0.5, games: 195000 },
+  { name: "XinZhao", val: 0.5, games: 195000 },
 ];
 
 const GAME_DUR: RawEntry[] = [
@@ -456,7 +456,7 @@ const GAME_DUR: RawEntry[] = [
   { name: "Diana", val: 1815, games: 346000 },
   { name: "Warwick", val: 1830, games: 312000 },
   { name: "Udyr", val: 1845, games: 105000 },
-  { name: "Xinzhao", val: 1860, games: 195000 },
+  { name: "XinZhao", val: 1860, games: 195000 },
   { name: "Amumu", val: 1875, games: 285000 },
   { name: "Volibear", val: 1890, games: 189000 },
   { name: "Fiddlesticks", val: 1905, games: 184000 },
@@ -480,7 +480,7 @@ const GOLD_PM: RawEntry[] = [
   { name: "Nocturne", val: 372, games: 215000 },
   { name: "JarvanIV", val: 368, games: 392000 },
   { name: "Warwick", val: 365, games: 312000 },
-  { name: "Xinzhao", val: 362, games: 195000 },
+  { name: "XinZhao", val: 362, games: 195000 },
   { name: "Volibear", val: 358, games: 189000 },
   { name: "Amumu", val: 342, games: 285000 },
   { name: "Sejuani", val: 328, games: 134000 },
@@ -504,7 +504,7 @@ const CS_PM: RawEntry[] = [
   { name: "Nocturne", val: 5.72, games: 215000 },
   { name: "LeeSin", val: 5.65, games: 890000 },
   { name: "Warwick", val: 5.52, games: 312000 },
-  { name: "Xinzhao", val: 5.42, games: 195000 },
+  { name: "XinZhao", val: 5.42, games: 195000 },
   { name: "Sejuani", val: 5.28, games: 134000 },
   { name: "Elise", val: 5.15, games: 165000 },
 ];
@@ -527,7 +527,7 @@ const CS_15: RawEntry[] = [
   { name: "Nocturne", val: 80, games: 215000 },
   { name: "LeeSin", val: 78, games: 890000 },
   { name: "Warwick", val: 76, games: 312000 },
-  { name: "Xinzhao", val: 74, games: 195000 },
+  { name: "XinZhao", val: 74, games: 195000 },
   { name: "Sejuani", val: 72, games: 134000 },
   { name: "Elise", val: 68, games: 165000 },
 ];
@@ -549,7 +549,7 @@ const GOLD_15: RawEntry[] = [
   { name: "Nocturne", val: 5340, games: 215000 },
   { name: "JarvanIV", val: 5300, games: 392000 },
   { name: "Warwick", val: 5260, games: 312000 },
-  { name: "Xinzhao", val: 5220, games: 195000 },
+  { name: "XinZhao", val: 5220, games: 195000 },
   { name: "Volibear", val: 5180, games: 189000 },
   { name: "Amumu", val: 5120, games: 285000 },
   { name: "Sejuani", val: 5040, games: 134000 },
@@ -564,7 +564,7 @@ const PLATES: RawEntry[] = [
   { name: "Volibear", val: 0.28, games: 189000 },
   { name: "Warwick", val: 0.25, games: 312000 },
   { name: "Nocturne", val: 0.22, games: 215000 },
-  { name: "Xinzhao", val: 0.20, games: 195000 },
+  { name: "XinZhao", val: 0.20, games: 195000 },
   { name: "Kayn", val: 0.18, games: 655000 },
   { name: "Graves", val: 0.15, games: 437000 },
   { name: "Diana", val: 0.12, games: 346000 },
@@ -596,7 +596,7 @@ const XP_15: RawEntry[] = [
   { name: "LeeSin", val: 7520, games: 890000 },
   { name: "Warwick", val: 7450, games: 312000 },
   { name: "Volibear", val: 7380, games: 189000 },
-  { name: "Xinzhao", val: 7320, games: 195000 },
+  { name: "XinZhao", val: 7320, games: 195000 },
   { name: "Sejuani", val: 7250, games: 134000 },
   { name: "Elise", val: 7180, games: 165000 },
 ];

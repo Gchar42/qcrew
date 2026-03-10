@@ -252,7 +252,14 @@ function formatChampName(key: string): string {
   if (key === "JarvanIV") return "Jarvan IV";
   if (key === "LeeSin") return "Lee Sin";
   if (key === "RekSai") return "Rek'Sai";
-  if (key === "Xinzhao") return "Xin Zhao";
+  if (key === "XinZhao") return "Xin Zhao";
+  if (key === "MonkeyKing" || key === "Wukong") return "Wukong";
+  if (key === "MasterYi") return "Master Yi";
+  if (key === "MissFortune") return "Miss Fortune";
+  if (key === "TwistedFate") return "Twisted Fate";
+  if (key === "TahmKench") return "Tahm Kench";
+  if (key === "KogMaw") return "Kog'Maw";
+  if (key === "KhaZix") return "Kha'Zix";
   return key.replace(/([A-Z])/g, " $1").trim();
 }
 
