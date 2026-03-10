@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, Suspense } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getChampionSquareUrl } from "@/lib/riotAssets";
 
@@ -25,6 +25,7 @@ type StatsResponse = {
   entries: ChampionEntry[];
   source: string;
   filters: { rank: string; region: string; period: string };
+  filterOptions: { ranks: string[]; regions: string[]; periods: string[] };
 };
 
 const GROUP_ICONS: Record<string, string> = {
@@ -34,6 +35,63 @@ const GROUP_ICONS: Record<string, string> = {
   lane: "🏰",
 };
 
+function FilterDropdown({
+  label,
+  value,
+  options,
+  onChange,
+  color,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (v: string) => void;
+  color?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 rounded-lg bg-[#151620] border border-white/10 px-3 py-1.5 hover:border-white/20 transition"
+      >
+        <span className="text-[10px] text-white/30 uppercase">{label}</span>
+        <span className={`text-sm font-medium ${color ?? "text-white/70"}`}>{value}</span>
+        <svg className="h-3 w-3 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-50 rounded-lg bg-[#1a1d2e] border border-white/10 shadow-xl py-1 min-w-[140px] max-h-64 overflow-y-auto">
+          {options.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => { onChange(opt); setOpen(false); }}
+              className={`w-full text-left px-3 py-1.5 text-sm transition ${
+                opt === value
+                  ? "bg-[#5865F2]/15 text-[#7B8CFF] font-medium"
+                  : "text-white/60 hover:bg-white/5 hover:text-white/80"
+              }`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ChampionsPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -42,32 +100,36 @@ function ChampionsPageInner() {
   const [data, setData] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [rank, setRank] = useState("Emerald+");
+  const [region, setRegion] = useState("ALL");
+  const [period, setPeriod] = useState("30 days");
 
-  const fetchData = useCallback(async (stat: string) => {
+  const fetchData = useCallback(async (stat: string, r: string, reg: string, per: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/champion-stats-global?stat=${encodeURIComponent(stat)}`);
+      const params = new URLSearchParams({ stat, rank: r, region: reg, period: per });
+      const res = await fetch(`/api/champion-stats-global?${params}`);
       if (res.ok) setData(await res.json());
     } catch { /* ok */ }
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(activeStat); }, [activeStat, fetchData]);
+  useEffect(() => { fetchData(activeStat, rank, region, period); }, [activeStat, rank, region, period, fetchData]);
 
   const setStat = (statId: string) => {
     router.push(`/champions?stat=${statId}`, { scroll: false });
   };
 
   const filteredEntries = data?.entries.filter((e) =>
-    !search || e.championName.toLowerCase().includes(search.toLowerCase())
+    !search || formatChampName(e.championName).toLowerCase().includes(search.toLowerCase())
   ) ?? [];
 
   const maxValue = filteredEntries.length > 0 ? Math.max(...filteredEntries.map((e) => e.value)) : 1;
   const minValue = filteredEntries.length > 0 ? Math.min(...filteredEntries.map((e) => e.value)) : 0;
 
+  const cat = data?.categories.find((c) => c.id === activeStat);
   const isLowerBetter = activeStat === "fullClearTime" || activeStat === "deathsPerGame" || activeStat === "avgGameDuration";
-  const barBase = isLowerBetter ? minValue : 0;
-  const barMax = isLowerBetter ? maxValue : maxValue;
+  const showExtraCols = activeStat === "fullClearTime";
 
   return (
     <main className="min-h-screen bg-[#0E0F15] text-[#E8E9F0]">
@@ -94,17 +156,17 @@ function ChampionsPageInner() {
                   </div>
                   {data.categories
                     .filter((c) => c.group === group.id)
-                    .map((cat) => (
+                    .map((c) => (
                       <button
-                        key={cat.id}
-                        onClick={() => setStat(cat.id)}
+                        key={c.id}
+                        onClick={() => setStat(c.id)}
                         className={`w-full text-left px-3 py-1.5 text-sm rounded-lg transition ${
-                          activeStat === cat.id
+                          activeStat === c.id
                             ? "bg-[#5865F2]/15 text-[#7B8CFF] font-medium"
                             : "text-white/50 hover:text-white/80 hover:bg-white/5"
                         }`}
                       >
-                        {cat.label}
+                        {c.label}
                       </button>
                     ))}
                 </div>
@@ -125,8 +187,8 @@ function ChampionsPageInner() {
                   <optgroup key={group.id} label={group.label}>
                     {data.categories
                       .filter((c) => c.group === group.id)
-                      .map((cat) => (
-                        <option key={cat.id} value={cat.id}>{cat.label}</option>
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>{c.label}</option>
                       ))}
                   </optgroup>
                 ))}
@@ -135,18 +197,25 @@ function ChampionsPageInner() {
 
             {/* Filters bar */}
             <div className="flex flex-wrap items-center gap-3 mb-5">
-              <div className="flex items-center gap-2 rounded-lg bg-[#151620] border border-white/10 px-3 py-1.5">
-                <span className="text-[10px] text-white/30 uppercase">Rank</span>
-                <span className="text-sm text-emerald-400 font-medium">{data?.filters.rank ?? "Emerald+"}</span>
-              </div>
-              <div className="flex items-center gap-2 rounded-lg bg-[#151620] border border-white/10 px-3 py-1.5">
-                <span className="text-[10px] text-white/30 uppercase">Region</span>
-                <span className="text-sm text-white/70 font-medium">{data?.filters.region ?? "ALL"}</span>
-              </div>
-              <div className="flex items-center gap-2 rounded-lg bg-[#151620] border border-white/10 px-3 py-1.5">
-                <span className="text-[10px] text-white/30 uppercase">Period</span>
-                <span className="text-sm text-white/70 font-medium">{data?.filters.period ?? "30 days"}</span>
-              </div>
+              <FilterDropdown
+                label="Rank"
+                value={rank}
+                options={data?.filterOptions.ranks ?? ["Emerald+"]}
+                onChange={setRank}
+                color="text-emerald-400"
+              />
+              <FilterDropdown
+                label="Region"
+                value={region}
+                options={data?.filterOptions.regions ?? ["ALL"]}
+                onChange={setRegion}
+              />
+              <FilterDropdown
+                label="Period"
+                value={period}
+                options={data?.filterOptions.periods ?? ["30 days"]}
+                onChange={setPeriod}
+              />
               <div className="flex-1" />
               <input
                 type="text"
@@ -157,24 +226,23 @@ function ChampionsPageInner() {
               />
             </div>
 
-            {/* Stat header */}
+            {/* Table */}
             <div className="rounded-xl border border-white/10 bg-[#151620] overflow-hidden">
-              <div className="grid grid-cols-[40px_44px_1fr_minmax(110px,140px)_minmax(80px,100px)_minmax(80px,100px)_70px] items-center px-4 py-3 border-b border-white/10 text-[10px] text-white/35 uppercase tracking-wider font-semibold">
+              <div className={`grid items-center px-4 py-3 border-b border-white/10 text-[10px] text-white/35 uppercase tracking-wider font-semibold ${
+                showExtraCols
+                  ? "grid-cols-[40px_44px_1fr_minmax(110px,140px)_minmax(80px,100px)_minmax(80px,100px)_70px]"
+                  : "grid-cols-[40px_44px_1fr_minmax(160px,220px)_70px]"
+              }`}>
                 <div className="text-center">#</div>
                 <div></div>
                 <div>Champion</div>
-                <div className="text-center font-bold text-white/50">{data?.category.label ?? "Stat"}</div>
-                {activeStat === "fullClearTime" ? (
+                <div className="text-center font-bold text-white/50">{cat?.label ?? "Stat"}</div>
+                {showExtraCols ? (
                   <>
                     <div className="text-center">Blue Side</div>
                     <div className="text-center">Red Side</div>
                   </>
-                ) : (
-                  <>
-                    <div></div>
-                    <div></div>
-                  </>
-                )}
+                ) : null}
                 <div className="text-center">Games</div>
               </div>
 
@@ -186,15 +254,17 @@ function ChampionsPageInner() {
 
               {!loading && filteredEntries.map((entry, idx) => {
                 const barWidth = isLowerBetter
-                  ? Math.max(5, ((barMax - entry.value) / Math.max(1, barMax - barBase)) * 100)
-                  : Math.max(5, (entry.value / barMax) * 100);
+                  ? Math.max(5, ((maxValue - entry.value) / Math.max(1, maxValue - minValue)) * 100)
+                  : Math.max(5, (entry.value / maxValue) * 100);
 
                 return (
                   <div
                     key={entry.championName}
-                    className={`grid grid-cols-[40px_44px_1fr_minmax(110px,140px)_minmax(80px,100px)_minmax(80px,100px)_70px] items-center px-4 py-2.5 border-b border-white/5 hover:bg-white/[0.02] transition ${
-                      idx === 0 ? "bg-amber-500/[0.03]" : idx === 1 ? "bg-white/[0.015]" : idx === 2 ? "bg-white/[0.01]" : ""
-                    }`}
+                    className={`grid items-center px-4 py-2.5 border-b border-white/5 hover:bg-white/[0.02] transition ${
+                      showExtraCols
+                        ? "grid-cols-[40px_44px_1fr_minmax(110px,140px)_minmax(80px,100px)_minmax(80px,100px)_70px]"
+                        : "grid-cols-[40px_44px_1fr_minmax(160px,220px)_70px]"
+                    } ${idx === 0 ? "bg-amber-500/[0.03]" : idx === 1 ? "bg-white/[0.015]" : idx === 2 ? "bg-white/[0.01]" : ""}`}
                   >
                     <div className={`text-center text-sm font-bold tabular-nums ${idx === 0 ? "text-amber-400" : idx === 1 ? "text-zinc-300" : idx === 2 ? "text-amber-600" : "text-white/30"}`}>
                       {entry.rank}
@@ -210,7 +280,7 @@ function ChampionsPageInner() {
                       {formatChampName(entry.championName)}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`text-sm font-bold tabular-nums ${idx < 3 ? "text-white" : "text-white/80"}`}>
+                      <span className={`text-sm font-bold tabular-nums flex-shrink-0 ${idx < 3 ? "text-white" : "text-white/80"}`}>
                         {entry.displayValue}
                       </span>
                       <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
@@ -220,17 +290,12 @@ function ChampionsPageInner() {
                         />
                       </div>
                     </div>
-                    {activeStat === "fullClearTime" ? (
+                    {showExtraCols ? (
                       <>
                         <div className="text-center text-xs text-blue-400/60 tabular-nums">{entry.extra?.blueSide ?? ""}</div>
                         <div className="text-center text-xs text-red-400/60 tabular-nums">{entry.extra?.redSide ?? ""}</div>
                       </>
-                    ) : (
-                      <>
-                        <div></div>
-                        <div></div>
-                      </>
-                    )}
+                    ) : null}
                     <div className="text-center text-xs text-white/30 tabular-nums">{entry.gamesFormatted}</div>
                   </div>
                 );
@@ -247,20 +312,26 @@ function ChampionsPageInner() {
   );
 }
 
+const CHAMP_DISPLAY_NAMES: Record<string, string> = {
+  DrMundo: "Dr. Mundo",
+  JarvanIV: "Jarvan IV",
+  LeeSin: "Lee Sin",
+  RekSai: "Rek'Sai",
+  XinZhao: "Xin Zhao",
+  MonkeyKing: "Wukong",
+  Wukong: "Wukong",
+  MasterYi: "Master Yi",
+  MissFortune: "Miss Fortune",
+  TwistedFate: "Twisted Fate",
+  TahmKench: "Tahm Kench",
+  KogMaw: "Kog'Maw",
+  KhaZix: "Kha'Zix",
+  BelVeth: "Bel'Veth",
+  Fiddlesticks: "Fiddlesticks",
+};
+
 function formatChampName(key: string): string {
-  if (key === "DrMundo") return "Dr. Mundo";
-  if (key === "JarvanIV") return "Jarvan IV";
-  if (key === "LeeSin") return "Lee Sin";
-  if (key === "RekSai") return "Rek'Sai";
-  if (key === "XinZhao") return "Xin Zhao";
-  if (key === "MonkeyKing" || key === "Wukong") return "Wukong";
-  if (key === "Ambessa") return "Ambessa";
-  if (key === "MasterYi") return "Master Yi";
-  if (key === "MissFortune") return "Miss Fortune";
-  if (key === "TwistedFate") return "Twisted Fate";
-  if (key === "TahmKench") return "Tahm Kench";
-  if (key === "KogMaw") return "Kog'Maw";
-  if (key === "KhaZix") return "Kha'Zix";
+  if (CHAMP_DISPLAY_NAMES[key]) return CHAMP_DISPLAY_NAMES[key];
   return key.replace(/([A-Z])/g, " $1").trim();
 }
 
