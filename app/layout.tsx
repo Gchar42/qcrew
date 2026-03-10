@@ -1,10 +1,11 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { Toaster } from "@/components/Toast";
 import { Footer } from "@/components/Footer";
 import SiteHeader from "@/components/SiteHeader";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +45,7 @@ export default function RootLayout({
         <div className="flex-1 flex flex-col"><SiteHeader />{children}</div>
         <Footer />
         <Toaster />
+        <ServiceWorkerRegister />
         <SpeedInsights />
       </body>
     </html>

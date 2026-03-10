@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/tierlist-refresh",
       "schedule": "0 6 * * 1"
+    },
+    {
+      "path": "/api/cron/profile-refresh",
+      "schedule": "0 */2 * * *"
     }
   ]
 }

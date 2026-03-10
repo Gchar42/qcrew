@@ -3,7 +3,15 @@
  * Key format: { riotId, region, label } where label is for display (e.g. "Name#Tag").
  */
 
-export type SavedSummoner = { riotId: string; region: string; label?: string };
+export type SavedSummoner = {
+  riotId: string;
+  region: string;
+  label?: string;
+  lastSeenLP?: number;
+  lastSeenTier?: string;
+  lastSeenRank?: string;
+  lastSeenAt?: number;
+};
 
 const FAVORITES_KEY = "statgap_favorites";
 const RECENT_KEY = "statgap_recent";
@@ -88,6 +96,30 @@ export function addRecent(entry: SavedSummoner): void {
   if (!s.riotId || !s.region) return;
   const list = getRecent();
   const k = keyOf(s);
+  const existing = list.find((x) => keyOf(x) === k);
+  const merged = {
+    ...s,
+    lastSeenLP: entry.lastSeenLP ?? existing?.lastSeenLP,
+    lastSeenTier: entry.lastSeenTier ?? existing?.lastSeenTier,
+    lastSeenRank: entry.lastSeenRank ?? existing?.lastSeenRank,
+    lastSeenAt: entry.lastSeenAt ?? Date.now(),
+  };
   const rest = list.filter((x) => keyOf(x) !== k);
-  safeJsonSet(RECENT_KEY, [s, ...rest].slice(0, RECENT_MAX));
+  safeJsonSet(RECENT_KEY, [merged, ...rest].slice(0, RECENT_MAX));
+}
+
+export function updateRecentLP(
+  riotId: string,
+  region: string,
+  lp: number,
+  tier?: string,
+  rank?: string
+): void {
+  const list = getRecent();
+  const k = keyOf({ riotId, region });
+  const updated = list.map((s) => {
+    if (keyOf(s) !== k) return s;
+    return { ...s, lastSeenLP: lp, lastSeenTier: tier ?? s.lastSeenTier, lastSeenRank: rank ?? s.lastSeenRank, lastSeenAt: Date.now() };
+  });
+  safeJsonSet(RECENT_KEY, updated);
 }
