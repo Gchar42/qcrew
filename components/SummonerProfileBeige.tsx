@@ -15,6 +15,7 @@ import { ChampionFirePortrait } from "@/components/ChampionFirePortrait";
 import { ChampionIcePortrait } from "@/components/ChampionIcePortrait";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
 import { ProfileSocialFeatures } from "@/components/ProfileSocialFeatures";
+import ChampionPoolView from "@/components/ChampionPoolView";
 import {
   getChampionSquareUrl,
   getChampionSplashUrl,
@@ -1116,6 +1117,7 @@ export default function SummonerProfileBeige({
         </div>
       </section>
 
+      {mainTab === "overview" ? (
       <div className={`profile-body${(displayedMatches?.length ?? 0) > 0 ? " profile-body-has-right" : ""}`}>
         <aside className="profile-body-left">
           {renderRankCard("Ranked Solo", soloEntry, rankLoading, rankError ?? null)}
@@ -1829,6 +1831,15 @@ export default function SummonerProfileBeige({
           </aside>
         )}
       </div>
+      ) : (
+      <ChampionPoolView
+        champions={championStatsToShow?.[queue === "flex" ? "flex" : "solo"]?.champions ?? []}
+        riotId={riotIdParam ?? ""}
+        region={regionVal}
+        tier={soloEntry?.tier ?? ""}
+        ddragonVersion={effectiveDdragonVersion}
+      />
+      )}
 
       {detailMatch && (
         <MatchDetailSlideOver
