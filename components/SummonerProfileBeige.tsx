@@ -14,6 +14,7 @@ import RecentlyPlayedWithCard from "@/components/RecentlyPlayedWithCard";
 import { ChampionFirePortrait } from "@/components/ChampionFirePortrait";
 import { ChampionIcePortrait } from "@/components/ChampionIcePortrait";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
+import { ProfileSocialFeatures } from "@/components/ProfileSocialFeatures";
 import {
   getChampionSquareUrl,
   getChampionSplashUrl,
@@ -1113,6 +1114,17 @@ export default function SummonerProfileBeige({
               onRefresh={() => mutate()}
             />
           )}
+          <ProfileSocialFeatures
+            riotId={riotIdParam ?? ""}
+            region={regionVal}
+            tier={soloEntry?.tier}
+            rank={soloEntry?.rank}
+            leaguePoints={soloEntry?.leaguePoints}
+            wins={soloEntry?.wins}
+            losses={soloEntry?.losses}
+            profileIconId={summoner?.profileIconId}
+            summonerLevel={summoner?.summonerLevel}
+          />
         </aside>
         <div className="profile-body-main">
       <div className="recent-matches-section">
