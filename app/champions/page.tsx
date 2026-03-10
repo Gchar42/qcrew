@@ -325,8 +325,8 @@ const CHAMP_DISPLAY_NAMES: Record<string, string> = {
   TwistedFate: "Twisted Fate",
   TahmKench: "Tahm Kench",
   KogMaw: "Kog'Maw",
-  KhaZix: "Kha'Zix",
-  BelVeth: "Bel'Veth",
+  Khazix: "Kha'Zix",
+  Belveth: "Bel'Veth",
   Fiddlesticks: "Fiddlesticks",
 };
 
