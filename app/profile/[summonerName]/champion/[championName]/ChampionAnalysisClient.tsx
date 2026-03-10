@@ -69,6 +69,20 @@ type AIResponse = {
   retryAfterMs?: number;
 };
 
+type RoleModel = {
+  riotId: string;
+  tier: string;
+  rank: string;
+  lp: number;
+  games: number;
+  winRate: number;
+  kda: number;
+  avgCsPerMin: number;
+  avgVisionScore: number;
+  avgDamageShare: number;
+  region: string;
+};
+
 const TIER_COLORS: Record<string, string> = {
   CHALLENGER: "text-amber-400",
   GRANDMASTER: "text-red-400",
@@ -131,6 +145,7 @@ export default function ChampionAnalysisClient({
   const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [region] = useState("na1");
+  const [roleModels, setRoleModels] = useState<RoleModel[]>([]);
 
   const riotId = summonerName;
 
@@ -147,6 +162,13 @@ export default function ChampionAnalysisClient({
       }
       const analysis: AnalysisData = await res.json();
       setData(analysis);
+
+      fetch(
+        `/api/champion-analysis/role-models?champion=${encodeURIComponent(championName)}&tier=${encodeURIComponent(analysis.tier)}`
+      )
+        .then((r) => (r.ok ? r.json() : { roleModels: [] }))
+        .then((d: { roleModels: RoleModel[] }) => setRoleModels(d.roleModels ?? []))
+        .catch(() => {});
 
       setAiLoading(true);
       try {
@@ -442,6 +464,78 @@ export default function ChampionAnalysisClient({
             </div>
           </div>
         </div>
+
+        {/* Players to Study */}
+        {roleModels.length > 0 && (
+          <div className="rounded-xl border border-white/10 bg-[#151620] overflow-hidden mb-8">
+            <div className="px-5 py-4 border-b border-white/10">
+              <h2 className="text-sm font-semibold text-white/80 uppercase tracking-wider">
+                Players to Study
+              </h2>
+              <p className="text-xs text-white/30 mt-1">
+                High-rank {championName} mains — see how your stats compare
+              </p>
+            </div>
+            <div className="divide-y divide-white/5">
+              {roleModels.map((model) => {
+                const modelTierColor = TIER_COLORS[model.tier.toUpperCase()] ?? "text-white/50";
+                const tierLabel = model.tier === "GRANDMASTER" ? "GM" : model.tier === "CHALLENGER" ? "Challenger" : model.tier === "MASTER" ? "Master" : model.tier.charAt(0) + model.tier.slice(1).toLowerCase();
+
+                const statDiffs = [
+                  { label: "KDA", yours: data.overall.avgKda, theirs: model.kda },
+                  { label: "CS/min", yours: data.overall.avgCsPerMin, theirs: model.avgCsPerMin },
+                  { label: "Vision", yours: data.overall.avgVisionScore, theirs: model.avgVisionScore },
+                  { label: "Dmg%", yours: data.overall.avgDamageShare, theirs: model.avgDamageShare },
+                  { label: "WR", yours: data.overall.winRate, theirs: model.winRate, pct: true },
+                ];
+
+                return (
+                  <div key={model.riotId} className="px-5 py-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <span className="text-sm font-semibold text-white/90">{model.riotId}</span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className={`text-xs font-bold ${modelTierColor}`}>
+                              {tierLabel} {model.lp} LP
+                            </span>
+                            <span className="text-[11px] text-white/30">
+                              {model.games} games · {model.winRate}% WR
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-5 gap-2">
+                      {statDiffs.map((s) => {
+                        const diff = s.theirs - s.yours;
+                        const isAhead = s.yours >= s.theirs;
+                        return (
+                          <div key={s.label} className="text-center">
+                            <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">{s.label}</div>
+                            <div className="text-xs text-white/50 mb-0.5">
+                              {s.theirs}{s.pct ? "%" : ""}
+                            </div>
+                            <div
+                              className={`text-xs font-bold ${
+                                isAhead ? "text-emerald-400" : "text-red-400"
+                              }`}
+                            >
+                              {isAhead ? "+" : ""}{(s.yours - s.theirs).toFixed(1)}{s.pct ? "%" : ""}
+                            </div>
+                            <div className="text-[10px] text-white/20">
+                              {isAhead ? "ahead" : "behind"}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* AI Analysis */}
         <div className="rounded-xl border border-white/10 bg-[#151620] overflow-hidden mb-8">
