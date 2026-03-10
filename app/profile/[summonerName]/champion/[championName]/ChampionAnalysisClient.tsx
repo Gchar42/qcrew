@@ -256,7 +256,7 @@ export default function ChampionAnalysisClient({
   return (
     <main className="min-h-screen bg-[#0E0F15] text-[#E8E9F0]">
       {/* Hero with splash art */}
-      <div className="relative h-72 overflow-hidden">
+      <div className="relative h-56 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-[center_20%] blur-sm brightness-[0.3] scale-105"
           style={{ backgroundImage: `url(${splashUrl})` }}
@@ -284,7 +284,7 @@ export default function ChampionAnalysisClient({
         </div>
       </div>
 
-      <div className="mx-auto max-w-5xl px-4 sm:px-8 pb-16 -mt-4">
+      <div className="mx-auto max-w-5xl px-4 sm:px-8 pb-16 pt-6">
         {/* Top cards row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {/* Equivalent rank */}
