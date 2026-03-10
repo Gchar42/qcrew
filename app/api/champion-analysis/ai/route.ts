@@ -38,6 +38,11 @@ Matchup data:
 - Best matchups: ${best}
 - Worst matchups: ${worst}
 
+Playstyle identity: "${data.playstyleTitle}" — ${data.playstyleDescription}
+Mastery grade: ${data.masteryGrade}
+Best win streak: ${data.bestWinStreak} games
+${data.winConditions?.length ? `Win conditions:\n${data.winConditions.map((wc) => `- ${wc.description}: ${wc.winRate}% WR (${wc.games} games)`).join("\n")}` : ""}
+
 Write exactly 3 paragraphs:
 1. Their main strengths on this champion (be specific, reference their actual stats)
 2. Their single biggest gap vs high-rank players and what it likely means about their gameplay
