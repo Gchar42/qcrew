@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getAccount, getMatch, getMatchIds, getSummoner } from "@/lib/riot-api";
 import { computeChampionAnalysis } from "@/lib/championAnalysis";
-import type { MatchDto } from "@/types/riot";
+import type { ProfileBundle } from "@/app/api/riot/profileBundle/route";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -18,71 +18,34 @@ export async function GET(request: Request) {
     );
   }
 
-  const [gameName, tagLine] = riotId.includes("#")
-    ? riotId.split("#")
-    : [riotId, "NA1"];
-
   try {
-    const account = await getAccount(region, gameName, tagLine);
-    if (!account) {
-      return NextResponse.json({ error: "Account not found" }, { status: 404 });
-    }
+    const headersList = await headers();
+    const host = headersList.get("host") ?? "localhost:3000";
+    const protocol = host.includes("localhost") ? "http" : "https";
+    const baseUrl = `${protocol}://${host}`;
 
-    const summoner = await getSummoner(region, account.puuid);
+    const bundleUrl = `${baseUrl}/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}&queue=solo`;
+    const bundleRes = await fetch(bundleUrl, { cache: "no-store" });
 
-    let leagueEntries: Array<{
-      queueType: string;
-      tier: string;
-      rank: string;
-      leaguePoints: number;
-      wins: number;
-      losses: number;
-    }> = [];
-
-    const apiKey = process.env.RIOT_API_KEY;
-    if (apiKey && summoner) {
-      const platformMap: Record<string, string> = {
-        na1: "na1", euw1: "euw1", eun1: "eun1", kr: "kr", br1: "br1",
-        jp1: "jp1", la1: "la1", la2: "la2", oc1: "oc1", tr1: "tr1",
-        ru: "ru", ph2: "ph2", sg2: "sg2", th2: "th2", tw2: "tw2", vn2: "vn2",
-      };
-      const platform = platformMap[region.toLowerCase()] ?? region;
-      const summonerId = summoner.encryptedSummonerId ?? summoner.id;
-
-      try {
-        const leagueRes = await fetch(
-          `https://${platform}.api.riotgames.com/lol/league/v4/entries/by-summoner/${summonerId}`,
-          { headers: { "X-Riot-Token": apiKey } }
-        );
-        if (leagueRes.ok) {
-          leagueEntries = await leagueRes.json();
-        }
-      } catch { /* proceed without rank data */ }
-    }
-
-    const soloEntry = leagueEntries.find((e) => e.queueType === "RANKED_SOLO_5x5");
-    const tier = soloEntry?.tier ?? "GOLD";
-    const rank = soloEntry?.rank ?? "IV";
-
-    const matchIds = await getMatchIds(region, account.puuid, 60);
-    const matches: MatchDto[] = [];
-
-    const BATCH_SIZE = 10;
-    for (let i = 0; i < matchIds.length; i += BATCH_SIZE) {
-      const batch = matchIds.slice(i, i + BATCH_SIZE);
-      const results = await Promise.allSettled(
-        batch.map((id) => getMatch(region, id))
+    if (!bundleRes.ok) {
+      const body = await bundleRes.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: body.error || "Failed to load profile" },
+        { status: bundleRes.status }
       );
-      for (const r of results) {
-        if (r.status === "fulfilled" && r.value) {
-          matches.push(r.value);
-        }
-      }
+    }
+
+    const bundle: ProfileBundle = await bundleRes.json();
+    const matches = bundle.matches ?? [];
+    const puuid = bundle.profile?.account?.puuid;
+
+    if (!puuid) {
+      return NextResponse.json({ error: "Account not found" }, { status: 404 });
     }
 
     const champMatches = matches.filter((m) =>
       m.info.participants.some(
-        (p) => p.puuid === account.puuid && p.championName === champion
+        (p) => p.puuid === puuid && p.championName === champion
       )
     );
 
@@ -93,9 +56,13 @@ export async function GET(request: Request) {
       );
     }
 
+    const soloEntry = bundle.ranked?.solo;
+    const tier = soloEntry?.tier ?? "GOLD";
+    const rank = soloEntry?.rank ?? "IV";
+
     const analysis = computeChampionAnalysis(
       matches,
-      account.puuid,
+      puuid,
       champion,
       riotId,
       region,
