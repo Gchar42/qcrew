@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 
@@ -10,7 +10,7 @@ export default function SiteHeader() {
         className="flex items-center gap-2 font-semibold text-[#E8E9F0] transition hover:opacity-90"
       >
         <span className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-[#5865F2] to-[#7289DA] text-sm">
-          📈
+          ðŸ“ˆ
         </span>
         <span>
           Stat<span className="text-[#7289DA]">Gap</span>
@@ -28,6 +28,12 @@ export default function SiteHeader() {
         </Link>
         <Link href="/leaderboard" className="transition hover:text-white">
           Leaderboard
+        </Link>
+        <Link href="/settings" className="transition hover:text-white">
+          Settings
+        </Link>
+        <Link href="/settings" className="transition hover:text-white">
+          Link Discord
         </Link>
       </nav>
     </header>
