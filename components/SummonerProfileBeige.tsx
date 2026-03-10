@@ -458,8 +458,6 @@ export default function SummonerProfileBeige({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [isFav, setIsFav] = useState(false);
-  const [pushSupported, setPushSupported] = useState(false);
-  const [pushSubscribed, setPushSubscribed] = useState(false);
 
   const account = bundle?.profile.account ?? null;
   const summoner = bundle?.profile.summoner ?? null;
@@ -654,32 +652,6 @@ export default function SummonerProfileBeige({
       return next;
     });
   }, [queue, bundle?.matches?.length, bundleFirstMatchId]);
-
-  useEffect(() => {
-    setPushSupported("serviceWorker" in navigator && "PushManager" in window);
-  }, []);
-
-  const handlePushSubscribe = useCallback(async () => {
-    try {
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-      });
-      await fetch("/api/social/push-subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subscription: sub.toJSON(),
-          riotId: riotIdParam,
-          region: regionVal,
-        }),
-      });
-      setPushSubscribed(true);
-    } catch {
-      /* user denied or error */
-    }
-  }, [riotIdParam, regionVal]);
 
   const CHAMPION_STATS_STALE_MS = 5 * 60 * 1000;
   const CHAMPION_STATS_REFRESH_THROTTLE_MS = 4 * 60 * 1000;
@@ -1098,21 +1070,6 @@ export default function SummonerProfileBeige({
               >
                 {isFav ? "★ Favorited" : "☆ Add to Favorites"}
               </button>
-            )}
-            {pushSupported && !pushSubscribed && (
-              <button
-                type="button"
-                onClick={handlePushSubscribe}
-                className="profile-badge border-amber-500/50 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 cursor-pointer"
-                title={`Notify me when ${account.gameName} ranks up`}
-              >
-                🔔 Notify on Rank Up
-              </button>
-            )}
-            {pushSubscribed && (
-              <span className="profile-badge border-emerald-500/50 bg-emerald-500/15 text-emerald-300">
-                ✓ Notifications On
-              </span>
             )}
             <button
               type="button"
