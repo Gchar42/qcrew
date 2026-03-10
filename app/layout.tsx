@@ -18,7 +18,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Statgap.gg â€“ League of Legends stats",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ??
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "https://statgap.gg")
+  ),
+  title: "Statgap.gg - League of Legends stats",
   description: "Search Riot ID and region. View match history and stats on Statgap.gg.",
 };
 
@@ -51,4 +57,3 @@ export default function RootLayout({
     </html>
   );
 }
-
