@@ -480,6 +480,7 @@ export default function SummonerProfileBeige({
   const [detailMatch, setDetailMatch] = useState<MatchDto | null>(null);
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
   const [favoriteToast, setFavoriteToast] = useState<"added" | "removed" | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
 
   const activeQueueType = queue === "flex" ? "RANKED_FLEX_SR" : "RANKED_SOLO_5x5";
 
@@ -1071,6 +1072,20 @@ export default function SummonerProfileBeige({
                 {isFav ? "★ Favorited" : "☆ Add to Favorites"}
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => {
+                const url = window.location.href;
+                navigator.clipboard.writeText(url).then(() => {
+                  setShareCopied(true);
+                  setTimeout(() => setShareCopied(false), 2000);
+                });
+              }}
+              className="profile-badge border-white/20 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white cursor-pointer"
+              title="Copy profile link"
+            >
+              {shareCopied ? "✓ Copied!" : "🔗 Share Profile"}
+            </button>
             <button
               type="button"
               onClick={handleRefreshMatchHistory}
