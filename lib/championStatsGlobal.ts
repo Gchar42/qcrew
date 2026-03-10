@@ -17,9 +17,7 @@ export type ChampionStatEntry = {
 
 export const STAT_GROUPS = [
   { id: "jungle", label: "JUNGLE" },
-  { id: "combat", label: "COMBAT" },
   { id: "game", label: "GAME" },
-  { id: "lane", label: "LANE" },
 ] as const;
 
 export const STAT_CATEGORIES: StatCategory[] = [
@@ -30,24 +28,11 @@ export const STAT_CATEGORIES: StatCategory[] = [
   { id: "counterJungleCs", label: "Counter Jungle CS", group: "jungle", format: "dec1" },
   { id: "gankSuccessRate", label: "Gank Success Rate", group: "jungle", format: "pct" },
 
-  { id: "kda", label: "KDA", group: "combat", format: "dec2" },
-  { id: "killParticipation", label: "Kill Participation", group: "combat", format: "pct" },
-  { id: "soloKills", label: "Solo Kills / Game", group: "combat", format: "dec2" },
-  { id: "firstBloodRate", label: "First Blood Rate", group: "combat", format: "pct" },
-  { id: "deathsPerGame", label: "Deaths / Game", group: "combat", lowerIsBetter: true, format: "dec1" },
-  { id: "damagePerMin", label: "Damage / min", group: "combat", format: "int" },
-
   { id: "winRate", label: "Win Rate", group: "game", format: "pct" },
   { id: "pickRate", label: "Pick Rate", group: "game", format: "pct" },
   { id: "banRate", label: "Ban Rate", group: "game", format: "pct" },
   { id: "avgGameDuration", label: "Avg Game Duration", group: "game", lowerIsBetter: true, format: "timeLong" },
   { id: "goldPerMin", label: "Gold / min", group: "game", format: "int" },
-
-  { id: "csPerMin", label: "CS / min", group: "lane", format: "dec2" },
-  { id: "csAt15", label: "CS @ 15 min", group: "lane", format: "int" },
-  { id: "goldAt15", label: "Gold @ 15 min", group: "lane", format: "gold" },
-  { id: "plateTaken", label: "Plates Taken / Game", group: "lane", format: "dec2" },
-  { id: "xpAt15", label: "XP @ 15 min", group: "lane", format: "gold" },
 ];
 
 export const RANK_OPTIONS = ["All Ranks", "Iron+", "Bronze+", "Silver+", "Gold+", "Platinum+", "Emerald+", "Diamond+", "Master+", "Grandmaster+", "Challenger"];
@@ -179,22 +164,11 @@ const EXTRACTORS: Record<string, StatExtractor> = {
   scuttleControl: (j) => ({ value: j.scuttle }),
   counterJungleCs: (j) => ({ value: j.counterJg }),
   gankSuccessRate: (j) => ({ value: j.gankSuccess }),
-  kda: (j) => ({ value: j.kda }),
-  killParticipation: (j) => ({ value: j.killPart }),
-  soloKills: (j) => ({ value: j.soloKills }),
-  firstBloodRate: (j) => ({ value: j.firstBlood }),
-  deathsPerGame: (j) => ({ value: j.deaths }),
-  damagePerMin: (j) => ({ value: j.dmgPerMin }),
   winRate: (j) => ({ value: j.winRate }),
   pickRate: (j) => ({ value: j.pickRate }),
   banRate: (j) => ({ value: j.banRate }),
   avgGameDuration: (j) => ({ value: j.gameDuration }),
   goldPerMin: (j) => ({ value: j.goldPerMin }),
-  csPerMin: (j) => ({ value: j.csPerMin }),
-  csAt15: (j) => ({ value: j.cs15 }),
-  goldAt15: (j) => ({ value: j.gold15 }),
-  plateTaken: (j) => ({ value: j.plates }),
-  xpAt15: (j) => ({ value: j.xp15 }),
 };
 
 export function getStatData(statId: string): ChampionStatEntry[] {

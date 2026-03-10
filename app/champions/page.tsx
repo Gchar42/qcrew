@@ -30,9 +30,7 @@ type StatsResponse = {
 
 const GROUP_ICONS: Record<string, string> = {
   jungle: "🌿",
-  combat: "⚔️",
   game: "🎮",
-  lane: "🏰",
 };
 
 function FilterDropdown({
@@ -135,8 +133,8 @@ function ChampionsPageInner() {
     <main className="min-h-screen bg-[#0E0F15] text-[#E8E9F0]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Champion Statistics</h1>
-          <p className="text-sm text-white/40 mt-1">Detailed champion analytics across all ranks and regions</p>
+          <h1 className="text-3xl font-bold tracking-tight">Jungle Stats</h1>
+          <p className="text-sm text-white/40 mt-1">Jungle champion analytics — clear times, objective control, and more</p>
           {data?.source === "placeholder" && (
             <span className="inline-block mt-2 text-[10px] uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded">
               Sample Data
