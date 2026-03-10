@@ -1,4 +1,4 @@
-const DDragonVersion = "14.16.1";
+const DDragonVersion = "16.5.1";
 
 /** Default Data Dragon version for item/spell/champion assets when not fetched. Use same as spells/runes. */
 export const DEFAULT_DDRAGON_VERSION = DDragonVersion;

@@ -254,6 +254,7 @@ function formatChampName(key: string): string {
   if (key === "RekSai") return "Rek'Sai";
   if (key === "XinZhao") return "Xin Zhao";
   if (key === "MonkeyKing" || key === "Wukong") return "Wukong";
+  if (key === "Ambessa") return "Ambessa";
   if (key === "MasterYi") return "Master Yi";
   if (key === "MissFortune") return "Miss Fortune";
   if (key === "TwistedFate") return "Twisted Fate";

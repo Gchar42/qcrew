@@ -87,7 +87,7 @@ const JG_CLEAR_TIMES: RawEntry[] = [
   { name: "Fizz", val: 163, games: 99000, extra: { blueSide: fmt(163), redSide: fmt(164) } },
   { name: "Shaco", val: 164, games: 282000, extra: { blueSide: fmt(164), redSide: fmt(165) } },
   { name: "JarvanIV", val: 164, games: 392000, extra: { blueSide: fmt(163), redSide: fmt(166) } },
-  { name: "Wukong", val: 165, games: 235000, extra: { blueSide: fmt(164), redSide: fmt(166) } },
+  { name: "Ambessa", val: 165, games: 235000, extra: { blueSide: fmt(164), redSide: fmt(166) } },
   { name: "Shyvana", val: 165, games: 74000, extra: { blueSide: fmt(165), redSide: fmt(166) } },
   { name: "Sejuani", val: 166, games: 134000, extra: { blueSide: fmt(165), redSide: fmt(166) } },
   { name: "Diana", val: 166, games: 346000, extra: { blueSide: fmt(166), redSide: fmt(166) } },
@@ -367,7 +367,7 @@ const DMG_PER_MIN: RawEntry[] = [
 ];
 
 const WIN_RATES: RawEntry[] = [
-  { name: "Wukong", val: 54.2, games: 235000 },
+  { name: "Ambessa", val: 54.2, games: 235000 },
   { name: "Viego", val: 52.8, games: 788000 },
   { name: "Hecarim", val: 52.5, games: 241000 },
   { name: "Shyvana", val: 52.3, games: 74000 },
@@ -407,7 +407,7 @@ const PICK_RATES: RawEntry[] = [
   { name: "Amumu", val: 5.1, games: 285000 },
   { name: "Shaco", val: 4.8, games: 282000 },
   { name: "DrMundo", val: 4.5, games: 253000 },
-  { name: "Wukong", val: 4.2, games: 235000 },
+  { name: "Ambessa", val: 4.2, games: 235000 },
   { name: "Hecarim", val: 4.0, games: 241000 },
   { name: "Nocturne", val: 3.8, games: 215000 },
   { name: "XinZhao", val: 3.5, games: 195000 },
@@ -418,7 +418,7 @@ const PICK_RATES: RawEntry[] = [
 ];
 
 const BAN_RATES: RawEntry[] = [
-  { name: "Wukong", val: 32.5, games: 235000 },
+  { name: "Ambessa", val: 32.5, games: 235000 },
   { name: "Viego", val: 18.2, games: 788000 },
   { name: "Shaco", val: 15.8, games: 282000 },
   { name: "Kayn", val: 12.5, games: 655000 },
