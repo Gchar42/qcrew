@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { getChampionSquareUrl } from "@/lib/riotAssets";
 import type { ChampionStatsSlice } from "@/app/api/riot/profileBundle/route";
 
@@ -11,9 +12,10 @@ export default function ChampionStatsCard(props: {
   ddragonVersion?: string | null;
   puuid?: string | null;
   region?: string | null;
+  riotId?: string | null;
   onRefresh?: () => void;
 }) {
-  const { championStats, ddragonVersion, puuid, region, onRefresh } = props;
+  const { championStats, ddragonVersion, puuid, region, riotId, onRefresh } = props;
   const [queue, setQueue] = React.useState<QueueKey>("solo");
   const [refreshing, setRefreshing] = React.useState(false);
   const refreshRunIdRef = React.useRef(0);
@@ -103,36 +105,58 @@ export default function ChampionStatsCard(props: {
           </span>
         ) : (
           <div className="champ_list">
-            {top7.map((r, i) => (
-              <div key={r.championId} className="champ_row">
-                <div className="champ_left">
-                  <img
-                    className="champ_icon"
-                    src={getChampionSquareUrl(r.championName, ddragonVersion)}
-                    alt=""
-                    width={32}
-                    height={32}
-                    loading={i < 3 ? "eager" : "lazy"}
-                    fetchPriority={i === 0 ? "high" : undefined}
-                  />
-                  <div className="champ_meta">
-                    <div className="champ_name">{r.championName}</div>
+            {top7.map((r, i) => {
+              const isTop5 = i < 5 && riotId;
+              const analysisHref = isTop5
+                ? `/profile/${encodeURIComponent(riotId)}/champion/${encodeURIComponent(r.championName)}`
+                : undefined;
+
+              const row = (
+                <div className={`champ_row${isTop5 ? " champ_row--linked" : ""}`}>
+                  <div className="champ_left">
+                    <img
+                      className="champ_icon"
+                      src={getChampionSquareUrl(r.championName, ddragonVersion)}
+                      alt=""
+                      width={32}
+                      height={32}
+                      loading={i < 3 ? "eager" : "lazy"}
+                      fetchPriority={i === 0 ? "high" : undefined}
+                    />
+                    <div className="champ_meta">
+                      <div className="champ_name">{r.championName}</div>
+                    </div>
                   </div>
-                </div>
-                <div className="champ_mid">
-                  <div className="kda_big">{r.kda.toFixed(2)} KDA</div>
-                  <div className="left_card_muted left_card_small">
-                    {r.avgKills.toFixed(1)} / {r.avgDeaths.toFixed(1)} / {r.avgAssists.toFixed(1)}
+                  <div className="champ_mid">
+                    <div className="kda_big">{r.kda.toFixed(2)} KDA</div>
+                    <div className="left_card_muted left_card_small">
+                      {r.avgKills.toFixed(1)} / {r.avgDeaths.toFixed(1)} / {r.avgAssists.toFixed(1)}
+                    </div>
                   </div>
-                </div>
-                <div className="champ_right">
-                  <div className="wr">{r.winRate}%</div>
-                  <div className="left_card_muted left_card_small">
-                    {r.games} games
+                  <div className="champ_right">
+                    <div className="wr">{r.winRate}%</div>
+                    <div className="left_card_muted left_card_small">
+                      {r.games} games
+                    </div>
                   </div>
+                  {isTop5 && (
+                    <div className="champ_analysis_indicator" title="AI Analysis available">
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+
+              return isTop5 ? (
+                <Link key={r.championId} href={analysisHref!} className="champ_row_link">
+                  {row}
+                </Link>
+              ) : (
+                <div key={r.championId}>{row}</div>
+              );
+            })}
           </div>
         )}
       </div>

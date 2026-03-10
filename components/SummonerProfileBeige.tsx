@@ -1126,6 +1126,7 @@ export default function SummonerProfileBeige({
               ddragonVersion={effectiveDdragonVersion}
               puuid={account.puuid}
               region={regionVal}
+              riotId={riotIdParam}
               onRefresh={() => mutate()}
             />
           )}

@@ -963,6 +963,35 @@
   border-bottom: none;
 }
 
+.profile-page .champ_row--linked {
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 6px 4px;
+  margin: 0 -4px;
+  transition: background 0.15s;
+}
+
+.profile-page .champ_row--linked:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.profile-page .champ_row_link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.profile-page .champ_analysis_indicator {
+  flex-shrink: 0;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.profile-page .champ_row--linked:hover .champ_analysis_indicator {
+  opacity: 1;
+}
+
 .profile-page .champ_left {
   display: flex;
   align-items: center;
