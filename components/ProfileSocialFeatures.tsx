@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { updateRecentLP } from "@/lib/savedSummoners";
 
@@ -46,8 +46,6 @@ export function ProfileSocialFeatures({
 }) {
   const [viewCount, setViewCount] = useState<number | null>(null);
   const [teammates, setTeammates] = useState<FrequentTeammate[]>([]);
-  const [pushSupported, setPushSupported] = useState(false);
-  const [pushSubscribed, setPushSubscribed] = useState(false);
 
   useEffect(() => {
     fetch("/api/social/profile-view", {
@@ -87,61 +85,12 @@ export function ProfileSocialFeatures({
       .catch(() => {});
   }, [riotId, region]);
 
-  useEffect(() => {
-    setPushSupported("serviceWorker" in navigator && "PushManager" in window);
-  }, []);
-
-  const handlePushSubscribe = useCallback(async () => {
-    try {
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-      });
-      await fetch("/api/social/push-subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subscription: sub.toJSON(),
-          riotId,
-          region,
-        }),
-      });
-      setPushSubscribed(true);
-    } catch {
-      /* user denied or error */
-    }
-  }, [riotId, region]);
-
   return (
     <div className="space-y-4">
       {/* View count */}
       {viewCount !== null && viewCount > 0 && (
         <div className="text-xs text-white/30">
           Viewed {viewCount} time{viewCount !== 1 ? "s" : ""} this week
-        </div>
-      )}
-
-      {/* Push notification bell */}
-      {pushSupported && !pushSubscribed && (
-        <button
-          type="button"
-          onClick={handlePushSubscribe}
-          className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#151620] px-3 py-1.5 text-xs text-white/50 hover:text-white transition"
-          title={`Notify me when ${riotId} ranks up`}
-        >
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-          Notify on rank up
-        </button>
-      )}
-      {pushSubscribed && (
-        <div className="flex items-center gap-1.5 text-xs text-emerald-400">
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-          Notifications enabled
         </div>
       )}
 
