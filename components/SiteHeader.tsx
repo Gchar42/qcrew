@@ -27,6 +27,9 @@ export default function SiteHeader() {
         <Link href="/tierlist" className="transition hover:text-white">
           Tierlist
         </Link>
+        <Link href="/champions" className="transition hover:text-white">
+          Champions
+        </Link>
         <Link href="/leaderboard" className="transition hover:text-white">
           Leaderboard
         </Link>
