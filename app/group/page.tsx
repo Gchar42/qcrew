@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -55,6 +55,20 @@ function winRate(w: number, l: number) {
 }
 
 export default function GroupPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#0E0F15] text-[#E8E9F0] flex items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-[#5865F2]" />
+        </main>
+      }
+    >
+      <GroupPageInner />
+    </Suspense>
+  );
+}
+
+function GroupPageInner() {
   const searchParams = useSearchParams();
   const playersParam = searchParams.get("p") ?? "";
   const region = searchParams.get("region") ?? "na1";
