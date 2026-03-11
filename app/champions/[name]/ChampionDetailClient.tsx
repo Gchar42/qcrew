@@ -316,7 +316,7 @@ function RunesCard({ build, getPerkIcon, getStyleIcon }: {
             <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">{p.tree}</span>
           </div>
           {/* Keystone */}
-          <div className="flex items-center gap-3 mb-3 p-2.5 rounded-xl" style={{ background: "rgba(99, 102, 241, 0.08)", border: "1px solid rgba(99, 102, 241, 0.15)" }}>
+          <div className="flex items-center gap-3 mb-3 py-1.5">
             <RuneIcon url={getPerkIcon(p.keystone.id)} size={44} glow />
             <span className="text-sm font-semibold text-zinc-100">{p.keystone.name}</span>
           </div>
