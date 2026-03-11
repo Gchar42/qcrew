@@ -9,11 +9,11 @@ interface Champion {
   title: string;
   tags: string[];
   iconUrl: string;
-  tier: string | null;
-  winRate: number | null;
-  pickRate: number | null;
-  banRate: number | null;
-  role: string | null;
+  tier: string;
+  winRate: number;
+  pickRate: number;
+  banRate: number;
+  role: string;
 }
 
 const ROLES = [
