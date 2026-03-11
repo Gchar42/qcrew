@@ -150,7 +150,7 @@ export async function GET(req: Request) {
 
   // Scrape patch notes
   const changes: PatchChange[] = [];
-  const patchesToScrape = PATCH_VERSIONS.slice(0, 30);
+  const patchesToScrape = PATCH_VERSIONS;
 
   // Scrape in parallel batches of 5 to avoid hammering the server
   for (let i = 0; i < patchesToScrape.length; i += 5) {
