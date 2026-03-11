@@ -86,6 +86,7 @@ function VerifyAccountFlow({ champion, onVerified }: { champion: string; onVerif
   const [error, setError] = useState<string | null>(null);
   const [challenge, setChallenge] = useState<ChallengeData | null>(null);
   const [checkResult, setCheckResult] = useState<string | null>(null);
+  const [devMode, setDevMode] = useState(false);
 
   const startVerification = async () => {
     if (!gameName.trim() || !tagLine.trim()) {
@@ -110,6 +111,7 @@ function VerifyAccountFlow({ champion, onVerified }: { champion: string; onVerif
         return;
       }
 
+      if (data.devMode) setDevMode(true);
       setChallenge(data);
       setStep("challenge");
     } catch {
@@ -222,6 +224,11 @@ function VerifyAccountFlow({ champion, onVerified }: { champion: string; onVerif
           {/* Step 2: Icon Challenge */}
           {step === "challenge" && challenge && (
             <>
+              {devMode && (
+                <div className="px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs mb-4 text-center">
+                  Dev mode — Riot API key not set. Click &quot;Verify&quot; to auto-verify with mock rank data.
+                </div>
+              )}
               <div className="text-center mb-6">
                 <div className="flex items-center justify-center gap-3 mb-4">
                   <img

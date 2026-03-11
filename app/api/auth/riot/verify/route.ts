@@ -14,6 +14,8 @@ const VERIFICATION_ICONS = [
   { id: 20, name: "Star" },
 ];
 
+const DEV_MODE = !process.env.RIOT_API_KEY;
+
 /**
  * POST /api/auth/riot/verify - Start or check verification
  *
@@ -21,6 +23,9 @@ const VERIFICATION_ICONS = [
  *
  * "start": Looks up the account, picks a challenge icon, stores it.
  * "check": Looks up the summoner, checks if icon matches challenge.
+ *
+ * When RIOT_API_KEY is not set, runs in dev mode: skips API calls
+ * and auto-verifies so you can test the full guide creation flow.
  */
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -30,10 +35,67 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Riot ID required (gameName#tagLine)" }, { status: 400 });
   }
 
+  if (DEV_MODE) {
+    return handleDevMode(action, gameName, tagLine, region);
+  }
+
   if (action === "start") {
     return handleStart(gameName, tagLine, region);
   } else if (action === "check") {
     return handleCheck(gameName, tagLine, region);
+  }
+
+  return Response.json({ error: "Invalid action" }, { status: 400 });
+}
+
+/**
+ * Dev mode: no Riot API key available. Simulate the full flow with mock data.
+ * "start" returns a challenge immediately, "check" auto-verifies.
+ */
+async function handleDevMode(action: string, gameName: string, tagLine: string, region: string) {
+  const riotId = `${gameName}#${tagLine}`;
+  const fakePuuid = `dev-${gameName.toLowerCase()}-${tagLine.toLowerCase()}`;
+
+  if (action === "start") {
+    const challenge = VERIFICATION_ICONS[Math.floor(Math.random() * VERIFICATION_ICONS.length)];
+    return Response.json({
+      success: true,
+      devMode: true,
+      puuid: fakePuuid,
+      riotId,
+      currentIconId: 1,
+      challengeIcon: challenge,
+      summonerLevel: 250,
+    });
+  }
+
+  if (action === "check") {
+    // Auto-verify in dev mode — upsert guide_authors with mock rank data
+    await supabaseAdmin.from("guide_authors").upsert(
+      {
+        riot_puuid: fakePuuid,
+        riot_id: riotId,
+        region,
+        tier: "DIAMOND",
+        rank: "II",
+        lp: 75,
+        avatar_icon_id: 29,
+        verified_at: new Date().toISOString(),
+      },
+      { onConflict: "riot_puuid" }
+    );
+
+    const cookie = setRiotSessionCookie(fakePuuid);
+    const response = NextResponse.json({
+      verified: true,
+      devMode: true,
+      riotId,
+      tier: "DIAMOND",
+      rank: "II",
+      lp: 75,
+    });
+    response.cookies.set(cookie.name, cookie.value, cookie.options as Parameters<typeof response.cookies.set>[2]);
+    return response;
   }
 
   return Response.json({ error: "Invalid action" }, { status: 400 });
