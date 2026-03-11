@@ -120,9 +120,9 @@ function StatRow({
 
   return (
     <>
-      <div className={`compare-stat-value ${lClass}`}>{left}</div>
+      <div className={`compare-stat-value compare-stat-left ${lClass}`}>{left}</div>
       <div className="compare-stat-label">{label}</div>
-      <div className={`compare-stat-value ${rClass}`}>{right}</div>
+      <div className={`compare-stat-value compare-stat-right ${rClass}`}>{right}</div>
     </>
   );
 }
