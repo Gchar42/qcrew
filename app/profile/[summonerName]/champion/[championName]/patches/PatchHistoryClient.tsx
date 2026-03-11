@@ -34,17 +34,23 @@ function formatDate(dateStr: string | null): string {
   }
 }
 
-function renderChanges(raw: string) {
-  // Parse the [ABILITY] markers into structured sections
+const TYPE_TEXT_COLOR: Record<string, string> = {
+  buff: "text-emerald-400",
+  nerf: "text-red-400",
+  adjust: "text-amber-400",
+  change: "text-blue-300",
+};
+
+function renderChanges(raw: string, changeType: string | null) {
   const parts = raw.split(/\[ABILITY\]/);
   const sections: { ability: string | null; lines: string[] }[] = [];
+  const textColor = TYPE_TEXT_COLOR[changeType ?? "change"] ?? "text-white/60";
 
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i].trim();
     if (!part) continue;
 
     if (i === 0 && !raw.startsWith("[ABILITY]")) {
-      // Content before any ability marker (e.g. base stat changes without header)
       const lines = part.split("\n").map((l) => l.trim()).filter(Boolean);
       if (lines.length > 0) sections.push({ ability: null, lines });
     } else {
@@ -60,31 +66,33 @@ function renderChanges(raw: string) {
       {sections.map((sec, si) => (
         <div key={si}>
           {sec.ability && (
-            <div className="text-white/80 font-semibold text-sm mb-1.5">{sec.ability}</div>
+            <div className={`font-semibold text-sm mb-1.5 ${textColor}`}>{sec.ability}</div>
           )}
           <ul className="space-y-1 pl-1">
             {sec.lines.map((line, li) => {
               const text = line.startsWith("- ") ? line.slice(2) : line;
               if (!text.trim()) return null;
 
-              // Highlight arrows
               const arrowIdx = text.indexOf("\u21D2");
+              const bulletColor = changeType === "buff" ? "text-emerald-500/40" :
+                                  changeType === "nerf" ? "text-red-500/40" : "text-white/20";
+
               if (arrowIdx > -1) {
                 return (
-                  <li key={li} className="text-sm text-white/50 flex items-start gap-1.5">
-                    <span className="text-white/20 mt-0.5 shrink-0">&bull;</span>
+                  <li key={li} className={`text-sm ${textColor} flex items-start gap-1.5`}>
+                    <span className={`${bulletColor} mt-0.5 shrink-0`}>&bull;</span>
                     <span>
-                      <span className="text-white/40">{text.slice(0, arrowIdx)}</span>
-                      <span className="text-white/30 mx-1">&rArr;</span>
-                      <span className="text-white/70">{text.slice(arrowIdx + 1)}</span>
+                      <span className="opacity-60">{text.slice(0, arrowIdx)}</span>
+                      <span className="opacity-40 mx-1">&rArr;</span>
+                      <span className="font-medium">{text.slice(arrowIdx + 1)}</span>
                     </span>
                   </li>
                 );
               }
 
               return (
-                <li key={li} className="text-sm text-white/50 flex items-start gap-1.5">
-                  <span className="text-white/20 mt-0.5 shrink-0">&bull;</span>
+                <li key={li} className={`text-sm ${textColor} flex items-start gap-1.5`}>
+                  <span className={`${bulletColor} mt-0.5 shrink-0`}>&bull;</span>
                   <span>{text}</span>
                 </li>
               );
@@ -267,7 +275,7 @@ export default function PatchHistoryClient({
                       )}
                     </div>
                     <div className="px-5 py-4">
-                      {renderChanges(c.changes)}
+                      {renderChanges(c.changes, c.changeType)}
                     </div>
                   </div>
                 );

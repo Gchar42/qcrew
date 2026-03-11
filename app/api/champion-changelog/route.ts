@@ -39,20 +39,12 @@ function extractChampionChanges(html: string, championName: string): string | nu
   const normalized = normalizeChampName(championName);
 
   // Riot HTML: <h3 class="change-title" id="patch-{normalized}"><a>Champion Name</a></h3>
+  // The id format "patch-{name}" is consistent across all patch versions (14.x through 26.x)
   const idRegex = new RegExp(
     `<h3[^>]*\\bid="${escapeRegex("patch-" + normalized)}"[^>]*>[\\s\\S]*?</h3>`,
     "i"
   );
-  let headerMatch = idRegex.exec(html);
-
-  // Fallback: search for h3 containing the champion name inside an <a> tag
-  if (!headerMatch) {
-    const nameRegex = new RegExp(
-      `<h3[^>]*class="[^"]*change-title[^"]*"[^>]*>[\\s\\S]*?${escapeRegex(championName)}[\\s\\S]*?</h3>`,
-      "i"
-    );
-    headerMatch = nameRegex.exec(html);
-  }
+  const headerMatch = idRegex.exec(html);
 
   if (!headerMatch) return null;
 
@@ -199,6 +191,14 @@ export async function GET(req: Request) {
       }));
       return NextResponse.json({ champion, changes, cached: true });
     }
+  }
+
+  // Clear stale cache when busting
+  if (client && bustCache) {
+    await client
+      .from("champion_patch_notes")
+      .delete()
+      .ilike("champion_name", champion);
   }
 
   // Scrape patch notes
