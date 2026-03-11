@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getRankEmblemUrl, getProfileIconUrl } from "@/lib/riotAssets";
@@ -34,7 +34,19 @@ const TAG_OPTIONS = [
   "Itemization",
 ];
 
-export default function CreateGuidePage() {
+export default function CreateGuidePageWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
+        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <CreateGuidePage />
+    </Suspense>
+  );
+}
+
+function CreateGuidePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [session, setSession] = useState<AuthorSession | null>(null);
