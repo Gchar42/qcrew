@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addRecent } from "@/lib/savedSummoners";
 import { SavedSummonersList } from "@/components/SavedSummonersList";
+import SummonerAutocomplete from "@/components/SummonerAutocomplete";
 
 type Region = { value: string; label: string };
 
@@ -83,14 +84,16 @@ export default function HomeLanding({ regions }: { regions: readonly Region[] })
                 ))}
               </select>
             </div>
-            <input
+            <SummonerAutocomplete
               value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setError(null);
+              onChange={(v) => { setQuery(v); setError(null); }}
+              onSelect={(riotId) => {
+                addRecent({ riotId, region, label: riotId });
+                router.push(`/summoner?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}`);
               }}
               placeholder="Search by Riot ID (GameName#Tag)"
-              className="flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-white/30"
+              className="flex-1"
+              inputClassName="w-full bg-transparent px-2 text-sm outline-none placeholder:text-white/30"
             />
             <button className="rounded-lg bg-[#5865F2] px-5 py-2 text-sm font-semibold transition hover:bg-[#6875F5]" type="submit">
               Search

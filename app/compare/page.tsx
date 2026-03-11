@@ -9,6 +9,7 @@ import {
 } from "@/lib/riotAssets";
 import { REGIONS } from "@/lib/riot-regions";
 import type { ProfileBundle } from "@/app/api/riot/profileBundle/route";
+import SummonerAutocomplete from "@/components/SummonerAutocomplete";
 import "./compare.css";
 
 type QueueStats = {
@@ -289,11 +290,12 @@ function CompareInner() {
         <form className="compare-picker" onSubmit={handleSubmit}>
           <div className="compare-picker-group">
             <label>Summoner 1</label>
-            <input
-              type="text"
-              placeholder="Name#Tag"
+            <SummonerAutocomplete
               value={summoner1}
-              onChange={(e) => setSummoner1(e.target.value)}
+              onChange={setSummoner1}
+              onSelect={setSummoner1}
+              placeholder="Name#Tag"
+              inputClassName="compare-input"
             />
           </div>
           <div className="compare-picker-group">
@@ -309,11 +311,12 @@ function CompareInner() {
 
           <div className="compare-picker-group">
             <label>Summoner 2</label>
-            <input
-              type="text"
-              placeholder="Name#Tag"
+            <SummonerAutocomplete
               value={summoner2}
-              onChange={(e) => setSummoner2(e.target.value)}
+              onChange={setSummoner2}
+              onSelect={setSummoner2}
+              placeholder="Name#Tag"
+              inputClassName="compare-input"
             />
           </div>
           <div className="compare-picker-group">

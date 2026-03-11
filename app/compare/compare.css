@@ -447,3 +447,20 @@
 .compare-tabs + .compare-grid {
   border-radius: 0 0 16px 16px;
 }
+
+/* Autocomplete input in compare picker */
+.compare-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 200px;
+}
+.compare-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
