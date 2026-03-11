@@ -598,42 +598,167 @@ function StatTag({ label, value }: { label: string; value: string }) {
 
 /* ═══════════════ PATCHES TAB ═══════════════ */
 
+const PATCH_TYPE_STYLES: Record<string, { bg: string; text: string; border: string; label: string }> = {
+  buff: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20", label: "Buff" },
+  nerf: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/20", label: "Nerf" },
+  adjust: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/20", label: "Adjust" },
+  change: { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/20", label: "Change" },
+};
+
+const PATCH_TEXT_COLOR: Record<string, string> = {
+  buff: "text-emerald-400",
+  nerf: "text-red-400",
+  adjust: "text-amber-400",
+  change: "text-blue-300",
+};
+
+function formatPatchDate(dateStr: string | null): string {
+  if (!dateStr) return "";
+  try {
+    return new Date(dateStr).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  } catch {
+    return dateStr;
+  }
+}
+
 function PatchesTab({ patches, loading }: { patches: PatchChange[]; loading: boolean }) {
+  const [filter, setFilter] = useState<string>("all");
+
   if (loading) return (
-    <div className="flex justify-center py-12">
-      <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+    <div className="flex items-center justify-center py-24 gap-3 text-white/40">
+      <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
+        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      </svg>
+      Loading patch history...
     </div>
   );
-  if (!patches.length) return <EmptyState text="No patch history available" />;
+
+  if (!patches.length) return <EmptyState text="No patch history available" sub="This champion hasn't been changed in recent patches." />;
+
+  const filtered = filter === "all" ? patches : patches.filter((c) => c.changeType === filter);
+  const counts = {
+    all: patches.length,
+    buff: patches.filter((c) => c.changeType === "buff").length,
+    nerf: patches.filter((c) => c.changeType === "nerf").length,
+    adjust: patches.filter((c) => c.changeType === "adjust").length,
+    change: patches.filter((c) => c.changeType === "change").length,
+  };
 
   return (
-    <div className="flex flex-col gap-3 max-w-3xl">
-      {patches.map((p, i) => {
-        const color = CHANGE_TYPE_COLORS[p.changeType] ?? "text-zinc-400";
-        const border = CHANGE_TYPE_BG[p.changeType] ?? "border-zinc-700/30";
-        return (
-          <GlassCard key={i} className={border}>
-            <div className="flex items-center gap-2.5 mb-2.5">
-              <span className="text-sm font-bold text-zinc-100">Patch {p.patchVersion}</span>
-              <span className={`text-[10px] font-bold uppercase tracking-wider ${color}`}>{p.changeType}</span>
-              {p.patchDate && <span className="text-[10px] text-zinc-600 ml-auto">{p.patchDate}</span>}
+    <div className="max-w-4xl">
+      {/* Summary */}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <span className="text-sm text-white/50">{patches.length} changes found across recent patches</span>
+        <span className="text-white/15">|</span>
+        <span className="text-xs text-emerald-400 font-semibold">{counts.buff} buffs</span>
+        <span className="text-xs text-red-400 font-semibold">{counts.nerf} nerfs</span>
+        <span className="text-xs text-amber-400 font-semibold">{counts.adjust} adjustments</span>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {(["all", "buff", "nerf", "adjust", "change"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+              filter === f
+                ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30"
+                : "bg-white/5 text-white/40 border border-white/10 hover:text-white/60"
+            }`}
+          >
+            {f === "all" ? `All (${counts.all})` : `${f.charAt(0).toUpperCase() + f.slice(1)}s (${counts[f]})`}
+          </button>
+        ))}
+      </div>
+
+      {/* Entries */}
+      <div className="space-y-4">
+        {filtered.map((c, i) => {
+          const style = PATCH_TYPE_STYLES[c.changeType ?? "change"] ?? PATCH_TYPE_STYLES.change;
+          return (
+            <div key={i} className={`rounded-xl border ${style.border} ${style.bg} overflow-hidden`}>
+              <div className="flex items-center gap-3 px-5 py-3 border-b border-white/5">
+                <span className="text-lg font-bold text-white/90">Patch {c.patchVersion}</span>
+                <span className={`rounded-md px-2 py-0.5 text-[11px] font-bold uppercase ${style.bg} ${style.text} border ${style.border}`}>
+                  {style.label}
+                </span>
+                {c.patchDate && <span className="text-xs text-white/30 ml-auto">{formatPatchDate(c.patchDate)}</span>}
+              </div>
+              <div className="px-5 py-4">
+                {renderPatchChanges(c.changes, c.changeType)}
+              </div>
             </div>
-            <div className="text-xs text-zinc-400 leading-relaxed whitespace-pre-wrap">{renderPatchText(p.changes, color)}</div>
-          </GlassCard>
-        );
-      })}
+          );
+        })}
+      </div>
+
+      {filtered.length === 0 && (
+        <div className="rounded-xl border border-white/10 bg-[#151620] p-8 text-center">
+          <p className="text-white/40">No {filter} changes found.</p>
+        </div>
+      )}
     </div>
   );
 }
 
-function renderPatchText(text: string, color: string) {
-  return text.split("\n").map((line, i) => {
-    const t = line.trim();
-    if (!t) return null;
-    if (t.startsWith("[") && t.endsWith("]")) return <p key={i} className={`font-semibold mt-2 mb-1 ${color}`}>{t}</p>;
-    if (t.startsWith("- ")) return <p key={i} className="pl-3"><span className={color}>&bull;</span> {t.slice(2)}</p>;
-    return <p key={i}>{t}</p>;
-  });
+function renderPatchChanges(raw: string, changeType: string | null) {
+  const parts = raw.split(/\[ABILITY\]/);
+  const sections: { ability: string | null; lines: string[] }[] = [];
+  const textColor = PATCH_TEXT_COLOR[changeType ?? "change"] ?? "text-white/60";
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i].trim();
+    if (!part) continue;
+    if (i === 0 && !raw.startsWith("[ABILITY]")) {
+      const lines = part.split("\n").map((l) => l.trim()).filter(Boolean);
+      if (lines.length > 0) sections.push({ ability: null, lines });
+    } else {
+      const lines = part.split("\n").map((l) => l.trim()).filter(Boolean);
+      const ability = lines[0] || null;
+      const changeLines = lines.slice(1);
+      if (ability) sections.push({ ability, lines: changeLines });
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {sections.map((sec, si) => (
+        <div key={si}>
+          {sec.ability && <div className={`font-semibold text-sm mb-1.5 ${textColor}`}>{sec.ability}</div>}
+          <ul className="space-y-1 pl-1">
+            {sec.lines.map((line, li) => {
+              const text = line.startsWith("- ") ? line.slice(2) : line;
+              if (!text.trim()) return null;
+              const arrowIdx = text.indexOf("\u21D2");
+              const bulletColor = changeType === "buff" ? "text-emerald-500/40" : changeType === "nerf" ? "text-red-500/40" : "text-white/20";
+
+              if (arrowIdx > -1) {
+                return (
+                  <li key={li} className={`text-sm ${textColor} flex items-start gap-1.5`}>
+                    <span className={`${bulletColor} mt-0.5 shrink-0`}>&bull;</span>
+                    <span>
+                      <span className="opacity-60">{text.slice(0, arrowIdx)}</span>
+                      <span className="opacity-40 mx-1">&rArr;</span>
+                      <span className="font-medium">{text.slice(arrowIdx + 1)}</span>
+                    </span>
+                  </li>
+                );
+              }
+
+              return (
+                <li key={li} className={`text-sm ${textColor} flex items-start gap-1.5`}>
+                  <span className={`${bulletColor} mt-0.5 shrink-0`}>&bull;</span>
+                  <span>{text}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 /* ═══════════════ GUIDES TAB ═══════════════ */
