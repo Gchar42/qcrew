@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { getChampionSquareUrl } from "@/lib/riotAssets";
-import type { ChampionStatRow } from "@/app/api/champion_stats_season/route";
+import type { ChampionStatRow } from "@/app/api/champion-stats/route";
 
 type QueueKey = "solo" | "flex";
 
