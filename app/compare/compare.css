@@ -394,3 +394,56 @@
   background: rgba(59,130,246,0.25);
   color: #fff;
 }
+/* === Queue Tabs === */
+.compare-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  padding: 12px 16px 0;
+  box-shadow: 0 -2px 24px rgba(0,0,0,0.15);
+}
+
+.compare-tab {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 24px;
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  transition: color 0.15s, background 0.15s;
+  letter-spacing: 0.3px;
+  position: relative;
+}
+
+.compare-tab:hover {
+  color: var(--ink);
+  background: rgba(255,255,255,0.03);
+}
+
+.compare-tab.active {
+  color: var(--accent);
+  background: var(--surface2);
+}
+
+.compare-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.compare-tabs + .compare-grid {
+  border-radius: 0 0 16px 16px;
+}

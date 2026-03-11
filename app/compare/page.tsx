@@ -11,41 +11,60 @@ import { REGIONS } from "@/lib/riot-regions";
 import type { ProfileBundle } from "@/app/api/riot/profileBundle/route";
 import "./compare.css";
 
+type QueueStats = {
+  tier: string;
+  rank: string;
+  lp: number;
+  wins: number;
+  losses: number;
+  wr: number;
+  topChamps: { name: string; games: number; winRate: number }[];
+};
+
 type CompareStats = {
   name: string;
   tag: string;
   region: string;
   level: number;
   profileIconId: number;
-  soloTier: string;
-  soloRank: string;
-  soloLp: number;
-  soloWins: number;
-  soloLosses: number;
-  soloWr: number;
-  flexTier: string;
-  flexRank: string;
-  flexLp: number;
+  solo: QueueStats;
+  flex: QueueStats;
   matchCount: number;
   avgKda: string;
   csPerMin: number;
   avgDuration: number;
   avgRankPlayed: string;
-  topChamps: { name: string; games: number; winRate: number }[];
   totalKills: number;
   totalDeaths: number;
   totalAssists: number;
   ddragonVersion: string | null;
 };
 
+function extractQueueStats(
+  entry: { tier: string; rank: string; leaguePoints: number; wins: number; losses: number } | null,
+  champs: { championName: string; games: number; winRate: number }[]
+): QueueStats {
+  const wins = entry?.wins ?? 0;
+  const losses = entry?.losses ?? 0;
+  const total = wins + losses;
+  return {
+    tier: entry?.tier ?? "",
+    rank: entry?.rank ?? "",
+    lp: entry?.leaguePoints ?? 0,
+    wins,
+    losses,
+    wr: total > 0 ? Math.round((wins / total) * 100) : 0,
+    topChamps: champs.slice(0, 5).map((c) => ({
+      name: c.championName,
+      games: c.games,
+      winRate: Math.round(c.winRate),
+    })),
+  };
+}
+
 function extractStats(bundle: ProfileBundle, region: string): CompareStats {
   const acc = bundle.profile.account;
   const sum = bundle.profile.summoner;
-  const solo = bundle.ranked.solo;
-  const flex = bundle.ranked.flex;
-  const soloWins = solo?.wins ?? 0;
-  const soloLosses = solo?.losses ?? 0;
-  const soloTotal = soloWins + soloLosses;
 
   const matches = bundle.matches ?? [];
   let totalK = 0, totalD = 0, totalA = 0;
@@ -54,12 +73,8 @@ function extractStats(bundle: ProfileBundle, region: string): CompareStats {
     if (p) { totalK += p.kills; totalD += p.deaths; totalA += p.assists; }
   }
 
-  const champStats = bundle.championStats?.solo?.champions ?? [];
-  const topChamps = champStats.slice(0, 5).map((c) => ({
-    name: c.championName,
-    games: c.games,
-    winRate: Math.round(c.winRate),
-  }));
+  const soloChamps = bundle.championStats?.solo?.champions ?? [];
+  const flexChamps = bundle.championStats?.flex?.champions ?? [];
 
   return {
     name: acc.gameName,
@@ -67,21 +82,13 @@ function extractStats(bundle: ProfileBundle, region: string): CompareStats {
     region,
     level: sum.summonerLevel,
     profileIconId: sum.profileIconId,
-    soloTier: solo?.tier ?? "",
-    soloRank: solo?.rank ?? "",
-    soloLp: solo?.leaguePoints ?? 0,
-    soloWins,
-    soloLosses,
-    soloWr: soloTotal > 0 ? Math.round((soloWins / soloTotal) * 100) : 0,
-    flexTier: flex?.tier ?? "",
-    flexRank: flex?.rank ?? "",
-    flexLp: flex?.leaguePoints ?? 0,
+    solo: extractQueueStats(bundle.ranked.solo, soloChamps),
+    flex: extractQueueStats(bundle.ranked.flex, flexChamps),
     matchCount: bundle.computed.matchCount,
     avgKda: bundle.computed.avgKda,
     csPerMin: bundle.computed.csPerMin,
     avgDuration: bundle.computed.avgDuration,
     avgRankPlayed: bundle.computed.avgRankPlayedAgainst,
-    topChamps,
     totalKills: totalK,
     totalDeaths: totalD,
     totalAssists: totalA,
@@ -135,8 +142,8 @@ function PlayerHeader({ stats }: { stats: CompareStats }) {
         className="compare-player-icon"
         src={getProfileIconUrl(stats.profileIconId, stats.ddragonVersion)}
         alt=""
-        width={64}
-        height={64}
+        width={72}
+        height={72}
       />
       <div className="compare-player-name">
         {stats.name}
@@ -152,14 +159,14 @@ function RankDisplay({ tier, rank, lp }: { tier: string; rank: string; lp: numbe
   return (
     <div className="compare-rank">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="compare-rank-emblem" src={getRankEmblemUrl(tier)} alt="" width={48} height={48} />
+      <img className="compare-rank-emblem" src={getRankEmblemUrl(tier)} alt="" width={56} height={56} />
       <span className="compare-rank-tier">{formatTier(tier, rank)}</span>
       <span className="compare-rank-lp">{lp} LP</span>
     </div>
   );
 }
 
-function ChampIcons({ champs, version }: { champs: CompareStats["topChamps"]; version: string | null }) {
+function ChampIcons({ champs, version }: { champs: QueueStats["topChamps"]; version: string | null }) {
   if (!champs.length) return <span style={{ color: "var(--muted)", fontSize: 13 }}>No data</span>;
   return (
     <div className="compare-champs">
@@ -171,8 +178,8 @@ function ChampIcons({ champs, version }: { champs: CompareStats["topChamps"]; ve
           src={getChampionSquareUrl(c.name, version)}
           alt={c.name}
           title={`${c.name} - ${c.winRate}% WR (${c.games} games)`}
-          width={32}
-          height={32}
+          width={36}
+          height={36}
         />
       ))}
     </div>
@@ -206,6 +213,7 @@ function CompareInner() {
   const [stats2, setStats2] = useState<CompareStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [queue, setQueue] = useState<"solo" | "flex">("solo");
 
   const fetchBundle = useCallback(async (riotId: string, region: string): Promise<ProfileBundle> => {
     const url = `/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}&queue=solo`;
@@ -270,6 +278,9 @@ function CompareInner() {
   const kda1 = stats1 ? parseKda(stats1.avgKda) : null;
   const kda2 = stats2 ? parseKda(stats2.avgKda) : null;
 
+  const q1 = stats1 ? stats1[queue] : null;
+  const q2 = stats2 ? stats2[queue] : null;
+
   return (
     <div className="compare-page">
       <div className="compare-container">
@@ -323,76 +334,103 @@ function CompareInner() {
         {error && <div className="compare-error">{error}</div>}
 
         {stats1 && stats2 && (
-          <div className="compare-grid">
-            {/* Headers */}
-            <div className="compare-col compare-col-left">
-              <PlayerHeader stats={stats1} />
+          <>
+            <div className="compare-tabs">
+              <button
+                className={`compare-tab ${queue === "solo" ? "active" : ""}`}
+                onClick={() => setQueue("solo")}
+              >
+                Ranked Solo
+              </button>
+              <button
+                className={`compare-tab ${queue === "flex" ? "active" : ""}`}
+                onClick={() => setQueue("flex")}
+              >
+                Ranked Flex
+              </button>
             </div>
-            <div className="compare-labels">
-              <div className="compare-player-header" style={{ visibility: "hidden" }}>
-                <div style={{ width: 64, height: 64 }} />
-                <div>&nbsp;</div>
-                <div>&nbsp;</div>
+
+            <div className="compare-grid">
+              {/* Headers */}
+              <div className="compare-col compare-col-left">
+                <PlayerHeader stats={stats1} />
               </div>
-            </div>
-            <div className="compare-col compare-col-right">
-              <PlayerHeader stats={stats2} />
-            </div>
+              <div className="compare-labels">
+                <div className="compare-player-header" style={{ visibility: "hidden", pointerEvents: "none" }}>
+                  <div style={{ width: 72, height: 72 }} />
+                  <div>&nbsp;</div>
+                  <div>&nbsp;</div>
+                </div>
+              </div>
+              <div className="compare-col compare-col-right">
+                <PlayerHeader stats={stats2} />
+              </div>
 
-            {/* Ranked Solo */}
-            <div className="compare-section-title">Ranked Solo</div>
-            <div className="compare-col compare-col-left">
-              <RankDisplay tier={stats1.soloTier} rank={stats1.soloRank} lp={stats1.soloLp} />
-            </div>
-            <div className="compare-labels">
-              <div className="compare-stat-label">Rank</div>
-            </div>
-            <div className="compare-col compare-col-right">
-              <RankDisplay tier={stats2.soloTier} rank={stats2.soloRank} lp={stats2.soloLp} />
-            </div>
+              {/* Ranked section */}
+              <div className="compare-section-title">
+                {queue === "solo" ? "Ranked Solo/Duo" : "Ranked Flex"}
+              </div>
+              {q1 && q2 && (
+                <>
+                  <div className="compare-col compare-col-left">
+                    <RankDisplay tier={q1.tier} rank={q1.rank} lp={q1.lp} />
+                  </div>
+                  <div className="compare-labels">
+                    <div className="compare-stat-label">Rank</div>
+                  </div>
+                  <div className="compare-col compare-col-right">
+                    <RankDisplay tier={q2.tier} rank={q2.rank} lp={q2.lp} />
+                  </div>
 
-            <StatRow left={stats1.soloLp} right={stats2.soloLp} label="LP" />
-            <StatRow left={`${stats1.soloWins}W - ${stats1.soloLosses}L`} right={`${stats2.soloWins}W - ${stats2.soloLosses}L`} label="Record" />
-            <StatRow left={`${stats1.soloWr}%`} right={`${stats2.soloWr}%`} label="Win Rate" />
+                  <StatRow left={q1.lp} right={q2.lp} label="LP" />
+                  <StatRow left={`${q1.wins}W - ${q1.losses}L`} right={`${q2.wins}W - ${q2.losses}L`} label="Record" />
+                  <StatRow left={`${q1.wr}%`} right={`${q2.wr}%`} label="Win Rate" />
+                </>
+              )}
 
-            {/* Recent Games */}
-            <div className="compare-section-title">Recent Games</div>
-            <StatRow left={stats1.matchCount} right={stats2.matchCount} label="Games" />
-            <StatRow
-              left={kda1 ? `${kda1.k}/${kda1.d}/${kda1.a}` : "-"}
-              right={kda2 ? `${kda2.k}/${kda2.d}/${kda2.a}` : "-"}
-              label="Avg KDA"
-            />
-            <StatRow
-              left={kda1 ? kda1.ratio.toFixed(2) : "-"}
-              right={kda2 ? kda2.ratio.toFixed(2) : "-"}
-              label="KDA Ratio"
-            />
-            <StatRow
-              left={stats1.csPerMin.toFixed(1)}
-              right={stats2.csPerMin.toFixed(1)}
-              label="CS / min"
-            />
-            <StatRow
-              left={`${stats1.avgDuration.toFixed(1)}m`}
-              right={`${stats2.avgDuration.toFixed(1)}m`}
-              label="Avg Duration"
-              higherIsBetter={false}
-            />
-            <StatRow left={stats1.avgRankPlayed} right={stats2.avgRankPlayed} label="Avg Enemy Rank" />
+              {/* Recent Games */}
+              <div className="compare-section-title">Recent Games</div>
+              <StatRow left={stats1.matchCount} right={stats2.matchCount} label="Games" />
+              <StatRow
+                left={kda1 ? `${kda1.k}/${kda1.d}/${kda1.a}` : "-"}
+                right={kda2 ? `${kda2.k}/${kda2.d}/${kda2.a}` : "-"}
+                label="Avg KDA"
+              />
+              <StatRow
+                left={kda1 ? kda1.ratio.toFixed(2) : "-"}
+                right={kda2 ? kda2.ratio.toFixed(2) : "-"}
+                label="KDA Ratio"
+              />
+              <StatRow
+                left={stats1.csPerMin.toFixed(1)}
+                right={stats2.csPerMin.toFixed(1)}
+                label="CS / min"
+              />
+              <StatRow
+                left={`${stats1.avgDuration.toFixed(1)}m`}
+                right={`${stats2.avgDuration.toFixed(1)}m`}
+                label="Avg Duration"
+                higherIsBetter={false}
+              />
+              <StatRow left={stats1.avgRankPlayed} right={stats2.avgRankPlayed} label="Avg Enemy Rank" />
 
-            {/* Top Champions */}
-            <div className="compare-section-title">Top Champions</div>
-            <div className="compare-col compare-col-left">
-              <ChampIcons champs={stats1.topChamps} version={stats1.ddragonVersion} />
+              {/* Top Champions for selected queue */}
+              <div className="compare-section-title">Top Champions</div>
+              {q1 && q2 && (
+                <>
+                  <div className="compare-col compare-col-left">
+                    <ChampIcons champs={q1.topChamps} version={stats1.ddragonVersion} />
+                  </div>
+                  <div className="compare-labels">
+                    <div className="compare-stat-label">Most Played</div>
+                  </div>
+                  <div className="compare-col compare-col-right">
+                    <ChampIcons champs={q2.topChamps} version={stats2.ddragonVersion} />
+                  </div>
+                </>
+              )}
             </div>
-            <div className="compare-labels">
-              <div className="compare-stat-label">Most Played</div>
-            </div>
-            <div className="compare-col compare-col-right">
-              <ChampIcons champs={stats2.topChamps} version={stats2.ddragonVersion} />
-            </div>
-          </div>
+          </>
         )}
       </div>
     </div>
