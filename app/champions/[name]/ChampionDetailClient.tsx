@@ -67,15 +67,41 @@ const CHANGE_TYPE_BG: Record<string, string> = {
   change: "border-blue-500/20",
 };
 
+const ROLE_LABELS: Record<string, string> = {
+  top: "Top", jungle: "Jungle", mid: "Mid", bot: "ADC", support: "Support",
+};
+
+function RoleIcon({ role, size = 16 }: { role: string; size?: number }) {
+  const s = { width: size, height: size, fill: "currentColor" };
+  switch (role) {
+    case "top":
+      return <svg viewBox="0 0 24 24" {...s}><path d="M4 4h7v2H6v5H4V4zm16 10h-2v5h-5v2h7v-7z" /><path d="M4 20l7-7 2 2-7 7-2-2zM13 9l7-7 2 2-7 7-2-2z" opacity=".4" /></svg>;
+    case "jungle":
+      return <svg viewBox="0 0 24 24" {...s}><path d="M12 2C9 6 4 9 4 14a8 8 0 0016 0c0-5-5-8-8-12zm0 18a6 6 0 01-6-6c0-3.5 3-6 6-9 3 3 6 5.5 6 9a6 6 0 01-6 6z" /></svg>;
+    case "mid":
+      return <svg viewBox="0 0 24 24" {...s}><path d="M4 20l4-4m0 0l8-8m-8 8h6m2-8h-6m8-4L14 8m0 0L6 16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" /></svg>;
+    case "bot":
+      return <svg viewBox="0 0 24 24" {...s}><circle cx="12" cy="12" r="3" /><path d="M12 2v4m0 12v4M2 12h4m12 0h4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M19.07 4.93l-2.83 2.83M7.76 16.24l-2.83 2.83" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" /></svg>;
+    case "support":
+      return <svg viewBox="0 0 24 24" {...s}><path d="M12 3L4 9v6l8 6 8-6V9l-8-6zm0 2.5L18 10v4.5L12 19 6 14.5V10l6-4.5z" /><path d="M12 8v8M8 12h8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" /></svg>;
+    default:
+      return null;
+  }
+}
+
 export default function ChampionDetailClient({ championId }: { championId: string }) {
   const [tab, setTab] = useState<Tab>("build");
-  const [build, setBuild] = useState<ChampionBuild | null>(null);
+  const [builds, setBuilds] = useState<Record<string, ChampionBuild>>({});
+  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+  const [selectedRole, setSelectedRole] = useState<string>("");
   const [info, setInfo] = useState<ChampionInfo | null>(null);
   const [patches, setPatches] = useState<PatchChange[]>([]);
   const [loading, setLoading] = useState(true);
   const [patchLoading, setPatchLoading] = useState(false);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
+
+  const build = builds[selectedRole] ?? null;
 
   useEffect(() => {
     Promise.all([
@@ -85,7 +111,11 @@ export default function ChampionDetailClient({ championId }: { championId: strin
       fetch("/api/cd/perkstyles").then((r) => r.json()),
     ])
       .then(([buildData, infoData, perksData, stylesData]) => {
-        if (!buildData.error) setBuild(buildData);
+        if (buildData.builds) {
+          setBuilds(buildData.builds);
+          setAvailableRoles(buildData.availableRoles ?? []);
+          setSelectedRole(buildData.defaultRole ?? "");
+        }
         if (!infoData.error) setInfo(infoData);
         if (perksData.perks) {
           const m = new Map<number, string>();
@@ -176,7 +206,7 @@ export default function ChampionDetailClient({ championId }: { championId: strin
               <h1 className="text-2xl font-bold text-white glow-text">{name}</h1>
               <p className="text-sm text-zinc-400 mt-0.5">{info?.title}</p>
               <p className="text-xs text-zinc-500 mt-1">
-                {build?.role ? build.role.charAt(0).toUpperCase() + build.role.slice(1) : "Mid"} &middot; Patch {build?.patch ?? "16.5"} &middot; Data from one-tricks &amp; high-elo
+                Patch {build?.patch ?? "16.5"} &middot; Data from one-tricks &amp; high-elo
               </p>
             </div>
             {info && (
@@ -192,6 +222,29 @@ export default function ChampionDetailClient({ championId }: { championId: strin
               </div>
             )}
           </div>
+
+          {/* Role selector */}
+          {availableRoles.length > 0 && (
+            <div className="flex items-center gap-1 mb-4">
+              {availableRoles.map((role) => {
+                const active = role === selectedRole;
+                return (
+                  <button
+                    key={role}
+                    onClick={() => setSelectedRole(role)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      active
+                        ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30"
+                        : "text-zinc-500 hover:text-zinc-300 border border-transparent hover:border-white/10 hover:bg-white/[0.03]"
+                    }`}
+                  >
+                    <RoleIcon role={role} size={14} />
+                    {ROLE_LABELS[role] ?? role}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Stats row */}
           {build && (
