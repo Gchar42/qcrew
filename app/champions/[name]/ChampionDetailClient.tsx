@@ -316,8 +316,8 @@ function RunesCard({ build, getPerkIcon, getStyleIcon }: {
             <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">{p.tree}</span>
           </div>
           {/* Keystone */}
-          <div className="flex items-center gap-3 mb-3 py-1.5">
-            <RuneIcon url={getPerkIcon(p.keystone.id)} size={44} glow />
+          <div className="flex items-center gap-3 py-1.5">
+            <RuneIcon url={getPerkIcon(p.keystone.id)} size={40} glow />
             <span className="text-sm font-semibold text-zinc-100">{p.keystone.name}</span>
           </div>
           {p.slots.map((r) => (
@@ -327,8 +327,6 @@ function RunesCard({ build, getPerkIcon, getStyleIcon }: {
             </div>
           ))}
         </div>
-
-        <div className="w-px bg-white/5" />
 
         {/* Secondary tree */}
         <div className="flex-1">
