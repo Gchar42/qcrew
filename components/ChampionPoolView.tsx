@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { getChampionSquareUrl, getChampionSplashUrl } from "@/lib/riotAssets";
+import ChampionChangelog from "@/components/ChampionChangelog";
 
 type ChampionStatRow = {
   championId: number;
@@ -81,10 +82,10 @@ export default function ChampionPoolView({
             {top5.map((champ, i) => {
               const analysisUrl = `/profile/${encodeURIComponent(riotId)}/champion/${encodeURIComponent(champ.championName)}`;
               return (
+                <div key={champ.championId} className={`group relative rounded-xl border ${i === 0 ? borderClass : "border-white/10"} bg-[#151620] overflow-hidden hover:border-white/20 transition-all hover:shadow-lg`}>
                 <Link
-                  key={champ.championId}
                   href={analysisUrl}
-                  className={`group relative rounded-xl border ${i === 0 ? borderClass : "border-white/10"} bg-[#151620] overflow-hidden hover:border-white/20 transition-all hover:shadow-lg`}
+                  className="block"
                 >
                   {/* Splash background */}
                   <div className="relative h-28 overflow-hidden">
@@ -148,6 +149,8 @@ export default function ChampionPoolView({
                     </div>
                   </div>
                 </Link>
+                  <div className="px-4 pb-3"><ChampionChangelog championName={champ.championName} /></div>
+                </div>
               );
             })}
           </div>
