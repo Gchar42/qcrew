@@ -57,8 +57,8 @@ export default function ChampionPoolView({
   tier: string;
   ddragonVersion: string | null;
 }) {
-  const top5 = champions.slice(0, 5);
-  const rest = champions.slice(5);
+  const top5 = champions.slice(0, 6);
+  const rest = champions.slice(6);
   const borderClass = TIER_COLORS[tier?.toUpperCase()] ?? "border-white/10";
 
   return (
