@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 
@@ -28,16 +28,16 @@ export default function SiteHeader() {
           Tierlist
         </Link>
         <Link href="/champions" className="transition hover:text-white">
-          Jungle Stats
+          Champions
         </Link>
         <Link href="/leaderboard" className="transition hover:text-white">
           Leaderboard
         </Link>
-        <Link href="/settings" className="transition hover:text-white">
-          Settings
+        <Link href="/compare" className="transition hover:text-white">
+          Compare
         </Link>
         <Link
-          href="/settings"
+          href="/dashboard"
           className="flex items-center justify-center text-white/55 transition hover:text-white"
           aria-label="Link Discord"
         >
