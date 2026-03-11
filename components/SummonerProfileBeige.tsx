@@ -329,14 +329,14 @@ function ChampIcon({
     return (
       <span
         className={fallbackClass}
-        title={`${summonerName} · ${championName}`}
+        title={`${summonerName} Ã‚Â· ${championName}`}
       >
         <span className="profile-match-team-champ-placeholder" aria-hidden />
       </span>
     );
   }
   return (
-    <span className={champClass} title={`${summonerName} · ${championName}`}>
+    <span className={champClass} title={`${summonerName} Ã‚Â· ${championName}`}>
       <Image
         src={squareUrl}
         alt=""
@@ -387,7 +387,7 @@ function relativeTime(gameEndTimestamp: number | undefined): string {
 
 /** Map teamPosition to display label */
 function roleLabel(pos: string | undefined): string {
-  if (!pos) return "—";
+  if (!pos) return "Ã¢â‚¬â€";
   const upper = pos.toUpperCase();
   if (upper === "JUNGLE") return "Jungle";
   if (upper === "TOP") return "Top";
@@ -902,7 +902,7 @@ export default function SummonerProfileBeige({
   };
 
   const renderRankCard = (title: string, entry: LeagueEntryDto | null, loading: boolean, err: string | null) => {
-    if (loading) return <div className="profile-rank-card profile-rank-card-unranked"><div className="profile-rank-card-title">{title}</div><div className="profile-rank-card-content"><span className="profile-ranked-loading">Loading…</span></div></div>;
+    if (loading) return <div className="profile-rank-card profile-rank-card-unranked"><div className="profile-rank-card-title">{title}</div><div className="profile-rank-card-content"><span className="profile-ranked-loading">LoadingÃ¢â‚¬Â¦</span></div></div>;
     if (err) return <div className="profile-rank-card profile-rank-card-unranked"><div className="profile-rank-card-title">{title}</div><div className="profile-rank-card-content"><span className="profile-ranked-error">{err}</span></div></div>;
     if (!entry) return (
       <div className="profile-rank-card profile-rank-card-unranked">
@@ -968,7 +968,7 @@ export default function SummonerProfileBeige({
                 </div>
                 <div className="stat-item">
                   <span className="stat-label">Record</span>
-                  <span className="stat-value"><span className="win">{entry.wins}W</span><span className="sep">–</span><span className="loss">{entry.losses}L</span></span>
+                  <span className="stat-value"><span className="win">{entry.wins}W</span><span className="sep">Ã¢â‚¬â€œ</span><span className="loss">{entry.losses}L</span></span>
                 </div>
               </div>
             </div>
@@ -1070,7 +1070,7 @@ export default function SummonerProfileBeige({
                 }}
                 className="profile-badge border-indigo-500/50 bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 cursor-pointer"
               >
-                {isFav ? "★ Favorited" : "☆ Add to Favorites"}
+                {isFav ? "Ã¢Ëœâ€¦ Favorited" : "Ã¢Ëœâ€  Add to Favorites"}
               </button>
             )}
             <button
@@ -1085,8 +1085,14 @@ export default function SummonerProfileBeige({
               className="profile-badge border-white/20 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white cursor-pointer"
               title="Copy profile link"
             >
-              {shareCopied ? "✓ Copied!" : "🔗 Share Profile"}
+              {shareCopied ? "Ã¢Å“â€œ Copied!" : "Ã°Å¸â€â€” Share Profile"}
             </button>
+            <Link
+              href={`/compare?summoner1=${encodeURIComponent(riotIdParam ?? "")}&region1=${encodeURIComponent(regionVal)}`}
+              className="profile-badge profile-badge-compare"
+            >
+              Compare
+            </Link>
             <button
               type="button"
               onClick={handleRefreshMatchHistory}
@@ -1097,7 +1103,7 @@ export default function SummonerProfileBeige({
               {(isLoading || isRefreshing) && (
                 <span className="profile-matches-refresh-spinner" aria-hidden />
               )}
-              {isLoading || isRefreshing ? "Updating…" : "Refresh"}
+              {isLoading || isRefreshing ? "UpdatingÃ¢â‚¬Â¦" : "Refresh"}
             </button>
             {refreshError && (
               <span className="profile-matches-refresh-error" role="alert">
@@ -1179,13 +1185,13 @@ export default function SummonerProfileBeige({
         <div className="profile-performance-summary" aria-label="Last games performance">
           <div className="profile-performance-strip">
             <span className="profile-performance-meta">Last {total} games</span>
-            <span className="profile-performance-sep" aria-hidden>·</span>
+            <span className="profile-performance-sep" aria-hidden>Ã‚Â·</span>
             <span className="profile-performance-wr">{winRate}%</span>
-            <span className="profile-performance-wl">{wins}W – {total - wins}L</span>
-            <span className="profile-performance-sep" aria-hidden>·</span>
+            <span className="profile-performance-wl">{wins}W Ã¢â‚¬â€œ {total - wins}L</span>
+            <span className="profile-performance-sep" aria-hidden>Ã‚Â·</span>
             <span className="profile-performance-kda-num">{kdaRatio} KDA</span>
             <span className="profile-performance-kda-detail">{(totalK / Math.max(1, total)).toFixed(1)} / {(totalD / Math.max(1, total)).toFixed(1)} / {(totalA / Math.max(1, total)).toFixed(1)}</span>
-            <span className="profile-performance-sep" aria-hidden>·</span>
+            <span className="profile-performance-sep" aria-hidden>Ã‚Â·</span>
             <span className="profile-performance-rank-label">Average enemy rank</span>
             <span className="profile-performance-rank">{avgRank.label}</span>
           </div>
@@ -1195,7 +1201,7 @@ export default function SummonerProfileBeige({
                 <span className="profile-performance-picks-label">Most played</span>
                 <div className="profile-performance-picks-icons">
                   {topChampsFromRecent.map((champ) => (
-                    <div key={champ.championId} className="profile-performance-pick" title={`${champ.championName} · ${champ.winRate}% · ${champ.kda.toFixed(1)} KDA`}>
+                    <div key={champ.championId} className="profile-performance-pick" title={`${champ.championName} Ã‚Â· ${champ.winRate}% Ã‚Â· ${champ.kda.toFixed(1)} KDA`}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         className="profile-performance-pick-img"
@@ -1237,7 +1243,7 @@ export default function SummonerProfileBeige({
                                   </defs>
                                 </svg>
                                 <span className="mc-badge-compact-text">Main Character</span>
-                                <span className="profile-performance-badge-count">×{count}</span>
+                                <span className="profile-performance-badge-count">Ãƒâ€”{count}</span>
                               </span>
                             </span>
                           </LeagueTooltip>
@@ -1251,7 +1257,7 @@ export default function SummonerProfileBeige({
                               className={`profile-badge-chip profile-performance-badge-chip ${getBadgeCategoryClass(badge)}`}
                             >
                               <span className="profile-badge-chip-text">{badge}</span>
-                              <span className="profile-performance-badge-count">×{count}</span>
+                              <span className="profile-performance-badge-count">Ãƒâ€”{count}</span>
                             </span>
                           </LeagueTooltip>
                         )
@@ -1455,8 +1461,8 @@ export default function SummonerProfileBeige({
                 <div className="profile-match-left-meta">
                   <div className="profile-match-line1">
                     <span className={win ? "victory-text" : "defeat-text"}>{win ? "Victory" : "Defeat"}</span>
-                    {" · "}{queue} · {duration}
-                    {relative && ` · ${relative}`}
+                    {" Ã‚Â· "}{queue} Ã‚Â· {duration}
+                    {relative && ` Ã‚Â· ${relative}`}
                   </div>
                   <div className="profile-match-line2">
                     <span className="profile-kda-inline">
@@ -1464,7 +1470,7 @@ export default function SummonerProfileBeige({
                       <span className="d">{p.deaths}</span> /{" "}
                       <span className="a">{p.assists}</span>
                     </span>
-                    {" · "}
+                    {" Ã‚Â· "}
                     <span>{cs} CS ({csPerMin.toFixed(1)}/m)</span>
                   </div>
                   <div className="profile-badge-rows">
@@ -1808,7 +1814,7 @@ export default function SummonerProfileBeige({
                 }
               }}
             >
-              {loadingMore ? "Loading…" : "Show more"}
+              {loadingMore ? "LoadingÃ¢â‚¬Â¦" : "Show more"}
             </button>
             {loadMoreError && (
               <span className="profile-matches-load-more-error" role="alert">
