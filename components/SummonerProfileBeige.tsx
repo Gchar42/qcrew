@@ -329,14 +329,14 @@ function ChampIcon({
     return (
       <span
         className={fallbackClass}
-        title={`${summonerName} Ã‚Â· ${championName}`}
+        title={`${summonerName} - ${championName}`}
       >
         <span className="profile-match-team-champ-placeholder" aria-hidden />
       </span>
     );
   }
   return (
-    <span className={champClass} title={`${summonerName} Ã‚Â· ${championName}`}>
+    <span className={champClass} title={`${summonerName} - ${championName}`}>
       <Image
         src={squareUrl}
         alt=""
@@ -387,7 +387,7 @@ function relativeTime(gameEndTimestamp: number | undefined): string {
 
 /** Map teamPosition to display label */
 function roleLabel(pos: string | undefined): string {
-  if (!pos) return "Ã¢â‚¬â€";
+  if (!pos) return "-";
   const upper = pos.toUpperCase();
   if (upper === "JUNGLE") return "Jungle";
   if (upper === "TOP") return "Top";
@@ -902,7 +902,7 @@ export default function SummonerProfileBeige({
   };
 
   const renderRankCard = (title: string, entry: LeagueEntryDto | null, loading: boolean, err: string | null) => {
-    if (loading) return <div className="profile-rank-card profile-rank-card-unranked"><div className="profile-rank-card-title">{title}</div><div className="profile-rank-card-content"><span className="profile-ranked-loading">LoadingÃ¢â‚¬Â¦</span></div></div>;
+    if (loading) return <div className="profile-rank-card profile-rank-card-unranked"><div className="profile-rank-card-title">{title}</div><div className="profile-rank-card-content"><span className="profile-ranked-loading">Loading...</span></div></div>;
     if (err) return <div className="profile-rank-card profile-rank-card-unranked"><div className="profile-rank-card-title">{title}</div><div className="profile-rank-card-content"><span className="profile-ranked-error">{err}</span></div></div>;
     if (!entry) return (
       <div className="profile-rank-card profile-rank-card-unranked">
@@ -1461,8 +1461,8 @@ export default function SummonerProfileBeige({
                 <div className="profile-match-left-meta">
                   <div className="profile-match-line1">
                     <span className={win ? "victory-text" : "defeat-text"}>{win ? "Victory" : "Defeat"}</span>
-                    {" Ã‚Â· "}{queue} Ã‚Â· {duration}
-                    {relative && ` Ã‚Â· ${relative}`}
+                    {" - "}{queue} - {duration}
+                    {relative && ` - ${relative}`}
                   </div>
                   <div className="profile-match-line2">
                     <span className="profile-kda-inline">
@@ -1470,7 +1470,7 @@ export default function SummonerProfileBeige({
                       <span className="d">{p.deaths}</span> /{" "}
                       <span className="a">{p.assists}</span>
                     </span>
-                    {" Ã‚Â· "}
+                    {" - "}
                     <span>{cs} CS ({csPerMin.toFixed(1)}/m)</span>
                   </div>
                   <div className="profile-badge-rows">
@@ -1814,7 +1814,7 @@ export default function SummonerProfileBeige({
                 }
               }}
             >
-              {loadingMore ? "LoadingÃ¢â‚¬Â¦" : "Show more"}
+              {loadingMore ? "Loading..." : "Show more"}
             </button>
             {loadMoreError && (
               <span className="profile-matches-load-more-error" role="alert">
