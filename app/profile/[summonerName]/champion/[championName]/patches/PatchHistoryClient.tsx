@@ -160,6 +160,13 @@ export default function PatchHistoryClient({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0b10] via-transparent to-transparent" />
         <div className="relative z-10 flex h-full items-end px-6 pb-6 sm:px-10 max-w-5xl mx-auto">
+          <Link
+            href={`/summoner?riotId=${encodeURIComponent(summonerName)}&region=${region}`}
+            className="absolute top-6 left-6 sm:left-10 flex items-center gap-1.5 text-sm text-white/40 hover:text-white transition"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+            Back to Profile
+          </Link>
           <div className="flex items-end gap-5">
             <img
               src={getChampionSquareUrl(championName)}
