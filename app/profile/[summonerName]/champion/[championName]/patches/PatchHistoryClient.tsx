@@ -34,6 +34,68 @@ function formatDate(dateStr: string | null): string {
   }
 }
 
+function renderChanges(raw: string) {
+  // Parse the [ABILITY] markers into structured sections
+  const parts = raw.split(/\[ABILITY\]/);
+  const sections: { ability: string | null; lines: string[] }[] = [];
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i].trim();
+    if (!part) continue;
+
+    if (i === 0 && !raw.startsWith("[ABILITY]")) {
+      // Content before any ability marker (e.g. base stat changes without header)
+      const lines = part.split("\n").map((l) => l.trim()).filter(Boolean);
+      if (lines.length > 0) sections.push({ ability: null, lines });
+    } else {
+      const lines = part.split("\n").map((l) => l.trim()).filter(Boolean);
+      const ability = lines[0] || null;
+      const changeLines = lines.slice(1);
+      if (ability) sections.push({ ability, lines: changeLines });
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {sections.map((sec, si) => (
+        <div key={si}>
+          {sec.ability && (
+            <div className="text-white/80 font-semibold text-sm mb-1.5">{sec.ability}</div>
+          )}
+          <ul className="space-y-1 pl-1">
+            {sec.lines.map((line, li) => {
+              const text = line.startsWith("- ") ? line.slice(2) : line;
+              if (!text.trim()) return null;
+
+              // Highlight arrows
+              const arrowIdx = text.indexOf("\u21D2");
+              if (arrowIdx > -1) {
+                return (
+                  <li key={li} className="text-sm text-white/50 flex items-start gap-1.5">
+                    <span className="text-white/20 mt-0.5 shrink-0">&bull;</span>
+                    <span>
+                      <span className="text-white/40">{text.slice(0, arrowIdx)}</span>
+                      <span className="text-white/30 mx-1">&rArr;</span>
+                      <span className="text-white/70">{text.slice(arrowIdx + 1)}</span>
+                    </span>
+                  </li>
+                );
+              }
+
+              return (
+                <li key={li} className="text-sm text-white/50 flex items-start gap-1.5">
+                  <span className="text-white/20 mt-0.5 shrink-0">&bull;</span>
+                  <span>{text}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function PatchHistoryClient({
   summonerName,
   championName,
@@ -51,7 +113,7 @@ export default function PatchHistoryClient({
     setError(null);
     try {
       const res = await fetch(
-        `/api/champion-changelog?champion=${encodeURIComponent(championName)}&limit=60`
+        `/api/champion-changelog?champion=${encodeURIComponent(championName)}&limit=60&bust=1`
       );
       if (!res.ok) throw new Error("Failed to load patch history");
       const json = await res.json();
@@ -148,7 +210,7 @@ export default function PatchHistoryClient({
         ) : changes.length === 0 ? (
           <div className="rounded-xl border border-white/10 bg-[#151620] p-12 text-center">
             <p className="text-white/40 text-lg">No patch changes found for {championName}</p>
-            <p className="text-white/25 text-sm mt-2">This champion hasn't been changed in recent patches.</p>
+            <p className="text-white/25 text-sm mt-2">This champion hasn&apos;t been changed in recent patches.</p>
           </div>
         ) : (
           <>
@@ -204,8 +266,8 @@ export default function PatchHistoryClient({
                         </span>
                       )}
                     </div>
-                    <div className="px-5 py-4 text-sm text-white/60 whitespace-pre-wrap leading-relaxed">
-                      {c.changes}
+                    <div className="px-5 py-4">
+                      {renderChanges(c.changes)}
                     </div>
                   </div>
                 );

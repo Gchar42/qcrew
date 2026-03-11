@@ -16,8 +16,6 @@ type PatchChange = {
 };
 
 const PATCH_VERSIONS: string[] = [];
-
-// Generate patch version list: 26.5 down to 14.1
 for (let minor = 5; minor >= 1; minor--) PATCH_VERSIONS.push(`26.${minor}`);
 for (let minor = 24; minor >= 1; minor--) PATCH_VERSIONS.push(`25.${minor}`);
 for (let minor = 24; minor >= 1; minor--) PATCH_VERSIONS.push(`14.${minor}`);
@@ -26,8 +24,11 @@ const PATCH_URL_BASE = "https://www.leagueoflegends.com/en-us/news/game-updates"
 
 function patchUrl(version: string): string {
   const slug = version.replace(/\./g, "-");
-  // Some older patches use "league-of-legends-patch-X-Y-notes"
   return `${PATCH_URL_BASE}/patch-${slug}-notes/`;
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function normalizeChampName(name: string): string {
@@ -37,72 +38,123 @@ function normalizeChampName(name: string): string {
 function extractChampionChanges(html: string, championName: string): string | null {
   const normalized = normalizeChampName(championName);
 
-  // Find champion header (h3 or h2) in the patch notes HTML
-  // Riot uses ### Champion Name in their markdown which renders to <h3>
-  const headerPatterns = [
-    new RegExp(`<h3[^>]*>\\s*${escapeRegex(championName)}\\s*</h3>`, "i"),
-    new RegExp(`<h2[^>]*>\\s*${escapeRegex(championName)}\\s*</h2>`, "i"),
-    // Also try with id attribute matching
-    new RegExp(`<h[23][^>]*id="[^"]*${escapeRegex(normalized)}[^"]*"[^>]*>`, "i"),
-  ];
+  // Riot HTML: <h3 class="change-title" id="patch-{normalized}"><a>Champion Name</a></h3>
+  const idRegex = new RegExp(
+    `<h3[^>]*\\bid="${escapeRegex("patch-" + normalized)}"[^>]*>[\\s\\S]*?</h3>`,
+    "i"
+  );
+  let headerMatch = idRegex.exec(html);
 
-  let startIdx = -1;
-  for (const pattern of headerPatterns) {
-    const match = pattern.exec(html);
-    if (match) {
-      startIdx = match.index;
-      break;
-    }
+  // Fallback: search for h3 containing the champion name inside an <a> tag
+  if (!headerMatch) {
+    const nameRegex = new RegExp(
+      `<h3[^>]*class="[^"]*change-title[^"]*"[^>]*>[\\s\\S]*?${escapeRegex(championName)}[\\s\\S]*?</h3>`,
+      "i"
+    );
+    headerMatch = nameRegex.exec(html);
   }
 
-  if (startIdx === -1) return null;
+  if (!headerMatch) return null;
 
-  // Find the end: next h2 or h3 that's a different champion section
-  const rest = html.slice(startIdx);
-  const endMatch = rest.match(/(?<=.{10})<h[23][^>]*>/i);
-  const section = endMatch ? rest.slice(0, endMatch.index!) : rest.slice(0, 2000);
+  const sectionStart = headerMatch.index + headerMatch[0].length;
+  const afterHeader = html.slice(sectionStart);
 
-  // Strip HTML tags and clean up
-  let text = section
-    .replace(/<blockquote[^>]*>[\s\S]*?<\/blockquote>/gi, "")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<li[^>]*>/gi, "- ")
-    .replace(/<\/li>/gi, "\n")
-    .replace(/<hr\s*\/?>/gi, "\n")
-    .replace(/<h[456][^>]*>([\s\S]*?)<\/h[456]>/gi, "**$1**\n")
-    .replace(/<[^>]+>/g, "")
+  // End at the next <h3 class="change-title" (next champion) or next major section header
+  const nextChampRegex = /<h3[^>]*class="[^"]*change-title[^"]*"[^>]*>/i;
+  const nextChampMatch = nextChampRegex.exec(afterHeader);
+
+  // Also check for section-ending patterns
+  const nextSectionRegex = /<h2[^>]*>/i;
+  const nextSectionMatch = nextSectionRegex.exec(afterHeader);
+
+  let endIdx = afterHeader.length;
+  if (nextChampMatch) endIdx = Math.min(endIdx, nextChampMatch.index);
+  if (nextSectionMatch) endIdx = Math.min(endIdx, nextSectionMatch.index);
+  endIdx = Math.min(endIdx, 5000);
+
+  const sectionHtml = afterHeader.slice(0, endIdx);
+
+  // Remove blockquotes (Riot's context/flavor text)
+  let cleaned = sectionHtml.replace(/<blockquote[^>]*>[\s\S]*?<\/blockquote>/gi, "");
+
+  // Extract ability sub-headers (h4 tags) → format as plain ability name on its own line
+  cleaned = cleaned.replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, (_match, inner: string) => {
+    // Strip img tags and HTML from the ability name
+    const abilityName = inner.replace(/<img[^>]*>/gi, "").replace(/<[^>]+>/g, "").trim();
+    return `\n[ABILITY]${abilityName}\n`;
+  });
+
+  // Convert list items
+  cleaned = cleaned.replace(/<li[^>]*>/gi, "- ");
+  cleaned = cleaned.replace(/<\/li>/gi, "\n");
+  cleaned = cleaned.replace(/<br\s*\/?>/gi, "\n");
+  cleaned = cleaned.replace(/<hr\s*\/?>/gi, "");
+
+  // Strip <strong> tags but keep their content
+  cleaned = cleaned.replace(/<\/?strong>/gi, "");
+
+  // Strip all remaining HTML tags
+  cleaned = cleaned.replace(/<[^>]+>/g, "");
+
+  // Decode HTML entities
+  cleaned = cleaned
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&nbsp;/g, " ")
+    .replace(/&#8658;/g, "\u21D2")
     .replace(/&#\d+;/g, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+    .replace(/&[a-z]+;/gi, "");
 
-  // Remove the champion name header line from the start
-  const lines = text.split("\n");
-  if (lines[0] && normalizeChampName(lines[0]) === normalized) {
-    text = lines.slice(1).join("\n").trim();
-  }
+  // Clean up whitespace
+  cleaned = cleaned.replace(/[ \t]+/g, " ");
+  cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
+  cleaned = cleaned.trim();
 
-  return text || null;
-}
+  if (!cleaned || cleaned.length < 5) return null;
 
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return cleaned;
 }
 
 function classifyChange(text: string): string {
+  const lines = text.split("\n").filter((l) => l.startsWith("- "));
+
+  let buffSignals = 0;
+  let nerfSignals = 0;
+
+  for (const line of lines) {
+    // Check for arrow notation: "old ⇒ new" or "old => new"
+    const arrowParts = line.split(/\u21D2|\u2192|=>|\u279C/);
+    if (arrowParts.length === 2) {
+      const beforeNums = arrowParts[0].match(/[\d.]+/g)?.map(Number) ?? [];
+      const afterNums = arrowParts[1].match(/[\d.]+/g)?.map(Number) ?? [];
+
+      if (beforeNums.length > 0 && afterNums.length > 0) {
+        // Compare the last number before/after the arrow for each stat line
+        const b = beforeNums[beforeNums.length - 1];
+        const a = afterNums[afterNums.length - 1];
+        if (a > b) buffSignals++;
+        else if (a < b) nerfSignals++;
+      }
+    }
+
+    // Keyword signals
+    const lower = line.toLowerCase();
+    if (/\bnew\b|\badded\b|\bnow\b/.test(lower) && !/\bremoved\b/.test(lower)) buffSignals++;
+    if (/\bremoved\b/.test(lower)) nerfSignals++;
+  }
+
+  // Also look at context if present
   const lower = text.toLowerCase();
-  const hasIncrease = /increased|buffed|added|new|improved|more|higher|longer|faster|reduced cooldown|increased.*ratio/i.test(lower);
-  const hasDecrease = /decreased|nerfed|removed|reduced|less|lower|shorter|slower|increased cooldown|reduced.*ratio/i.test(lower);
-  if (hasIncrease && hasDecrease) return "adjust";
-  if (hasIncrease) return "buff";
-  if (hasDecrease) return "nerf";
+  if (/\bbuff\b/.test(lower)) buffSignals += 2;
+  if (/\bnerf\b/.test(lower)) nerfSignals += 2;
+
+  if (buffSignals > 0 && nerfSignals > 0) return "adjust";
+  if (buffSignals > nerfSignals) return "buff";
+  if (nerfSignals > buffSignals) return "nerf";
   return "change";
 }
 
-// Dates for known patches (approximate)
 const PATCH_DATES: Record<string, string> = {
   "26.5": "2026-03-04", "26.4": "2026-02-18", "26.3": "2026-02-04",
   "26.2": "2026-01-21", "26.1": "2026-01-07",
@@ -121,6 +173,7 @@ export async function GET(req: Request) {
   const champion = (searchParams.get("champion") || "").trim();
   const limitParam = searchParams.get("limit");
   const limit = Math.min(Math.max(parseInt(limitParam || "20", 10) || 20, 1), 60);
+  const bustCache = searchParams.get("bust") === "1";
 
   if (!champion) {
     return NextResponse.json({ error: "champion param required" }, { status: 400 });
@@ -128,8 +181,8 @@ export async function GET(req: Request) {
 
   const client = getAdminClient();
 
-  // Check cache first
-  if (client) {
+  // Check cache first (unless bust=1)
+  if (client && !bustCache) {
     const { data: cached } = await client
       .from("champion_patch_notes")
       .select("patch_version, patch_date, change_type, changes_text")
@@ -150,11 +203,9 @@ export async function GET(req: Request) {
 
   // Scrape patch notes
   const changes: PatchChange[] = [];
-  const patchesToScrape = PATCH_VERSIONS;
 
-  // Scrape in parallel batches of 5 to avoid hammering the server
-  for (let i = 0; i < patchesToScrape.length; i += 5) {
-    const batch = patchesToScrape.slice(i, i + 5);
+  for (let i = 0; i < PATCH_VERSIONS.length; i += 5) {
+    const batch = PATCH_VERSIONS.slice(i, i + 5);
     const results = await Promise.allSettled(
       batch.map(async (version) => {
         try {
@@ -185,15 +236,19 @@ export async function GET(req: Request) {
     }
   }
 
-  // Sort by patch version descending
   changes.sort((a, b) => {
     const [aMaj, aMin] = a.patchVersion.split(".").map(Number);
     const [bMaj, bMin] = b.patchVersion.split(".").map(Number);
     return bMaj !== aMaj ? bMaj - aMaj : bMin - aMin;
   });
 
-  // Cache results in Supabase
+  // Delete stale cache then insert fresh data
   if (client && changes.length > 0) {
+    await client
+      .from("champion_patch_notes")
+      .delete()
+      .ilike("champion_name", champion);
+
     const rows = changes.map((c) => ({
       champion_name: champion,
       patch_version: c.patchVersion,
@@ -203,8 +258,7 @@ export async function GET(req: Request) {
     }));
     await client
       .from("champion_patch_notes")
-      .upsert(rows, { onConflict: "champion_name,patch_version" })
-      .then(() => {});
+      .upsert(rows, { onConflict: "champion_name,patch_version" });
   }
 
   return NextResponse.json({ champion, changes, cached: false });
