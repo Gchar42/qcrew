@@ -76,7 +76,7 @@ export default function ChampionStatsCard(props: {
                 <div className="champ_left">
                   <img
                     className="champ_icon"
-                    src={getChampionSquareUrl(r.championIcon, ddragonVersion)}
+                    src={getChampionSquareUrl(r.championName, ddragonVersion)}
                     alt={r.championName}
                   />
                   <div className="champ_meta">
