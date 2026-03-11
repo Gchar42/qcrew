@@ -33,10 +33,14 @@ export async function GET(
       }
     }
 
+    const sortedRoles = [...ALL_ROLES].sort(
+      (a, b) => (builds[b]?.sample_size ?? 0) - (builds[a]?.sample_size ?? 0)
+    );
+
     return Response.json({
       builds,
       defaultRole,
-      availableRoles: ALL_ROLES,
+      availableRoles: sortedRoles,
       dataSource: sample ? "sample" : "generated",
     });
   } catch (err) {
