@@ -11,31 +11,41 @@ export async function GET(
     return Response.json({ error: "Champion name required" }, { status: 400 });
   }
 
-  const role = req.nextUrl.searchParams.get("role") ?? undefined;
-
   try {
-    const build = await getBuildData(name, role);
-    const hasSample = !!getSampleBuild(name);
+    const tags = await getChampionTags(name);
+    const roles = getViableRoles(tags);
+    const defaultRole = roles[0];
+    const builds: Record<string, ChampionBuild> = {};
+
+    const sample = getSampleBuild(name);
+    for (const role of roles) {
+      if (sample && sample.role === role) {
+        builds[role] = sample;
+      } else if (sample) {
+        builds[role] = adaptBuildForRole(
+          { ...generateForArchetype(name, getArchetypeForRole(tags, role)) },
+          role,
+          role === defaultRole
+        );
+      } else {
+        builds[role] = adaptBuildForRole(
+          { ...generateForArchetype(name, getArchetypeForRole(tags, role)) },
+          role,
+          role === defaultRole
+        );
+      }
+    }
 
     return Response.json({
-      ...build,
-      dataSource: hasSample ? "sample" : "generated",
+      builds,
+      defaultRole,
+      availableRoles: roles,
+      dataSource: sample ? "sample" : "generated",
     });
   } catch (err) {
     console.error("Build API error:", err);
     return Response.json({ error: "Failed to load build" }, { status: 500 });
   }
-}
-
-async function getBuildData(
-  championName: string,
-  _role?: string
-): Promise<ChampionBuild> {
-  const sample = getSampleBuild(championName);
-  if (sample) return sample;
-
-  const tags = await getChampionTags(championName);
-  return generateFallbackBuild(championName, tags);
 }
 
 const getChampionTags = unstable_cache(
@@ -59,29 +69,56 @@ const getChampionTags = unstable_cache(
   { revalidate: 86400 }
 );
 
-/* ── Role-based build templates ─────────────────────────────────── */
+/* ── Viable roles from DDragon tags ─────────────────────────── */
+
+const ROLE_ORDER = ["top", "jungle", "mid", "bot", "support"];
+
+function getViableRoles(tags: string[]): string[] {
+  const t = tags.map((s) => s.toLowerCase());
+  const roles = new Set<string>();
+
+  if (t.includes("marksman")) { roles.add("bot"); }
+  if (t.includes("assassin")) { roles.add("mid"); roles.add("jungle"); }
+  if (t.includes("mage")) { roles.add("mid"); roles.add("support"); }
+  if (t.includes("fighter")) { roles.add("top"); roles.add("jungle"); }
+  if (t.includes("tank")) { roles.add("top"); roles.add("jungle"); roles.add("support"); }
+  if (t.includes("support")) { roles.add("support"); }
+
+  if (roles.size === 0) roles.add("mid");
+
+  return ROLE_ORDER.filter((r) => roles.has(r));
+}
+
+/* ── Pick best archetype for a given role ───────────────────── */
 
 type Archetype = "mage" | "assassin" | "marksman" | "fighter" | "tank" | "support";
 
-function tagsToArchetype(tags: string[]): Archetype {
+function getArchetypeForRole(tags: string[], role: string): Archetype {
   const t = tags.map((s) => s.toLowerCase());
-  if (t.includes("marksman")) return "marksman";
-  if (t.includes("assassin")) return "assassin";
-  if (t.includes("mage") && t.includes("support")) return "support";
-  if (t.includes("mage")) return "mage";
-  if (t.includes("support")) return "support";
-  if (t.includes("tank")) return "tank";
-  return "fighter";
+  switch (role) {
+    case "top":
+      if (t.includes("tank")) return "tank";
+      return "fighter";
+    case "jungle":
+      if (t.includes("assassin")) return "assassin";
+      if (t.includes("tank")) return "tank";
+      return "fighter";
+    case "mid":
+      if (t.includes("assassin")) return "assassin";
+      return "mage";
+    case "bot":
+      if (t.includes("marksman")) return "marksman";
+      return "mage";
+    case "support":
+      if (t.includes("tank")) return "support";
+      if (t.includes("mage")) return "mage";
+      return "support";
+    default:
+      return "fighter";
+  }
 }
 
-function tagsToRole(tags: string[]): string {
-  const a = tagsToArchetype(tags);
-  const map: Record<Archetype, string> = {
-    mage: "mid", assassin: "mid", marksman: "bot",
-    fighter: "top", tank: "top", support: "support",
-  };
-  return map[a];
-}
+/* ── Template builds per archetype ──────────────────────────── */
 
 const TEMPLATES: Record<Archetype, Omit<ChampionBuild, "champion_name">> = {
   mage: {
@@ -435,13 +472,50 @@ const TEMPLATES: Record<Archetype, Omit<ChampionBuild, "champion_name">> = {
   },
 };
 
-function generateFallbackBuild(championName: string, tags: string[]): ChampionBuild {
-  const archetype = tagsToArchetype(tags);
-  const template = TEMPLATES[archetype];
-  const role = tagsToRole(tags);
-  return {
-    ...template,
-    champion_name: championName,
-    role,
-  };
+/* ── Build generation helpers ───────────────────────────────── */
+
+function generateForArchetype(name: string, archetype: Archetype): ChampionBuild {
+  return { ...TEMPLATES[archetype], champion_name: name };
+}
+
+const ROLE_SUMMONERS: Record<string, { spells: { id: number; name: string }[] }> = {
+  top: { spells: [{ id: 4, name: "Flash" }, { id: 12, name: "Teleport" }] },
+  jungle: { spells: [{ id: 4, name: "Flash" }, { id: 11, name: "Smite" }] },
+  mid: { spells: [{ id: 4, name: "Flash" }, { id: 14, name: "Ignite" }] },
+  bot: { spells: [{ id: 4, name: "Flash" }, { id: 7, name: "Heal" }] },
+  support: { spells: [{ id: 4, name: "Flash" }, { id: 14, name: "Ignite" }] },
+};
+
+const ROLE_START_ITEMS: Record<string, { id: number; name: string }[] | null> = {
+  jungle: [{ id: 1103, name: "Gustwalker Hatchling" }],
+  support: [{ id: 3850, name: "Spellthief's Edge" }, { id: 2003, name: "Health Potion" }],
+  top: null,
+  mid: null,
+  bot: null,
+};
+
+function adaptBuildForRole(build: ChampionBuild, role: string, isPrimary: boolean): ChampionBuild {
+  const adapted = { ...build, role };
+
+  const roleSumms = ROLE_SUMMONERS[role];
+  if (roleSumms) {
+    adapted.summoner_spells = {
+      ...adapted.summoner_spells,
+      spells: roleSumms.spells,
+    };
+  }
+
+  const startOverride = ROLE_START_ITEMS[role];
+  if (startOverride) {
+    adapted.items_start = startOverride;
+  }
+
+  if (!isPrimary) {
+    adapted.pick_rate = Math.round(Math.max(0.5, adapted.pick_rate * 0.25) * 10) / 10;
+    adapted.sample_size = Math.floor(adapted.sample_size * 0.12);
+    const wrShift = role === "support" ? -1.5 : role === "jungle" ? -0.8 : -1.0;
+    adapted.win_rate = Math.round((adapted.win_rate + wrShift) * 10) / 10;
+  }
+
+  return adapted;
 }
