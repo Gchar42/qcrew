@@ -98,10 +98,13 @@ function extractChampionChanges(html: string, championName: string): string | nu
     .replace(/&#\d+;/g, "")
     .replace(/&[a-z]+;/gi, "");
 
-  // Clean up whitespace
-  cleaned = cleaned.replace(/[ \t]+/g, " ");
-  cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
-  cleaned = cleaned.trim();
+  // Clean up whitespace: trim each line, collapse blank lines
+  cleaned = cleaned
+    .split("\n")
+    .map((l) => l.replace(/[ \t]+/g, " ").trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 
   if (!cleaned || cleaned.length < 5) return null;
 
@@ -109,7 +112,7 @@ function extractChampionChanges(html: string, championName: string): string | nu
 }
 
 function classifyChange(text: string): string {
-  const lines = text.split("\n").filter((l) => l.startsWith("- "));
+  const lines = text.split("\n").map((l) => l.trim()).filter((l) => l.startsWith("- "));
 
   let buffSignals = 0;
   let nerfSignals = 0;
