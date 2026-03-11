@@ -202,12 +202,6 @@ export default function ChampionDetailClient({ championId }: { championId: strin
                   {build.win_rate.toFixed(1)}%
                 </span>
               </GlassPill>
-              {build.tier_rank != null && (
-                <GlassPill>
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Rank</span>
-                  <span className="text-sm font-bold text-white">{build.tier_rank}<span className="text-zinc-500 font-normal">/{build.tier_total}</span></span>
-                </GlassPill>
-              )}
               <GlassPill>
                 <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Pick</span>
                 <span className="text-sm font-semibold text-zinc-300">{build.pick_rate.toFixed(1)}%</span>
