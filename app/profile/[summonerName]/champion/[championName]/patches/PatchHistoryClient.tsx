@@ -121,7 +121,7 @@ export default function PatchHistoryClient({
     setError(null);
     try {
       const res = await fetch(
-        `/api/champion-changelog?champion=${encodeURIComponent(championName)}&limit=60&bust=1`
+        `/api/champion-changelog?champion=${encodeURIComponent(championName)}&limit=60`
       );
       if (!res.ok) throw new Error("Failed to load patch history");
       const json = await res.json();
