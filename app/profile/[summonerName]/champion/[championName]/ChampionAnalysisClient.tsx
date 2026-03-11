@@ -174,6 +174,16 @@ export default function ChampionAnalysisClient({
         </div>
       </div>
 
+      <nav className="mx-auto max-w-5xl px-4 sm:px-8 pt-4 flex gap-1">
+        <span className="inline-block px-5 py-2.5 text-sm font-bold text-indigo-400 bg-[#151620] border border-white/10 border-b-0 rounded-t-lg">Analysis</span>
+        <Link
+          href={`/profile/${encodeURIComponent(summonerName)}/champion/${encodeURIComponent(championName)}/patches`}
+          className="inline-block px-5 py-2.5 text-sm font-semibold text-white/40 hover:text-white/70 transition rounded-t-lg"
+        >
+          Patch History
+        </Link>
+      </nav>
+
       <div className="mx-auto max-w-5xl px-4 sm:px-8 pb-16 pt-6">
 
         {/* === HERO CARD: Grade + Identity === */}
