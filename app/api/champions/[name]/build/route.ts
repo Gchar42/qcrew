@@ -13,25 +13,22 @@ export async function GET(
 
   try {
     const tags = await getChampionTags(name);
-    const roles = getViableRoles(tags);
-    const defaultRole = roles[0];
+    const defaultRole = getPrimaryRole(tags);
+    const roleTiers = getRoleTiers(tags);
     const builds: Record<string, ChampionBuild> = {};
 
     const sample = getSampleBuild(name);
-    for (const role of roles) {
+
+    for (const role of ALL_ROLES) {
+      const tier = roleTiers[role];
       if (sample && sample.role === role) {
         builds[role] = sample;
-      } else if (sample) {
-        builds[role] = adaptBuildForRole(
-          { ...generateForArchetype(name, getArchetypeForRole(tags, role)) },
-          role,
-          role === defaultRole
-        );
       } else {
+        const archetype = getArchetypeForRole(tags, role);
         builds[role] = adaptBuildForRole(
-          { ...generateForArchetype(name, getArchetypeForRole(tags, role)) },
+          generateForArchetype(name, archetype),
           role,
-          role === defaultRole
+          tier
         );
       }
     }
@@ -39,7 +36,7 @@ export async function GET(
     return Response.json({
       builds,
       defaultRole,
-      availableRoles: roles,
+      availableRoles: ALL_ROLES,
       dataSource: sample ? "sample" : "generated",
     });
   } catch (err) {
@@ -69,24 +66,71 @@ const getChampionTags = unstable_cache(
   { revalidate: 86400 }
 );
 
-/* ── Viable roles from DDragon tags ─────────────────────────── */
+/* ── Role tier system ────────────────────────────────────────
+ * Every champion gets all 5 roles. Each role is classified:
+ *   "primary"   – main role, full stats
+ *   "secondary" – common flex pick, moderate stats
+ *   "offmeta"   – rare/troll, very low play rate but still present
+ * ──────────────────────────────────────────────────────────── */
 
-const ROLE_ORDER = ["top", "jungle", "mid", "bot", "support"];
+const ALL_ROLES = ["top", "jungle", "mid", "bot", "support"];
 
-function getViableRoles(tags: string[]): string[] {
+type RoleTier = "primary" | "secondary" | "offmeta";
+
+function getPrimaryRole(tags: string[]): string {
   const t = tags.map((s) => s.toLowerCase());
-  const roles = new Set<string>();
 
-  if (t.includes("marksman")) { roles.add("bot"); }
-  if (t.includes("assassin")) { roles.add("mid"); roles.add("jungle"); }
-  if (t.includes("mage")) { roles.add("mid"); roles.add("support"); }
-  if (t.includes("fighter")) { roles.add("top"); roles.add("jungle"); }
-  if (t.includes("tank")) { roles.add("top"); roles.add("jungle"); roles.add("support"); }
-  if (t.includes("support")) { roles.add("support"); }
+  if (t.includes("marksman")) return "bot";
+  if (t.includes("support") && !t.includes("mage") && !t.includes("tank")) return "support";
 
-  if (roles.size === 0) roles.add("mid");
+  if (t[0] === "assassin") return "mid";
+  if (t[0] === "mage" && t.includes("support")) return "mid";
+  if (t[0] === "mage") return "mid";
+  if (t[0] === "fighter" && t.includes("assassin")) return "mid";
+  if (t[0] === "fighter") return "top";
+  if (t[0] === "tank" && t.includes("support")) return "support";
+  if (t[0] === "tank") return "top";
+  if (t[0] === "support") return "support";
 
-  return ROLE_ORDER.filter((r) => roles.has(r));
+  return "mid";
+}
+
+function getRoleTiers(tags: string[]): Record<string, RoleTier> {
+  const t = tags.map((s) => s.toLowerCase());
+  const primary = getPrimaryRole(tags);
+  const tiers: Record<string, RoleTier> = {};
+
+  for (const role of ALL_ROLES) {
+    tiers[role] = "offmeta";
+  }
+  tiers[primary] = "primary";
+
+  if (t.includes("assassin")) {
+    if (primary !== "mid") tiers["mid"] = "secondary";
+    if (primary !== "jungle") tiers["jungle"] = "secondary";
+  }
+  if (t.includes("mage")) {
+    if (primary !== "mid") tiers["mid"] = "secondary";
+    if (primary !== "support") tiers["support"] = "secondary";
+  }
+  if (t.includes("fighter")) {
+    if (primary !== "top") tiers["top"] = "secondary";
+    if (primary !== "jungle") tiers["jungle"] = "secondary";
+  }
+  if (t.includes("tank")) {
+    if (primary !== "top") tiers["top"] = "secondary";
+    if (primary !== "jungle") tiers["jungle"] = "secondary";
+    if (primary !== "support") tiers["support"] = "secondary";
+  }
+  if (t.includes("marksman")) {
+    if (primary !== "bot") tiers["bot"] = "secondary";
+    if (primary !== "mid") tiers["mid"] = "secondary";
+  }
+  if (t.includes("support")) {
+    if (primary !== "support") tiers["support"] = "secondary";
+  }
+
+  return tiers;
 }
 
 /* ── Pick best archetype for a given role ───────────────────── */
@@ -494,7 +538,7 @@ const ROLE_START_ITEMS: Record<string, { id: number; name: string }[] | null> = 
   bot: null,
 };
 
-function adaptBuildForRole(build: ChampionBuild, role: string, isPrimary: boolean): ChampionBuild {
+function adaptBuildForRole(build: ChampionBuild, role: string, tier: RoleTier): ChampionBuild {
   const adapted = { ...build, role };
 
   const roleSumms = ROLE_SUMMONERS[role];
@@ -510,11 +554,18 @@ function adaptBuildForRole(build: ChampionBuild, role: string, isPrimary: boolea
     adapted.items_start = startOverride;
   }
 
-  if (!isPrimary) {
-    adapted.pick_rate = Math.round(Math.max(0.5, adapted.pick_rate * 0.25) * 10) / 10;
-    adapted.sample_size = Math.floor(adapted.sample_size * 0.12);
-    const wrShift = role === "support" ? -1.5 : role === "jungle" ? -0.8 : -1.0;
-    adapted.win_rate = Math.round((adapted.win_rate + wrShift) * 10) / 10;
+  if (tier === "secondary") {
+    adapted.pick_rate = Math.round(Math.max(1.0, adapted.pick_rate * 0.3) * 10) / 10;
+    adapted.sample_size = Math.floor(adapted.sample_size * 0.15);
+    adapted.win_rate = Math.round((adapted.win_rate - 1.2) * 10) / 10;
+    adapted.ban_rate = Math.round(Math.max(0.5, adapted.ban_rate * 0.4) * 10) / 10;
+    adapted.tier = "B";
+  } else if (tier === "offmeta") {
+    adapted.pick_rate = Math.round((0.1 + Math.random() * 0.5) * 10) / 10;
+    adapted.sample_size = Math.floor(100 + Math.random() * 600);
+    adapted.win_rate = Math.round((44 + Math.random() * 8) * 10) / 10;
+    adapted.ban_rate = 0;
+    adapted.tier = "D";
   }
 
   return adapted;

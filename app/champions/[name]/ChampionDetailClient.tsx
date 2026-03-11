@@ -228,6 +228,9 @@ export default function ChampionDetailClient({ championId }: { championId: strin
             <div className="flex items-center gap-1 mb-4">
               {availableRoles.map((role) => {
                 const active = role === selectedRole;
+                const roleBuild = builds[role];
+                const games = roleBuild?.sample_size ?? 0;
+                const isLowData = games < 1000;
                 return (
                   <button
                     key={role}
@@ -235,11 +238,18 @@ export default function ChampionDetailClient({ championId }: { championId: strin
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                       active
                         ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30"
-                        : "text-zinc-500 hover:text-zinc-300 border border-transparent hover:border-white/10 hover:bg-white/[0.03]"
+                        : isLowData
+                          ? "text-zinc-600 hover:text-zinc-400 border border-transparent hover:border-white/5 hover:bg-white/[0.02]"
+                          : "text-zinc-500 hover:text-zinc-300 border border-transparent hover:border-white/10 hover:bg-white/[0.03]"
                     }`}
                   >
                     <RoleIcon role={role} size={14} />
                     {ROLE_LABELS[role] ?? role}
+                    {games > 0 && (
+                      <span className={`text-[10px] font-normal ${active ? "text-indigo-400/60" : isLowData ? "text-zinc-700" : "text-zinc-600"}`}>
+                        {games >= 1000 ? `${(games / 1000).toFixed(1)}k` : games}
+                      </span>
+                    )}
                   </button>
                 );
               })}
