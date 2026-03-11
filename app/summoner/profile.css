@@ -3624,3 +3624,7 @@
     transform: rotate(360deg);
   }
 }
+
+/* Compare button in hero badges */
+.profile-badge-compare { border: 1px solid rgba(59,130,246,0.4); background: rgba(59,130,246,0.12); color: #93bbfc; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; transition: background 0.15s, color 0.15s; }
+.profile-badge-compare:hover { background: rgba(59,130,246,0.25); color: #fff; }

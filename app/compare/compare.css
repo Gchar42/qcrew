@@ -1,0 +1,64 @@
+﻿.compare-page {
+  --bg: #1c1c1e;
+  --surface: #1a1f26;
+  --surface2: #252b33;
+  --surface3: #2d343c;
+  --border: #3d4550;
+  --ink: #e6e6e6;
+  --muted: #8b95a0;
+  --accent: #3b82f6;
+  --win: #22c55e;
+  --loss: #ef4444;
+  --gold: #eab308;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  padding: 32px 16px 64px;
+}
+.compare-container { max-width: 1000px; margin: 0 auto; }
+.compare-title { font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 24px; }
+.compare-picker { display: flex; gap: 16px; justify-content: center; align-items: flex-end; flex-wrap: wrap; margin-bottom: 32px; }
+.compare-picker-group { display: flex; flex-direction: column; gap: 6px; }
+.compare-picker-group label { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; }
+.compare-picker-group input, .compare-picker-group select { background: var(--surface2); border: 1px solid var(--border); color: var(--ink); border-radius: 8px; padding: 10px 14px; font-size: 14px; outline: none; transition: border-color 0.15s; }
+.compare-picker-group input:focus, .compare-picker-group select:focus { border-color: var(--accent); }
+.compare-picker-group input { width: 220px; }
+.compare-picker-group select { width: 90px; }
+.compare-btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 10px 24px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+.compare-btn:hover { opacity: 0.85; }
+.compare-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.compare-vs { font-size: 20px; font-weight: 700; color: var(--muted); align-self: center; padding-bottom: 6px; }
+.compare-loading, .compare-error { text-align: center; padding: 48px 0; color: var(--muted); font-size: 15px; }
+.compare-error { color: var(--loss); }
+.compare-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; align-items: start; }
+.compare-col { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.compare-col-left .compare-stat-value { justify-content: flex-end; text-align: right; }
+.compare-col-right .compare-stat-value { justify-content: flex-start; text-align: left; }
+.compare-labels { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 0 12px; min-width: 120px; }
+.compare-player-header { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px; }
+.compare-player-icon { width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--border); }
+.compare-player-name { font-size: 18px; font-weight: 700; }
+.compare-player-tag { color: var(--muted); font-weight: 400; }
+.compare-player-level { font-size: 12px; color: var(--muted); }
+.compare-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 16px 0 6px; text-align: center; grid-column: 1 / -1; }
+.compare-stat-value { font-size: 15px; font-weight: 600; padding: 8px 8px; min-height: 36px; display: flex; align-items: center; }
+.compare-stat-label { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 0; display: flex; align-items: center; justify-content: center; min-height: 36px; text-align: center; }
+.compare-stat-value.better { color: var(--win); }
+.compare-stat-value.worse { color: var(--loss); }
+.compare-stat-value.neutral { color: var(--ink); }
+.compare-rank { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; }
+.compare-rank-emblem { width: 48px; height: 48px; }
+.compare-rank-tier { font-size: 16px; font-weight: 700; }
+.compare-rank-lp { font-size: 13px; color: var(--muted); }
+.compare-rank-wr { font-size: 12px; color: var(--muted); }
+.compare-champs { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; padding: 8px 0; }
+.compare-champ-icon { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border); }
+@media (max-width: 700px) {
+  .compare-grid { font-size: 13px; }
+  .compare-labels { min-width: 80px; padding: 0 4px; }
+  .compare-stat-value { font-size: 13px; padding: 6px 4px; }
+  .compare-player-icon { width: 48px; height: 48px; }
+}
+.profile-badge-compare { border: 1px solid rgba(59,130,246,0.4); background: rgba(59,130,246,0.12); color: #93bbfc; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; transition: background 0.15s, color 0.15s; }
+.profile-badge-compare:hover { background: rgba(59,130,246,0.25); color: #fff; }
