@@ -2560,38 +2560,34 @@
   margin-top: 4px;
 }
 
-/* Spells + runes below items (tasteful placement) */
-.profile-page .profile-match-spells-runes-below {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.profile-page .profile-match-spells-row,
-.profile-page .profile-match-runes-row {
-  display: flex;
-  align-items: center;
+/* Spells + runes below items: 2x2 grid (spell1|rune1, spell2|rune2), left-aligned with items */
+.profile-page .profile-match-spells-runes-grid-below {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   gap: 4px;
+  margin-top: 6px;
+  align-self: flex-start;
+  width: max-content;
 }
 
-.profile-page .profile-match-spell-below,
-.profile-page .profile-match-rune-below {
-  display: inline-flex;
+.profile-page .profile-match-spell-slot-below,
+.profile-page .profile-match-rune-slot-below {
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--border);
   background: rgba(0, 0, 0, 0.2);
 }
 
-.profile-page .profile-match-spell-below img,
-.profile-page .profile-match-rune-below img {
-  width: 20px;
-  height: 20px;
+.profile-page .profile-match-spell-slot-below img,
+.profile-page .profile-match-rune-slot-below img {
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   image-rendering: auto;
 }

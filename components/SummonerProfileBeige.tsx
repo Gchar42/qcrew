@@ -1540,78 +1540,48 @@ export default function SummonerProfileBeige({
                       })()
                     ) : null}
                   </div>
-                  <div className="profile-match-spells-runes-below">
-                    <div className="profile-match-spells-row">
-                      {[p.summoner1Id, p.summoner2Id].map((id, i) => {
-                        const src = getSummonerSpellIconUrl(id, effectiveDdragonVersion);
-                        if (!src) return null;
-                        return (
-                          <span key={i} className="profile-match-spell-below">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={src}
-                              alt=""
-                              width={20}
-                              height={20}
-                              loading={isFirstRow ? "eager" : "lazy"}
-                              fetchPriority={isFirstRow ? "high" : undefined}
-                              style={{ width: 20, height: 20, objectFit: "contain", imageRendering: "auto" }}
-                            />
-                          </span>
-                        );
-                      })}
-                    </div>
-                    <div className="profile-match-runes-row">
-                      {(() => {
-                        const keystoneId = p.perks?.styles?.[0]?.selections?.[0]?.perk;
-                        const secondaryStyleId = p.perks?.styles?.[1]?.style;
-                        const keystoneSrc = getPerkIconUrl(keystoneId, perksById);
-                        const secondarySrc = getStyleIconUrlCd(secondaryStyleId, stylesById);
-                        const nodes: React.ReactNode[] = [];
-                        if (keystoneSrc) {
-                          const keystoneData = keystoneId != null ? perkDataById.get(keystoneId) : undefined;
-                          nodes.push(
-                            <span key="keystone" className="profile-match-rune-below">
-                              <LeagueTooltip
-                                title={(keystoneData?.name || (keystoneId != null ? `Rune ${keystoneId}` : "")).trim() || (keystoneId != null ? `Rune ${keystoneId}` : "Rune")}
-                                body={keystoneData?.shortDesc}
-                              >
+                  <div className="profile-match-spells-runes-grid-below">
+                    {(() => {
+                      const spell1Src = getSummonerSpellIconUrl(p.summoner1Id, effectiveDdragonVersion);
+                      const spell2Src = getSummonerSpellIconUrl(p.summoner2Id, effectiveDdragonVersion);
+                      const keystoneId = p.perks?.styles?.[0]?.selections?.[0]?.perk;
+                      const secondaryStyleId = p.perks?.styles?.[1]?.style;
+                      const keystoneSrc = getPerkIconUrl(keystoneId, perksById);
+                      const secondarySrc = getStyleIconUrlCd(secondaryStyleId, stylesById);
+                      const imgStyle = { width: 18, height: 18, objectFit: "contain" as const, imageRendering: "auto" as const };
+                      return (
+                        <>
+                          {spell1Src && (
+                            <span className="profile-match-spell-slot-below">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={spell1Src} alt="" width={18} height={18} loading={isFirstRow ? "eager" : "lazy"} fetchPriority={isFirstRow ? "high" : undefined} style={imgStyle} />
+                            </span>
+                          )}
+                          {keystoneSrc && (
+                            <span className="profile-match-rune-slot-below">
+                              <LeagueTooltip title={((keystoneId != null ? perkDataById.get(keystoneId)?.name : undefined) || `Rune ${keystoneId ?? ""}`).trim() || `Rune ${keystoneId ?? ""}`} body={keystoneId != null ? perkDataById.get(keystoneId)?.shortDesc : undefined}>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={keystoneSrc}
-                                  alt=""
-                                  width={20}
-                                  height={20}
-                                  loading={isFirstRow ? "eager" : "lazy"}
-                                  fetchPriority={isFirstRow ? "high" : undefined}
-                                  style={{ width: 20, height: 20, objectFit: "contain", imageRendering: "auto" }}
-                                />
+                                <img src={keystoneSrc} alt="" width={18} height={18} loading={isFirstRow ? "eager" : "lazy"} fetchPriority={isFirstRow ? "high" : undefined} style={imgStyle} />
                               </LeagueTooltip>
                             </span>
-                          );
-                        }
-                        if (secondarySrc) {
-                          const styleName = secondaryStyleId != null ? styleNamesById.get(secondaryStyleId) : undefined;
-                          nodes.push(
-                            <span key="secondary" className="profile-match-rune-below">
-                              <LeagueTooltip title={(styleName || (secondaryStyleId != null ? `Style ${secondaryStyleId}` : "")).trim() || (secondaryStyleId != null ? `Style ${secondaryStyleId}` : "Style")}>
+                          )}
+                          {spell2Src && (
+                            <span className="profile-match-spell-slot-below">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={spell2Src} alt="" width={18} height={18} loading={isFirstRow ? "eager" : "lazy"} fetchPriority={isFirstRow ? "high" : undefined} style={imgStyle} />
+                            </span>
+                          )}
+                          {secondarySrc && (
+                            <span className="profile-match-rune-slot-below">
+                              <LeagueTooltip title={((secondaryStyleId != null ? styleNamesById.get(secondaryStyleId) : undefined) || `Style ${secondaryStyleId ?? ""}`).trim() || `Style ${secondaryStyleId ?? ""}`}>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={secondarySrc}
-                                  alt=""
-                                  width={20}
-                                  height={20}
-                                  loading={isFirstRow ? "eager" : "lazy"}
-                                  fetchPriority={isFirstRow ? "high" : undefined}
-                                  style={{ width: 20, height: 20, objectFit: "contain", imageRendering: "auto" }}
-                                />
+                                <img src={secondarySrc} alt="" width={18} height={18} loading={isFirstRow ? "eager" : "lazy"} fetchPriority={isFirstRow ? "high" : undefined} style={imgStyle} />
                               </LeagueTooltip>
                             </span>
-                          );
-                        }
-                        return nodes;
-                      })()}
-                    </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
