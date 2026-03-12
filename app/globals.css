@@ -146,38 +146,121 @@ select {
 .league-tooltip {
   position: fixed;
   z-index: 99999;
-  min-width: 120px;
-  max-width: 320px;
-  padding: 10px 12px;
-  background: #1a1a1e;
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  border-radius: 6px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
+  min-width: 180px;
+  max-width: 300px;
+  padding: 12px 14px;
+  background: #0a0a0f;
+  border: 1px solid rgba(80, 70, 50, 0.6);
+  border-radius: 4px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.7);
   pointer-events: auto;
   font-family: "Inter", system-ui, sans-serif;
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 1.55;
 }
 
 .league-tooltip-title {
   color: #d4af37;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 14px;
+  margin-bottom: 2px;
 }
 
 .league-tooltip:has(.league-tooltip-body) .league-tooltip-title {
-  margin-bottom: 6px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(80, 70, 50, 0.5);
 }
 
 .league-tooltip-body {
-  color: #b8b8bc;
+  color: #a0a0a8;
   white-space: normal;
 }
 
 .league-tooltip-body br {
   display: block;
   content: "";
+  margin-top: 2px;
+}
+
+/* DDragon rich item tooltip styles */
+.league-tooltip-body .tt-stats {
+  color: #c8c8d0;
+  line-height: 1.7;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(80, 70, 50, 0.35);
+}
+
+.league-tooltip-body attention {
+  color: #f0e6d2;
+  font-weight: 600;
+}
+
+.league-tooltip-body passive {
+  display: block;
+  color: #d4af37;
+  font-weight: 600;
+  font-style: italic;
   margin-top: 4px;
+}
+
+.league-tooltip-body active {
+  display: block;
+  color: #e8a642;
+  font-weight: 600;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.league-tooltip-body magicDamage,
+.league-tooltip-body magicdamage {
+  color: #7b8cde;
+}
+
+.league-tooltip-body trueDamage,
+.league-tooltip-body truedamage {
+  color: #f0f0f0;
+  font-weight: 600;
+}
+
+.league-tooltip-body physicaldamage,
+.league-tooltip-body physicalDamage {
+  color: #e08060;
+}
+
+.league-tooltip-body speed {
+  color: #c8aa6e;
+}
+
+.league-tooltip-body keyword {
+  color: #e0c080;
+  font-weight: 600;
+}
+
+.league-tooltip-body onhit,
+.league-tooltip-body OnHit {
+  color: #c8aa6e;
+}
+
+.league-tooltip-body healing {
+  color: #48c878;
+}
+
+.league-tooltip-body shield {
+  color: #c8c8e0;
+}
+
+.league-tooltip-body .tt-cost {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(80, 70, 50, 0.35);
+  color: #8a8a90;
+  font-size: 11px;
+}
+
+.league-tooltip-body .tt-gold {
+  color: #d4af37;
+  font-weight: 600;
+  margin-left: 4px;
 }

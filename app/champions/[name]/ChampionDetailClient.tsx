@@ -156,7 +156,7 @@ export default function ChampionDetailClient({ championId }: { championId: strin
           const byId: ItemTooltipData = {};
           for (const [id, entry] of Object.entries(itemsData.items)) {
             const num = Number(id);
-            if (Number.isFinite(num)) byId[num] = entry as { name: string; plaintext?: string };
+            if (Number.isFinite(num)) byId[num] = entry as { name: string; plaintext?: string; description?: string; gold?: number };
           }
           setItemData(byId);
         }
@@ -966,7 +966,7 @@ function CardHeader({ title, meta, compact }: { title: string; meta?: string; co
 function ItemIcon({ id, name, itemData }: { id: number; name: string; itemData: ItemTooltipData }) {
   const tip = getItemTooltip(itemData, id);
   return (
-    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml>
+    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml={tip.bodyHtml}>
       <div className="flex flex-col items-center gap-1 cursor-default">
         <img src={getItemIconUrl(id)} alt={name} className="w-11 h-11 rounded-xl border border-white/10" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }} />
         <span className="text-[10px] text-zinc-500 text-center max-w-[64px] truncate">{name}</span>
@@ -978,7 +978,7 @@ function ItemIcon({ id, name, itemData }: { id: number; name: string; itemData: 
 function ItemWithStat({ id, name, winRate, matches, itemData }: { id: number; name: string; winRate: number; matches: number; itemData: ItemTooltipData }) {
   const tip = getItemTooltip(itemData, id);
   return (
-    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml>
+    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml={tip.bodyHtml}>
       <div className="flex flex-col items-center gap-1 cursor-default">
         <img src={getItemIconUrl(id)} alt={name} className="w-13 h-13 rounded-xl border border-white/10" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }} />
         <span className="text-[10px] text-zinc-300 text-center max-w-[72px] truncate font-medium">{name}</span>
@@ -994,7 +994,7 @@ function ItemWithStat({ id, name, winRate, matches, itemData }: { id: number; na
 function ItemRow({ id, name, winRate, matches, itemData }: { id: number; name: string; winRate: number; matches: number; itemData: ItemTooltipData }) {
   const tip = getItemTooltip(itemData, id);
   return (
-    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml>
+    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml={tip.bodyHtml}>
       <div className="flex items-center gap-2.5 py-0.5 cursor-default">
         <img src={getItemIconUrl(id)} alt={name} className="w-9 h-9 rounded-lg border border-white/10" />
         <span className="flex-1 text-xs text-zinc-300 truncate">{name}</span>

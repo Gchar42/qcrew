@@ -149,17 +149,35 @@ export function getRankEmblemUrl(tier: string): string {
 
 /* ── Item tooltips ──────────────────────────────────────────── */
 
-export type ItemTooltipData = Record<number, { name: string; plaintext?: string }>;
+export type ItemTooltipData = Record<number, {
+  name: string;
+  plaintext?: string;
+  description?: string;
+  gold?: number;
+}>;
 
 export function getItemTooltip(
   itemDataById: ItemTooltipData | undefined,
   itemId: number | string
-): { title: string; body?: string } {
+): { title: string; body?: string; bodyHtml?: boolean } {
   const numId = typeof itemId === "string" ? parseInt(itemId, 10) : itemId;
   const id = Number.isFinite(numId) ? numId : itemId;
   const data =
     itemDataById?.[id as number] ??
-    (itemDataById as Record<string, { name: string; plaintext?: string }> | undefined)?.[String(itemId)];
+    (itemDataById as Record<string, { name: string; plaintext?: string; description?: string; gold?: number }> | undefined)?.[String(itemId)];
   const title = (data?.name || `Item ${itemId}`).trim() || `Item ${itemId}`;
+
+  if (data?.description) {
+    let html = data.description
+      .replace(/<mainText>|<\/mainText>/g, "")
+      .replace(/<stats>([\s\S]*?)<\/stats>/g, '<div class="tt-stats">$1</div>')
+      .replace(/<br\s*\/?>/g, "<br>");
+
+    if (data.gold) {
+      html += `<div class="tt-cost">Cost:<span class="tt-gold">${data.gold.toLocaleString()}</span></div>`;
+    }
+    return { title, body: html, bodyHtml: true };
+  }
+
   return { title, body: data?.plaintext };
 }
