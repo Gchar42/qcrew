@@ -3128,28 +3128,28 @@
   text-align: left;
 }
 
-/* Items header: shift right so centered over the 7 item icons */
+/* Items header: left-aligned with content */
 .profile-page .md-table thead th.c-items {
-  padding-left: 79px;
+  padding-left: 8px;
 }
 
 .profile-page .md-table .c-player {
-  width: 22%;
+  width: 24%;
   vertical-align: top;
-  padding-left: 85px;
+  padding-left: 8px;
 }
 
 .profile-page .md-table thead th.c-player {
-  padding-left: 85px;
+  padding-left: 8px;
 }
 
 .profile-page .md-table .c-ai-score {
-  width: 12%;
+  width: 10%;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-kda {
-  width: 14%;
+  width: 12%;
   vertical-align: middle;
 }
 
@@ -3159,19 +3159,19 @@
 }
 
 .profile-page .md-table .c-cs {
-  width: 10%;
+  width: 8%;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-vision {
-  width: 10%;
+  width: 8%;
   vertical-align: middle;
 }
 
 .profile-page .md-table .c-items {
-  width: 18%;
+  width: 24%;
   vertical-align: middle;
-  padding-right: 0;
+  padding-right: 8px;
 }
 
 /* Align body cells under column title: center for numeric columns */
