@@ -2518,10 +2518,17 @@
   overflow: visible !important;
 }
 
-.profile-page .profile-match-line1-row {
+.profile-page .profile-match-top-rows {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 10px;
+  min-width: 0;
+}
+
+.profile-page .profile-match-lines-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -2576,7 +2583,6 @@
   font-size: 10px;
   color: var(--muted);
   line-height: 1.25;
-  margin-top: 1px;
 }
 
 .profile-page .profile-kda-inline .k {

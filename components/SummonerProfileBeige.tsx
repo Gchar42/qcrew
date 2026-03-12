@@ -1402,11 +1402,22 @@ export default function SummonerProfileBeige({
                   </div>
                 </div>
                 <div className="profile-match-left-meta">
-                  <div className="profile-match-line1-row">
-                    <div className="profile-match-line1">
-                      <span className={win ? "victory-text" : "defeat-text"}>{win ? "Victory" : "Defeat"}</span>
-                      {" - "}{queue} - {duration}
-                      {relative && ` - ${relative}`}
+                  <div className="profile-match-top-rows">
+                    <div className="profile-match-lines-col">
+                      <div className="profile-match-line1">
+                        <span className={win ? "victory-text" : "defeat-text"}>{win ? "Victory" : "Defeat"}</span>
+                        {" - "}{queue} - {duration}
+                        {relative && ` - ${relative}`}
+                      </div>
+                      <div className="profile-match-line2">
+                        <span className="profile-kda-inline">
+                          <span className="k">{p.kills}</span> /{" "}
+                          <span className="d">{p.deaths}</span> /{" "}
+                          <span className="a">{p.assists}</span>
+                        </span>
+                        {" - "}
+                        <span>{cs} CS ({csPerMin.toFixed(1)}/m)</span>
+                      </div>
                     </div>
                     <div className="profile-match-spells-runes-inline">
                       {(() => {
@@ -1451,15 +1462,6 @@ export default function SummonerProfileBeige({
                         );
                       })()}
                     </div>
-                  </div>
-                  <div className="profile-match-line2">
-                    <span className="profile-kda-inline">
-                      <span className="k">{p.kills}</span> /{" "}
-                      <span className="d">{p.deaths}</span> /{" "}
-                      <span className="a">{p.assists}</span>
-                    </span>
-                    {" - "}
-                    <span>{cs} CS ({csPerMin.toFixed(1)}/m)</span>
                   </div>
                   <div className="profile-badge-rows">
                     <div className="profile-chips-row badgeArea socialBadgeWrap">
