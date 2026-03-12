@@ -230,18 +230,18 @@ function JungleStatsInner() {
             <h2 className="text-sm font-bold text-white/90">Dragon Soul Tier List</h2>
             <p className="text-[10px] text-white/40 mt-0.5">Best to worst by win rate (high elo). Hover souls for details. Sources: leaguetips.gg, zleague.gg, leagueofgraphs.com</p>
           </div>
-          <div className="p-4 flex flex-nowrap gap-3 overflow-x-auto">
+          <div className="p-4 overflow-x-auto">
+            <div className="grid grid-cols-6 gap-3 min-w-[780px]">
             {DRAGON_SOUL_TIER_LIST.map((soul, i) => (
-              <div key={soul.name} className="flex-1 min-w-[120px] shrink-0">
-                <LeagueTooltip title={soul.name} body={soul.tooltip}>
-                  <div
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg border ${soul.bg} ${soul.border} cursor-help`}
-                  >
-                  <span className={`text-lg font-bold tabular-nums ${soul.color}`}>{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-white/90">{soul.name}</span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${soul.bg} ${soul.color} border ${soul.border}`}>
+              <LeagueTooltip key={soul.name} title={soul.name} body={soul.tooltip}>
+                <div
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${soul.bg} ${soul.border} cursor-help min-w-0`}
+                >
+                  <span className={`text-base font-bold tabular-nums shrink-0 ${soul.color}`}>{i + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-white/90 truncate">{soul.name}</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${soul.bg} ${soul.color} border ${soul.border}`}>
                         {soul.tier}
                       </span>
                     </div>
@@ -249,8 +249,8 @@ function JungleStatsInner() {
                   </div>
                 </div>
               </LeagueTooltip>
-              </div>
             ))}
+            </div>
           </div>
         </div>
 
