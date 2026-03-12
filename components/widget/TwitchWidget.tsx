@@ -98,69 +98,69 @@ export default function TwitchWidget({
 
       {/* Content layer */}
       <div className="tw-content">
-        {/* Player name + region */}
-        <div className="tw-header">
-          <span className="tw-name">{name}</span>
-          <span className="tw-region">{regionLabel}</span>
-        </div>
-
-        {/* Rank display */}
-        <div className="tw-rank-row">
-          {tier ? (
-            <img
-              src={getRankEmblemUrl(tier)}
-              alt={tier}
-              className="tw-rank-icon"
-              width={56}
-              height={56}
-            />
-          ) : (
-            <div className="tw-rank-icon-placeholder" />
-          )}
-          <div className="tw-rank-info">
-            <span className="tw-rank-label" style={{ color: tierColor }}>
-              {rankLabel}
-            </span>
-            {lpLabel && <span className="tw-lp">{lpLabel}</span>}
+        {/* Top half: name + rank */}
+        <div className="tw-top">
+          <div className="tw-header">
+            <span className="tw-name">{name}</span>
+            <span className="tw-region">{regionLabel}</span>
+          </div>
+          <div className="tw-rank-row">
+            {tier ? (
+              <img
+                src={getRankEmblemUrl(tier)}
+                alt={tier}
+                className="tw-rank-icon"
+                width={52}
+                height={52}
+              />
+            ) : (
+              <div className="tw-rank-icon-placeholder" />
+            )}
+            <div className="tw-rank-info">
+              <span className="tw-rank-label" style={{ color: tierColor }}>
+                {rankLabel}
+              </span>
+              {lpLabel && <span className="tw-lp">{lpLabel}</span>}
+            </div>
           </div>
         </div>
 
         <div className="tw-divider" />
 
-        {/* This Week section */}
-        <div className="tw-section">
-          <span className="tw-section-title">This Week</span>
-          <div className="tw-stats-row">
-            <span className="tw-wr">{winRate}% WR</span>
-            <span className="tw-record">
-              {wins}W {losses}L
-            </span>
+        {/* Bottom half: condensed stats */}
+        <div className="tw-bottom">
+          <div className="tw-section">
+            <span className="tw-section-title">This Week</span>
+            <div className="tw-stats-row">
+              <span className="tw-wr">{winRate}% WR</span>
+              <span className="tw-record">
+                {wins}W {losses}L
+              </span>
+            </div>
+            {topChampion && (
+              <div className="tw-champ-row">
+                <span className="tw-champ-wr">
+                  {topChampion.winRate}% · {topChampion.games}G
+                </span>
+              </div>
+            )}
           </div>
-          {topChampion && (
-            <div className="tw-champ-row">
-              <span className="tw-champ-wr">
-                {topChampion.winRate}% · {topChampion.games}G
+
+          {(sessionWins > 0 || sessionLosses > 0) && (
+            <div className="tw-session">
+              <span className="tw-session-label">Last session:</span>
+              <span
+                className={`tw-session-result ${sessionNet > 0 ? "tw-positive" : sessionNet < 0 ? "tw-negative" : "tw-neutral"}`}
+              >
+                {sessionWins}W {sessionLosses}L{" "}
+                {sessionNet > 0 ? "↑" : sessionNet < 0 ? "↓" : "→"}
               </span>
             </div>
           )}
-        </div>
 
-        {/* Last session */}
-        {(sessionWins > 0 || sessionLosses > 0) && (
-          <div className="tw-session">
-            <span className="tw-session-label">Last session:</span>
-            <span
-              className={`tw-session-result ${sessionNet > 0 ? "tw-positive" : sessionNet < 0 ? "tw-negative" : "tw-neutral"}`}
-            >
-              {sessionWins}W {sessionLosses}L{" "}
-              {sessionNet > 0 ? "↑" : sessionNet < 0 ? "↓" : "→"}
-            </span>
+          <div className="tw-footer">
+            <span className="tw-brand">statgap.gg</span>
           </div>
-        )}
-
-        {/* Branding */}
-        <div className="tw-footer">
-          <span className="tw-brand">statgap.gg</span>
         </div>
 
         {isDemo && <span className="tw-demo-badge">Demo</span>}

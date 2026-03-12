@@ -1,23 +1,24 @@
-/* Twitch Panel Widget — 320px dark panel matching Twitch UI */
+/* Twitch Panel Widget — 320×320 square card */
 
 .tw-widget {
   position: relative;
-  max-width: 320px;
+  width: 320px;
+  height: 320px;
   margin: 0 auto;
   background: #0e0e10;
   color: #efeff1;
   font-family: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.3;
   overflow: hidden;
-  min-height: 100dvh;
+  border-radius: 8px;
 }
 
 /* ── Splash art background + Ken Burns ───────────────────── */
 
 .tw-splash {
   position: absolute;
-  inset: 0;
+  inset: -12px;
   background-size: cover;
   background-position: center 20%;
   animation: tw-kenburns 20s ease-in-out infinite alternate;
@@ -26,7 +27,7 @@
 
 @keyframes tw-kenburns {
   0%   { transform: scale(1.0); }
-  100% { transform: scale(1.12); }
+  100% { transform: scale(1.08); }
 }
 
 .tw-overlay {
@@ -35,29 +36,33 @@
   background:
     linear-gradient(
       to bottom,
-      rgba(14, 14, 16, 0.92) 0%,
-      rgba(14, 14, 16, 0.55) 40%,
-      rgba(14, 14, 16, 0.55) 60%,
-      rgba(14, 14, 16, 0.92) 100%
+      rgba(14, 14, 16, 0.88) 0%,
+      rgba(14, 14, 16, 0.40) 35%,
+      rgba(14, 14, 16, 0.50) 55%,
+      rgba(14, 14, 16, 0.94) 100%
     );
   z-index: 1;
 }
 
-/* ── Content layer (above splash + overlay) ──────────────── */
+/* ── Content layer ───────────────────────────────────────── */
 
 .tw-content {
   position: relative;
   z-index: 2;
-  padding: 14px 16px 10px;
-  min-height: 100dvh;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  padding: 14px 14px 10px;
+  box-sizing: border-box;
 }
 
 /* ── Loading state ───────────────────────────────────────── */
 
 .tw-widget-loading {
   display: flex;
+  width: 320px;
+  height: 320px;
   align-items: center;
   justify-content: center;
   gap: 10px;
@@ -81,72 +86,73 @@
   font-size: 12px;
 }
 
-/* ── Header (name + region) ──────────────────────────────── */
+/* ── Top half: header + rank ─────────────────────────────── */
+
+.tw-top {
+  flex: 0 0 auto;
+}
 
 .tw-header {
   display: flex;
   align-items: baseline;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 5px;
+  margin-bottom: 10px;
 }
 
 .tw-name {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #efeff1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 240px;
+  max-width: 220px;
 }
 
 .tw-region {
-  font-size: 11px;
+  font-size: 10px;
   color: #adadb8;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   flex-shrink: 0;
 }
 
-/* ── Rank row ────────────────────────────────────────────── */
-
 .tw-rank-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
 }
 
 .tw-rank-icon {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   flex-shrink: 0;
   object-fit: contain;
 }
 
 .tw-rank-icon-placeholder {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   flex-shrink: 0;
-  background: #1f1f23;
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 50%;
 }
 
 .tw-rank-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .tw-rank-label {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   line-height: 1.2;
 }
 
 .tw-lp {
-  font-size: 13px;
-  color: #adadb8;
+  font-size: 12px;
+  color: #d4d4d8;
   font-weight: 500;
 }
 
@@ -155,44 +161,51 @@
 .tw-divider {
   height: 1px;
   background: rgba(255, 255, 255, 0.1);
-  margin: 2px 0 10px;
+  margin: 10px 0 8px;
 }
 
-/* ── Section (This Week) ─────────────────────────────────── */
+/* ── Bottom half: condensed stats ────────────────────────── */
+
+.tw-bottom {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
 
 .tw-section {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .tw-section-title {
   display: block;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #adadb8;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .tw-stats-row {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  margin-bottom: 6px;
+  gap: 8px;
+  margin-bottom: 3px;
 }
 
 .tw-wr {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #efeff1;
 }
 
 .tw-record {
-  font-size: 12px;
+  font-size: 11px;
   color: #adadb8;
 }
 
-/* ── Champion stats row ──────────────────────────────────── */
+/* ── Champion stats ──────────────────────────────────────── */
 
 .tw-champ-row {
   display: flex;
@@ -209,17 +222,16 @@
 .tw-session {
   display: flex;
   align-items: baseline;
-  gap: 6px;
-  margin-bottom: 10px;
+  gap: 5px;
 }
 
 .tw-session-label {
-  font-size: 12px;
+  font-size: 11px;
   color: #adadb8;
 }
 
 .tw-session-result {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -227,18 +239,17 @@
 .tw-negative { color: #f87171; }
 .tw-neutral  { color: #adadb8; }
 
-/* ── Footer / Branding ───────────────────────────────────── */
+/* ── Footer / Branding (bottom-right corner) ─────────────── */
 
 .tw-footer {
   margin-top: auto;
-  padding-top: 8px;
   text-align: right;
 }
 
 .tw-brand {
   font-size: 10px;
   font-weight: 600;
-  color: #bf94ff;
+  color: rgba(191, 148, 255, 0.7);
   letter-spacing: 0.02em;
 }
 
@@ -267,6 +278,10 @@ html, body {
   margin: 0;
   padding: 0;
   background: #0e0e10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
 }
 
 ::-webkit-scrollbar { display: none; }
