@@ -228,7 +228,7 @@ function JungleStatsInner() {
         <div className="mb-8 rounded-xl border border-white/10 bg-[#151620] overflow-hidden">
           <div className="px-4 py-3 border-b border-white/10">
             <h2 className="text-sm font-bold text-white/90">Dragon Soul Tier List</h2>
-            <p className="text-[10px] text-white/40 mt-0.5">Best to worst by win rate (high elo). Prioritize souls accordingly. Sources: leaguetips.gg, zleague.gg, leagueofgraphs.com</p>
+            <p className="text-[10px] text-white/40 mt-0.5">Best to worst by win rate (high elo). Hover souls for details. Sources: leaguetips.gg, zleague.gg, leagueofgraphs.com</p>
           </div>
           <div className="p-4 flex flex-wrap gap-3">
             {DRAGON_SOUL_TIER_LIST.map((soul, i) => (
