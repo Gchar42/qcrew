@@ -2521,8 +2521,7 @@
 .profile-page .profile-match-line1-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -2533,7 +2532,7 @@
   min-width: 0;
 }
 
-/* 2x2 spells/runes box to the right of Victory - Ranked Solo - 29:10 */
+/* 2x2 spells/runes box next to 29:10 */
 .profile-page .profile-match-spells-runes-inline {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2547,8 +2546,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   border-radius: 2px;
   overflow: hidden;
   border: 1px solid var(--border);
@@ -2557,8 +2556,8 @@
 
 .profile-page .profile-match-spell-slot-inline img,
 .profile-page .profile-match-rune-slot-inline img {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   image-rendering: auto;
 }
