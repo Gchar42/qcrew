@@ -47,7 +47,13 @@ export type WidgetData = {
   sessionLosses: number;
 };
 
-export default function TwitchWidget({ data }: { data: WidgetData | null }) {
+export default function TwitchWidget({
+  data,
+  isDemo = false,
+}: {
+  data: WidgetData | null;
+  isDemo?: boolean;
+}) {
   if (!data) {
     return (
       <div className="tw-widget tw-widget-loading">
@@ -156,6 +162,8 @@ export default function TwitchWidget({ data }: { data: WidgetData | null }) {
         <div className="tw-footer">
           <span className="tw-brand">statgap.gg</span>
         </div>
+
+        {isDemo && <span className="tw-demo-badge">Demo</span>}
       </div>
     </div>
   );

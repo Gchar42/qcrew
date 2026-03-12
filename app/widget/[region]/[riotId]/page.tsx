@@ -135,28 +135,56 @@ export default function WidgetPage({
   const { region, riotId: riotIdEncoded } = params;
   const riotId = decodeURIComponent(riotIdEncoded);
 
+  const DEMO_DATA: WidgetData = {
+    name: "Faker#KR1",
+    region: "kr",
+    tier: "CHALLENGER",
+    rank: "I",
+    lp: 1247,
+    wins: 58,
+    losses: 24,
+    topChampion: { name: "Syndra", games: 34, winRate: 74 },
+    splashChampion: "Syndra",
+    sessionWins: 5,
+    sessionLosses: 1,
+  };
+
   const [data, setData] = useState<WidgetData | null>(null);
+  const [isDemo, setIsDemo] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
       const url = `/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}&queue=solo`;
       const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) return;
+      if (!res.ok) throw new Error("fetch failed");
       const bundle = (await res.json()) as ProfileBundle;
       setData(extractWidgetData(bundle, region));
+      setIsDemo(false);
     } catch {
-      // Silently retry on next interval
+      // Fall back to demo data so the widget renders immediately
+      setData((prev) => prev ?? DEMO_DATA);
+      setIsDemo((prev) => prev || !data);
     }
-  }, [riotId, region]);
+  }, [riotId, region, data]);
 
   useEffect(() => {
+    // Show demo instantly, then attempt real fetch in background
+    const timer = setTimeout(() => {
+      setData((prev) => {
+        if (prev) return prev;
+        setIsDemo(true);
+        return DEMO_DATA;
+      });
+    }, 2000);
+
     fetchData();
     intervalRef.current = setInterval(fetchData, REFRESH_INTERVAL_MS);
     return () => {
+      clearTimeout(timer);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [fetchData]);
 
-  return <TwitchWidget data={data} />;
+  return <TwitchWidget data={data} isDemo={isDemo} />;
 }
