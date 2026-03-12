@@ -75,6 +75,11 @@ export type MatchDto = {
       deaths: number;
       assists: number;
       win: boolean;
+      doubleKills?: number;
+      tripleKills?: number;
+      quadraKills?: number;
+      pentaKills?: number;
+      largestMultiKill?: number;
       /** 100 = blue, 200 = red */
       teamId?: number;
       teamPosition?: string;
@@ -84,6 +89,7 @@ export type MatchDto = {
       totalDamageDealtToChampions?: number;
       damageDealtToObjectives?: number;
       damageDealtToTurrets?: number;
+      goldEarned?: number;
       visionScore?: number;
       timeCCingOthers?: number;
       totalHealsOnTeammates?: number;

@@ -28,6 +28,7 @@ import { computeImpactScore } from "@/lib/impactScore";
 import { getMatchBadges, getBadgeCategory } from "@/lib/matchBadges";
 import { numberToRankLabel, rankToNumber } from "@/lib/rankMapping";
 import ChampionStatsCard from "@/components/profile/ChampionStatsCard";
+import PostGameBreakdown from "@/components/PostGameBreakdown";
 import type { AccountDto, LeagueEntryDto, SummonerDto, MatchDto } from "@/types/riot";
 
 /** Badge name -> profile CSS class for chip styling */
@@ -389,7 +390,8 @@ export default function SummonerProfileBeige({
   const [ddragonVersion, setDdragonVersion] = useState<string | null>(null);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
-  const [mainTab, setMainTab] = useState<"overview" | "champion-pool">("overview");
+  const initialTab = searchParams.get("tab") === "champion-pool" ? "champion-pool" : "overview";
+  const [mainTab, setMainTab] = useState<"overview" | "champion-pool">(initialTab);
 
   useEffect(() => {
     fetch("/api/ddragon/version")
@@ -552,6 +554,13 @@ export default function SummonerProfileBeige({
             <span className="profile-badge profile-badge-na">{regionDisplayLabel(regionVal)}</span>
             {role && <span className="profile-badge profile-badge-role">{role}</span>}
             <span className="profile-badge profile-badge-level">Lv.{level}</span>
+            <Link
+              href={`/compare?summoner1=${encodeURIComponent(`${account.gameName}#${account.tagLine}`)}&region1=${encodeURIComponent(regionVal)}`}
+              className="profile-badge profile-badge-compare"
+              style={{ marginLeft: "auto" }}
+            >
+              Compare
+            </Link>
           </div>
         </div>
         <nav className="profile-hero-tabs" aria-label="Profile sections">
@@ -604,7 +613,7 @@ export default function SummonerProfileBeige({
           </div>
         ) : (
           <>
-        {bundle?.partialMatches && (
+        {(bundle as ProfileBundle & { partialMatches?: boolean })?.partialMatches && (
           <div className="profile-matches-partial flex items-center gap-2 py-2 text-sm text-neutral-400">
             <span>Loading more matches…</span>
             <button type="button" onClick={() => mutate()} className="underline">
@@ -652,9 +661,19 @@ export default function SummonerProfileBeige({
           const portraitBaseUrl = getChampionSplashUrl(champName);
           const matchId = m.metadata?.matchId ?? "";
 
+          const isExpanded = expandedMatchId === matchId;
+          const teamParticipants = m.info?.participants ?? [];
+          const sameTeam = teamParticipants.filter((t) => t.teamId === p?.teamId);
+          const teamTotalDamage = sameTeam.reduce((s, t) => s + (t.totalDamageDealtToChampions ?? 0), 0);
+          const teamTotalKills = sameTeam.reduce((s, t) => s + (t.kills ?? 0), 0);
+
           return (
             <div key={matchId} className="profile-match-card-wrap">
-              <div className={`profile-match-row ${win ? "win" : "loss"}`}>
+              <div
+                className={`profile-match-row ${win ? "win" : "loss"}`}
+                style={{ cursor: "pointer" }}
+                onClick={() => setExpandedMatchId(isExpanded ? null : matchId)}
+              >
               <div className="profile-match-left-zone">
                 <div className="profile-match-left-visual">
                   <div className="profile-outcome-col">
@@ -700,12 +719,25 @@ export default function SummonerProfileBeige({
                   </div>
                 </div>
               </div>
-              <div className="profile-match-teams-block" style={{ display: "none" }}>
-                <div className="profile-match-team-col" aria-label="Blue team">
-                </div>
-                <div className="profile-match-team-col" aria-label="Red team" />
+              <div className="flex items-center pr-3 text-white/30">
+                <svg className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
               </div>
               </div>
+              {isExpanded && p && (
+                <PostGameBreakdown
+                  kills={p.kills ?? 0}
+                  deaths={p.deaths ?? 0}
+                  assists={p.assists ?? 0}
+                  csPerMin={csPerMin}
+                  visionScore={p.visionScore ?? 0}
+                  gameDuration={m.info?.gameDuration ?? 0}
+                  goldEarned={p.goldEarned ?? 0}
+                  damageDealt={p.totalDamageDealtToChampions ?? 0}
+                  teamTotalDamage={teamTotalDamage}
+                  teamTotalKills={teamTotalKills}
+                  win={win}
+                />
+              )}
             </div>
           );
         })}
