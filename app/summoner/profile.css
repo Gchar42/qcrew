@@ -31,6 +31,8 @@
   padding: 24px 20px;
   position: relative;
   z-index: 1;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 /* Nav */
@@ -173,6 +175,18 @@
   background: rgba(234, 179, 8, 0.12);
 }
 
+.profile-page .profile-badge-compare {
+  cursor: pointer;
+  text-decoration: none;
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+  transition: opacity 0.15s;
+}
+.profile-page .profile-badge-compare:hover {
+  opacity: 0.9;
+}
+
 /* Tabs: Overview | Champion Pool | LP History */
 .profile-page .profile-hero-tabs {
   display: flex;
@@ -252,10 +266,11 @@
 }
 
 .profile-page .profile-rank-card-emblem {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  border-radius: 0;
   object-fit: contain;
+  object-position: center;
   flex-shrink: 0;
 }
 
@@ -341,20 +356,19 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  overflow: hidden;
-  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  overflow: visible;
+  border-radius: 0;
   line-height: 1;
 }
 
 .profile-page .profile-ranked-emblem {
   display: block;
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   object-fit: contain;
   object-position: center;
-  transform: scale(2.8);
 }
 
 .profile-page .profile-ranked-loading {
@@ -1706,13 +1720,87 @@
 }
 
 
-/* Responsive */
+/* Responsive: split-screen and tablet */
+@media (max-width: 1024px) {
+  .profile-page .profile-container {
+    padding: 16px 12px;
+  }
+  .profile-page .profile-match-teams-block {
+    max-width: 260px;
+  }
+  .profile-page .profile-match-team-row {
+    grid-template-columns: 22px 22px 60px 22px;
+  }
+  .profile-page .profile-match-team-name-line {
+    width: 60px;
+    max-width: 60px;
+  }
+}
+
 @media (max-width: 900px) {
   .profile-page .profile-body {
     grid-template-columns: 1fr;
   }
   .profile-page .profile-body-left {
     position: static;
+  }
+}
+
+/* Split-screen / narrow: single column match row, hide teams on right */
+@media (max-width: 768px) {
+  .profile-page .profile-container {
+    padding: 12px 10px;
+  }
+  .profile-page .profile-nav {
+    padding: 10px 12px;
+  }
+  .profile-page .profile-hero {
+    gap: 12px 20px;
+    padding: 12px 0 0;
+  }
+  .profile-page .profile-hero-name {
+    font-size: 18px;
+  }
+  .profile-page .profile-hero-icon {
+    width: 48px;
+    height: 48px;
+  }
+  .profile-page .profile-match-row {
+    grid-template-columns: 1fr;
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .profile-page .profile-match-teams-block {
+    display: none;
+  }
+  .profile-page .profile-match-left-zone {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .profile-page .profile-match-left-visual {
+    flex-shrink: 0;
+  }
+  .profile-page .profile-match-portrait-wrap {
+    width: 48px;
+    height: 48px;
+  }
+  .profile-page .profile-match-items-row {
+    flex-wrap: wrap;
+  }
+  /* Match details table: horizontal scroll on narrow */
+  .profile-page .match-details-panel {
+    padding: 12px 14px;
+  }
+  .profile-page .md-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .profile-page .md-table {
+    min-width: 520px;
+  }
+  .profile-page .qcrew-summary-row {
+    grid-template-columns: 60px 1fr 100px;
+    gap: 8px;
   }
 }
 
@@ -1730,15 +1818,36 @@
   .profile-page .profile-stat-cell {
     border-right: none;
     border-bottom: 1.5px solid var(--border);
+    padding: 16px 14px;
   }
   .profile-page .profile-stat-cell:nth-last-child(-n + 2) {
     border-bottom: none;
+  }
+  .profile-page .profile-stat-value {
+    font-size: 20px;
   }
   .profile-page .profile-match-row {
     grid-template-columns: 1fr;
   }
   .profile-page .profile-match-teams-block {
     display: none;
+  }
+  .profile-page .profile-match-line1 {
+    font-size: 11px;
+  }
+  .profile-page .profile-match-line2 {
+    font-size: 10px;
+  }
+  .profile-page .champ_row {
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  .profile-page .champ_name {
+    font-size: 13px;
+  }
+  .profile-page .kda_big {
+    font-size: 13px;
   }
 }
 

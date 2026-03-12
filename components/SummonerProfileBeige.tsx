@@ -511,7 +511,16 @@ export default function SummonerProfileBeige({
           {tier && (
             <span className="profile-ranked-emblem-wrap">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={getRankEmblemUrl(tier)} alt="" className="profile-rank-card-emblem profile-ranked-emblem" width={48} height={48} />
+              <img
+                src={getRankEmblemUrl(tier)}
+                alt=""
+                className="profile-rank-card-emblem profile-ranked-emblem"
+                width={64}
+                height={64}
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
             </span>
           )}
           <div className="profile-ranked-summary">
