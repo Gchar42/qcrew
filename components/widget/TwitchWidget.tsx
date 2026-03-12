@@ -34,7 +34,7 @@ const REGION_LABELS: Record<string, string> = {
 };
 
 const TIER_BORDER_COLORS: Record<string, string> = {
-  CHALLENGER: "#00FFFF",
+  CHALLENGER: "#F4C874",
   GRANDMASTER: "#FF4444",
   MASTER: "#9B59B6",
   DIAMOND: "#4FC3F7",
