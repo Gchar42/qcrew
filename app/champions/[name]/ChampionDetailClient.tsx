@@ -493,23 +493,61 @@ function SummonerSpellsCard({ build }: { build: ChampionBuild }) {
 
 /* ── Counters ── */
 function CountersCard({ build }: { build: ChampionBuild }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
   if (!build.counters?.length) return null;
+
+  const DIFF_COLORS = { hard: "text-red-400 bg-red-500/10 border-red-500/20", medium: "text-amber-400 bg-amber-500/10 border-amber-500/20", easy: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" };
+
   return (
     <GlassCard>
       <CardHeader title="Toughest Matchups" />
       <div className="flex flex-col gap-1 mt-3">
-        {build.counters.map((c) => (
-          <Link
-            key={c.name}
-            href={`/champions/${encodeURIComponent(c.name)}`}
-            className="flex items-center gap-3 p-2 -mx-1 rounded-xl hover:bg-white/[0.03] transition-colors group"
-          >
-            <img src={getChampionSquareUrl(c.name)} alt={c.name} className="w-9 h-9 rounded-lg border border-white/10" />
-            <span className="flex-1 text-sm text-zinc-300 group-hover:text-white transition-colors">{c.name}</span>
-            <span className="text-xs font-semibold text-red-400">{c.winRate.toFixed(1)}%</span>
-            <span className="text-[10px] text-zinc-600">{c.matches.toLocaleString()} games</span>
-          </Link>
-        ))}
+        {build.counters.map((c) => {
+          const isOpen = expanded === c.name;
+          const diffStyle = c.difficulty ? DIFF_COLORS[c.difficulty] : null;
+          return (
+            <div key={c.name}>
+              <button
+                onClick={() => setExpanded(isOpen ? null : c.name)}
+                className="w-full flex items-center gap-3 p-2 -mx-1 rounded-xl hover:bg-white/[0.03] transition-colors group text-left"
+              >
+                <img src={getChampionSquareUrl(c.name)} alt={c.name} className="w-9 h-9 rounded-lg border border-white/10" />
+                <span className="flex-1 text-sm text-zinc-300 group-hover:text-white transition-colors">{c.name}</span>
+                {diffStyle && (
+                  <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${diffStyle}`}>
+                    {c.difficulty}
+                  </span>
+                )}
+                <span className="text-xs font-semibold text-red-400">{c.winRate.toFixed(1)}%</span>
+                <svg
+                  className={`w-3.5 h-3.5 text-zinc-600 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isOpen && (c.tip || c.powerSpikes) && (
+                <div className="ml-12 mr-2 mb-2 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                  {c.tip && (
+                    <p className="text-xs text-zinc-400 leading-relaxed">{c.tip}</p>
+                  )}
+                  {c.powerSpikes && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[10px] text-indigo-400 font-semibold uppercase tracking-wider shrink-0">Power Spikes</span>
+                      <span className="text-[11px] text-zinc-300">{c.powerSpikes}</span>
+                    </div>
+                  )}
+                  <Link
+                    href={`/champions/${encodeURIComponent(c.name)}`}
+                    className="inline-block mt-2 text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors"
+                  >
+                    View {c.name}&apos;s build →
+                  </Link>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </GlassCard>
   );
