@@ -225,6 +225,14 @@ function buildParticipant(
     totalHealsOnTeammates: stats.totalHealsOnTeammates ?? 0,
     totalDamageShieldedOnTeammates: stats.totalDamageShieldedOnTeammates ?? 0,
     item0, item1, item2, item3, item4, item5, item6,
+    summoner1Id: 4,   /* Flash */
+    summoner2Id: 14,  /* Ignite */
+    perks: {
+      styles: [
+        { style: 8100, selections: [{ perk: 8112 }] },  /* Domination + Electrocute */
+        { style: 8300 },                                 /* Inspiration secondary */
+      ],
+    },
     riotIdGameName: summonerName,
     riotIdTagline: "NA1",
   };

@@ -286,8 +286,8 @@ export function MatchDetails({
                           <img
                             src={champUrl}
                             alt=""
-                            width={30}
-                            height={30}
+                            width={40}
+                            height={40}
                             className="md-champ-icon champ-icon"
                           />
                         ) : (
@@ -300,18 +300,18 @@ export function MatchDetails({
                             <img
                               src={spell1Src}
                               alt=""
-width={12}
-                            height={12}
-                            className="md-spell-icon spell-icon"
+                              width={18}
+                              height={18}
+                              className="md-spell-icon spell-icon"
                             />
                           )}
                           {spell2Src && (
                             <img
                               src={spell2Src}
                               alt=""
-width={12}
-                            height={12}
-                            className="md-spell-icon spell-icon"
+                              width={18}
+                              height={18}
+                              className="md-spell-icon spell-icon"
                             />
                           )}
                         </div>
@@ -337,9 +337,9 @@ width={12}
                               <img
                                 src={secondarySrc}
                                 alt=""
-width={12}
-                            height={12}
-                            className="md-rune-icon rune-icon"
+                                width={18}
+                                height={18}
+                                className="md-rune-icon rune-icon"
                               />
                             </LeagueTooltip>
                           )}
@@ -430,8 +430,8 @@ width={12}
                                       src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
                                       alt=""
                                       title={title}
-                                      width={18}
-                                      height={18}
+                                      width={24}
+                                      height={24}
                                       className="md-item-icon item-icon"
                                     />
                                   </LeagueTooltip>
@@ -450,8 +450,8 @@ width={12}
                                   src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${p.item6}.png`}
                                   alt=""
                                   title={title}
-                                  width={14}
-                                  height={14}
+                                  width={20}
+                                  height={20}
                                   className="md-item-icon item-icon trinket-icon"
                                 />
                               </LeagueTooltip>
