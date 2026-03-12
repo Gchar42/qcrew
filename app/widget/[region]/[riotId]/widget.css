@@ -15,6 +15,39 @@
   border: 2px solid #3a3a3d;
 }
 
+/* ── Challenger animated gradient border ─────────────────── */
+
+.tw-challenger-wrap {
+  position: relative;
+  padding: 2px;
+  border-radius: 10px;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.tw-challenger-wrap::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150%;
+  height: 150%;
+  margin-top: -75%;
+  margin-left: -75%;
+  background: conic-gradient(#F4C874, #FFFFFF, #E8B84B, #F4C874);
+  animation: tw-border-rotate 3s linear infinite;
+}
+
+@keyframes tw-border-rotate {
+  to { transform: rotate(360deg); }
+}
+
+.tw-widget.tw-challenger {
+  border: none;
+  position: relative;
+  z-index: 1;
+}
+
 /* ── Splash art background + Ken Burns ───────────────────── */
 
 .tw-splash {

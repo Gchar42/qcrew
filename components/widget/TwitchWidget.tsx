@@ -132,17 +132,25 @@ export default function TwitchWidget({
   const peakColor = peakTier
     ? (TIER_COLORS[peakTier.toUpperCase()] ?? "#d4d4d8")
     : "#d4d4d8";
+  const isChallenger = tier?.toUpperCase() === "CHALLENGER";
   const borderColor = tier
     ? (TIER_BORDER_COLORS[tier.toUpperCase()] ?? "#3a3a3d")
     : "#3a3a3d";
 
-  return (
-    <div
-      className="tw-widget"
-      style={{
+  const widgetStyle: React.CSSProperties = isChallenger
+    ? {
+        boxShadow:
+          "0 0 8px rgba(244, 200, 116, 0.8), 0 0 20px rgba(244, 200, 116, 0.4)",
+      }
+    : {
         borderColor,
         boxShadow: `0 0 8px ${borderColor}66`,
-      }}
+      };
+
+  const widgetEl = (
+    <div
+      className={`tw-widget${isChallenger ? " tw-challenger" : ""}`}
+      style={widgetStyle}
     >
       {splashChampion && (
         <div
@@ -267,5 +275,11 @@ export default function TwitchWidget({
         {isDemo && <span className="tw-demo-badge">Demo</span>}
       </div>
     </div>
+  );
+
+  return isChallenger ? (
+    <div className="tw-challenger-wrap">{widgetEl}</div>
+  ) : (
+    widgetEl
   );
 }
