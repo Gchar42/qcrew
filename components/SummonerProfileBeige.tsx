@@ -9,6 +9,7 @@ import { buildProfileHref } from "@/lib/routes";
 import type { ProfileBundle } from "@/app/api/riot/profileBundle/route";
 import { MatchDetailSlideOver } from "@/components/summoner/MatchDetailSlideOver";
 import { MatchDetails } from "@/components/MatchDetails";
+import PostGameBreakdown from "@/components/PostGameBreakdown";
 import ChampionStatsCard from "@/components/ChampionStatsCard";
 import RecentlyPlayedWithCard from "@/components/RecentlyPlayedWithCard";
 import { ChampionFirePortrait } from "@/components/ChampionFirePortrait";
@@ -1771,6 +1772,27 @@ export default function SummonerProfileBeige({
                   />
                 );
               })() : null}
+              {expandedMatchId === matchId && (() => {
+                const teamParts = m.info?.participants ?? [];
+                const sameTeam = teamParts.filter((t) => t.teamId === p.teamId);
+                const teamTotalDamage = sameTeam.reduce((s, t) => s + (t.totalDamageDealtToChampions ?? 0), 0);
+                const teamTotalKills = sameTeam.reduce((s, t) => s + (t.kills ?? 0), 0);
+                return (
+                  <PostGameBreakdown
+                    kills={p.kills ?? 0}
+                    deaths={p.deaths ?? 0}
+                    assists={p.assists ?? 0}
+                    csPerMin={csPerMin}
+                    visionScore={p.visionScore ?? 0}
+                    gameDuration={m.info?.gameDuration ?? 0}
+                    goldEarned={p.goldEarned ?? 0}
+                    damageDealt={p.totalDamageDealtToChampions ?? 0}
+                    teamTotalDamage={teamTotalDamage}
+                    teamTotalKills={teamTotalKills}
+                    win={win}
+                  />
+                );
+              })()}
             </div>
           );
         })}

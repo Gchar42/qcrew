@@ -41,7 +41,14 @@ export interface ChampionBuild {
   };
   skill_order: string[];
   skill_path: number[];
-  counters: { name: string; winRate: number; matches: number }[];
+  counters: {
+    name: string;
+    winRate: number;
+    matches: number;
+    tip?: string;
+    powerSpikes?: string;
+    difficulty?: "easy" | "medium" | "hard";
+  }[];
 }
 
 const SAMPLE_BUILDS: Record<string, ChampionBuild> = {

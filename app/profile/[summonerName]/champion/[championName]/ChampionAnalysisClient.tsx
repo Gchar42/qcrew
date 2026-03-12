@@ -6,6 +6,9 @@ import {
   getChampionSplashUrl,
   getChampionSquareUrl,
 } from "@/lib/riotAssets";
+import OneTrickInsights from "@/components/OneTrickInsights";
+import ProgressionTracker from "@/components/ProgressionTracker";
+import MatchupAdvisor from "@/components/MatchupAdvisor";
 
 type StatsBlock = {
   games: number; wins: number; winRate: number;
@@ -385,6 +388,19 @@ export default function ChampionAnalysisClient({
               ))}
             </div>
           </div>
+        </div>
+
+        {/* === One-Trick Insights === */}
+        <OneTrickInsights championName={championName} />
+
+        {/* === Progression Tracker === */}
+        <div className="mt-8">
+          <ProgressionTracker riotId={riotId} region={region} />
+        </div>
+
+        {/* === Matchup Advisor === */}
+        <div className="mt-8 mb-8">
+          <MatchupAdvisor championName={championName} />
         </div>
 
         {/* === Rank-Up Roadmap === */}
