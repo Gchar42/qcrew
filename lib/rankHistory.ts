@@ -47,7 +47,7 @@ export async function upsertRankHistory(
   }
 }
 
-/** Fetch past ranks for a player, ordered by season descending (most recent first). */
+/** Fetch past ranks for a player, ordered by season ascending (earliest first). */
 export async function getPastRanks(
   puuid: string,
   region: string,
@@ -62,7 +62,7 @@ export async function getPastRanks(
       .eq("puuid", puuid)
       .eq("region", region)
       .eq("queue", queue)
-      .order("season", { ascending: false })
+      .order("season", { ascending: true })
       .limit(limit);
 
     if (error) {
