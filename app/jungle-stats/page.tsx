@@ -33,6 +33,15 @@ const GROUP_ICONS: Record<string, string> = {
   game: "\u{1F3AE}",
 };
 
+/** Dragon soul tier list by win rate (high elo). Source: leaguetips.gg, zleague.gg */
+const DRAGON_SOUL_TIER_LIST = [
+  { name: "Cloud Soul", tier: "S", winRate: 92.8, color: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/30", desc: "60% MS for 6s after ult — chase, kite, reposition" },
+  { name: "Mountain Soul", tier: "A", winRate: 91.1, color: "text-amber-600", bg: "bg-amber-500/10", border: "border-amber-500/30", desc: "Shield after 5s out of combat — survivability" },
+  { name: "Hextech Soul", tier: "A", winRate: 91, color: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/30", desc: "True damage + slow on hit — damage and utility" },
+  { name: "Infernal Soul", tier: "B", winRate: 90.9, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/30", desc: "Explosions on damage — burst, waveclear" },
+  { name: "Ocean Soul", tier: "C", winRate: 90, color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/30", desc: "Heal + mana on damage — sustain (champ-dependent)" },
+];
+
 function FilterDropdown({
   label,
   value,
@@ -163,6 +172,34 @@ function JungleStatsInner() {
               Sample Data
             </span>
           )}
+        </div>
+
+        {/* Dragon Soul Tier List */}
+        <div className="mb-8 rounded-xl border border-white/10 bg-[#151620] overflow-hidden">
+          <div className="px-4 py-3 border-b border-white/10">
+            <h2 className="text-sm font-bold text-white/90">Dragon Soul Tier List</h2>
+            <p className="text-[10px] text-white/40 mt-0.5">Best to worst by win rate (high elo). Prioritize souls accordingly. Source: leaguetips.gg</p>
+          </div>
+          <div className="p-4 flex flex-wrap gap-3">
+            {DRAGON_SOUL_TIER_LIST.map((soul, i) => (
+              <div
+                key={soul.name}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg border ${soul.bg} ${soul.border} min-w-[200px] flex-1`}
+                title={soul.desc}
+              >
+                <span className={`text-lg font-bold tabular-nums ${soul.color}`}>{i + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-white/90">{soul.name}</span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${soul.bg} ${soul.color} border ${soul.border}`}>
+                      {soul.tier}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-white/50 mt-0.5">{soul.winRate}% WR</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="flex gap-6">
