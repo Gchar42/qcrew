@@ -15,27 +15,63 @@ const TIER_COLORS: Record<string, string> = {
   IRON: "#78716C",
 };
 
+const TIER_BORDER_COLORS: Record<string, string> = {
+  CHALLENGER: "#F4C874",
+  GRANDMASTER: "#FF4444",
+  MASTER: "#9B59B6",
+  DIAMOND: "#4FC3F7",
+  EMERALD: "#2ECC71",
+  PLATINUM: "#1ABC9C",
+  GOLD: "#C89B3C",
+  SILVER: "#AAB8C2",
+  BRONZE: "#CD7F32",
+  IRON: "#8B7355",
+};
+
+const REGION_LABELS: Record<string, string> = {
+  na1: "NA",
+  euw1: "EUW",
+  eun1: "EUNE",
+  kr: "KR",
+  jp1: "JP",
+  br1: "BR",
+  la1: "LAN",
+  la2: "LAS",
+  oc1: "OCE",
+  tr1: "TR",
+  ru: "RU",
+};
+
+function splashUrl(champion: string): string {
+  return `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${champion}_0.jpg`;
+}
+
+function formatTier(tier: string): string {
+  if (tier === "GRANDMASTER") return "Grandmaster";
+  if (!tier) return "Unranked";
+  return tier.charAt(0) + tier.slice(1).toLowerCase();
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const name = searchParams.get("name") ?? "Summoner";
-  const tier = searchParams.get("tier") ?? "";
-  const rank = searchParams.get("rank") ?? "";
-  const lp = searchParams.get("lp") ?? "0";
-  const wr = searchParams.get("wr") ?? "50";
-  const games = searchParams.get("games") ?? "0";
 
-  const tierUpper = tier.toUpperCase();
-  const tierColor = TIER_COLORS[tierUpper] ?? "#A1A1AA";
-  const tierDisplay =
-    tierUpper === "GRANDMASTER"
-      ? "Grandmaster"
-      : tierUpper
-        ? tierUpper.charAt(0) + tierUpper.slice(1).toLowerCase()
-        : "Unranked";
-  const rankDisplay =
-    ["MASTER", "GRANDMASTER", "CHALLENGER"].includes(tierUpper)
-      ? ""
-      : ` ${rank}`;
+  const name = searchParams.get("name") ?? "Faker#KR1";
+  const region = searchParams.get("region") ?? "kr";
+  const tier = (searchParams.get("tier") ?? "CHALLENGER").toUpperCase();
+  const rank = searchParams.get("rank") ?? "I";
+  const lp = searchParams.get("lp") ?? "1247";
+  const wins = parseInt(searchParams.get("wins") ?? "58", 10);
+  const losses = parseInt(searchParams.get("losses") ?? "24", 10);
+  const champion = searchParams.get("champion") ?? "Syndra";
+  const ladderRank = searchParams.get("ladderRank") ?? "1";
+
+  const totalGames = wins + losses;
+  const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
+  const tierColor = TIER_COLORS[tier] ?? "#A1A1AA";
+  const borderColor = TIER_BORDER_COLORS[tier] ?? "#3a3a3d";
+  const regionLabel = REGION_LABELS[region.toLowerCase()] ?? region.toUpperCase();
+  const tierDisplay = formatTier(tier);
+  const showDivision = !["MASTER", "GRANDMASTER", "CHALLENGER"].includes(tier);
 
   return new ImageResponse(
     (
@@ -44,97 +80,329 @@ export async function GET(request: Request) {
           width: "1200px",
           height: "630px",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          background: "linear-gradient(135deg, #0E0F15 0%, #151620 50%, #1a1b2e 100%)",
+          position: "relative",
+          overflow: "hidden",
           fontFamily: "sans-serif",
-          color: "#E8E9F0",
+          color: "#efeff1",
         }}
       >
-        {/* Logo area */}
-        <div style={{ display: "flex", alignItems: "center", marginBottom: "32px" }}>
-          <span style={{ fontSize: "24px", color: "#5865F2", fontWeight: 700 }}>
-            STATGAP.GG
-          </span>
-        </div>
-
-        {/* Summoner name */}
-        <div
+        {/* Splash art background */}
+        <img
+          src={splashUrl(champion)}
+          width={1200}
+          height={630}
           style={{
-            fontSize: "56px",
-            fontWeight: 800,
-            letterSpacing: "-0.02em",
-            marginBottom: "16px",
-            maxWidth: "900px",
-            textAlign: "center",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "1200px",
+            height: "630px",
+            objectFit: "cover",
+            objectPosition: "center 20%",
           }}
-        >
-          {name}
-        </div>
+        />
 
-        {/* Tier + LP */}
+        {/* Dark overlay */}
         <div
           style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "1200px",
+            height: "630px",
+            background:
+              "linear-gradient(135deg, rgba(14,14,16,0.93) 0%, rgba(14,14,16,0.7) 50%, rgba(14,14,16,0.85) 100%)",
+          }}
+        />
+
+        {/* Top accent bar */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "1200px",
+            height: "4px",
+            background: `linear-gradient(90deg, transparent 0%, ${borderColor} 15%, ${tierColor} 50%, ${borderColor} 85%, transparent 100%)`,
+          }}
+        />
+
+        {/* Bottom accent bar */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            width: "1200px",
+            height: "4px",
+            background: `linear-gradient(90deg, transparent 0%, ${borderColor}66 20%, ${borderColor} 50%, ${borderColor}66 80%, transparent 100%)`,
+          }}
+        />
+
+        {/* Content */}
+        <div
+          style={{
+            position: "relative",
             display: "flex",
-            alignItems: "center",
-            gap: "16px",
-            marginBottom: "24px",
+            flexDirection: "column",
+            padding: "44px 64px",
+            width: "100%",
+            height: "100%",
+            justifyContent: "space-between",
           }}
         >
-          <span
+          {/* Top row: branding + region */}
+          <div
             style={{
-              fontSize: "32px",
-              fontWeight: 700,
-              color: tierColor,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            {tierDisplay}{rankDisplay}
-          </span>
-          {tier && (
-            <span style={{ fontSize: "28px", color: "#9CA3AF" }}>
-              {lp} LP
-            </span>
-          )}
-        </div>
-
-        {/* Stats row */}
-        <div
-          style={{
-            display: "flex",
-            gap: "48px",
-            padding: "20px 40px",
-            borderRadius: "16px",
-            border: "1px solid rgba(255,255,255,0.1)",
-            background: "rgba(255,255,255,0.03)",
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <span
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span
+                style={{
+                  fontSize: "22px",
+                  fontWeight: 800,
+                  color: "#fff",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                stat
+              </span>
+              <span
+                style={{
+                  fontSize: "22px",
+                  fontWeight: 800,
+                  color: "#bf94ff",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                gap
+              </span>
+              <span
+                style={{
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  color: "#adadb8",
+                  marginLeft: "2px",
+                }}
+              >
+                .gg
+              </span>
+            </div>
+            <div
               style={{
-                fontSize: "36px",
-                fontWeight: 700,
-                color: parseInt(wr) >= 50 ? "#34D399" : "#EF4444",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "6px 16px",
+                borderRadius: "8px",
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.1)",
               }}
             >
-              {wr}%
-            </span>
-            <span style={{ fontSize: "14px", color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              Win Rate
-            </span>
+              <span
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 600,
+                  color: "#adadb8",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                {regionLabel}
+              </span>
+            </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <span style={{ fontSize: "36px", fontWeight: 700 }}>{games}</span>
-            <span style={{ fontSize: "14px", color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              Games
-            </span>
+
+          {/* Middle: player identity */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}
+          >
+            {/* Name */}
+            <div
+              style={{
+                fontSize: "72px",
+                fontWeight: 800,
+                letterSpacing: "-0.02em",
+                lineHeight: 1.1,
+                maxWidth: "900px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {name}
+            </div>
+
+            {/* Rank row */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "16px",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "38px",
+                  fontWeight: 700,
+                  color: tierColor,
+                }}
+              >
+                {tierDisplay}
+                {showDivision ? ` ${rank}` : ""}
+              </span>
+              <span style={{ fontSize: "30px", color: "#d4d4d8", fontWeight: 500 }}>
+                {lp} LP
+              </span>
+              {ladderRank && (
+                <span
+                  style={{
+                    fontSize: "22px",
+                    color: "#adadb8",
+                    fontWeight: 500,
+                    marginLeft: "8px",
+                  }}
+                >
+                  Rank {ladderRank} in {regionLabel}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom: stats cards */}
+          <div
+            style={{
+              display: "flex",
+              gap: "24px",
+            }}
+          >
+            {/* Win Rate */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                padding: "20px 36px",
+                borderRadius: "12px",
+                background: "rgba(0,0,0,0.4)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "44px",
+                  fontWeight: 700,
+                  color: winRate >= 50 ? "#34d399" : "#f87171",
+                }}
+              >
+                {winRate}%
+              </span>
+              <span
+                style={{
+                  fontSize: "13px",
+                  color: "#6b7280",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  fontWeight: 600,
+                }}
+              >
+                Win Rate
+              </span>
+            </div>
+
+            {/* Games */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                padding: "20px 36px",
+                borderRadius: "12px",
+                background: "rgba(0,0,0,0.4)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <span style={{ fontSize: "44px", fontWeight: 700 }}>
+                {totalGames}
+              </span>
+              <span
+                style={{
+                  fontSize: "13px",
+                  color: "#6b7280",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  fontWeight: 600,
+                }}
+              >
+                Games
+              </span>
+            </div>
+
+            {/* Wins */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                padding: "20px 36px",
+                borderRadius: "12px",
+                background: "rgba(0,0,0,0.4)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <span style={{ fontSize: "44px", fontWeight: 700, color: "#34d399" }}>
+                {wins}
+              </span>
+              <span
+                style={{
+                  fontSize: "13px",
+                  color: "#6b7280",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  fontWeight: 600,
+                }}
+              >
+                Wins
+              </span>
+            </div>
+
+            {/* Losses */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                padding: "20px 36px",
+                borderRadius: "12px",
+                background: "rgba(0,0,0,0.4)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <span style={{ fontSize: "44px", fontWeight: 700, color: "#f87171" }}>
+                {losses}
+              </span>
+              <span
+                style={{
+                  fontSize: "13px",
+                  color: "#6b7280",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  fontWeight: 600,
+                }}
+              >
+                Losses
+              </span>
+            </div>
           </div>
         </div>
       </div>
     ),
-    { width: 1200, height: 630 }
+    { width: 1200, height: 630 },
   );
 }
