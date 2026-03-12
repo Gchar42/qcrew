@@ -119,7 +119,32 @@ const CLASS_ADVICE: Record<ClassTag, { runes: string[]; items: string[]; tips: s
   },
 };
 
+let _champListCache: { id: string; tags: string[] }[] | null = null;
+
+async function getChampionList(): Promise<{ id: string; tags: string[] }[]> {
+  if (_champListCache) return _champListCache;
+  try {
+    const res = await fetch("/api/champions");
+    if (!res.ok) return [];
+    const data = await res.json();
+    const list = (data.champions ?? []).map((c: { id: string; tags?: string[] }) => ({
+      id: c.id,
+      tags: c.tags ?? [],
+    }));
+    _champListCache = list;
+    return list;
+  } catch {
+    return [];
+  }
+}
+
 async function fetchChampionTags(name: string): Promise<string[]> {
+  const list = await getChampionList();
+  const lower = name.toLowerCase();
+  const match = list.find((c) => c.id.toLowerCase() === lower);
+  if (match) return match.tags;
+
+  // Fallback: try direct API call with original casing
   try {
     const res = await fetch(`/api/ddragon/champion/${encodeURIComponent(name)}`);
     if (!res.ok) return [];
