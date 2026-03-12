@@ -132,15 +132,19 @@ export default function TwitchWidget({
   const peakColor = peakTier
     ? (TIER_COLORS[peakTier.toUpperCase()] ?? "#d4d4d8")
     : "#d4d4d8";
-  const isChallenger = tier?.toUpperCase() === "CHALLENGER";
+  const tierUpper = tier?.toUpperCase() ?? "";
+  const isChallenger = tierUpper === "CHALLENGER";
+  const isGrandmaster = tierUpper === "GRANDMASTER";
+  const hasSpinBorder = isChallenger || isGrandmaster;
   const borderColor = tier
-    ? (TIER_BORDER_COLORS[tier.toUpperCase()] ?? "#3a3a3d")
+    ? (TIER_BORDER_COLORS[tierUpper] ?? "#3a3a3d")
     : "#3a3a3d";
 
-  const widgetStyle: React.CSSProperties = isChallenger
+  const widgetStyle: React.CSSProperties = hasSpinBorder
     ? {
-        boxShadow:
-          "0 0 8px rgba(244, 200, 116, 0.8), 0 0 20px rgba(244, 200, 116, 0.4)",
+        boxShadow: isChallenger
+          ? "0 0 8px rgba(244, 200, 116, 0.8), 0 0 20px rgba(244, 200, 116, 0.4)"
+          : "0 0 8px rgba(255, 68, 68, 0.8), 0 0 20px rgba(255, 140, 0, 0.4)",
       }
     : {
         borderColor,
@@ -149,7 +153,7 @@ export default function TwitchWidget({
 
   const widgetEl = (
     <div
-      className={`tw-widget${isChallenger ? " tw-challenger" : ""}`}
+      className={`tw-widget${hasSpinBorder ? " tw-spin-card" : ""}`}
       style={widgetStyle}
     >
       {splashChampion && (
@@ -277,9 +281,19 @@ export default function TwitchWidget({
     </div>
   );
 
-  return isChallenger ? (
-    <div className="tw-challenger-wrap">{widgetEl}</div>
-  ) : (
-    widgetEl
-  );
+  if (hasSpinBorder) {
+    const spinGradient = isChallenger
+      ? "conic-gradient(#F4C874, #FFFFFF, #C8922A, #FFFFFF, #F4C874)"
+      : "conic-gradient(#FF4444, #FF8C00, #FF4444, #FF8C00, #FF4444)";
+    return (
+      <div
+        className="tw-spin-wrap"
+        style={{ "--tw-spin-bg": spinGradient } as React.CSSProperties}
+      >
+        {widgetEl}
+      </div>
+    );
+  }
+
+  return widgetEl;
 }

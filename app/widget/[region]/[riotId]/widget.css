@@ -15,9 +15,9 @@
   border: 2px solid #3a3a3d;
 }
 
-/* ── Challenger animated gradient border ─────────────────── */
+/* ── Spinning gradient border (Challenger / Grandmaster) ─── */
 
-.tw-challenger-wrap {
+.tw-spin-wrap {
   position: relative;
   padding: 2px;
   border-radius: 10px;
@@ -25,24 +25,19 @@
   width: fit-content;
 }
 
-.tw-challenger-wrap::before {
+.tw-spin-wrap::before {
   content: "";
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 150%;
-  height: 150%;
-  margin-top: -75%;
-  margin-left: -75%;
-  background: conic-gradient(#F4C874, #FFFFFF, #E8B84B, #F4C874);
-  animation: tw-border-rotate 3s linear infinite;
+  inset: -100%;
+  background: var(--tw-spin-bg);
+  animation: tw-spin-border 2s linear infinite;
 }
 
-@keyframes tw-border-rotate {
+@keyframes tw-spin-border {
   to { transform: rotate(360deg); }
 }
 
-.tw-widget.tw-challenger {
+.tw-widget.tw-spin-card {
   border: none;
   position: relative;
   z-index: 1;
