@@ -230,9 +230,9 @@ function JungleStatsInner() {
             <h2 className="text-sm font-bold text-white/90">Dragon Soul Tier List</h2>
             <p className="text-[10px] text-white/40 mt-0.5">Best to worst by win rate (high elo). Hover souls for details. Sources: leaguetips.gg, zleague.gg, leagueofgraphs.com</p>
           </div>
-          <div className="p-4 flex flex-wrap gap-3">
+          <div className="p-4 flex flex-nowrap gap-3 overflow-x-auto">
             {DRAGON_SOUL_TIER_LIST.map((soul, i) => (
-              <div key={soul.name} className="min-w-[200px] flex-1">
+              <div key={soul.name} className="flex-1 min-w-[120px] shrink-0">
                 <LeagueTooltip title={soul.name} body={soul.tooltip}>
                   <div
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg border ${soul.bg} ${soul.border} cursor-help`}
