@@ -143,7 +143,7 @@ export default function TwitchWidget({
   const widgetStyle: React.CSSProperties = hasSpinBorder
     ? {
         boxShadow: isChallenger
-          ? "0 0 15px rgba(244, 200, 116, 0.9), 0 0 30px rgba(244, 200, 116, 0.5)"
+          ? "0 0 8px rgba(244, 200, 116, 0.9), 0 0 20px rgba(244, 200, 116, 0.5), 0 0 35px rgba(0, 240, 255, 0.2)"
           : "0 0 8px rgba(255, 68, 68, 0.8), 0 0 20px rgba(255, 140, 0, 0.4)",
       }
     : {
@@ -283,7 +283,7 @@ export default function TwitchWidget({
 
   if (hasSpinBorder) {
     const spinGradient = isChallenger
-      ? "conic-gradient(#F4C874, #FFFFFF, #C8922A, #FFFFFF, #F4C874)"
+      ? "conic-gradient(#F4C874, #FFFFFF, #00F0FF, #F4C874, #C8922A, #F4C874)"
       : "conic-gradient(#FF4444, #FF8C00, #FF4444, #FF8C00, #FF4444)";
     return (
       <div
