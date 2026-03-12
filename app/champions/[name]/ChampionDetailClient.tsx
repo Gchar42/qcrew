@@ -56,6 +56,18 @@ const TIER_STYLES: Record<string, string> = {
 const SKILL_LABELS = ["Q", "W", "E", "R"];
 const SKILL_ACCENTS = ["#3b82f6", "#22c55e", "#f59e0b", "#a855f7"];
 
+const STAT_SHARD_ICONS: Record<number, string> = {
+  5008: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodsadaptiveforceicon.png",
+  5005: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodsattackspeedicon.png",
+  5007: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodscdrscalingicon.png",
+  5002: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodsarmoricon.png",
+  5003: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodsmagicresicon.png",
+  5001: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodshealthscalingicon.png",
+};
+function getStatShardIcon(id: number): string {
+  return STAT_SHARD_ICONS[id] ?? STAT_SHARD_ICONS[5008];
+}
+
 const CHANGE_TYPE_COLORS: Record<string, string> = {
   buff: "text-emerald-400",
   nerf: "text-red-400",
@@ -438,7 +450,7 @@ function RunesCard({ build, getPerkIcon, getStyleIcon, perkNamesById }: {
               <div className="flex gap-2">
                 {rune_shards.map((sh, i) => (
                   <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded-md" style={{ background: "rgba(255,255,255,0.04)" }}>
-                    <div className="w-3.5 h-3.5 rounded-full" style={{ background: "radial-gradient(circle, rgba(99,102,241,0.5), rgba(99,102,241,0.15))" }} />
+                    <img src={getStatShardIcon(sh.id)} alt={sh.name} className="w-3.5 h-3.5" />
                     <span className="text-[10px] text-zinc-500">{sh.name}</span>
                   </div>
                 ))}
@@ -496,15 +508,12 @@ function CountersCard({ build }: { build: ChampionBuild }) {
   const [expanded, setExpanded] = useState<string | null>(null);
   if (!build.counters?.length) return null;
 
-  const DIFF_COLORS = { hard: "text-red-400 bg-red-500/10 border-red-500/20", medium: "text-amber-400 bg-amber-500/10 border-amber-500/20", easy: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" };
-
   return (
     <GlassCard>
       <CardHeader title="Toughest Matchups" />
       <div className="flex flex-col gap-1 mt-3">
         {build.counters.map((c) => {
           const isOpen = expanded === c.name;
-          const diffStyle = c.difficulty ? DIFF_COLORS[c.difficulty] : null;
           return (
             <div key={c.name}>
               <button
@@ -513,11 +522,6 @@ function CountersCard({ build }: { build: ChampionBuild }) {
               >
                 <img src={getChampionSquareUrl(c.name)} alt={c.name} className="w-9 h-9 rounded-lg border border-white/10" />
                 <span className="flex-1 text-sm text-zinc-300 group-hover:text-white transition-colors">{c.name}</span>
-                {diffStyle && (
-                  <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${diffStyle}`}>
-                    {c.difficulty}
-                  </span>
-                )}
                 <span className="text-xs font-semibold text-red-400">{c.winRate.toFixed(1)}%</span>
                 <svg
                   className={`w-3.5 h-3.5 text-zinc-600 transition-transform ${isOpen ? "rotate-180" : ""}`}
