@@ -28,6 +28,7 @@ type ProfileBundle = {
         puuid: string;
         championName: string;
         win: boolean;
+        teamPosition?: string;
       }>;
     };
     metadata: { participants?: string[] };
@@ -50,27 +51,22 @@ function extractWidgetData(
   const name = `${bundle.profile.account.gameName}#${bundle.profile.account.tagLine}`;
   const solo = bundle.ranked.solo;
 
-  const topChamp = bundle.championStats?.solo?.champions?.[0] ?? null;
+  const champList = bundle.championStats?.solo?.champions ?? [];
+  const topChamp = champList[0] ?? null;
+  const topChampions = champList.slice(0, 3).map((c) => ({
+    name: c.championName,
+    games: c.games,
+    winRate: Math.round(c.winRate),
+  }));
 
-  // Approximate "this week" from available match data
   const now = Date.now();
   const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
 
-  const puuid =
-    bundle.matches?.[0]?.metadata?.participants?.find(() => true) ?? "";
-
-  let weekWins = 0;
-  let weekLosses = 0;
-  let sessionWins = 0;
-  let sessionLosses = 0;
-
-  // Find the player's puuid from a match
   let playerPuuid = "";
   for (const m of bundle.matches ?? []) {
     const pList = m.metadata?.participants ?? [];
     const participants = m.info?.participants ?? [];
     if (pList.length > 0 && participants.length > 0) {
-      // First participant puuid that matches someone in the match
       for (const p of participants) {
         if (pList.includes(p.puuid)) {
           playerPuuid = p.puuid;
@@ -81,7 +77,13 @@ function extractWidgetData(
     }
   }
 
-  // Session: group recent games within 4h of each other
+  let weekWins = 0;
+  let weekLosses = 0;
+  let sessionWins = 0;
+  let sessionLosses = 0;
+  let weekDurationSec = 0;
+  const roleCounts: Record<string, number> = {};
+
   const SESSION_GAP_MS = 4 * 60 * 60 * 1000;
   let lastGameTime = 0;
 
@@ -96,15 +98,30 @@ function extractWidgetData(
     if (gameEnd > oneWeekAgo) {
       if (me.win) weekWins++;
       else weekLosses++;
+      weekDurationSec += m.info.gameDuration;
     }
 
-    // Session detection: most recent contiguous block
+    if (me.teamPosition) {
+      roleCounts[me.teamPosition] = (roleCounts[me.teamPosition] ?? 0) + 1;
+    }
+
     if (lastGameTime === 0 || lastGameTime - gameEnd < SESSION_GAP_MS) {
       if (me.win) sessionWins++;
       else sessionLosses++;
       lastGameTime = gameEnd;
     }
   }
+
+  let favoriteRole: string | null = null;
+  let maxRoleCount = 0;
+  for (const [role, count] of Object.entries(roleCounts)) {
+    if (count > maxRoleCount) {
+      maxRoleCount = count;
+      favoriteRole = role;
+    }
+  }
+
+  const hoursPlayed = Math.round(weekDurationSec / 3600);
 
   return {
     name,
@@ -121,11 +138,43 @@ function extractWidgetData(
           winRate: Math.round(topChamp.winRate),
         }
       : null,
+    topChampions,
     splashChampion: topChamp?.championName ?? null,
     sessionWins,
     sessionLosses,
+    ladderRank: null,
+    lpGainToday: null,
+    favoriteRole,
+    peakTier: null,
+    peakRank: null,
+    hoursPlayedThisWeek: hoursPlayed > 0 ? hoursPlayed : null,
   };
 }
+
+const DEMO_DATA: WidgetData = {
+  name: "Faker#KR1",
+  region: "kr",
+  tier: "CHALLENGER",
+  rank: "I",
+  lp: 1247,
+  wins: 58,
+  losses: 24,
+  topChampion: { name: "Syndra", games: 34, winRate: 74 },
+  topChampions: [
+    { name: "Syndra", games: 34, winRate: 74 },
+    { name: "Azir", games: 22, winRate: 68 },
+    { name: "Orianna", games: 15, winRate: 67 },
+  ],
+  splashChampion: "Syndra",
+  sessionWins: 5,
+  sessionLosses: 1,
+  ladderRank: 1,
+  lpGainToday: 47,
+  favoriteRole: "MIDDLE",
+  peakTier: "CHALLENGER",
+  peakRank: "I",
+  hoursPlayedThisWeek: 23,
+};
 
 export default function WidgetPage({
   params,
@@ -134,20 +183,6 @@ export default function WidgetPage({
 }) {
   const { region, riotId: riotIdEncoded } = params;
   const riotId = decodeURIComponent(riotIdEncoded);
-
-  const DEMO_DATA: WidgetData = {
-    name: "Faker#KR1",
-    region: "kr",
-    tier: "CHALLENGER",
-    rank: "I",
-    lp: 1247,
-    wins: 58,
-    losses: 24,
-    topChampion: { name: "Syndra", games: 34, winRate: 74 },
-    splashChampion: "Syndra",
-    sessionWins: 5,
-    sessionLosses: 1,
-  };
 
   const [data, setData] = useState<WidgetData | null>(null);
   const [isDemo, setIsDemo] = useState(false);
@@ -162,14 +197,12 @@ export default function WidgetPage({
       setData(extractWidgetData(bundle, region));
       setIsDemo(false);
     } catch {
-      // Fall back to demo data so the widget renders immediately
       setData((prev) => prev ?? DEMO_DATA);
       setIsDemo((prev) => prev || !data);
     }
   }, [riotId, region, data]);
 
   useEffect(() => {
-    // Show demo instantly, then attempt real fetch in background
     const timer = setTimeout(() => {
       setData((prev) => {
         if (prev) return prev;

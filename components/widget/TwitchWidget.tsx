@@ -1,6 +1,10 @@
 "use client";
 
-import { getRankEmblemUrl } from "@/lib/riotAssets";
+import {
+  getRankEmblemUrl,
+  getChampionSquareUrl,
+  getChampionSplashUrl,
+} from "@/lib/riotAssets";
 
 const TIER_COLORS: Record<string, string> = {
   CHALLENGER: "#F59E0B",
@@ -29,9 +33,13 @@ const REGION_LABELS: Record<string, string> = {
   ru: "RU",
 };
 
-function splashUrl(championName: string): string {
-  return `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${championName}_0.jpg`;
-}
+const ROLE_LABELS: Record<string, string> = {
+  TOP: "TOP",
+  JUNGLE: "JNG",
+  MIDDLE: "MID",
+  BOTTOM: "BOT",
+  UTILITY: "SUP",
+};
 
 export type WidgetData = {
   name: string;
@@ -42,9 +50,16 @@ export type WidgetData = {
   wins: number;
   losses: number;
   topChampion: { name: string; games: number; winRate: number } | null;
+  topChampions: { name: string; games: number; winRate: number }[];
   splashChampion: string | null;
   sessionWins: number;
   sessionLosses: number;
+  ladderRank: number | null;
+  lpGainToday: number | null;
+  favoriteRole: string | null;
+  peakTier: string | null;
+  peakRank: string | null;
+  hoursPlayedThisWeek: number | null;
 };
 
 export default function TwitchWidget({
@@ -71,47 +86,68 @@ export default function TwitchWidget({
     lp,
     wins,
     losses,
-    topChampion,
+    topChampions,
     splashChampion,
     sessionWins,
     sessionLosses,
+    ladderRank,
+    lpGainToday,
+    favoriteRole,
+    peakTier,
+    peakRank,
+    hoursPlayedThisWeek,
   } = data;
 
   const totalGames = wins + losses;
   const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
-  const tierColor = tier ? TIER_COLORS[tier.toUpperCase()] ?? "#A1A1AA" : "#A1A1AA";
-  const regionLabel = REGION_LABELS[region.toLowerCase()] ?? region.toUpperCase();
-  const rankLabel = tier && rank ? `${tier} ${rank}` : tier ?? "Unranked";
+  const tierColor = tier
+    ? (TIER_COLORS[tier.toUpperCase()] ?? "#A1A1AA")
+    : "#A1A1AA";
+  const regionLabel =
+    REGION_LABELS[region.toLowerCase()] ?? region.toUpperCase();
+  const rankLabel = tier && rank ? `${tier} ${rank}` : (tier ?? "Unranked");
   const lpLabel = lp != null ? `${lp} LP` : "";
   const sessionNet = sessionWins - sessionLosses;
+  const roleLabel = favoriteRole
+    ? (ROLE_LABELS[favoriteRole] ?? favoriteRole)
+    : null;
+  const peakLabel = peakTier
+    ? peakRank
+      ? `${peakTier} ${peakRank}`
+      : peakTier
+    : null;
+  const peakColor = peakTier
+    ? (TIER_COLORS[peakTier.toUpperCase()] ?? "#d4d4d8")
+    : "#d4d4d8";
 
   return (
     <div className="tw-widget">
-      {/* Splash art background with Ken Burns animation */}
       {splashChampion && (
         <div
           className="tw-splash"
-          style={{ backgroundImage: `url(${splashUrl(splashChampion)})` }}
+          style={{
+            backgroundImage: `url(${getChampionSplashUrl(splashChampion)})`,
+          }}
         />
       )}
       <div className="tw-overlay" />
 
-      {/* Content layer */}
       <div className="tw-content">
-        {/* Top half: name + rank */}
+        {/* ── Top: name + rank ── */}
         <div className="tw-top">
           <div className="tw-header">
             <span className="tw-name">{name}</span>
             <span className="tw-region">{regionLabel}</span>
           </div>
+
           <div className="tw-rank-row">
             {tier ? (
               <img
                 src={getRankEmblemUrl(tier)}
                 alt={tier}
                 className="tw-rank-icon"
-                width={52}
-                height={52}
+                width={48}
+                height={48}
               />
             ) : (
               <div className="tw-rank-icon-placeholder" />
@@ -120,35 +156,73 @@ export default function TwitchWidget({
               <span className="tw-rank-label" style={{ color: tierColor }}>
                 {rankLabel}
               </span>
-              {lpLabel && <span className="tw-lp">{lpLabel}</span>}
+              <div className="tw-rank-details">
+                {lpLabel && <span className="tw-lp">{lpLabel}</span>}
+                {lpGainToday != null && (
+                  <span
+                    className={`tw-lp-gain ${lpGainToday >= 0 ? "tw-positive" : "tw-negative"}`}
+                  >
+                    {lpGainToday >= 0 ? "↑" : "↓"}{" "}
+                    {lpGainToday >= 0 ? "+" : ""}
+                    {lpGainToday} LP
+                  </span>
+                )}
+              </div>
+              {ladderRank != null && (
+                <span className="tw-ladder">
+                  Rank {ladderRank} in {regionLabel}
+                </span>
+              )}
             </div>
           </div>
         </div>
 
         <div className="tw-divider" />
 
-        {/* Bottom half: condensed stats */}
+        {/* ── Bottom: stats ── */}
         <div className="tw-bottom">
-          <div className="tw-section">
-            <span className="tw-section-title">This Week</span>
-            <div className="tw-stats-row">
-              <span className="tw-wr">{winRate}% WR</span>
-              <span className="tw-record">
-                {wins}W {losses}L
-              </span>
-            </div>
-            {topChampion && (
-              <div className="tw-champ-row">
-                <span className="tw-champ-wr">
-                  {topChampion.winRate}% · {topChampion.games}G
-                </span>
-              </div>
+          <div className="tw-stats-line">
+            <span className="tw-wr">{winRate}% WR</span>
+            <span className="tw-record">
+              {wins}W {losses}L
+            </span>
+            {hoursPlayedThisWeek != null && (
+              <span className="tw-hours">{hoursPlayedThisWeek}h played</span>
             )}
           </div>
 
+          {(topChampions.length > 0 || roleLabel) && (
+            <div className="tw-champs-role-row">
+              {topChampions.length > 0 && (
+                <div className="tw-champ-icons">
+                  {topChampions.slice(0, 3).map((c) => (
+                    <img
+                      key={c.name}
+                      src={getChampionSquareUrl(c.name)}
+                      alt={c.name}
+                      className="tw-champ-icon"
+                      width={22}
+                      height={22}
+                    />
+                  ))}
+                </div>
+              )}
+              {roleLabel && <span className="tw-role-badge">{roleLabel}</span>}
+            </div>
+          )}
+
+          {peakLabel && (
+            <div className="tw-peak">
+              <span className="tw-peak-label">Peak:</span>
+              <span className="tw-peak-value" style={{ color: peakColor }}>
+                {peakLabel}
+              </span>
+            </div>
+          )}
+
           {(sessionWins > 0 || sessionLosses > 0) && (
             <div className="tw-session">
-              <span className="tw-session-label">Last session:</span>
+              <span className="tw-session-label">Session:</span>
               <span
                 className={`tw-session-result ${sessionNet > 0 ? "tw-positive" : sessionNet < 0 ? "tw-negative" : "tw-neutral"}`}
               >
@@ -159,7 +233,11 @@ export default function TwitchWidget({
           )}
 
           <div className="tw-footer">
-            <span className="tw-brand">statgap.gg</span>
+            <img
+              src="/logos/statgap-logo-transparent.png"
+              alt="StatGap"
+              className="tw-brand-logo"
+            />
           </div>
         </div>
 

@@ -96,7 +96,7 @@
   display: flex;
   align-items: baseline;
   gap: 5px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .tw-name {
@@ -124,15 +124,15 @@
 }
 
 .tw-rank-icon {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
   object-fit: contain;
 }
 
 .tw-rank-icon-placeholder {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.06);
   border-radius: 50%;
@@ -145,9 +145,15 @@
 }
 
 .tw-rank-label {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.2;
+}
+
+.tw-rank-details {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
 }
 
 .tw-lp {
@@ -156,42 +162,39 @@
   font-weight: 500;
 }
 
+.tw-lp-gain {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tw-ladder {
+  font-size: 10px;
+  color: #adadb8;
+  font-weight: 500;
+}
+
 /* ── Divider ─────────────────────────────────────────────── */
 
 .tw-divider {
   height: 1px;
   background: rgba(255, 255, 255, 0.1);
-  margin: 10px 0 8px;
+  margin: 8px 0 7px;
 }
 
-/* ── Bottom half: condensed stats ────────────────────────── */
+/* ── Bottom half: stats ──────────────────────────────────── */
 
 .tw-bottom {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  gap: 5px;
 }
 
-.tw-section {
-  margin-bottom: 6px;
-}
-
-.tw-section-title {
-  display: block;
-  font-size: 9px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #adadb8;
-  margin-bottom: 4px;
-}
-
-.tw-stats-row {
+.tw-stats-line {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  margin-bottom: 3px;
 }
 
 .tw-wr {
@@ -205,16 +208,62 @@
   color: #adadb8;
 }
 
-/* ── Champion stats ──────────────────────────────────────── */
-
-.tw-champ-row {
-  display: flex;
-  align-items: center;
+.tw-hours {
+  font-size: 10px;
+  color: #adadb8;
+  margin-left: auto;
 }
 
-.tw-champ-wr {
-  font-size: 11px;
+/* ── Champion icons + role ───────────────────────────────── */
+
+.tw-champs-role-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tw-champ-icons {
+  display: flex;
+  gap: 3px;
+}
+
+.tw-champ-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.tw-role-badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #efeff1;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 2px 6px;
+  border-radius: 3px;
+  line-height: 1;
+}
+
+/* ── Peak rank ───────────────────────────────────────────── */
+
+.tw-peak {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.tw-peak-label {
+  font-size: 10px;
   color: #adadb8;
+  font-weight: 500;
+}
+
+.tw-peak-value {
+  font-size: 11px;
+  font-weight: 600;
 }
 
 /* ── Session ─────────────────────────────────────────────── */
@@ -226,12 +275,12 @@
 }
 
 .tw-session-label {
-  font-size: 11px;
+  font-size: 10px;
   color: #adadb8;
 }
 
 .tw-session-result {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -239,18 +288,22 @@
 .tw-negative { color: #f87171; }
 .tw-neutral  { color: #adadb8; }
 
-/* ── Footer / Branding (bottom-right corner) ─────────────── */
+/* ── Footer / Logo (bottom-right corner) ─────────────────── */
 
 .tw-footer {
   margin-top: auto;
   text-align: right;
 }
 
-.tw-brand {
-  font-size: 10px;
-  font-weight: 600;
-  color: rgba(191, 148, 255, 0.7);
-  letter-spacing: 0.02em;
+.tw-brand-logo {
+  height: 14px;
+  width: auto;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.tw-brand-logo:hover {
+  opacity: 1;
 }
 
 /* ── Demo badge ──────────────────────────────────────────── */
