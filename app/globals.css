@@ -135,3 +135,49 @@ select {
   line-height: 1.5 !important;
   vertical-align: middle !important;
 }
+
+/* League-style hover tooltips for items/runes */
+.league-tooltip-trigger {
+  display: inline-block;
+  cursor: default;
+  pointer-events: auto;
+}
+
+.league-tooltip {
+  position: fixed;
+  z-index: 99999;
+  min-width: 120px;
+  max-width: 320px;
+  padding: 10px 12px;
+  background: #1a1a1e;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.league-tooltip-title {
+  color: #d4af37;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.league-tooltip:has(.league-tooltip-body) .league-tooltip-title {
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.league-tooltip-body {
+  color: #b8b8bc;
+  white-space: normal;
+}
+
+.league-tooltip-body br {
+  display: block;
+  content: "";
+  margin-top: 4px;
+}

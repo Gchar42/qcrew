@@ -7,8 +7,11 @@ import {
   getItemIconUrl,
   getSummonerSpellIconUrl,
   getChampionSquareUrl,
+  getItemTooltip,
+  type ItemTooltipData,
 } from "@/lib/riotAssets";
 import { perkIconPathToUrl } from "@/lib/runesCd";
+import { LeagueTooltip } from "@/components/LeagueTooltip";
 
 type Tab = "build" | "abilities" | "patches" | "guides";
 
@@ -99,7 +102,9 @@ export default function ChampionDetailClient({ championId }: { championId: strin
   const [loading, setLoading] = useState(true);
   const [patchLoading, setPatchLoading] = useState(false);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
+  const [perkNamesById, setPerkNamesById] = useState<Map<number, { name: string; desc: string }>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
+  const [itemData, setItemData] = useState<ItemTooltipData>({});
 
   const build = builds[selectedRole] ?? null;
 
@@ -109,8 +114,11 @@ export default function ChampionDetailClient({ championId }: { championId: strin
       fetch(`/api/ddragon/champion/${championId}`).then((r) => r.json()),
       fetch("/api/cd/perks").then((r) => r.json()),
       fetch("/api/cd/perkstyles").then((r) => r.json()),
+      fetch("/api/ddragon/version").then((r) => r.json()).then((v) =>
+        fetch(`/api/ddragon/items?version=${v.version ?? "14.16.1"}`).then((r) => r.json())
+      ),
     ])
-      .then(([buildData, infoData, perksData, stylesData]) => {
+      .then(([buildData, infoData, perksData, stylesData, itemsData]) => {
         if (buildData.builds) {
           setBuilds(buildData.builds);
           setAvailableRoles(buildData.availableRoles ?? []);
@@ -118,14 +126,27 @@ export default function ChampionDetailClient({ championId }: { championId: strin
         }
         if (!infoData.error) setInfo(infoData);
         if (perksData.perks) {
-          const m = new Map<number, string>();
-          for (const p of perksData.perks) m.set(p.id, p.iconPath);
-          setPerksById(m);
+          const iconMap = new Map<number, string>();
+          const nameMap = new Map<number, { name: string; desc: string }>();
+          for (const p of perksData.perks) {
+            iconMap.set(p.id, p.iconPath);
+            nameMap.set(p.id, { name: p.name ?? `Rune ${p.id}`, desc: p.shortDesc ?? "" });
+          }
+          setPerksById(iconMap);
+          setPerkNamesById(nameMap);
         }
         if (stylesData.styles) {
           const m = new Map<number, string>();
           for (const s of stylesData.styles) m.set(s.id, s.iconPath);
           setStylesById(m);
+        }
+        if (itemsData?.items) {
+          const byId: ItemTooltipData = {};
+          for (const [id, entry] of Object.entries(itemsData.items)) {
+            const num = Number(id);
+            if (Number.isFinite(num)) byId[num] = entry as { name: string; plaintext?: string };
+          }
+          setItemData(byId);
         }
       })
       .catch(() => {})
@@ -302,7 +323,7 @@ export default function ChampionDetailClient({ championId }: { championId: strin
 
       {/* Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-        {tab === "build" && build && <BuildTab build={build} info={info} getPerkIcon={getPerkIcon} getStyleIcon={getStyleIcon} />}
+        {tab === "build" && build && <BuildTab build={build} info={info} getPerkIcon={getPerkIcon} getStyleIcon={getStyleIcon} itemData={itemData} perkNamesById={perkNamesById} />}
         {tab === "build" && !build && (
           <EmptyState text="No build data available yet" sub="Build data is populated from one-trick and high-elo player matches." />
         )}
@@ -334,34 +355,41 @@ function EmptyState({ text, sub }: { text: string; sub?: string }) {
 
 /* ═══════════════ BUILD TAB ═══════════════ */
 
-function BuildTab({ build, info, getPerkIcon, getStyleIcon }: {
+function BuildTab({ build, info, getPerkIcon, getStyleIcon, itemData, perkNamesById }: {
   build: ChampionBuild;
   info: ChampionInfo | null;
   getPerkIcon: (id: number) => string;
   getStyleIcon: (id: number) => string;
+  itemData: ItemTooltipData;
+  perkNamesById: Map<number, { name: string; desc: string }>;
 }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
       <div className="lg:col-span-5 flex flex-col gap-5">
-        <RunesCard build={build} getPerkIcon={getPerkIcon} getStyleIcon={getStyleIcon} />
+        <RunesCard build={build} getPerkIcon={getPerkIcon} getStyleIcon={getStyleIcon} perkNamesById={perkNamesById} />
         <SummonerSpellsCard build={build} />
         <CountersCard build={build} />
       </div>
       <div className="lg:col-span-7 flex flex-col gap-5">
         <SkillOrderCard build={build} info={info} />
-        <ItemsCard build={build} />
+        <ItemsCard build={build} itemData={itemData} />
       </div>
     </div>
   );
 }
 
 /* ── Runes ── */
-function RunesCard({ build, getPerkIcon, getStyleIcon }: {
+function RunesCard({ build, getPerkIcon, getStyleIcon, perkNamesById }: {
   build: ChampionBuild;
   getPerkIcon: (id: number) => string;
   getStyleIcon: (id: number) => string;
+  perkNamesById: Map<number, { name: string; desc: string }>;
 }) {
   const { runes_primary: p, runes_secondary: s, rune_shards } = build;
+  const perkTip = (id: number, fallbackName: string) => {
+    const data = perkNamesById.get(id);
+    return { title: data?.name ?? fallbackName, body: data?.desc };
+  };
   return (
     <GlassCard>
       <CardHeader title="Runes" meta={`${build.win_rate.toFixed(1)}% WR`} />
@@ -373,15 +401,19 @@ function RunesCard({ build, getPerkIcon, getStyleIcon }: {
             <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">{p.tree}</span>
           </div>
           {/* Keystone */}
-          <div className="flex items-center gap-3 py-1.5">
-            <RuneIcon url={getPerkIcon(p.keystone.id)} size={40} glow />
-            <span className="text-sm font-semibold text-zinc-100">{p.keystone.name}</span>
-          </div>
-          {p.slots.map((r) => (
-            <div key={r.id} className="flex items-center gap-3 py-1.5">
-              <RuneIcon url={getPerkIcon(r.id)} size={32} />
-              <span className="text-xs text-zinc-400">{r.name}</span>
+          <LeagueTooltip {...perkTip(p.keystone.id, p.keystone.name)}>
+            <div className="flex items-center gap-3 py-1.5 cursor-default">
+              <RuneIcon url={getPerkIcon(p.keystone.id)} size={40} glow />
+              <span className="text-sm font-semibold text-zinc-100">{p.keystone.name}</span>
             </div>
+          </LeagueTooltip>
+          {p.slots.map((r) => (
+            <LeagueTooltip key={r.id} {...perkTip(r.id, r.name)}>
+              <div className="flex items-center gap-3 py-1.5 cursor-default">
+                <RuneIcon url={getPerkIcon(r.id)} size={32} />
+                <span className="text-xs text-zinc-400">{r.name}</span>
+              </div>
+            </LeagueTooltip>
           ))}
         </div>
 
@@ -392,10 +424,12 @@ function RunesCard({ build, getPerkIcon, getStyleIcon }: {
             <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">{s.tree}</span>
           </div>
           {s.slots.map((r) => (
-            <div key={r.id} className="flex items-center gap-3 py-1.5">
-              <RuneIcon url={getPerkIcon(r.id)} size={32} />
-              <span className="text-xs text-zinc-400">{r.name}</span>
-            </div>
+            <LeagueTooltip key={r.id} {...perkTip(r.id, r.name)}>
+              <div className="flex items-center gap-3 py-1.5 cursor-default">
+                <RuneIcon url={getPerkIcon(r.id)} size={32} />
+                <span className="text-xs text-zinc-400">{r.name}</span>
+              </div>
+            </LeagueTooltip>
           ))}
 
           {rune_shards.length > 0 && (
@@ -554,13 +588,13 @@ function SkillOrderCard({ build, info }: { build: ChampionBuild; info: ChampionI
 }
 
 /* ── Items ── */
-function ItemsCard({ build }: { build: ChampionBuild }) {
+function ItemsCard({ build, itemData }: { build: ChampionBuild; itemData: ItemTooltipData }) {
   return (
     <div className="flex flex-col gap-5">
       <GlassCard>
         <CardHeader title="Starting Items" />
         <div className="flex items-center gap-2 mt-3">
-          {build.items_start.map((item, i) => <ItemIcon key={i} id={item.id} name={item.name} />)}
+          {build.items_start.map((item, i) => <ItemIcon key={i} id={item.id} name={item.name} itemData={itemData} />)}
         </div>
       </GlassCard>
 
@@ -572,13 +606,13 @@ function ItemsCard({ build }: { build: ChampionBuild }) {
               {i > 0 && <div className="text-zinc-700">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
               </div>}
-              <ItemWithStat id={item.id} name={item.name} winRate={item.winRate} matches={item.matches} />
+              <ItemWithStat id={item.id} name={item.name} winRate={item.winRate} matches={item.matches} itemData={itemData} />
             </div>
           ))}
           {build.boots && (
             <>
               <div className="w-px h-14 bg-white/5 mx-1" />
-              <ItemWithStat id={build.boots.id} name={build.boots.name} winRate={build.boots.winRate} matches={build.boots.matches} />
+              <ItemWithStat id={build.boots.id} name={build.boots.name} winRate={build.boots.winRate} matches={build.boots.matches} itemData={itemData} />
             </>
           )}
         </div>
@@ -593,7 +627,7 @@ function ItemsCard({ build }: { build: ChampionBuild }) {
           <GlassCard key={title}>
             <CardHeader title={title} compact />
             <div className="flex flex-col gap-2 mt-2">
-              {items.map((item) => <ItemRow key={item.id} id={item.id} name={item.name} winRate={item.winRate} matches={item.matches} />)}
+              {items.map((item) => <ItemRow key={item.id} id={item.id} name={item.name} winRate={item.winRate} matches={item.matches} itemData={itemData} />)}
             </div>
           </GlassCard>
         ))}
@@ -887,35 +921,44 @@ function CardHeader({ title, meta, compact }: { title: string; meta?: string; co
   );
 }
 
-function ItemIcon({ id, name }: { id: number; name: string }) {
+function ItemIcon({ id, name, itemData }: { id: number; name: string; itemData: ItemTooltipData }) {
+  const tip = getItemTooltip(itemData, id);
   return (
-    <div className="flex flex-col items-center gap-1">
-      <img src={getItemIconUrl(id)} alt={name} className="w-11 h-11 rounded-xl border border-white/10" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }} />
-      <span className="text-[10px] text-zinc-500 text-center max-w-[64px] truncate">{name}</span>
-    </div>
-  );
-}
-
-function ItemWithStat({ id, name, winRate, matches }: { id: number; name: string; winRate: number; matches: number }) {
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <img src={getItemIconUrl(id)} alt={name} className="w-13 h-13 rounded-xl border border-white/10" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }} />
-      <span className="text-[10px] text-zinc-300 text-center max-w-[72px] truncate font-medium">{name}</span>
-      <div className="flex gap-1.5 text-[9px]">
-        <span className="text-emerald-400 font-semibold">{winRate.toFixed(1)}%</span>
-        <span className="text-zinc-600">{(matches / 1000).toFixed(1)}k</span>
+    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml>
+      <div className="flex flex-col items-center gap-1 cursor-default">
+        <img src={getItemIconUrl(id)} alt={name} className="w-11 h-11 rounded-xl border border-white/10" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }} />
+        <span className="text-[10px] text-zinc-500 text-center max-w-[64px] truncate">{name}</span>
       </div>
-    </div>
+    </LeagueTooltip>
   );
 }
 
-function ItemRow({ id, name, winRate, matches }: { id: number; name: string; winRate: number; matches: number }) {
+function ItemWithStat({ id, name, winRate, matches, itemData }: { id: number; name: string; winRate: number; matches: number; itemData: ItemTooltipData }) {
+  const tip = getItemTooltip(itemData, id);
   return (
-    <div className="flex items-center gap-2.5 py-0.5">
-      <img src={getItemIconUrl(id)} alt={name} className="w-9 h-9 rounded-lg border border-white/10" />
-      <span className="flex-1 text-xs text-zinc-300 truncate">{name}</span>
-      <span className="text-[10px] text-emerald-400 font-bold">{winRate.toFixed(1)}%</span>
-      <span className="text-[10px] text-zinc-600">{(matches / 1000).toFixed(1)}k</span>
-    </div>
+    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml>
+      <div className="flex flex-col items-center gap-1 cursor-default">
+        <img src={getItemIconUrl(id)} alt={name} className="w-13 h-13 rounded-xl border border-white/10" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }} />
+        <span className="text-[10px] text-zinc-300 text-center max-w-[72px] truncate font-medium">{name}</span>
+        <div className="flex gap-1.5 text-[9px]">
+          <span className="text-emerald-400 font-semibold">{winRate.toFixed(1)}%</span>
+          <span className="text-zinc-600">{(matches / 1000).toFixed(1)}k</span>
+        </div>
+      </div>
+    </LeagueTooltip>
+  );
+}
+
+function ItemRow({ id, name, winRate, matches, itemData }: { id: number; name: string; winRate: number; matches: number; itemData: ItemTooltipData }) {
+  const tip = getItemTooltip(itemData, id);
+  return (
+    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml>
+      <div className="flex items-center gap-2.5 py-0.5 cursor-default">
+        <img src={getItemIconUrl(id)} alt={name} className="w-9 h-9 rounded-lg border border-white/10" />
+        <span className="flex-1 text-xs text-zinc-300 truncate">{name}</span>
+        <span className="text-[10px] text-emerald-400 font-bold">{winRate.toFixed(1)}%</span>
+        <span className="text-[10px] text-zinc-600">{(matches / 1000).toFixed(1)}k</span>
+      </div>
+    </LeagueTooltip>
   );
 }

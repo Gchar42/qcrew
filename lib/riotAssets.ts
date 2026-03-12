@@ -146,3 +146,20 @@ export function getRankEmblemUrl(tier: string): string {
   const key = tier.toLowerCase();
   return `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem/emblem-${key}.png`;
 }
+
+/* ── Item tooltips ──────────────────────────────────────────── */
+
+export type ItemTooltipData = Record<number, { name: string; plaintext?: string }>;
+
+export function getItemTooltip(
+  itemDataById: ItemTooltipData | undefined,
+  itemId: number | string
+): { title: string; body?: string } {
+  const numId = typeof itemId === "string" ? parseInt(itemId, 10) : itemId;
+  const id = Number.isFinite(numId) ? numId : itemId;
+  const data =
+    itemDataById?.[id as number] ??
+    (itemDataById as Record<string, { name: string; plaintext?: string }> | undefined)?.[String(itemId)];
+  const title = (data?.name || `Item ${itemId}`).trim() || `Item ${itemId}`;
+  return { title, body: data?.plaintext };
+}
