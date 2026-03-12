@@ -2518,10 +2518,49 @@
   overflow: visible !important;
 }
 
+.profile-page .profile-match-line1-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
 .profile-page .profile-match-line1 {
   font-size: 11px;
   color: var(--ink);
   line-height: 1.25;
+  min-width: 0;
+}
+
+/* 2x2 spells/runes box to the right of Victory - Ranked Solo - 29:10 */
+.profile-page .profile-match-spells-runes-inline {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.profile-page .profile-match-spell-slot-inline,
+.profile-page .profile-match-rune-slot-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.profile-page .profile-match-spell-slot-inline img,
+.profile-page .profile-match-rune-slot-inline img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  image-rendering: auto;
 }
 
 .profile-page .profile-match-line1 .victory-text {
@@ -2558,43 +2597,6 @@
   align-items: flex-start;
   gap: 4px;
   margin-top: 4px;
-}
-
-/* Spells + runes below items: [summoner spells]    [runes] with space between */
-.profile-page .profile-match-spells-runes-below {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 6px;
-  align-self: flex-start;
-}
-
-.profile-page .profile-match-spells-row,
-.profile-page .profile-match-runes-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.profile-page .profile-match-spell-slot-below,
-.profile-page .profile-match-rune-slot-below {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.profile-page .profile-match-spell-slot-below img,
-.profile-page .profile-match-rune-slot-below img {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  image-rendering: auto;
 }
 
 /* Fixed tile for each of the 6 item slots: icon + caption under */
