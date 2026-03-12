@@ -130,15 +130,15 @@
 .profile-page .profile-hero-past-ranks {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
   margin-bottom: 2px;
 }
 
 .profile-page .profile-past-rank-badge {
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
   font-weight: 600;
   color: #fff;
   white-space: nowrap;
