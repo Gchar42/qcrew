@@ -33,6 +33,9 @@ export default function SiteHeader() {
         <Link href="/champions" className="transition hover:text-white">
           Champions
         </Link>
+        <Link href="/jungle-stats" className="transition hover:text-white">
+          Jungle Stats
+        </Link>
         <Link href="/guides" className="transition hover:text-white">
           Guides
         </Link>
