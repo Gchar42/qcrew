@@ -146,8 +146,8 @@ export default function TwitchWidget({
                 src={getRankEmblemUrl(tier)}
                 alt={tier}
                 className="tw-rank-icon"
-                width={48}
-                height={48}
+                width={52}
+                height={52}
               />
             ) : (
               <div className="tw-rank-icon-placeholder" />
@@ -187,7 +187,7 @@ export default function TwitchWidget({
               {wins}W {losses}L
             </span>
             {hoursPlayedThisWeek != null && (
-              <span className="tw-hours">{hoursPlayedThisWeek}h played</span>
+              <span className="tw-hours">{hoursPlayedThisWeek}h this week</span>
             )}
           </div>
 
@@ -201,8 +201,8 @@ export default function TwitchWidget({
                       src={getChampionSquareUrl(c.name)}
                       alt={c.name}
                       className="tw-champ-icon"
-                      width={22}
-                      height={22}
+                      width={26}
+                      height={26}
                     />
                   ))}
                 </div>
