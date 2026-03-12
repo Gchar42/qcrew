@@ -7,23 +7,6 @@ export const DEFAULT_DDRAGON_VERSION = DDragonVersion;
 export const isValidItemId = (v: unknown): v is number =>
   typeof v === "number" && Number.isFinite(v) && v > 0;
 
-/** Item tooltip data map (id can be number or string from different API sources). */
-export type ItemTooltipData = Record<number, { name: string; plaintext?: string }>;
-
-/** Look up item name/plaintext for tooltips; tries number and string key so lookups always work. */
-export function getItemTooltip(
-  itemDataById: ItemTooltipData | undefined,
-  itemId: number | string
-): { title: string; body?: string } {
-  const numId = typeof itemId === "string" ? parseInt(itemId, 10) : itemId;
-  const id = Number.isFinite(numId) ? numId : itemId;
-  const data =
-    itemDataById?.[id as number] ??
-    (itemDataById as Record<string, { name: string; plaintext?: string }> | undefined)?.[String(itemId)];
-  const title = (data?.name || `Item ${itemId}`).trim() || `Item ${itemId}`;
-  return { title, body: data?.plaintext };
-}
-
 /** Display name (from Riot API) to Data Dragon champion key for URLs */
 const CHAMPION_NAME_TO_KEY: Record<string, string> = {
   "Dr. Mundo": "DrMundo",
@@ -159,10 +142,43 @@ export function getRuneStyleIconUrl(
   return `https://ddragon.leagueoflegends.com/cdn/${v}/img/${path}`;
 }
 
-/** Ranked tier emblem (CommunityDragon shared-components: larger PNGs for crisp display at 140px). tier e.g. "EMERALD", "PLATINUM". */
+/** Ranked tier emblem (CommunityDragon). tier e.g. "EMERALD", "PLATINUM". */
 export function getRankEmblemUrl(tier: string): string {
   const key = tier.toLowerCase();
-  return `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/${key}.png`;
+  return `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem/emblem-${key}.png`;
 }
 
 /* ── Item tooltips ──────────────────────────────────────────── */
+
+export type ItemTooltipData = Record<number, {
+  name: string;
+  plaintext?: string;
+  description?: string;
+  gold?: number;
+}>;
+
+export function getItemTooltip(
+  itemDataById: ItemTooltipData | undefined,
+  itemId: number | string
+): { title: string; body?: string; bodyHtml?: boolean } {
+  const numId = typeof itemId === "string" ? parseInt(itemId, 10) : itemId;
+  const id = Number.isFinite(numId) ? numId : itemId;
+  const data =
+    itemDataById?.[id as number] ??
+    (itemDataById as Record<string, { name: string; plaintext?: string; description?: string; gold?: number }> | undefined)?.[String(itemId)];
+  const title = (data?.name || `Item ${itemId}`).trim() || `Item ${itemId}`;
+
+  if (data?.description) {
+    let html = data.description
+      .replace(/<mainText>|<\/mainText>/g, "")
+      .replace(/<stats>([\s\S]*?)<\/stats>/g, '<div class="tt-stats">$1</div>')
+      .replace(/<br\s*\/?>/g, "<br>");
+
+    if (data.gold) {
+      html += `<div class="tt-cost">Cost:<span class="tt-gold">${data.gold.toLocaleString()}</span></div>`;
+    }
+    return { title, body: html, bodyHtml: true };
+  }
+
+  return { title, body: data?.plaintext };
+}
