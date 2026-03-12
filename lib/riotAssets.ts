@@ -142,10 +142,24 @@ export function getRuneStyleIconUrl(
   return `https://ddragon.leagueoflegends.com/cdn/${v}/img/${path}`;
 }
 
-/** Ranked tier emblem (CommunityDragon). tier e.g. "EMERALD", "PLATINUM". */
+/** Ranked tier emblem. Uses jsDelivr CDN (reliable); tier e.g. "EMERALD", "PLATINUM". */
+const RANKED_EMBLEM_CDN = "https://cdn.jsdelivr.net/gh/magisteriis/lol-icons-and-emblems@master/ranked-emblems";
+const TIER_TO_EMBLEM: Record<string, string> = {
+  iron: "Emblem_Iron",
+  bronze: "Emblem_Bronze",
+  silver: "Emblem_Silver",
+  gold: "Emblem_Gold",
+  platinum: "Emblem_Platinum",
+  emerald: "Emblem_Emerald",
+  diamond: "Emblem_Diamond",
+  master: "Emblem_Master",
+  grandmaster: "Emblem_Grandmaster",
+  challenger: "Emblem_Challenger",
+};
 export function getRankEmblemUrl(tier: string): string {
   const key = tier.toLowerCase();
-  return `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem/emblem-${key}.png`;
+  const file = TIER_TO_EMBLEM[key] ?? `Emblem_${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+  return `${RANKED_EMBLEM_CDN}/${file}.png`;
 }
 
 /* ── Item tooltips ──────────────────────────────────────────── */

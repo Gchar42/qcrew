@@ -28,6 +28,12 @@ export const metadata: Metadata = {
   description: "Search Riot ID and region. View match history and stats on Statgap.gg.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
