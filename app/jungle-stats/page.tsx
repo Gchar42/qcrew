@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getChampionSquareUrl } from "@/lib/riotAssets";
+import { LeagueTooltip } from "@/components/LeagueTooltip";
 
 type StatCategory = { id: string; label: string; group: string };
 type StatGroup = { id: string; label: string };
@@ -35,12 +36,60 @@ const GROUP_ICONS: Record<string, string> = {
 
 /** Dragon soul tier list by win rate (high elo). Sources: leaguetips.gg, zleague.gg, leagueofgraphs.com, procomps.gg */
 const DRAGON_SOUL_TIER_LIST = [
-  { name: "Cloud Soul", tier: "S", winRate: 92.8, color: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/30", desc: "60% MS for 6s after ult — chase, kite, reposition" },
-  { name: "Mountain Soul", tier: "A", winRate: 91.1, color: "text-amber-600", bg: "bg-amber-500/10", border: "border-amber-500/30", desc: "Shield after 5s out of combat — survivability" },
-  { name: "Hextech Soul", tier: "A", winRate: 91, color: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/30", desc: "True damage + slow on hit — damage and utility" },
-  { name: "Infernal Soul", tier: "B", winRate: 90.9, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/30", desc: "Explosions on damage — burst, waveclear" },
-  { name: "Ocean Soul", tier: "C", winRate: 90, color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/30", desc: "Heal + mana on damage — sustain (champ-dependent)" },
-  { name: "Chemtech Soul", tier: "C", winRate: 89.5, color: "text-lime-400", bg: "bg-lime-500/10", border: "border-lime-500/30", desc: "10% DR + 10% damage when below 50% HP — bruiser/tank skewed" },
+  {
+    name: "Cloud Soul",
+    tier: "S",
+    winRate: 92.8,
+    color: "text-sky-400",
+    bg: "bg-sky-500/10",
+    border: "border-sky-500/30",
+    tooltip: "Grants 10% bonus movement speed. After casting your ultimate, gain 60% bonus movement speed for 6 seconds. Excellent for chase, kite, and repositioning.",
+  },
+  {
+    name: "Mountain Soul",
+    tier: "A",
+    winRate: 91.1,
+    color: "text-amber-600",
+    bg: "bg-amber-500/10",
+    border: "border-amber-500/30",
+    tooltip: "After not taking damage for 5 seconds, gain a shield. Scales with bonus resistances. Strong survivability for all roles.",
+  },
+  {
+    name: "Hextech Soul",
+    tier: "A",
+    winRate: 91,
+    color: "text-violet-400",
+    bg: "bg-violet-500/10",
+    border: "border-violet-500/30",
+    tooltip: "Dealing damage with basic attacks or abilities causes chain lightning (true damage + slow) to the target and up to 3 nearby enemies. 8 second cooldown per target.",
+  },
+  {
+    name: "Infernal Soul",
+    tier: "B",
+    winRate: 90.9,
+    color: "text-orange-400",
+    bg: "bg-orange-500/10",
+    border: "border-orange-500/30",
+    tooltip: "Basic attacks and abilities trigger an explosion dealing adaptive damage to the target and nearby enemies. Great for burst and waveclear.",
+  },
+  {
+    name: "Ocean Soul",
+    tier: "C",
+    winRate: 90,
+    color: "text-cyan-400",
+    bg: "bg-cyan-500/10",
+    border: "border-cyan-500/30",
+    tooltip: "Dealing damage to champions heals you and restores mana over 4 seconds. Damage to minions and monsters heals at 30% effectiveness. Best on sustain champions.",
+  },
+  {
+    name: "Chemtech Soul",
+    tier: "C",
+    winRate: 89.5,
+    color: "text-lime-400",
+    bg: "bg-lime-500/10",
+    border: "border-lime-500/30",
+    tooltip: "Gain 10% damage resistance. When below 50% health, deal 10% increased damage (similar to Last Stand rune). Best for bruisers and tanks.",
+  },
 ];
 
 function FilterDropdown({
@@ -183,21 +232,23 @@ function JungleStatsInner() {
           </div>
           <div className="p-4 flex flex-wrap gap-3">
             {DRAGON_SOUL_TIER_LIST.map((soul, i) => (
-              <div
-                key={soul.name}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg border ${soul.bg} ${soul.border} min-w-[200px] flex-1`}
-                title={soul.desc}
-              >
-                <span className={`text-lg font-bold tabular-nums ${soul.color}`}>{i + 1}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-white/90">{soul.name}</span>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${soul.bg} ${soul.color} border ${soul.border}`}>
-                      {soul.tier}
-                    </span>
+              <div key={soul.name} className="min-w-[200px] flex-1">
+                <LeagueTooltip title={soul.name} body={soul.tooltip}>
+                  <div
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg border ${soul.bg} ${soul.border} cursor-help`}
+                  >
+                  <span className={`text-lg font-bold tabular-nums ${soul.color}`}>{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-white/90">{soul.name}</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${soul.bg} ${soul.color} border ${soul.border}`}>
+                        {soul.tier}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-white/50 mt-0.5">{soul.winRate}% WR</div>
                   </div>
-                  <div className="text-[10px] text-white/50 mt-0.5">{soul.winRate}% WR</div>
                 </div>
+              </LeagueTooltip>
               </div>
             ))}
           </div>
