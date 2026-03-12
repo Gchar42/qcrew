@@ -540,7 +540,7 @@ function enrichCounters(build: ChampionBuild, champName: string): ChampionBuild 
         ...c,
         tip: c.tip ?? tip,
         powerSpikes: c.powerSpikes ?? powerSpikes,
-        difficulty: c.difficulty ?? (c.winRate < 47 ? "hard" as const : c.winRate < 49 ? "medium" as const : "easy" as const),
+        difficulty: c.difficulty ?? "hard" as const,
       };
     }),
   };
@@ -602,7 +602,7 @@ function adaptBuildForRole(build: ChampionBuild, role: string, tier: RoleTier, t
         ...c,
         tip: c.tip ?? tip,
         powerSpikes: c.powerSpikes ?? powerSpikes,
-        difficulty: c.difficulty ?? (c.winRate < 47 ? "hard" as const : c.winRate < 49 ? "medium" as const : "easy" as const),
+        difficulty: c.difficulty ?? "hard" as const,
       };
     });
   }
@@ -689,7 +689,7 @@ const CHAMP_MECHANICS: Record<string, ChampMechanics> = {
   Karma: { keyAbility: "Inner Flame (Q)", keyAbilitySlot: "Q", dodgeTip: "dodge her empowered R+Q — it does massive AoE damage and slows", weakness: "R empowerment has a long cooldown early, trade after she uses it", powerSpike: "Level 1-2 R+Q poke", itemSpike: "Shurelya's / Mandate", engageTool: "W root + R+Q", defTool: "E shield + speed" },
   Karthus: { keyAbility: "Requiem (R)", keyAbilitySlot: "R", dodgeTip: "buy Zhonya's or Banshee's — his R is unavoidable global damage, you need to negate it", weakness: "immobile and squishy, dive him and kill him before he can DPS in passive", powerSpike: "Level 6 global R | 3 items", itemSpike: "Liandry's / Shadowflame", engageTool: "R global damage", defTool: "Passive: keeps casting for 7s after death" },
   Kassadin: { keyAbility: "Riftwalk (R)", keyAbilitySlot: "R", dodgeTip: "punish him hard pre-6 — he's a melee with no gap closer until level 6", weakness: "extremely weak early, one of the weakest laners levels 1-5", powerSpike: "Level 6 R mobility | Level 16", itemSpike: "Rod of Ages + Seraph's", engageTool: "R blink + E slow", defTool: "R blink escape" },
-  Katarina: { keyAbility: "Shunpo (E)", keyAbilitySlot: "E", dodgeTip: "step on her daggers before she can E to them — it denies her burst damage", weakness: "if you CC her during R channel, she deals no damage", powerSpike: "Level 3 with all abilities | Level 6 R", itemSpike: "Hextech Rocketbelt / Nashor's", engageTool: "E to daggers + R", defTool: "E blink to daggers/allies" },
+  Katarina: { keyAbility: "Shunpo (E)", keyAbilitySlot: "E", dodgeTip: "avoid standing on her daggers — she E's to them for massive burst, move away from where they land", weakness: "if you CC her during R channel, she deals no damage", powerSpike: "Level 3 with all abilities | Level 6 R", itemSpike: "Hextech Rocketbelt / Nashor's", engageTool: "E to daggers + R", defTool: "E blink to daggers/allies" },
   Kayle: { keyAbility: "Divine Judgment (R)", keyAbilitySlot: "R", dodgeTip: "all-in before level 6 — she's one of the weakest early laners in the game", weakness: "melee and useless levels 1-5, freeze and zone her off CS", powerSpike: "Level 6 ranged | Level 11 waves | Level 16", itemSpike: "Nashor's Tooth", engageTool: "W speed + ranged autos", defTool: "R invulnerability" },
   Kayn: { keyAbility: "Shadow Step (E)", keyAbilitySlot: "E", dodgeTip: "ward your jungle walls — he ganks through terrain with E", weakness: "weak in base form pre-transformation, fight him early", powerSpike: "Form transformation (Red or Blue)", itemSpike: "Goredrinker (Red) / Prowler's (Blue)", engageTool: "W knockup (Rhaast) / W through walls (SA)", defTool: "R untargetable + heal" },
   Kennen: { keyAbility: "Slicing Maelstrom (R)", keyAbilitySlot: "R", dodgeTip: "don't group tightly — his R stuns everyone in a big AoE", weakness: "squishy and short-range, burst him before he gets R off", powerSpike: "Level 6 teamfight with R + Zhonya's", itemSpike: "Hextech Rocketbelt + Zhonya's", engageTool: "E speed + R + Zhonya's", defTool: "E Lightning Rush speed" },
@@ -865,7 +865,7 @@ function generateCounters(
   else classKey = "fighter";
 
   const names = CLASS_COUNTER_NAMES[classKey] ?? CLASS_COUNTER_NAMES.fighter;
-  const difficulties: Array<"hard" | "hard" | "medium" | "medium" | "easy"> = ["hard", "hard", "medium", "medium", "easy"];
+  const difficulties: Array<"hard"> = ["hard", "hard", "hard", "hard", "hard"];
 
   return names.map((name, i) => {
     const { tip, powerSpikes } = generateMatchupTip(championName, name);
