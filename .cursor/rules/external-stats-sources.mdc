@@ -1,0 +1,33 @@
+---
+description: Update dragon soul and jungle stats from external sources
+globs: app/jungle-stats/**/*, lib/championStatsGlobal.ts, app/api/champion-stats-global/**/*
+alwaysApply: false
+---
+
+# External Stats Sources
+
+**Goal**: Eventually use our own stats (Riot Match API, our aggregation). Until then, cross-reference external sources.
+
+## Dragon Soul Tier List
+
+- **All 6 souls**: Cloud, Mountain, Hextech, Infernal, Ocean, Chemtech (reworked — 10% DR + damage when low HP)
+- **Cross-reference these sources** when updating:
+  - [leaguetips.gg/dragon-soul-tier-list](https://leaguetips.gg/dragon-soul-tier-list)
+  - [zleague.gg best dragons](https://www.zleague.gg/theportal/best-dragons-and-souls-league-of-legends/)
+  - [leagueofgraphs.com/stats/drakes](https://www.leagueofgraphs.com/stats/drakes) — drake/soul win rates by elo and region
+  - [procomps.gg dragon soul win rates](https://hub.procomps.gg/) — historical analysis
+  - [mobafire.com chemtech soul](https://www.mobafire.com/league-of-legends/wiki/buffs/chemtech-soul) — soul effect details
+  - [jaxon.gg](https://www.jaxon.gg/) — patch/balance coverage
+- **Update**: Fetch/verify current rankings from multiple sources before changing our tier list
+- **Future**: Replace with our own Riot API–derived soul win rates when we have the pipeline
+
+## Jungle Champion Stats
+
+- **Current**: `lib/championStatsGlobal.ts` uses hardcoded placeholder data
+- **Future**: Use our own Riot Match API aggregation. Until then, reference op.gg, u.gg, porofessor.gg
+- **Include**: Clear times, objective control, first dragon rate, scuttle control, gank success, win/pick/ban rates
+
+## General
+
+- Always cite sources on the UI when displaying third-party stats
+- Prefer automated updates over manual edits when possible
