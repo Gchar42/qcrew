@@ -34,7 +34,7 @@ const GROUP_ICONS: Record<string, string> = {
   game: "\u{1F3AE}",
 };
 
-/** Dragon soul tier list by win rate (high elo). Sources: leaguetips.gg, zleague.gg, leagueofgraphs.com, procomps.gg */
+/** Dragon soul tier list by win rate (high elo). */
 const DRAGON_SOUL_TIER_LIST = [
   {
     name: "Cloud Soul",
@@ -217,18 +217,13 @@ function JungleStatsInner() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Jungle Stats</h1>
           <p className="text-sm text-white/40 mt-1">Jungle champion analytics — clear times, objective control, and more</p>
-          {data?.source === "placeholder" && (
-            <span className="inline-block mt-2 text-[10px] uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded">
-              Sample Data
-            </span>
-          )}
         </div>
 
         {/* Dragon Soul Tier List */}
         <div className="mb-8 rounded-xl border border-white/10 bg-[#151620] overflow-hidden">
           <div className="px-4 py-3 border-b border-white/10">
             <h2 className="text-sm font-bold text-white/90">Dragon Soul Tier List</h2>
-            <p className="text-[10px] text-white/40 mt-0.5">Best to worst by win rate (high elo). Hover souls for details. Sources: leaguetips.gg, zleague.gg, leagueofgraphs.com</p>
+            <p className="text-[10px] text-white/40 mt-0.5">Best to worst by win rate (high elo). Hover souls for details.</p>
           </div>
           <div className="p-4 overflow-x-auto">
             <div className="grid grid-cols-6 gap-3 min-w-[780px]">
