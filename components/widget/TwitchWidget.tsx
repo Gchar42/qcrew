@@ -33,6 +33,19 @@ const REGION_LABELS: Record<string, string> = {
   ru: "RU",
 };
 
+const TIER_BORDER_COLORS: Record<string, string> = {
+  CHALLENGER: "#00FFFF",
+  GRANDMASTER: "#FF4444",
+  MASTER: "#9B59B6",
+  DIAMOND: "#4FC3F7",
+  EMERALD: "#2ECC71",
+  PLATINUM: "#1ABC9C",
+  GOLD: "#C89B3C",
+  SILVER: "#AAB8C2",
+  BRONZE: "#CD7F32",
+  IRON: "#8B7355",
+};
+
 const ROLE_LABELS: Record<string, string> = {
   TOP: "TOP",
   JUNGLE: "JNG",
@@ -119,9 +132,18 @@ export default function TwitchWidget({
   const peakColor = peakTier
     ? (TIER_COLORS[peakTier.toUpperCase()] ?? "#d4d4d8")
     : "#d4d4d8";
+  const borderColor = tier
+    ? (TIER_BORDER_COLORS[tier.toUpperCase()] ?? "#3a3a3d")
+    : "#3a3a3d";
 
   return (
-    <div className="tw-widget">
+    <div
+      className="tw-widget"
+      style={{
+        borderColor,
+        boxShadow: `0 0 8px ${borderColor}66`,
+      }}
+    >
       {splashChampion && (
         <div
           className="tw-splash"
