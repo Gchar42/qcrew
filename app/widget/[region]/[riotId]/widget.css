@@ -44,6 +44,26 @@
   z-index: 1;
 }
 
+.tw-orb-glow {
+  position: absolute;
+  top: 50%;
+  left: 30%;
+  width: 80px;
+  height: 80px;
+  margin-top: -40px;
+  margin-left: -40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(138, 43, 226, 0.6) 0%, transparent 70%);
+  animation: tw-orb-pulse 2s ease-in-out infinite alternate;
+  z-index: 1;
+  pointer-events: none;
+}
+
+@keyframes tw-orb-pulse {
+  0%   { opacity: 0.3; transform: scale(0.8); }
+  100% { opacity: 0.9; transform: scale(1.3); }
+}
+
 /* ── Content layer ───────────────────────────────────────── */
 
 .tw-content {

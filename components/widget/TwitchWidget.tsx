@@ -131,6 +131,7 @@ export default function TwitchWidget({
         />
       )}
       <div className="tw-overlay" />
+      <div className="tw-orb-glow" />
 
       <div className="tw-content">
         {/* ── Top: name + rank ── */}
