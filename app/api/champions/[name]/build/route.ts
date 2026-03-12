@@ -22,7 +22,7 @@ export async function GET(
     for (const role of ALL_ROLES) {
       const tier = roleTiers[role];
       if (sample && sample.role === role) {
-        builds[role] = sample;
+        builds[role] = enrichCounters(sample, name);
       } else {
         const archetype = getArchetypeForRole(tags, role);
         builds[role] = adaptBuildForRole(
@@ -527,6 +527,25 @@ function generateForArchetype(name: string, archetype: Archetype): ChampionBuild
   return { ...TEMPLATES[archetype], champion_name: name };
 }
 
+function enrichCounters(build: ChampionBuild, champName: string): ChampionBuild {
+  if (!build.counters?.length) return build;
+  const needsEnrichment = build.counters.some((c) => !c.tip || !c.powerSpikes);
+  if (!needsEnrichment) return build;
+  return {
+    ...build,
+    counters: build.counters.map((c) => {
+      if (c.tip && c.powerSpikes && c.difficulty) return c;
+      const { tip, powerSpikes } = generateMatchupTip(champName, c.name);
+      return {
+        ...c,
+        tip: c.tip ?? tip,
+        powerSpikes: c.powerSpikes ?? powerSpikes,
+        difficulty: c.difficulty ?? (c.winRate < 47 ? "hard" as const : c.winRate < 49 ? "medium" as const : "easy" as const),
+      };
+    }),
+  };
+}
+
 const ROLE_SUMMONERS: Record<string, { spells: { id: number; name: string }[] }> = {
   top: { spells: [{ id: 4, name: "Flash" }, { id: 12, name: "Teleport" }] },
   jungle: { spells: [{ id: 4, name: "Flash" }, { id: 11, name: "Smite" }] },
@@ -575,6 +594,17 @@ function adaptBuildForRole(build: ChampionBuild, role: string, tier: RoleTier, t
 
   if (!adapted.counters?.length) {
     adapted.counters = generateCounters(adapted.champion_name, tags, role);
+  } else {
+    adapted.counters = adapted.counters.map((c) => {
+      if (c.tip && c.powerSpikes) return c;
+      const { tip, powerSpikes } = generateMatchupTip(adapted.champion_name, c.name);
+      return {
+        ...c,
+        tip: c.tip ?? tip,
+        powerSpikes: c.powerSpikes ?? powerSpikes,
+        difficulty: c.difficulty ?? (c.winRate < 47 ? "hard" as const : c.winRate < 49 ? "medium" as const : "easy" as const),
+      };
+    });
   }
 
   return adapted;
