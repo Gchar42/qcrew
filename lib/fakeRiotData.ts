@@ -109,6 +109,7 @@ type FakeProfileBundle = {
     primaryRole: string;
     roleCounts: Record<string, number>;
   }>;
+  pastRanks?: Array<{ season: string; tier: string; rank?: string }>;
 };
 
 const DEMO_CHAMPIONS: Array<{ championId: number; championName: string }> = [
@@ -453,9 +454,23 @@ export function getFakeProfileBundle(
   const avgDurationMin = totalSec / 60 / n;
   const avgCsPerMin = totalSec > 0 ? totalCs / (totalSec / 60) : 0;
 
+  const pastRanks: Array<{ season: string; tier: string; rank?: string }> = [
+    { season: "S26", tier: "Gold", rank: "II" },
+    { season: "S25", tier: "Gold", rank: "III" },
+    { season: "S24", tier: "Silver", rank: "I" },
+    { season: "S23", tier: "Gold", rank: "IV" },
+    { season: "S22", tier: "Gold", rank: "II" },
+    { season: "S21", tier: "Gold", rank: "I" },
+    { season: "S20", tier: "Gold", rank: "III" },
+    { season: "S19", tier: "Platinum", rank: "IV" },
+    { season: "S18", tier: "Gold", rank: "II" },
+    { season: "S17", tier: "Gold", rank: "I" },
+  ];
+
   return {
     profile: { account, summoner },
     ranked: { solo: soloEntry, flex: flexEntry },
+    pastRanks,
     matchIds,
     matches,
     computed: {

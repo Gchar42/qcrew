@@ -120,10 +120,77 @@
   position: relative;
   z-index: 2;
   display: flex;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
   flex: 1;
   min-width: 0;
+}
+
+.profile-page .profile-hero-past-ranks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.profile-page .profile-past-rank-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.profile-page .profile-past-rank-gold {
+  background: linear-gradient(135deg, #b8860b 0%, #daa520 100%);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.profile-page .profile-past-rank-silver {
+  background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
+  border: 1px solid rgba(192, 192, 192, 0.3);
+}
+
+.profile-page .profile-past-rank-platinum {
+  background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.profile-page .profile-past-rank-emerald {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.profile-page .profile-past-rank-diamond {
+  background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+}
+
+.profile-page .profile-past-rank-master,
+.profile-page .profile-past-rank-grandmaster,
+.profile-page .profile-past-rank-challenger {
+  background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+}
+
+.profile-page .profile-past-rank-bronze {
+  background: linear-gradient(135deg, #92400e 0%, #b45309 100%);
+  border: 1px solid rgba(180, 83, 9, 0.3);
+}
+
+.profile-page .profile-past-rank-iron {
+  background: linear-gradient(135deg, #44403c 0%, #78716c 100%);
+  border: 1px solid rgba(120, 113, 108, 0.3);
+}
+
+.profile-page .profile-hero-name-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .profile-page .profile-hero-eyebrow {

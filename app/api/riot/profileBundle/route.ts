@@ -9,6 +9,7 @@ import type { ChampionStatRow } from "@/app/api/champion-stats/route";
 import { computeChampionStatsFromMatches } from "@/lib/championStatsFromMatches";
 import { isFakeRiotId, getFakeProfileBundle } from "@/lib/fakeRiotData";
 import { computeRecentlyPlayedWith, type RecentlyPlayedWithEntry } from "@/lib/recentlyPlayedWith";
+import { getPastRanks, upsertRankHistory, seasonKeyToDisplay } from "@/lib/rankHistory";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -90,9 +91,12 @@ export type ChampionStatsSlice = {
   updatedAt: string;
 };
 
+export type PastRankEntry = { season: string; tier: string; rank?: string };
+
 export type ProfileBundle = {
   profile: { account: AccountDto; summoner: SummonerDto };
   ranked: { solo: LeagueEntryDto | null; flex: LeagueEntryDto | null };
+  pastRanks?: PastRankEntry[];
   matchIds: string[];
   matches: MatchDto[];
   computed: {
@@ -455,9 +459,24 @@ async function fetchBundleFromRiot(
     }
   }
 
+  const currentSeason = seasonKeyToDisplay(SEASON_KEY);
+  const [dbPastRanks] = await Promise.all([
+    getPastRanks(account.puuid, region, queue),
+    soloEntry?.tier ? upsertRankHistory(account.puuid, region, queue, soloEntry.tier, soloEntry.rank ?? undefined) : Promise.resolve(),
+    flexEntry?.tier ? upsertRankHistory(account.puuid, region, "flex", flexEntry.tier, flexEntry.rank ?? undefined) : Promise.resolve(),
+  ]);
+
+  const pastRanks: PastRankEntry[] =
+    dbPastRanks.length > 0
+      ? dbPastRanks
+      : soloEntry?.tier
+        ? [{ season: currentSeason, tier: soloEntry.tier, rank: soloEntry.rank ?? undefined }]
+        : [];
+
   const bundle: ProfileBundle = {
     profile: { account, summoner },
     ranked: { solo: soloEntry, flex: flexEntry },
+    pastRanks: pastRanks.length > 0 ? pastRanks : undefined,
     matchIds: matchIdList,
     matches,
     computed: {
@@ -576,7 +595,16 @@ export async function GET(request: Request) {
         cached.recentlyPlayedWith && Array.isArray(cached.recentlyPlayedWith)
           ? (cached.recentlyPlayedWith as RecentlyPlayedWithEntry[])
           : computeRecentlyPlayedWith(cachedMatches, puuid);
-      const bundleToReturn = { ...cached, championStats, ddragonVersion, recentlyPlayedWith };
+      let pastRanks = cached.pastRanks;
+      if (!pastRanks?.length) {
+        const dbPastRanks = await getPastRanks(puuid, region, queue);
+        pastRanks = dbPastRanks.length > 0
+          ? dbPastRanks
+          : cached.ranked?.solo?.tier
+            ? [{ season: seasonKeyToDisplay(SEASON_KEY), tier: cached.ranked.solo.tier, rank: cached.ranked.solo.rank ?? undefined }]
+            : undefined;
+      }
+      const bundleToReturn = { ...cached, championStats, ddragonVersion, recentlyPlayedWith, pastRanks };
 
       const baseUrl = getBaseUrl(request);
       await triggerChampionStatsRefreshIfNeeded(bundleToReturn, region, baseUrl);

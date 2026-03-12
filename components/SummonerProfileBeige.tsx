@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -1002,6 +1002,19 @@ export default function SummonerProfileBeige({
           </>
         )}
         <div className="profile-hero-left">
+          {bundle?.pastRanks && bundle.pastRanks.length > 0 && (
+            <div className="profile-hero-past-ranks">
+              {bundle.pastRanks.map((pr, i) => (
+                <span
+                  key={`${pr.season}-${pr.tier}-${pr.rank ?? ""}-${i}`}
+                  className={`profile-past-rank-badge profile-past-rank-${pr.tier.toLowerCase()}`}
+                >
+                  {pr.season} {pr.tier}{pr.rank ? ` ${pr.rank}` : ""}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="profile-hero-name-row">
           <h1 className="profile-hero-name">
             {summoner?.profileIconId != null &&
               (winStreakCount >= 3 ? (
@@ -1112,6 +1125,7 @@ export default function SummonerProfileBeige({
                 {refreshError}
               </span>
             )}
+          </div>
           </div>
         </div>
         <nav className="profile-hero-tabs" aria-label="Profile sections">
