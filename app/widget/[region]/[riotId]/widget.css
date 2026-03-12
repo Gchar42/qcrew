@@ -19,8 +19,8 @@
 
 .tw-spin-wrap {
   position: relative;
-  padding: 2px;
-  border-radius: 10px;
+  padding: 4px;
+  border-radius: 12px;
   overflow: hidden;
   width: fit-content;
 }

@@ -143,7 +143,7 @@ export default function TwitchWidget({
   const widgetStyle: React.CSSProperties = hasSpinBorder
     ? {
         boxShadow: isChallenger
-          ? "0 0 8px rgba(244, 200, 116, 0.8), 0 0 20px rgba(244, 200, 116, 0.4)"
+          ? "0 0 15px rgba(244, 200, 116, 0.9), 0 0 30px rgba(244, 200, 116, 0.5)"
           : "0 0 8px rgba(255, 68, 68, 0.8), 0 0 20px rgba(255, 140, 0, 0.4)",
       }
     : {
