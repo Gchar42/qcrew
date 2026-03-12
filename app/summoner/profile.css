@@ -2560,15 +2560,20 @@
   margin-top: 4px;
 }
 
-/* Spells + runes below items: 2x2 grid (spell1|rune1, spell2|rune2), left-aligned with items */
-.profile-page .profile-match-spells-runes-grid-below {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 4px;
+/* Spells + runes below items: [summoner spells]    [runes] with space between */
+.profile-page .profile-match-spells-runes-below {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   margin-top: 6px;
   align-self: flex-start;
-  width: max-content;
+}
+
+.profile-page .profile-match-spells-row,
+.profile-page .profile-match-runes-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .profile-page .profile-match-spell-slot-below,
