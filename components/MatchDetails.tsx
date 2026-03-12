@@ -294,56 +294,34 @@ export function MatchDetails({
                           <span className="md-champ-placeholder" />
                         )}
                       </span>
-                      <div className="md-spells-runes">
-                        <div className="md-spells">
-                          {spell1Src && (
-                            <img
-                              src={spell1Src}
-                              alt=""
-                              width={18}
-                              height={18}
-                              className="md-spell-icon spell-icon"
-                            />
-                          )}
-                          {spell2Src && (
-                            <img
-                              src={spell2Src}
-                              alt=""
-                              width={18}
-                              height={18}
-                              className="md-spell-icon spell-icon"
-                            />
-                          )}
-                        </div>
-                        <div className="md-runes">
-                          {keystoneSrc && (
+                      <div className="md-spells-runes-grid">
+                        {spell1Src && (
+                          <span className="md-spell-slot">
+                            <img src={spell1Src} alt="" width={16} height={16} className="md-spell-icon spell-icon" />
+                          </span>
+                        )}
+                        {keystoneSrc && (
+                          <span className="md-rune-slot">
                             <LeagueTooltip
                               title={(primaryKeystoneId != null ? (perkDataById?.get(primaryKeystoneId)?.name || `Rune ${primaryKeystoneId}`) : "Rune").trim() || `Rune ${primaryKeystoneId ?? ""}`}
                               body={primaryKeystoneId != null ? perkDataById?.get(primaryKeystoneId)?.shortDesc : undefined}
                             >
-                              <img
-                                src={keystoneSrc}
-                                alt=""
-width={12}
-                            height={12}
-                            className="md-rune-icon rune-icon"
-                              />
+                              <img src={keystoneSrc} alt="" width={16} height={16} className="md-rune-icon rune-icon" />
                             </LeagueTooltip>
-                          )}
-                          {secondarySrc && (
-                            <LeagueTooltip
-                              title={(secondaryStyleId != null ? (styleNamesById?.get(secondaryStyleId) || `Style ${secondaryStyleId}`) : "Style").trim() || `Style ${secondaryStyleId ?? ""}`}
-                            >
-                              <img
-                                src={secondarySrc}
-                                alt=""
-                                width={18}
-                                height={18}
-                                className="md-rune-icon rune-icon"
-                              />
+                          </span>
+                        )}
+                        {spell2Src && (
+                          <span className="md-spell-slot">
+                            <img src={spell2Src} alt="" width={16} height={16} className="md-spell-icon spell-icon" />
+                          </span>
+                        )}
+                        {secondarySrc && (
+                          <span className="md-rune-slot">
+                            <LeagueTooltip title={(secondaryStyleId != null ? (styleNamesById?.get(secondaryStyleId) || `Style ${secondaryStyleId}`) : "Style").trim() || `Style ${secondaryStyleId ?? ""}`}>
+                              <img src={secondarySrc} alt="" width={16} height={16} className="md-rune-icon rune-icon" />
                             </LeagueTooltip>
-                          )}
-                        </div>
+                          </span>
+                        )}
                       </div>
                       <Link
                         className="md-name player-link"
@@ -430,8 +408,8 @@ width={12}
                                       src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
                                       alt=""
                                       title={title}
-                                      width={24}
-                                      height={24}
+                                      width={20}
+                                      height={20}
                                       className="md-item-icon item-icon"
                                     />
                                   </LeagueTooltip>
@@ -450,8 +428,8 @@ width={12}
                                   src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${p.item6}.png`}
                                   alt=""
                                   title={title}
-                                  width={20}
-                                  height={20}
+                                  width={18}
+                                  height={18}
                                   className="md-item-icon item-icon trinket-icon"
                                 />
                               </LeagueTooltip>

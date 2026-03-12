@@ -3172,6 +3172,8 @@
   width: 24%;
   vertical-align: middle;
   padding-right: 8px;
+  overflow: hidden;
+  min-width: 0;
 }
 
 /* Align body cells under column title: center for numeric columns */
@@ -3277,24 +3279,28 @@
   box-shadow: 0 0 0 1px rgba(100, 160, 255, 0.3);
 }
 
-.profile-page .md-spells-runes {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+/* 2x2 grid: top-left spell1, top-right rune1, bottom-left spell2, bottom-right rune2 */
+.profile-page .md-spells-runes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
   flex-shrink: 0;
 }
 
-.profile-page .md-spells,
-.profile-page .md-runes {
+.profile-page .md-spell-slot,
+.profile-page .md-rune-slot {
   display: flex;
-  flex-direction: column;
-  gap: 0;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
 }
 
 .profile-page .md-spell-icon.spell-icon,
 .profile-page .md-rune-icon.rune-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 3px;
   border: 1px solid var(--border);
   object-fit: contain;
@@ -3517,14 +3523,16 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 1px;
+  gap: 2px;
   flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .profile-page .md-itemGrid {
   display: grid;
-  grid-template-columns: repeat(6, 24px);
-  grid-template-rows: 24px;
+  grid-template-columns: repeat(6, 20px);
+  grid-template-rows: 20px;
   gap: 2px;
   width: max-content;
 }
@@ -3537,16 +3545,16 @@
 }
 
 .profile-page .md-item-icon.item-icon {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 4px;
   object-fit: cover;
   border: 1px solid var(--border);
 }
 
 .profile-page .md-item-icon.trinket-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 4px;
   opacity: 0.95;
 }
