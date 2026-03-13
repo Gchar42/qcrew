@@ -430,7 +430,7 @@ export default function LiveGameView({
         </div>
       </div>
 
-      <div className="live-page-teams">
+      <div className="live-page-teams" style={{ alignItems: "stretch" }}>
         <div
           className="live-page-team live-page-team--blue"
           style={{
@@ -447,30 +447,21 @@ export default function LiveGameView({
               position: "absolute",
               inset: 0,
               zIndex: 0,
+              opacity: 0.12,
+              backgroundImage: `url(${getDataDragonSplashUrl(blueSplashChamp)})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center top",
             }}
-          >
-            <img
-              src={getDataDragonSplashUrl(blueSplashChamp)}
-              alt=""
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                objectPosition: "center 20%",
-                opacity: 0.15,
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: "linear-gradient(to bottom, rgba(21,22,32,0.75) 0%, rgba(21,22,32,0.9) 50%, rgba(21,22,32,0.96) 100%)",
-                pointerEvents: "none",
-              }}
-            />
-          </div>
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 0,
+              background: "linear-gradient(to bottom, rgba(21,22,32,0.75) 0%, rgba(21,22,32,0.9) 50%, rgba(21,22,32,0.96) 100%)",
+              pointerEvents: "none",
+            }}
+          />
           <div style={{ position: "relative", zIndex: 1 }}>
             <h2 className="live-page-team-title">Blue Team</h2>
             {blueTeam.map((p) => (
@@ -543,30 +534,21 @@ export default function LiveGameView({
               position: "absolute",
               inset: 0,
               zIndex: 0,
+              opacity: 0.12,
+              backgroundImage: `url(${getDataDragonSplashUrl(redSplashChamp)})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center top",
             }}
-          >
-            <img
-              src={getDataDragonSplashUrl(redSplashChamp)}
-              alt=""
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                objectPosition: "center 20%",
-                opacity: 0.15,
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: "linear-gradient(to bottom, rgba(21,22,32,0.75) 0%, rgba(21,22,32,0.9) 50%, rgba(21,22,32,0.96) 100%)",
-                pointerEvents: "none",
-              }}
-            />
-          </div>
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 0,
+              background: "linear-gradient(to bottom, rgba(21,22,32,0.75) 0%, rgba(21,22,32,0.9) 50%, rgba(21,22,32,0.96) 100%)",
+              pointerEvents: "none",
+            }}
+          />
           <div style={{ position: "relative", zIndex: 1 }}>
             <h2 className="live-page-team-title">Red Team</h2>
             {redTeam.map((p) => (
