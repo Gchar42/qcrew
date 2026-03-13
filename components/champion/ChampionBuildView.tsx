@@ -405,148 +405,146 @@ export default function ChampionBuildView({
         ))}
       </div>
 
-      {/* ── Two-column ──────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      {/* ── Item Build Path (full width) ─────────── */}
+      <Card>
+        <CardHead title="Item Build Paths" meta={buildTab === "popular" ? "by pick rate" : "by win rate"} />
+        <div className="overflow-x-auto -mx-1 px-1 mt-3">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-white/5">
+                <Th align="left">Slot</Th>
+                <Th align="left">Item</Th>
+                <Th align="right">WR</Th>
+                <Th align="right">Pick</Th>
+                <Th align="right">Games</Th>
+                <Th align="right">Diff</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {itemSlots.map(group => {
+                const isFirstSlot = group.label === "1st Item";
+                const visible = group.items.filter(i => i.games >= HIDE_THRESHOLD);
+                const hidden = group.items.length - visible.length;
 
-        {/* ── Left: Rune Grid ────────────────────── */}
-        <div className="lg:col-span-5">
-          <Card>
-            <CardHead title="Rune Configuration" meta={`${samples.length} games`} />
-
-            {priTree && (
-              <div className="mt-4 mb-5">
-                <TreeLabel iconPath={priTree.iconPath} name={priTree.name} accent={priAccent} />
-                {priTree.slots.map((slot, si) => {
-                  const agg = si === 0 ? keystoneAgg : priSlotAggs[si - 1] ?? [];
-                  const aggMap = new Map(agg.map(r => [r.id, r]));
-                  const topId = agg[0]?.id;
-                  const isKeystone = si === 0;
+                if (visible.length === 0) {
                   return (
-                    <div key={si} className="flex items-center gap-2 py-1.5">
-                      {slot.perks.map(pid => (
-                        <RuneCell key={pid} id={pid} icon={getPerkIcon(pid)}
-                          name={perkName(pid)} desc={perkDesc(pid)}
-                          pickRate={aggMap.get(pid)?.pickRate ?? 0}
-                          winRate={aggMap.get(pid)?.winRate ?? 0}
-                          games={aggMap.get(pid)?.games ?? 0}
-                          isTop={pid === topId} size={isKeystone ? 40 : 30}
-                          accent={priAccent} />
-                      ))}
-                    </div>
+                    <tr key={group.label} className="border-b border-white/[0.03]">
+                      <td className="py-2 px-2 text-zinc-500 font-medium text-[11px]">{group.label}</td>
+                      <td className="py-2 px-2 text-zinc-600 text-[10px]" colSpan={5}>
+                        {hidden > 0 ? "Not enough data" : "\u2014"}
+                      </td>
+                    </tr>
                   );
-                })}
-              </div>
-            )}
+                }
 
-            {secTree && (
-              <div className="mb-5">
-                <TreeLabel iconPath={secTree.iconPath} name={secTree.name} accent={secAccent} />
-                {secTree.slots.slice(1).map((slot, si) => {
-                  const agg = secSlotAggs[si] ?? [];
-                  const aggMap = new Map(agg.map(r => [r.id, r]));
-                  const topId = agg[0]?.id;
+                return visible.map((item, j) => {
+                  const isExpanded = isFirstSlot && expandedFirstItem === item.id;
+                  const diff = isFirstSlot && j > 0 ? Math.round((item.winRate - topFirstWr) * 10) / 10 : null;
                   return (
-                    <div key={si} className="flex items-center gap-2 py-1.5">
-                      {slot.perks.map(pid => (
-                        <RuneCell key={pid} id={pid} icon={getPerkIcon(pid)}
-                          name={perkName(pid)} desc={perkDesc(pid)}
-                          pickRate={aggMap.get(pid)?.pickRate ?? 0}
-                          winRate={aggMap.get(pid)?.winRate ?? 0}
-                          games={aggMap.get(pid)?.games ?? 0}
-                          isTop={pid === topId} size={30}
-                          accent={secAccent} />
-                      ))}
-                    </div>
+                    <ItemRowGroup key={`${group.label}-${item.id}`}
+                      slot={j === 0 ? group.label : ""}
+                      item={item}
+                      slotLabel={`${item.winRate}% as ${group.label}`}
+                      diff={diff}
+                      lowSample={item.games < LOW_SAMPLE}
+                      expandable={isFirstSlot}
+                      isExpanded={isExpanded}
+                      onToggle={() => setExpandedFirstItem(isExpanded ? null : item.id)}
+                      secondItems={isExpanded ? secondItemsForExpanded : []}
+                      firstItemName={itemData[item.id]?.name ?? ""}
+                      itemData={itemData}
+                    />
                   );
-                })}
-              </div>
-            )}
+                });
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
-            <div className="pt-4 border-t border-white/5">
-              <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-2">Stat Shards</p>
-              {SHARD_ROWS.map((row, ri) => {
-                const agg = shardAggs[ri] ?? [];
+      {/* ── Rune Configuration (two columns) ───────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Primary tree */}
+        <Card>
+          <CardHead title="Primary Runes" meta={priTree?.name ?? ""} />
+          {priTree && (
+            <div className="mt-4">
+              <TreeLabel iconPath={priTree.iconPath} name={priTree.name} accent={priAccent} />
+              {priTree.slots.map((slot, si) => {
+                const agg = si === 0 ? keystoneAgg : priSlotAggs[si - 1] ?? [];
                 const aggMap = new Map(agg.map(r => [r.id, r]));
                 const topId = agg[0]?.id;
+                const isKeystone = si === 0;
                 return (
-                  <div key={ri} className="flex items-center gap-3 py-1">
-                    {row.map(sid => {
-                      const a = aggMap.get(sid);
-                      const isTop = sid === topId;
-                      return (
-                        <div key={`${ri}-${sid}`} className="flex flex-col items-center gap-0.5"
-                          style={{ opacity: isTop ? 1 : 0.4 }}>
-                          <img src={SHARD_ICONS[sid] ?? ""} alt="" className="w-5 h-5" />
-                          <span className="text-[9px] text-zinc-500">{SHARD_NAMES[sid] ?? sid}</span>
-                          <span className="text-[9px] text-zinc-600">{a ? `${a.pickRate}%` : "\u2014"}</span>
-                        </div>
-                      );
-                    })}
+                  <div key={si} className="flex items-center gap-2 py-1.5">
+                    {slot.perks.map(pid => (
+                      <RuneCell key={pid} id={pid} icon={getPerkIcon(pid)}
+                        name={perkName(pid)} desc={perkDesc(pid)}
+                        pickRate={aggMap.get(pid)?.pickRate ?? 0}
+                        winRate={aggMap.get(pid)?.winRate ?? 0}
+                        games={aggMap.get(pid)?.games ?? 0}
+                        isTop={pid === topId} size={isKeystone ? 40 : 30}
+                        accent={priAccent} />
+                    ))}
                   </div>
                 );
               })}
             </div>
-          </Card>
-        </div>
+          )}
+        </Card>
 
-        {/* ── Right: Item Build Path ─────────────── */}
-        <div className="lg:col-span-7">
-          <Card>
-            <CardHead title="First Item Win Rates" meta={buildTab === "popular" ? "by pick rate" : "by win rate"} />
-            <div className="overflow-x-auto -mx-1 px-1 mt-3">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-white/5">
-                    <Th align="left">Slot</Th>
-                    <Th align="left">Item</Th>
-                    <Th align="right">WR</Th>
-                    <Th align="right">Pick</Th>
-                    <Th align="right">Games</Th>
-                    <Th align="right">Diff</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {itemSlots.map(group => {
-                    const isFirstSlot = group.label === "1st Item";
-                    const visible = group.items.filter(i => i.games >= HIDE_THRESHOLD);
-                    const hidden = group.items.length - visible.length;
-
-                    if (visible.length === 0) {
-                      return (
-                        <tr key={group.label} className="border-b border-white/[0.03]">
-                          <td className="py-2 px-2 text-zinc-500 font-medium text-[11px]">{group.label}</td>
-                          <td className="py-2 px-2 text-zinc-600 text-[10px]" colSpan={5}>
-                            {hidden > 0 ? "Not enough data" : "\u2014"}
-                          </td>
-                        </tr>
-                      );
-                    }
-
-                    return visible.map((item, j) => {
-                      const isExpanded = isFirstSlot && expandedFirstItem === item.id;
-                      const diff = isFirstSlot && j > 0 ? Math.round((item.winRate - topFirstWr) * 10) / 10 : null;
-                      return (
-                        <ItemRowGroup key={`${group.label}-${item.id}`}
-                          slot={j === 0 ? group.label : ""}
-                          item={item}
-                          slotLabel={`${item.winRate}% as ${group.label}`}
-                          diff={diff}
-                          lowSample={item.games < LOW_SAMPLE}
-                          expandable={isFirstSlot}
-                          isExpanded={isExpanded}
-                          onToggle={() => setExpandedFirstItem(isExpanded ? null : item.id)}
-                          secondItems={isExpanded ? secondItemsForExpanded : []}
-                          firstItemName={itemData[item.id]?.name ?? ""}
-                          itemData={itemData}
-                        />
-                      );
-                    });
-                  })}
-                </tbody>
-              </table>
+        {/* Secondary tree + shards */}
+        <Card>
+          <CardHead title="Secondary Runes & Shards" meta={secTree?.name ?? ""} />
+          {secTree && (
+            <div className="mt-4 mb-5">
+              <TreeLabel iconPath={secTree.iconPath} name={secTree.name} accent={secAccent} />
+              {secTree.slots.slice(1).map((slot, si) => {
+                const agg = secSlotAggs[si] ?? [];
+                const aggMap = new Map(agg.map(r => [r.id, r]));
+                const topId = agg[0]?.id;
+                return (
+                  <div key={si} className="flex items-center gap-2 py-1.5">
+                    {slot.perks.map(pid => (
+                      <RuneCell key={pid} id={pid} icon={getPerkIcon(pid)}
+                        name={perkName(pid)} desc={perkDesc(pid)}
+                        pickRate={aggMap.get(pid)?.pickRate ?? 0}
+                        winRate={aggMap.get(pid)?.winRate ?? 0}
+                        games={aggMap.get(pid)?.games ?? 0}
+                        isTop={pid === topId} size={30}
+                        accent={secAccent} />
+                    ))}
+                  </div>
+                );
+              })}
             </div>
-          </Card>
-        </div>
+          )}
+
+          <div className="pt-4 border-t border-white/5">
+            <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-2">Stat Shards</p>
+            {SHARD_ROWS.map((row, ri) => {
+              const agg = shardAggs[ri] ?? [];
+              const aggMap = new Map(agg.map(r => [r.id, r]));
+              const topId = agg[0]?.id;
+              return (
+                <div key={ri} className="flex items-center gap-3 py-1">
+                  {row.map(sid => {
+                    const a = aggMap.get(sid);
+                    const isTop = sid === topId;
+                    return (
+                      <div key={`${ri}-${sid}`} className="flex flex-col items-center gap-0.5"
+                        style={{ opacity: isTop ? 1 : 0.4 }}>
+                        <img src={SHARD_ICONS[sid] ?? ""} alt="" className="w-5 h-5" />
+                        <span className="text-[9px] text-zinc-500">{SHARD_NAMES[sid] ?? sid}</span>
+                        <span className="text-[9px] text-zinc-600">{a ? `${a.pickRate}%` : "\u2014"}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </Card>
       </div>
 
       {/* ── Rune Trees Reference ─────────────────── */}

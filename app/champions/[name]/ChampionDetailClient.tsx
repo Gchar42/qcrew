@@ -430,7 +430,7 @@ export default function ChampionDetailClient({ championId }: { championId: strin
           {/* Tabs */}
           <div className="flex gap-0.5 border-b border-white/5">
             {(["build", "builds", "abilities", "matchups", "patches", "guides"] as Tab[]).map((t) => {
-              const labels: Record<Tab, string> = { build: "Build", builds: "Builds", abilities: "Abilities", matchups: "Matchups", patches: "Patch History", guides: "Guides" };
+              const labels: Record<Tab, string> = { build: "Build", builds: "Stats & Runes", abilities: "Abilities", matchups: "Matchups", patches: "Patch History", guides: "Guides" };
               const active = tab === t;
               return (
                 <button
