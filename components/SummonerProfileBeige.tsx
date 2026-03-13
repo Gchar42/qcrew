@@ -1415,7 +1415,7 @@ export default function SummonerProfileBeige({
                       {win ? "W" : "L"}
                     </span>
                     <span style={{
-                      marginTop: 8,
+                      marginTop: 20,
                       whiteSpace: "nowrap",
                       color: win ? "#2ECC71" : "#E74C3C",
                       textShadow: win ? "0 0 6px rgba(46,204,113,0.3)" : "0 0 6px rgba(231,76,60,0.3)",
