@@ -196,10 +196,16 @@ function getViewerInfo(): { riotId: string; region: string } | null {
 
 /* ── Sub-Components ─────────────────────────────────────── */
 
-function PlayerHeader({ stats }: { stats: CompareStats }) {
+function PlayerHeader({ stats, tierColor }: { stats: CompareStats; tierColor?: string }) {
   const region = REGION_LABELS[stats.region.toLowerCase()] ?? stats.region.toUpperCase();
   return (
-    <div className="cr-player-header">
+    <div
+      className="cr-player-header"
+      style={tierColor ? {
+        borderLeft: `4px solid ${tierColor}`,
+        boxShadow: `inset 4px 0 12px -4px ${tierColor}44`,
+      } : undefined}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         className="cr-player-icon"
@@ -478,13 +484,7 @@ export default function CompareResults({
 
       {/* ── Player Headers with splash backgrounds ──── */}
       <div className="cr-header-row">
-        <div
-          className="cr-player-col"
-          style={{
-            borderLeftColor: tierColor1,
-            boxShadow: `inset 4px 0 12px -4px ${tierColor1}44`,
-          }}
-        >
+        <div className="cr-player-col">
           {splash1 && (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -495,16 +495,10 @@ export default function CompareResults({
               <div className="cr-header-overlay" />
             </>
           )}
-          <PlayerHeader stats={stats1} />
+          <PlayerHeader stats={stats1} tierColor={tierColor1} />
         </div>
         <div className="cr-vs-badge">VS</div>
-        <div
-          className="cr-player-col"
-          style={{
-            borderLeftColor: tierColor2,
-            boxShadow: `inset 4px 0 12px -4px ${tierColor2}44`,
-          }}
-        >
+        <div className="cr-player-col">
           {splash2 && (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -515,7 +509,7 @@ export default function CompareResults({
               <div className="cr-header-overlay" />
             </>
           )}
-          <PlayerHeader stats={stats2} />
+          <PlayerHeader stats={stats2} tierColor={tierColor2} />
         </div>
       </div>
 

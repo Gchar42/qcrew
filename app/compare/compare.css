@@ -267,8 +267,6 @@
   flex: 1;
   position: relative;
   overflow: hidden;
-  border-left: 4px solid transparent;
-  transition: border-color 0.3s;
 }
 
 .cr-header-splash {
@@ -763,7 +761,7 @@
 
   .cr-header-row { flex-direction: column; }
   .cr-player-col {
-    border-left-width: 3px;
+    /* tier border moved to .cr-player-header */
   }
   .cr-vs-badge {
     padding: 8px 0;
