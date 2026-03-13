@@ -55,7 +55,7 @@ function formatTier(tier: string): string {
 export async function GET(request: Request) {
   const reqUrl = new URL(request.url);
   const { searchParams } = reqUrl;
-  const logoUrl = `${reqUrl.origin}/logos/statgap-logo-transparent.png`;
+  const logoUrl = `${reqUrl.origin}/logos/statgap-logo-dark-clean.png`;
 
   const name = searchParams.get("name") ?? "Faker#KR1";
   const region = searchParams.get("region") ?? "kr";
@@ -163,8 +163,8 @@ export async function GET(request: Request) {
           >
             <img
               src={logoUrl}
-              height={36}
-              style={{ height: "36px", width: "auto" }}
+              height={40}
+              style={{ height: "40px", width: "auto" }}
             />
             <div
               style={{
