@@ -1426,7 +1426,7 @@ export default function SummonerProfileBeige({
                     }}>
                       {win ? "▲" : "▼"}{" "}
                       {(() => {
-                        const seed = (m.info?.gameId ?? idx) % 15;
+                        const seed = (m.info?.gameId ?? matchIndex) % 15;
                         return win ? `+${14 + seed}` : `-${14 + (seed % 9)}`;
                       })()}
                     </span>
