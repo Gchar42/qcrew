@@ -915,6 +915,301 @@ Do not add any new features. Only fix these 5 specific things. Do not touch any 
 
 ---
 
+---
+# PROMPT 20 — Live Game Page
+---
+
+```
+@ARCHITECTURE.md
+
+Build a live game page at /app/live/[region]/[riotId]/page.tsx. Only touch files inside /app/live/ and /components/live/.
+
+This page shows the current in-progress game for a summoner if they are in one.
+
+DATA SOURCE: GET /lol/spectator/v5/active-games/by-summoner/{summonerId} [platform route]
+Cache in Redis: live:game:{encryptedSummonerId} TTL 30s
+
+PAGE STATES:
+1. NOT IN GAME: Show "PlayerName is not currently in a game." with last seen timestamp
+2. IN GAME: Show full live game breakdown (see below)
+
+LIVE GAME LAYOUT:
+
+Header:
+- Game mode (Ranked Solo/Duo, Normal, ARAM etc)
+- Game timer (compute from gameStartTime)
+- Map name
+
+Two teams side by side (Blue team left, Red team right):
+
+Per player row:
+- Champion icon + name
+- Summoner name (clickable → their profile)
+- Current rank + LP
+- Win rate on this champion (from champion_stats Redis key)
+- KDA on this champion this season
+- Most played champion icon (if different from current)
+- Ranked record today: "3W 1L today"
+
+Bottom of each team column:
+- Team average rank
+- Team average WR on their picks
+
+PREDICTED WINNER banner between teams:
+- "Blue team favored" or "Even matchup" based on average champion win rates
+- Show confidence: "52% likely" etc
+- Caveat: "Based on champion win rates only — individual performance varies"
+
+AUTO-REFRESH every 30 seconds — show "Live" pulsing green dot + "Updates every 30s"
+
+Add "Live Game" button to summoner profile page header that only appears when player is in game.
+Use sample data for Demo#NA1 for now.
+Do not touch any other files.
+```
+
+---
+# PROMPT 21 — Champion Counters + Matchups Tab
+---
+
+```
+@ARCHITECTURE.md
+
+Add a Matchups tab to the champion page. Only touch files inside /app/champions/ and /components/champion/.
+
+MATCHUPS TAB layout:
+
+TOP SECTION — Hardest Counters (top 5):
+- Champion icon + name
+- Win rate against: "47.2% WR" (red — below 50%)
+- Games: sample size
+- Difficulty badge: "Hard Counter" / "Slight Counter"
+- One tip line: "Respect their level 2 all-in. Play safe until 6."
+
+BOTTOM SECTION — Best Into (top 5 easiest matchups):
+- Same format but green win rates above 50%
+- Tip: "You outscale after Luden's. Trade short early, win late."
+
+FULL MATCHUP TABLE (expandable, hidden by default):
+- All champions with 200+ games against
+- Columns: champion icon | name | your WR | games | trend this patch
+- Sort by WR ascending by default (hardest first)
+- Toggle to sort by games desc
+- Search/filter input above table
+- Each row expandable to show: laning phase tip, power spike info, item recommendations vs this champion
+
+COUNTER TIPS:
+- Each matchup has 2-3 short tips (max 100 chars each)
+- These can be seeded from existing tips data you already have
+- Players can upvote/downvote tips (store in Supabase, no auth required — use localStorage to prevent duplicate votes)
+
+DATA SOURCE: champion:matchups:{championId}:{patch}:{tier}:{role} Redis key
+Use sample data for Ahri mid for now.
+Do not touch any other files.
+```
+
+---
+# PROMPT 22 — Duo Win Rate Tracking
+---
+
+```
+@ARCHITECTURE.md
+
+Add duo win rate tracking to summoner profiles. Only touch files inside the summoner profile location and /components/summoner/.
+
+WHAT IT DOES:
+Detect when two players queued together in the same game (same team, same queue) and track their combined win rate.
+
+DATA DETECTION:
+- In match_participants, when two players share the same match_id and are on the same team (teamId) and the queue is ranked: they duoed
+- Build a duo_stats table to store this
+
+DATABASE TABLE:
+```sql
+CREATE TABLE duo_stats (
+  puuid_a TEXT,
+  puuid_b TEXT,
+  games INT,
+  wins INT,
+  patch TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (puuid_a, puuid_b, patch)
+);
+CREATE INDEX idx_duo_a ON duo_stats(puuid_a);
+CREATE INDEX idx_duo_b ON duo_stats(puuid_b);
+```
+
+Add duo computation to the cron worker: after processing match_participants, find all same-team pairs per match and upsert into duo_stats.
+
+DISPLAY ON SUMMONER PROFILE:
+Add a "Best Duos" section to the summoner profile right sidebar:
+- Title: "Best Duos"
+- Top 3-5 duo partners by games played together
+- Each row: partner name (clickable) | games together | duo WR | compared to solo WR
+- Color: green if duo WR > solo WR, red if worse
+- Example: "TestW#NA1 — 23 games together — 61% duo WR (+6% vs solo)"
+- "Compare" button → links to comparison page
+
+Also add duo WR to the comparison page when two players have played together.
+Use sample data for now.
+Do not touch any other files.
+```
+
+---
+# PROMPT 23 — Dodge Tracker
+---
+
+```
+@ARCHITECTURE.md
+
+Build a dodge tracker that detects when a player dodged champion select. Only touch files inside /lib/ and /app/api/.
+
+HOW DODGE DETECTION WORKS:
+A dodge cannot be directly detected from Riot API. Use this inference method:
+1. When a summoner's profile is refreshed, check if their LP dropped by exactly 3 or 5 LP (standard dodge penalties) without a corresponding match in their match history
+2. If LP dropped 3-5 LP AND no new match_id appeared since last check: flag as probable dodge
+3. Store in a dodges table with confidence level
+
+DATABASE TABLE:
+```sql
+CREATE TABLE dodges (
+  id BIGSERIAL PRIMARY KEY,
+  puuid TEXT NOT NULL,
+  detected_at TIMESTAMPTZ DEFAULT NOW(),
+  lp_before INT,
+  lp_after INT,
+  lp_loss INT,
+  confidence TEXT, -- 'high' (exact 3 or 5 LP loss) | 'medium' (ambiguous)
+  patch TEXT
+);
+CREATE INDEX idx_dodges_puuid ON dodges(puuid);
+```
+
+DISPLAY ON SUMMONER PROFILE:
+- Small badge next to rank: "2 dodges this patch" in amber/yellow
+- In match history: insert a "Dodge" entry between matches where a dodge was detected, showing estimated time and LP loss
+- Tooltip: "Probable dodge detected — LP dropped 3 without a new match"
+
+IMPORTANT CAVEATS TO DISPLAY:
+- Always show: "Dodge detection is estimated and may not be 100% accurate"
+- Never show this data publicly on other players' profiles without a disclaimer
+- Only show on the profile owner's own page (best effort — since no auth, show on all profiles with disclaimer)
+
+Add dodge detection to the profile refresh flow in the cron worker.
+Use sample data for Demo#NA1 for now.
+Do not touch any other files.
+```
+
+---
+# PROMPT 24 — Season Recap Card
+---
+
+```
+@ARCHITECTURE.md
+
+Build a Season Recap shareable card. Only touch files inside /app/recap/ and /app/api/og/recap/.
+
+This is a Spotify Wrapped style end-of-season recap. Available year-round as "This Season So Far."
+
+PAGE: /app/recap/[region]/[riotId]/page.tsx
+
+RECAP STATS (computed from match_participants for current season):
+- Peak rank achieved this season
+- Total games played
+- Total wins / losses
+- Overall win rate
+- Most played champion: icon + name + games + WR
+- Best champion (highest WR, min 20 games): icon + name + WR
+- Biggest win streak
+- Favorite role
+- Total hours played (sum of game_duration_seconds / 3600)
+- Most played with: top duo partner
+
+DISPLAY:
+- Dark cinematic layout, full page
+- Champion splash art background (most played champion)
+- Stats revealed one at a time with fade-in animation
+- Each stat has a one-line context: "Top 12% CS/min across all Gold players"
+- Share button generates OG image via /api/og/recap/[region]/[riotId]
+
+SHAREABLE OG IMAGE at /app/api/og/recap/[region]/[riotId]/route.tsx:
+- Same format as main OG card but taller (1200x800)
+- Title: "My 2025 Season — StatGap.gg"
+- Shows: peak rank, most played champion splash, top 4 stats
+- Rank tier border matching peak rank achieved
+
+Add "Season Recap" button to summoner profile page.
+Use sample data for Demo#NA1 for now.
+Do not touch any other files.
+```
+
+---
+# PROMPT 25 — Embeddable Rank Badge
+---
+
+```
+@ARCHITECTURE.md
+
+Build a tiny embeddable rank badge at /app/api/badge/[region]/[riotId]/route.tsx. Only touch files inside /app/api/badge/.
+
+This generates a small image (400x80px) showing just rank + LP + username. Players embed it in Discord bios, forum signatures, Reddit flairs.
+
+BADGE DESIGN (400x80px, dark background):
+- Left: rank tier icon (32x32)
+- Center: "PlayerName · Gold II · 67 LP"
+- Right: "statgap.gg" watermark (small, muted)
+- Background: very dark (#0d0d0d) with subtle rank tier color left accent (4px)
+- Font: clean, readable at small sizes
+
+TWO SIZES:
+- Standard: /api/badge/[region]/[riotId] → 400x80px
+- Mini: /api/badge/[region]/[riotId]?size=mini → 200x40px
+
+Updates every 5 minutes (Cache-Control: max-age=300).
+
+Also create a badge generator page at /app/badge/[region]/[riotId]/page.tsx:
+- Shows preview of the badge
+- Copy button for: Direct image URL, Markdown embed code, HTML embed code, BBCode (for forums)
+- Example markdown: `![My Rank](https://statgap.gg/api/badge/na1/Demo%23NA1)`
+
+Add "Get Badge" button to summoner profile page.
+Use sample data for Demo#NA1 for now.
+Do not touch any other files.
+```
+
+---
+# PROMPT 26 — Patch Notes Integration
+---
+
+```
+@ARCHITECTURE.md
+
+Integrate patch notes into champion pages. Only touch files inside /app/champions/ and /components/champion/.
+
+Since patch notes pages already exist in the codebase, wire them to champion pages:
+
+1. CHAMPION PAGE BANNER — show a patch change banner below the champion header if the champion was changed in the current or previous patch:
+   - Buffed: green banner "Buffed in Patch 16.5 ↑" 
+   - Nerfed: red banner "Nerfed in Patch 16.5 ↓"
+   - Adjusted: yellow banner "Adjusted in Patch 16.5 →"
+   - Clicking banner links to the patch notes page filtered to that champion
+
+2. PATCH HISTORY TAB — the champion page already has a Patch History tab. Populate it with:
+   - Timeline of patches where this champion was changed
+   - Each entry: patch number + date + change type (buff/nerf/adjust) + brief description
+   - Win rate graph overlay showing WR change around each patch event (vertical line on graph at patch date)
+
+3. WIN RATE TREND on champion page stats bar:
+   - Next to win rate show trend vs last patch: "54.2% ↑ +1.3% vs last patch" in green
+   - Or "54.2% ↓ -0.8% vs last patch" in red
+
+DATA SOURCE: Use existing patch notes data already in the codebase.
+Compare champion_stats between current patch and previous patch to compute WR trend.
+Use sample data for Ahri for now.
+Do not touch any other files.
+```
+
+---
+
 ## BUILD ORDER
 
 Run prompts in this order. Each one depends on the previous.
@@ -940,3 +1235,10 @@ Run prompts in this order. Each one depends on the previous.
 | 17 | Objective Win Rates (Timeline API) | 07 |
 | 18 | LP Gain/Loss + LP Graph | 06 |
 | 19 | Champion Page Builds Cleanup | 14 |
+| 20 | Live Game Page | 06 |
+| 21 | Champion Counters + Matchups Tab | 04 |
+| 22 | Duo Win Rate Tracking | 03, 06 |
+| 23 | Dodge Tracker | 06 |
+| 24 | Season Recap Card | 06 |
+| 25 | Embeddable Rank Badge | 06 |
+| 26 | Patch Notes Integration | 04 |

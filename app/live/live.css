@@ -1,0 +1,263 @@
+/* Live Game Page */
+
+.live-page-wrapper {
+  min-height: 100vh;
+  background: #0e0f15;
+  color: #e8e9f0;
+  padding: 24px 16px;
+}
+
+.live-page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.live-page--not-in-game .live-page-card {
+  background: #151620;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 48px 32px;
+  text-align: center;
+}
+
+.live-page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #e8e9f0;
+}
+
+.live-page-message {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 8px;
+}
+
+.live-page-muted {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+}
+
+/* In-game header */
+.live-page-header {
+  margin-bottom: 24px;
+}
+
+.live-page-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.live-page-live-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.live-page-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: live-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+.live-page-live-muted {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.5);
+}
+
+.live-page-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.7);
+}
+
+.live-page-timer {
+  font-weight: 700;
+  color: #22c55e;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Teams layout */
+.live-page-teams {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .live-page-teams {
+    grid-template-columns: 1fr;
+  }
+}
+
+.live-page-team {
+  background: #151620;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.live-page-team--blue {
+  border-top: 3px solid #3b82f6;
+}
+
+.live-page-team--red {
+  border-top: 3px solid #ef4444;
+}
+
+.live-page-team-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+  color: rgba(255,255,255,0.9);
+}
+
+.live-page-team--blue .live-page-team-title { color: #60a5fa; }
+.live-page-team--red .live-page-team-title { color: #f87171; }
+
+.live-page-player {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.live-page-player:last-of-type {
+  border-bottom: none;
+}
+
+.live-page-player-champ {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.live-page-champ-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.live-page-champ-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #e8e9f0;
+}
+
+.live-page-summoner-link {
+  font-size: 0.75rem;
+  color: #60a5fa;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.live-page-summoner-link:hover {
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
+.live-page-player-stats {
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.6);
+}
+
+.live-page-player-rank {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #e8e9f0;
+  margin-bottom: 2px;
+}
+
+.live-page-rank-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.live-page-player-champ-stats,
+.live-page-player-main,
+.live-page-player-today {
+  margin-top: 2px;
+}
+
+.live-page-main-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.live-page-team-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.5);
+}
+
+/* Verdict banner */
+.live-page-verdict {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .live-page-verdict {
+    order: -1;
+    grid-column: 1;
+  }
+}
+
+.live-page-verdict-banner {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e8e9f0;
+}
+
+.live-page-verdict-confidence {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #22c55e;
+}
+
+.live-page-verdict-caveat {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.5);
+  max-width: 200px;
+  margin: 0;
+}
