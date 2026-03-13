@@ -19,6 +19,7 @@ import MatchupsTab from "@/components/champion/MatchupsTab";
 import PatchChangeBanner from "@/components/champion/PatchChangeBanner";
 import WinRateTrend from "@/components/champion/WinRateTrend";
 import PatchWinRateGraph from "@/components/champion/PatchWinRateGraph";
+import ChampionGuide from "@/components/champion/ChampionGuide";
 
 type Tab = "build" | "builds" | "abilities" | "matchups" | "patches" | "guides";
 
@@ -495,7 +496,12 @@ export default function ChampionDetailClient({ championId }: { championId: strin
             <PatchesTab patches={patches} loading={patchLoading} />
           </div>
         )}
-        {tab === "guides" && <GuidesTab championName={info?.name ?? championId} />}
+        {tab === "guides" && (
+          <div className="space-y-8">
+            <ChampionGuide championName={info?.id ?? championId} onNavigateToBuild={() => setTab("build")} />
+            <GuidesTab championName={info?.name ?? championId} />
+          </div>
+        )}
       </div>
     </div>
   );
