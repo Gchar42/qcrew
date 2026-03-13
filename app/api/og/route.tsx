@@ -53,7 +53,9 @@ function formatTier(tier: string): string {
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  const reqUrl = new URL(request.url);
+  const { searchParams } = reqUrl;
+  const logoUrl = `${reqUrl.origin}/logos/statgap-logo-transparent.png`;
 
   const name = searchParams.get("name") ?? "Faker#KR1";
   const region = searchParams.get("region") ?? "kr";
@@ -159,38 +161,11 @@ export async function GET(request: Request) {
               alignItems: "center",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span
-                style={{
-                  fontSize: "22px",
-                  fontWeight: 800,
-                  color: "#fff",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                stat
-              </span>
-              <span
-                style={{
-                  fontSize: "22px",
-                  fontWeight: 800,
-                  color: "#bf94ff",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                gap
-              </span>
-              <span
-                style={{
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  color: "#adadb8",
-                  marginLeft: "2px",
-                }}
-              >
-                .gg
-              </span>
-            </div>
+            <img
+              src={logoUrl}
+              height={36}
+              style={{ height: "36px", width: "auto" }}
+            />
             <div
               style={{
                 display: "flex",
