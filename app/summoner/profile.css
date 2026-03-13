@@ -1029,7 +1029,7 @@
 }
 
 .profile-page .champ_row:last-child {
-  border-bottom: none;
+  border-bottom: 1px solid var(--border);
 }
 
 .profile-page .champ_row--linked {

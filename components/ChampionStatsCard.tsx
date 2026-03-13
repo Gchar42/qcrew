@@ -106,7 +106,7 @@ export default function ChampionStatsCard(props: {
         ) : (
           <div className="champ_list">
             {top7.map((r, i) => {
-              const isTop5 = i < 5 && riotId;
+              const isTop5 = i < 6 && riotId;
               const analysisHref = isTop5
                 ? `/profile/${encodeURIComponent(riotId)}/champion/${encodeURIComponent(r.championName)}`
                 : undefined;
