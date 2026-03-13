@@ -95,6 +95,8 @@ function extractChampionChanges(html: string, championName: string): string | nu
   return cleaned;
 }
 
+const LOWER_IS_BETTER = /\bcooldown\b|\bcool\s*down\b|\bmana\s*cost\b|\bcost\b|\bcast\s*time\b|\bwind[\s-]*up\b|\bdelay\b/i;
+
 function classifyChange(text: string): string {
   const lines = text.split("\n").map((l) => l.trim()).filter((l) => l.startsWith("- "));
 
@@ -110,8 +112,9 @@ function classifyChange(text: string): string {
       if (beforeNums.length > 0 && afterNums.length > 0) {
         const b = beforeNums[beforeNums.length - 1];
         const a = afterNums[afterNums.length - 1];
-        if (a > b) buffSignals++;
-        else if (a < b) nerfSignals++;
+        const inverted = LOWER_IS_BETTER.test(line);
+        if (a > b) { inverted ? nerfSignals++ : buffSignals++; }
+        else if (a < b) { inverted ? buffSignals++ : nerfSignals++; }
       }
     }
 
