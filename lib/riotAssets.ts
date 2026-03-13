@@ -130,10 +130,10 @@ export function getSummonerSpellTooltip(
   return { title: data.name, body: data.description, icon };
 }
 
-/** Rank emblem from local /public/emblems/ directory. */
+/** Ranked tier emblem via CommunityDragon. tier e.g. "GOLD", "PLATINUM". */
 export function getRankEmblemUrl(tier: string): string {
-  const capitalised = tier.charAt(0).toUpperCase() + tier.slice(1).toLowerCase();
-  return `/emblems/${capitalised}.png`;
+  const key = tier.toLowerCase();
+  return `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem/emblem-${key}.png`;
 }
 
 /* ── Item tooltips ──────────────────────────────────────────── */

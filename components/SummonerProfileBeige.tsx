@@ -979,13 +979,13 @@ export default function SummonerProfileBeige({
           </div>
           <div className="card-body" style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 6 }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
-              <div>
+              <div style={{ width: 96, height: 96, flexShrink: 0 }}>
                 {tier ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    className="rank-emblem-img"
                     src={getRankEmblemUrl(tier)}
                     alt={tier}
+                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
                   />
                 ) : null}
               </div>

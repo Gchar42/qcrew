@@ -360,12 +360,3 @@ select {
   margin-left: 4px;
 }
 
-img.rank-emblem-img {
-  width: 96px !important;
-  height: 96px !important;
-  max-width: 96px !important;
-  min-width: 96px !important;
-  max-height: 96px !important;
-  min-height: 96px !important;
-  display: block !important;
-}
