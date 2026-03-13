@@ -609,7 +609,7 @@ export default function SummonerProfileBeige({
           return {
             win: me?.win ?? false,
             championName: me?.championName ?? "",
-            gameTimestamp: m.info?.gameCreation ?? 0,
+            gameTimestamp: m.info?.gameEndTimestamp ?? 0,
           };
         })
         .filter((m) => m.gameTimestamp > 0),
@@ -624,7 +624,7 @@ export default function SummonerProfileBeige({
           return {
             win: me?.win ?? false,
             championName: me?.championName ?? "",
-            gameTimestamp: m.info?.gameCreation ?? 0,
+            gameTimestamp: m.info?.gameEndTimestamp ?? 0,
             patch: m.info?.gameVersion ? m.info.gameVersion.split(".").slice(0, 2).join(".") : undefined,
           };
         })
