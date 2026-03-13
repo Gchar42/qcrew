@@ -14,9 +14,12 @@ import ChampionStatsCard from "@/components/ChampionStatsCard";
 import RecentlyPlayedWithCard from "@/components/RecentlyPlayedWithCard";
 import { ChampionFirePortrait } from "@/components/ChampionFirePortrait";
 import { ChampionIcePortrait } from "@/components/ChampionIcePortrait";
+import { SessionHealthCard } from "@/components/summoner/SessionHealthCard";
+import { LpHistoryGraph } from "@/components/summoner/LpHistoryGraph";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
 import { ProfileSocialFeatures } from "@/components/ProfileSocialFeatures";
 import ChampionPoolView from "@/components/ChampionPoolView";
+import { WinRateBreakdowns } from "@/components/summoner/WinRateBreakdowns";
 import {
   getChampionSquareUrl,
   getChampionSplashUrl,
@@ -598,6 +601,37 @@ export default function SummonerProfileBeige({
     return mode;
   }, [displayedMatches, account?.puuid]);
 
+  const sessionMatches = useMemo(
+    () =>
+      (displayedMatches ?? [])
+        .map((m) => {
+          const me = m.info?.participants?.find((p) => p.puuid === account?.puuid);
+          return {
+            win: me?.win ?? false,
+            championName: me?.championName ?? "",
+            gameTimestamp: m.info?.gameCreation ?? 0,
+          };
+        })
+        .filter((m) => m.gameTimestamp > 0),
+    [displayedMatches, account],
+  );
+
+  const breakdownMatches = useMemo(
+    () =>
+      (displayedMatches ?? [])
+        .map((m) => {
+          const me = m.info?.participants?.find((p) => p.puuid === account?.puuid);
+          return {
+            win: me?.win ?? false,
+            championName: me?.championName ?? "",
+            gameTimestamp: m.info?.gameCreation ?? 0,
+            patch: m.info?.gameVersion ? m.info.gameVersion.split(".").slice(0, 2).join(".") : undefined,
+          };
+        })
+        .filter((m) => m.gameTimestamp > 0),
+    [displayedMatches, account],
+  );
+
   useEffect(() => {
     setAdditionalMatchesByQueue({});
     setHasMoreByQueue({});
@@ -973,6 +1007,19 @@ export default function SummonerProfileBeige({
                   <span className="stat-value"><span className="win">{entry.wins}W</span><span className="sep">-</span><span className="loss">{entry.losses}L</span></span>
                 </div>
               </div>
+              <div className="ladder-rank-line" style={{
+                marginTop: "8px",
+                paddingTop: "8px",
+                borderTop: "1px solid rgba(255,255,255,0.1)",
+                fontSize: "12px",
+                color: "rgba(255,255,255,0.6)",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px"
+              }}>
+                <span style={{fontSize: "14px"}}>🏆</span>
+                <span>{regionDisplayLabel(regionVal)} · Ladder Rank —</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1144,6 +1191,7 @@ export default function SummonerProfileBeige({
         <aside className="profile-body-left">
           {renderRankCard("Ranked Solo", soloEntry, rankLoading, rankError ?? null)}
           {renderRankCard("Ranked Flex", flexEntry, rankLoading, null)}
+          <SessionHealthCard matches={sessionMatches} />
           {championStatsToShow && (
             <ChampionStatsCard
               championStats={championStatsToShow}
@@ -1164,6 +1212,12 @@ export default function SummonerProfileBeige({
             losses={soloEntry?.losses}
             profileIconId={summoner?.profileIconId}
             summonerLevel={summoner?.summonerLevel}
+          />
+          <LpHistoryGraph
+            matches={sessionMatches}
+            currentLp={soloEntry?.leaguePoints ?? 0}
+            tier={soloEntry?.tier ?? ""}
+            rank={soloEntry?.rank ?? ""}
           />
         </aside>
         <div className="profile-body-main">
@@ -1366,6 +1420,18 @@ export default function SummonerProfileBeige({
                   <div className="profile-outcome-col">
                     <span className={`profile-outcome-pill ${win ? "win" : "loss"}`}>
                       {win ? "W" : "L"}
+                    </span>
+                    <span style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      marginTop: 2,
+                      color: win ? "#2ECC71" : "#E74C3C",
+                      whiteSpace: "nowrap",
+                    }}>
+                      {win
+                        ? `+~${(soloEntry?.tier?.toUpperCase() ?? "") === "MASTER" || (soloEntry?.tier?.toUpperCase() ?? "") === "GRANDMASTER" || (soloEntry?.tier?.toUpperCase() ?? "") === "CHALLENGER" ? 18 : ["PLATINUM", "EMERALD", "DIAMOND"].includes(soloEntry?.tier?.toUpperCase() ?? "") ? 20 : 22}`
+                        : "-~18"
+                      }
                     </span>
                   </div>
                   <span className={`profile-verdict-line ${win ? "win" : "loss"}`} />
@@ -1849,6 +1915,7 @@ export default function SummonerProfileBeige({
         )}
       </div>
       ) : (
+      <>
       <ChampionPoolView
         champions={championStatsToShow?.[queue === "flex" ? "flex" : "solo"]?.champions ?? []}
         riotId={riotIdParam ?? ""}
@@ -1856,6 +1923,8 @@ export default function SummonerProfileBeige({
         tier={soloEntry?.tier ?? ""}
         ddragonVersion={effectiveDdragonVersion}
       />
+      <WinRateBreakdowns matches={breakdownMatches} />
+      </>
       )}
 
       {detailMatch && (

@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: "/tierlist", label: "Tierlist" },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/champions", label: "Champions" },
+  { href: "/runes", label: "Runes" },
   { href: "/jungle-stats", label: "Jungle Stats" },
   { href: "/guides", label: "Guides" },
 ];

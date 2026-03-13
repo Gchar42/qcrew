@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { getChampionSquareUrl } from "@/lib/riotAssets";
 
 type RoleKey = "top" | "jungle" | "mid" | "adc" | "support";
 type TierKey = "S" | "A" | "B" | "C" | "D" | "F";
+type RankFilter = "all" | "iron-silver" | "gold-plat" | "emerald-diamond" | "master+";
 
 type ChampStats = {
   championId: number;
@@ -14,6 +15,7 @@ type ChampStats = {
   wins: number;
   winRate: number;
   pickRate: number;
+  banRate?: number;
   score: number;
 };
 
@@ -31,7 +33,26 @@ const ROLE_TABS: Array<{ key: RoleKey; label: string }> = [
   { key: "support", label: "Support" },
 ];
 
+const RANK_FILTERS: Array<{ key: RankFilter; label: string }> = [
+  { key: "all", label: "All Ranks" },
+  { key: "iron-silver", label: "Iron–Silver" },
+  { key: "gold-plat", label: "Gold–Plat" },
+  { key: "emerald-diamond", label: "Emerald–Diamond" },
+  { key: "master+", label: "Master+" },
+];
+
 const TIERS: TierKey[] = ["S", "A", "B", "C", "D", "F"];
+
+function formatTimeAgo(iso: string): string {
+  if (!iso) return "—";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
 
 function emptyData(): TierlistResponse {
   const emptyRole = { S: [], A: [], B: [], C: [], D: [], F: [] } as Record<TierKey, ChampStats[]>;
@@ -48,8 +69,82 @@ function emptyData(): TierlistResponse {
   };
 }
 
+function ChampionIcon({
+  champ,
+  version,
+  tier,
+  index,
+}: {
+  champ: ChampStats;
+  version: string | null;
+  tier: TierKey;
+  index: number;
+}) {
+  const [show, setShow] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: boolean; left: number }>({ top: true, left: 0 });
+
+  const handleEnter = () => {
+    if (ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      const above = rect.top > 160;
+      const leftOffset = Math.min(0, window.innerWidth - rect.left - 220);
+      setPos({ top: above, left: leftOffset });
+    }
+    setShow(true);
+  };
+
+  return (
+    <div
+      ref={ref}
+      key={`${tier}-${champ.championName}-${index}`}
+      className="group relative flex w-14 flex-col items-center"
+      onMouseEnter={handleEnter}
+      onMouseLeave={() => setShow(false)}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={getChampionSquareUrl(champ.championName, version)}
+        alt={champ.championName}
+        className="h-14 w-14 rounded-md border border-white/10"
+      />
+      {show && (
+        <div
+          className="absolute z-50 w-52 rounded-lg border border-white/20 bg-[#1a1b26] px-3 py-2.5 shadow-xl"
+          style={{
+            [pos.top ? "bottom" : "top"]: "calc(100% + 8px)",
+            left: `calc(50% - 104px + ${pos.left}px)`,
+          }}
+        >
+          <p className="mb-1 text-sm font-bold text-white">{champ.championName}</p>
+          <div className="space-y-0.5 text-xs text-white/70">
+            <p>
+              Win Rate: <span className="text-white">{champ.winRate}%</span>
+              {" · "}Pick Rate: <span className="text-white">{champ.pickRate}%</span>
+            </p>
+            <p>
+              Ban Rate: <span className="text-white">{champ.banRate != null ? `${champ.banRate}%` : "—"}</span>
+            </p>
+            <p>
+              Games analyzed:{" "}
+              <span className="text-white">
+                {champ.games.toLocaleString()}
+                {champ.games < 500 && " ⚠"}
+              </span>
+            </p>
+            <p>
+              Patch trend: <span className="text-white">→ stable</span>
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function TierlistPage() {
   const [activeRole, setActiveRole] = useState<RoleKey>("top");
+  const [activeRank, setActiveRank] = useState<RankFilter>("all");
   const [data, setData] = useState<TierlistResponse>(emptyData());
   const [loading, setLoading] = useState(true);
   const [version, setVersion] = useState<string | null>(null);
@@ -77,7 +172,8 @@ export default function TierlistPage() {
           <Link href="/" className="text-sm text-white/70 hover:text-white">Back to Home</Link>
         </div>
 
-        <div className="mb-4 flex flex-wrap gap-2">
+        {/* Role tabs */}
+        <div className="mb-3 flex flex-wrap gap-2">
           {ROLE_TABS.map((tab) => (
             <button
               key={tab.key}
@@ -94,6 +190,34 @@ export default function TierlistPage() {
           ))}
         </div>
 
+        {/* Rank filter */}
+        <div className="mb-3 flex flex-wrap gap-2">
+          {RANK_FILTERS.map((rf) => (
+            <button
+              key={rf.key}
+              type="button"
+              onClick={() => setActiveRank(rf.key)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                activeRank === rf.key
+                  ? "bg-[#5865F2] text-white"
+                  : "bg-[#151620] text-white/50 hover:text-white/80 border border-white/10"
+              }`}
+            >
+              {rf.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Data freshness bar */}
+        {!loading && data.updatedAt && (
+          <p className="mb-4 text-center text-xs text-white/40">
+            Based on{" "}
+            <span className="text-white/60">{data.matchCount.toLocaleString()}</span> games
+            {" · "}Patch 16.5
+            {" · "}Updated {formatTimeAgo(data.updatedAt)}
+          </p>
+        )}
+
         <div className="space-y-3">
           {TIERS.map((tier) => (
             <section
@@ -106,18 +230,13 @@ export default function TierlistPage() {
               <div className="flex flex-wrap gap-2 p-3 min-h-[72px]">
                 {roleRows[tier]?.length ? (
                   roleRows[tier].map((c, i) => (
-                    <div
+                    <ChampionIcon
                       key={`${tier}-${c.championName}-${i}`}
-                      className="group relative flex w-14 flex-col items-center"
-                      title={`${c.championName} · WR ${c.winRate}% · PR ${c.pickRate}%${c.games ? ` · ${c.games} games` : ""}`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={getChampionSquareUrl(c.championName, version)}
-                        alt={c.championName}
-                        className="h-14 w-14 rounded-md border border-white/10"
-                      />
-                    </div>
+                      champ={c}
+                      version={version}
+                      tier={tier}
+                      index={i}
+                    />
                   ))
                 ) : (
                   <span className="self-center text-sm text-white/40">

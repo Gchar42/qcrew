@@ -9,6 +9,7 @@ import {
 import OneTrickInsights from "@/components/OneTrickInsights";
 import ProgressionTracker from "@/components/ProgressionTracker";
 import MatchupAdvisor from "@/components/MatchupAdvisor";
+import ObjectiveWinRates from "@/components/summoner/ObjectiveWinRates";
 
 type StatsBlock = {
   games: number; wins: number; winRate: number;
@@ -216,6 +217,21 @@ export default function ChampionAnalysisClient({
                 <span className="text-sm text-white/50">
                   Your {data.betterThanPercent.label} is better than <span className="font-bold text-white/80">{data.betterThanPercent.percentile}%</span> of {data.tier.charAt(0) + data.tier.slice(1).toLowerCase()} players
                 </span>
+              </div>
+              <div style={{
+                marginTop: "8px",
+                fontSize: "13px",
+                color: "rgba(255,255,255,0.6)",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px"
+              }}>
+                <span>🏆</span>
+                {data.overall.games >= 20 ? (
+                  <span>Ranked #— on {data.championName} in {data.region.toUpperCase()} · Top —% · Top —% Globally</span>
+                ) : (
+                  <span>Play 20+ ranked games on {data.championName} to appear on the leaderboard</span>
+                )}
               </div>
             </div>
           </div>
@@ -488,6 +504,9 @@ export default function ChampionAnalysisClient({
             {aiGeneratedAt && <p className="mt-4 text-[11px] text-white/25">Last updated: {new Date(aiGeneratedAt).toLocaleString()}</p>}
           </div>
         </div>
+
+        {/* === Objective Win Rates === */}
+        <ObjectiveWinRates championName={data.championName} games={data.overall.games} />
 
         {error && <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400 mb-4">{error}</div>}
 
