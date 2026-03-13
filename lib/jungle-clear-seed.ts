@@ -194,6 +194,12 @@ const SEED_DATA: SeedClearEntry[] = [
   { championKey: "Evelynn", name: "Evelynn", clearTimeP5Seconds: 200, hpAfterClearP50: 58, paths: [
     { icons: "🔵→🐸→🐺→🐦→🔴→🪨", label: "Blue→Gromp→Wolves→Raptors→Red→Krugs" },
   ], note: "Must full clear before 6 — no gank pressure pre-camo" },
+  { championKey: "Maokai", name: "Maokai", clearTimeP5Seconds: 210, hpAfterClearP50: 75, paths: [
+    { icons: "🔴→🪨→🐦→🐺→🔵→🐸", label: "Red→Krugs→Raptors→Wolves→Blue→Gromp" },
+  ], note: "Sapling AoE clear — slow but healthy" },
+  { championKey: "Neeko", name: "Neeko", clearTimeP5Seconds: 208, hpAfterClearP50: 55, paths: [
+    { icons: "🐦→🔴→🪨→🐺→🔵→🐸", label: "Raptors→Red→Krugs→Wolves→Blue→Gromp" },
+  ], note: "Clone tanks camps, passive AoE" },
 ];
 
 /* ── Formatter for the frontend ClearSpeedEntry shape ── */

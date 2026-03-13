@@ -1,4 +1,4 @@
-/* Sample data for the top 15 junglers — Prompt 28 */
+/* Sample data for all jungle-viable champions */
 
 export type JunglerTier = "S" | "A" | "B" | "C" | "D";
 
@@ -62,21 +62,67 @@ export interface MatchupEntry {
 }
 
 export const JUNGLERS: JunglerStats[] = [
-  { id: "LeeSin", name: "Lee Sin", winRate: 49.8, pickRate: 14.2, banRate: 8.1, tier: "S", games: 142300 },
+  // S TIER
+  { id: "RekSai", name: "Rek'Sai", winRate: 53.2, pickRate: 5.8, banRate: 6.1, tier: "S", games: 58200 },
+  { id: "Nocturne", name: "Nocturne", winRate: 52.8, pickRate: 7.4, banRate: 4.2, tier: "S", games: 74100 },
+  { id: "Briar", name: "Briar", winRate: 52.6, pickRate: 6.1, banRate: 8.8, tier: "S", games: 61200 },
   { id: "Viego", name: "Viego", winRate: 51.3, pickRate: 10.8, banRate: 12.4, tier: "S", games: 108200 },
-  { id: "Graves", name: "Graves", winRate: 51.0, pickRate: 8.6, banRate: 6.3, tier: "S", games: 86400 },
+  { id: "Belveth", name: "Bel'Veth", winRate: 52.4, pickRate: 4.9, banRate: 7.3, tier: "S", games: 49100 },
+  // A TIER
+  { id: "LeeSin", name: "Lee Sin", winRate: 49.8, pickRate: 14.2, banRate: 8.1, tier: "A", games: 142300 },
+  { id: "Graves", name: "Graves", winRate: 51.0, pickRate: 8.6, banRate: 6.3, tier: "A", games: 86400 },
   { id: "Elise", name: "Elise", winRate: 51.7, pickRate: 5.4, banRate: 3.2, tier: "A", games: 54100 },
   { id: "Vi", name: "Vi", winRate: 52.1, pickRate: 6.2, banRate: 4.8, tier: "A", games: 62300 },
   { id: "JarvanIV", name: "Jarvan IV", winRate: 51.4, pickRate: 5.8, banRate: 3.6, tier: "A", games: 58100 },
   { id: "Khazix", name: "Kha'Zix", winRate: 51.9, pickRate: 7.1, banRate: 9.2, tier: "A", games: 71200 },
-  { id: "RekSai", name: "Rek'Sai", winRate: 52.4, pickRate: 3.1, banRate: 1.4, tier: "B", games: 31200 },
+  { id: "Zyra", name: "Zyra", winRate: 52.5, pickRate: 3.8, banRate: 2.9, tier: "A", games: 38100 },
+  { id: "Kayn", name: "Kayn", winRate: 50.2, pickRate: 9.4, banRate: 7.3, tier: "A", games: 94300 },
+  { id: "Volibear", name: "Volibear", winRate: 51.8, pickRate: 4.6, banRate: 2.1, tier: "A", games: 46100 },
+  { id: "Lillia", name: "Lillia", winRate: 52.0, pickRate: 3.9, banRate: 2.4, tier: "A", games: 39100 },
+  { id: "Diana", name: "Diana", winRate: 51.6, pickRate: 5.1, banRate: 3.8, tier: "A", games: 51200 },
+  // B TIER
   { id: "Hecarim", name: "Hecarim", winRate: 50.6, pickRate: 5.5, banRate: 5.1, tier: "B", games: 55100 },
-  { id: "Kayn", name: "Kayn", winRate: 50.2, pickRate: 9.4, banRate: 7.3, tier: "B", games: 94300 },
   { id: "Shaco", name: "Shaco", winRate: 51.1, pickRate: 4.8, banRate: 11.6, tier: "B", games: 48200 },
   { id: "Warwick", name: "Warwick", winRate: 52.3, pickRate: 4.2, banRate: 2.8, tier: "B", games: 42100 },
+  { id: "Ekko", name: "Ekko", winRate: 50.8, pickRate: 5.3, banRate: 4.1, tier: "B", games: 53100 },
+  { id: "Fiddlesticks", name: "Fiddlesticks", winRate: 52.1, pickRate: 3.4, banRate: 2.7, tier: "B", games: 34100 },
+  { id: "XinZhao", name: "Xin Zhao", winRate: 51.2, pickRate: 3.6, banRate: 1.8, tier: "B", games: 36100 },
+  { id: "MasterYi", name: "Master Yi", winRate: 50.9, pickRate: 4.7, banRate: 6.4, tier: "B", games: 47100 },
+  { id: "Udyr", name: "Udyr", winRate: 51.4, pickRate: 3.2, banRate: 1.9, tier: "B", games: 32100 },
+  { id: "Kindred", name: "Kindred", winRate: 50.7, pickRate: 3.8, banRate: 2.6, tier: "B", games: 38100 },
+  { id: "Nunu", name: "Nunu & Willump", winRate: 51.0, pickRate: 3.5, banRate: 1.4, tier: "B", games: 35100 },
+  { id: "Zac", name: "Zac", winRate: 51.5, pickRate: 3.1, banRate: 2.0, tier: "B", games: 31100 },
+  { id: "MonkeyKing", name: "Wukong", winRate: 50.6, pickRate: 3.3, banRate: 2.2, tier: "B", games: 33100 },
+  { id: "Trundle", name: "Trundle", winRate: 51.3, pickRate: 2.8, banRate: 1.5, tier: "B", games: 28100 },
+  { id: "Rengar", name: "Rengar", winRate: 50.4, pickRate: 4.1, banRate: 3.9, tier: "B", games: 41100 },
+  { id: "Morgana", name: "Morgana", winRate: 52.0, pickRate: 2.6, banRate: 1.2, tier: "B", games: 26100 },
+  { id: "Ivern", name: "Ivern", winRate: 51.8, pickRate: 2.1, banRate: 0.8, tier: "B", games: 21100 },
+  // C TIER
   { id: "Amumu", name: "Amumu", winRate: 52.8, pickRate: 3.6, banRate: 1.9, tier: "C", games: 36100 },
   { id: "Evelynn", name: "Evelynn", winRate: 50.4, pickRate: 4.1, banRate: 6.7, tier: "C", games: 41300 },
-  { id: "Nidalee", name: "Nidalee", winRate: 48.2, pickRate: 3.8, banRate: 1.1, tier: "D", games: 38200 },
+  { id: "Nidalee", name: "Nidalee", winRate: 48.2, pickRate: 3.8, banRate: 1.1, tier: "C", games: 38200 },
+  { id: "DrMundo", name: "Dr. Mundo", winRate: 51.2, pickRate: 2.4, banRate: 1.0, tier: "C", games: 24100 },
+  { id: "Rammus", name: "Rammus", winRate: 51.6, pickRate: 2.2, banRate: 1.8, tier: "C", games: 22100 },
+  { id: "Karthus", name: "Karthus", winRate: 50.1, pickRate: 2.3, banRate: 1.6, tier: "C", games: 23100 },
+  { id: "Taliyah", name: "Taliyah", winRate: 49.8, pickRate: 2.0, banRate: 1.3, tier: "C", games: 20100 },
+  { id: "Skarner", name: "Skarner", winRate: 50.3, pickRate: 2.5, banRate: 2.1, tier: "C", games: 25100 },
+  { id: "Gragas", name: "Gragas", winRate: 49.9, pickRate: 2.7, banRate: 1.7, tier: "C", games: 27100 },
+  { id: "Shyvana", name: "Shyvana", winRate: 50.8, pickRate: 2.1, banRate: 1.2, tier: "C", games: 21100 },
+  { id: "Sylas", name: "Sylas", winRate: 49.6, pickRate: 2.9, banRate: 1.4, tier: "C", games: 29100 },
+  { id: "Brand", name: "Brand", winRate: 51.4, pickRate: 1.8, banRate: 1.1, tier: "C", games: 18100 },
+  // D TIER
+  { id: "Sejuani", name: "Sejuani", winRate: 49.2, pickRate: 1.9, banRate: 0.9, tier: "D", games: 19100 },
+  { id: "Poppy", name: "Poppy", winRate: 49.5, pickRate: 1.6, banRate: 0.7, tier: "D", games: 16100 },
+  { id: "Pantheon", name: "Pantheon", winRate: 48.8, pickRate: 1.8, banRate: 1.0, tier: "D", games: 18100 },
+  { id: "Talon", name: "Talon", winRate: 48.5, pickRate: 2.1, banRate: 1.3, tier: "D", games: 21100 },
+  { id: "Naafiri", name: "Naafiri", winRate: 49.1, pickRate: 1.5, banRate: 0.6, tier: "D", games: 15100 },
+  { id: "Sett", name: "Sett", winRate: 49.3, pickRate: 1.4, banRate: 0.8, tier: "D", games: 14100 },
+  { id: "Mordekaiser", name: "Mordekaiser", winRate: 49.7, pickRate: 1.3, banRate: 0.5, tier: "D", games: 13100 },
+  { id: "Jax", name: "Jax", winRate: 48.9, pickRate: 1.7, banRate: 1.1, tier: "D", games: 17100 },
+  { id: "Qiyana", name: "Qiyana", winRate: 48.3, pickRate: 1.2, banRate: 0.9, tier: "D", games: 12100 },
+  { id: "Maokai", name: "Maokai", winRate: 50.1, pickRate: 1.1, banRate: 0.4, tier: "D", games: 11100 },
+  { id: "Aatrox", name: "Aatrox", winRate: 48.0, pickRate: 0.9, banRate: 0.3, tier: "D", games: 9100 },
+  { id: "Neeko", name: "Neeko", winRate: 50.5, pickRate: 1.0, banRate: 0.4, tier: "D", games: 10100 },
 ];
 
 export const OBJECTIVES: ObjectiveEntry[] = [
