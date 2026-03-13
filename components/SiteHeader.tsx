@@ -6,6 +6,7 @@ import Link from "next/link";
 const NAV_LINKS = [
   { href: "/search", label: "Search summoner" },
   { href: "/favorites", label: "Favorites" },
+  { href: "/following", label: "Following" },
   { href: "/tierlist", label: "Tierlist" },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/champions", label: "Champions" },
