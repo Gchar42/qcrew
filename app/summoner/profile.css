@@ -26,7 +26,7 @@
 }
 
 .profile-page .profile-container {
-  max-width: 1600px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 16px 14px;
   position: relative;
@@ -35,7 +35,7 @@
 
 /* Widen container when recently played column is shown so match cards keep room */
 .profile-page .profile-container:has(.profile-body-has-right) {
-  max-width: 1600px;
+  max-width: 1440px;
 }
 
 /* Nav */
@@ -415,14 +415,14 @@
 /* Body: left stats, center match list, optional right (recently played) */
 .profile-page .profile-body {
   display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 20px;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
   align-items: start;
   margin-top: 12px;
 }
 
 .profile-page .profile-body.profile-body-has-right {
-  grid-template-columns: 360px 1fr 320px;
+  grid-template-columns: 320px 1fr 260px;
 }
 
 .profile-page .profile-body-left {
@@ -3569,7 +3569,7 @@
 
 /* Responsive */
 /* When recently played column is shown, stack earlier so match cards keep full width */
-@media (max-width: 1340px) {
+@media (max-width: 1160px) {
   .profile-page .profile-body.profile-body-has-right {
     grid-template-columns: 1fr;
   }
