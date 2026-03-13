@@ -114,6 +114,59 @@ function StatCard({ label, value, context, color, delay }: StatCardProps) {
   );
 }
 
+function ShareButtons({ riotId, shareUrl, recap }: { riotId: string; shareUrl: string; recap: RecapData }) {
+  const [copied, setCopied] = useState(false);
+
+  const tweetText = `My 2025 League of Legends season on StatGap.gg — Peak: ${recap.peakRank} · ${recap.winRate}% WR · ${recap.totalGames} games · Best champion: ${recap.bestChampion.name} ${recap.bestChampion.winRate}% WR 🎮 ${shareUrl}`;
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+
+  return (
+    <div style={{ marginTop: 40, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+      <button
+        type="button"
+        onClick={() => {
+          navigator.clipboard.writeText(shareUrl);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }}
+        style={{
+          padding: "12px 32px",
+          fontSize: 14,
+          fontWeight: 700,
+          color: copied ? "#22c55e" : "#fff",
+          background: copied ? "rgba(34,197,94,0.15)" : "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+          border: copied ? "1px solid rgba(34,197,94,0.3)" : "none",
+          borderRadius: 8,
+          cursor: "pointer",
+          transition: "all 0.2s",
+        }}
+      >
+        {copied ? "Copied!" : "Share Link"}
+      </button>
+      <a
+        href={twitterUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          padding: "12px 32px",
+          fontSize: 14,
+          fontWeight: 700,
+          color: "#fff",
+          background: "#1d9bf0",
+          border: "none",
+          borderRadius: 8,
+          textDecoration: "none",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        Share on X / Twitter
+      </a>
+    </div>
+  );
+}
+
 export default function SeasonRecapPage() {
   const params = useParams<{ region: string; riotId: string }>();
   const region = params.region;
@@ -336,30 +389,9 @@ export default function SeasonRecapPage() {
           />
         </div>
 
-        {/* Share button */}
-        <div style={{ marginTop: 40, display: "flex", gap: 12, justifyContent: "center" }}>
-          <button
-            type="button"
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({ title: `${riotId} — Season Recap`, url: shareUrl });
-              } else if (navigator.clipboard) {
-                navigator.clipboard.writeText(shareUrl);
-              }
-            }}
-            style={{
-              padding: "12px 32px",
-              fontSize: 14,
-              fontWeight: 700,
-              color: "#fff",
-              background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-              border: "none",
-              borderRadius: 8,
-              cursor: "pointer",
-            }}
-          >
-            Share Recap
-          </button>
+        {/* Share buttons */}
+        <ShareButtons riotId={riotId} shareUrl={shareUrl} recap={recap} />
+        <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "center" }}>
           <Link
             href={`/summoner?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}`}
             style={{

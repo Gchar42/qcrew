@@ -92,29 +92,18 @@ export default function BadgePage() {
         </p>
 
         {/* Standard preview */}
-        <div style={{ marginBottom: 32 }}>
+        <div style={{ marginBottom: 28 }}>
           <h2 style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.6)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.1em" }}>
             Standard (400×80)
           </h2>
-          <div
-            style={{
-              padding: 24,
-              borderRadius: 12,
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              display: "flex",
-              justifyContent: "center",
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={badgeUrl}
-              alt={`${riotId} rank badge`}
-              width={400}
-              height={80}
-              style={{ borderRadius: 4 }}
-            />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={badgeUrl}
+            alt={`${riotId} rank badge`}
+            width={400}
+            height={80}
+            style={{ borderRadius: 6, boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}
+          />
         </div>
 
         {/* Mini preview */}
@@ -122,25 +111,14 @@ export default function BadgePage() {
           <h2 style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.6)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.1em" }}>
             Mini (200×40)
           </h2>
-          <div
-            style={{
-              padding: 24,
-              borderRadius: 12,
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              display: "flex",
-              justifyContent: "center",
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={miniUrl}
-              alt={`${riotId} mini rank badge`}
-              width={200}
-              height={40}
-              style={{ borderRadius: 4 }}
-            />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={miniUrl}
+            alt={`${riotId} mini rank badge`}
+            width={200}
+            height={40}
+            style={{ borderRadius: 4, boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}
+          />
         </div>
 
         {/* Embed codes */}
@@ -164,7 +142,28 @@ export default function BadgePage() {
           />
         </div>
 
-        <p style={{ marginTop: 40, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.2)" }}>
+        {/* Add to Profile */}
+        <div
+          style={{
+            marginTop: 40,
+            padding: "20px 24px",
+            borderRadius: 12,
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          <h2 style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.6)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            Add to Profile
+          </h2>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", margin: 0, lineHeight: 1.5 }}>
+            <strong style={{ color: "rgba(255,255,255,0.7)" }}>Discord:</strong> Paste the HTML embed into your Discord bio or About Me section.
+          </p>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", margin: "6px 0 0", lineHeight: 1.5 }}>
+            <strong style={{ color: "rgba(255,255,255,0.7)" }}>Reddit / Forums:</strong> Use the BBCode or Markdown embed above.
+          </p>
+        </div>
+
+        <p style={{ marginTop: 24, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.2)" }}>
           Badge updates every 5 minutes. Sample data shown for demo accounts.
         </p>
       </div>
