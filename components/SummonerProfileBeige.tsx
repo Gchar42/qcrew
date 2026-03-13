@@ -1415,20 +1415,21 @@ export default function SummonerProfileBeige({
                       {win ? "W" : "L"}
                     </span>
                     <span style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      marginTop: 3,
-                      letterSpacing: "0.02em",
+                      marginTop: 8,
                       whiteSpace: "nowrap",
                       color: win ? "#2ECC71" : "#E74C3C",
                       textShadow: win ? "0 0 6px rgba(46,204,113,0.3)" : "0 0 6px rgba(231,76,60,0.3)",
                       fontFamily: "var(--font-geist-mono), monospace",
+                      lineHeight: 1,
                     }}>
-                      {win ? "▲" : "▼"}{" "}
-                      {(() => {
-                        const seed = (m.info?.gameId ?? matchIndex) % 15;
-                        return win ? `+${14 + seed}` : `-${14 + (seed % 9)}`;
-                      })()}
+                      <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.02em" }}>
+                        {win ? "▲" : "▼"}{" "}
+                        {(() => {
+                          const seed = (m.info?.gameId ?? matchIndex) % 15;
+                          return win ? `+${14 + seed}` : `-${14 + (seed % 9)}`;
+                        })()}
+                      </span>
+                      <span style={{ fontSize: 10, fontWeight: 500, opacity: 0.75, marginLeft: 2 }}>LP</span>
                     </span>
                   </div>
                   <span className={`profile-verdict-line ${win ? "win" : "loss"}`} />
