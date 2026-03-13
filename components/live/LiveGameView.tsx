@@ -2,7 +2,22 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getChampionSquareUrl, getChampionSplashUrl, getRankEmblemUrl } from "@/lib/riotAssets";
+import { getChampionSquareUrl, getRankEmblemUrl } from "@/lib/riotAssets";
+
+/** Data Dragon splash URL for team card backgrounds */
+function getDataDragonSplashUrl(championName: string): string {
+  const specialKeys: Record<string, string> = {
+    "Dr. Mundo": "DrMundo", "Lee Sin": "LeeSin", "Jarvan IV": "JarvanIV",
+    "Xin Zhao": "XinZhao", "Master Yi": "MasterYi", "Miss Fortune": "MissFortune",
+    "Twisted Fate": "TwistedFate", "Tahm Kench": "TahmKench", "Renata Glasc": "Renata",
+    "Kai'Sa": "Kaisa", "Rek'Sai": "RekSai", "Cho'Gath": "Chogath", "Kha'Zix": "Khazix",
+    "Vel'Koz": "Velkoz", "Kog'Maw": "KogMaw", "LeBlanc": "Leblanc",
+    "Nunu & Willump": "Nunu", "Bel'Veth": "Belveth",
+  };
+  const key = specialKeys[championName] ?? championName.replace(/\s+/g, "").replace(/'/g, "").replace(/\./g, "");
+  return `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${key}_0.jpg`;
+}
+
 import { useFollowing } from "@/components/following/useFollowing";
 
 /* ── Sample data for Demo#NA1 ───────────────────────────────────────────── */
@@ -376,8 +391,8 @@ export default function LiveGameView({
   const profileUrl = (riotIdDisplay: string) =>
     `/summoner?riotId=${encodeURIComponent(riotIdDisplay)}&region=${encodeURIComponent(region)}`;
 
-  const blueCarry = blueTeam.find((p) => p.championName === "Jinx") ?? blueTeam[0];
-  const redCarry = redTeam.find((p) => p.championName === "Caitlyn") ?? redTeam[0];
+  const blueSplashChamp = blueTeam[0]?.championName ?? "Jinx";
+  const redSplashChamp = redTeam[0]?.championName ?? "Caitlyn";
 
   return (
     <div className="live-page live-page--in-game">
@@ -428,24 +443,34 @@ export default function LiveGameView({
           }}
         >
           <div
-            className="live-page-team-splash"
             style={{
               position: "absolute",
               inset: 0,
-              backgroundImage: `url(${getChampionSplashUrl(blueCarry.championName)})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center 20%",
-              opacity: 0.2,
+              zIndex: 0,
             }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(to bottom, rgba(21,22,32,0.85) 0%, rgba(21,22,32,0.95) 50%, rgba(21,22,32,0.98) 100%)",
-              pointerEvents: "none",
-            }}
-          />
+          >
+            <img
+              src={getDataDragonSplashUrl(blueSplashChamp)}
+              alt=""
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center 20%",
+                opacity: 0.15,
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "linear-gradient(to bottom, rgba(21,22,32,0.75) 0%, rgba(21,22,32,0.9) 50%, rgba(21,22,32,0.96) 100%)",
+                pointerEvents: "none",
+              }}
+            />
+          </div>
           <div style={{ position: "relative", zIndex: 1 }}>
             <h2 className="live-page-team-title">Blue Team</h2>
             {blueTeam.map((p) => (
@@ -467,8 +492,8 @@ export default function LiveGameView({
         <div
           className="live-page-verdict"
           style={{
-            background: isEven ? "rgba(255,255,255,0.04)" : `linear-gradient(135deg, ${verdictColor}22 0%, ${verdictColor}08 100%)`,
-            border: `2px solid ${verdictColor}44`,
+            background: isEven ? "#1a1a1a" : `linear-gradient(135deg, ${verdictColor}1a 0%, ${verdictColor}0d 100%)`,
+            border: isEven ? "1px solid rgba(255,255,255,0.15)" : `2px solid ${verdictColor}44`,
             borderRadius: 12,
             padding: 24,
           }}
@@ -476,7 +501,7 @@ export default function LiveGameView({
           <div
             className="live-page-verdict-banner"
             style={{
-              fontSize: "1.35rem",
+              fontSize: isEven ? 28 : "1.35rem",
               fontWeight: 800,
               color: verdictColor,
               marginBottom: 4,
@@ -514,24 +539,34 @@ export default function LiveGameView({
           }}
         >
           <div
-            className="live-page-team-splash"
             style={{
               position: "absolute",
               inset: 0,
-              backgroundImage: `url(${getChampionSplashUrl(redCarry.championName)})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center 20%",
-              opacity: 0.2,
+              zIndex: 0,
             }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(to bottom, rgba(21,22,32,0.85) 0%, rgba(21,22,32,0.95) 50%, rgba(21,22,32,0.98) 100%)",
-              pointerEvents: "none",
-            }}
-          />
+          >
+            <img
+              src={getDataDragonSplashUrl(redSplashChamp)}
+              alt=""
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center 20%",
+                opacity: 0.15,
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "linear-gradient(to bottom, rgba(21,22,32,0.75) 0%, rgba(21,22,32,0.9) 50%, rgba(21,22,32,0.96) 100%)",
+                pointerEvents: "none",
+              }}
+            />
+          </div>
           <div style={{ position: "relative", zIndex: 1 }}>
             <h2 className="live-page-team-title">Red Team</h2>
             {redTeam.map((p) => (
