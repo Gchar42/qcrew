@@ -13,10 +13,16 @@ type Props = {
   body?: string;
   /** If true, render body as HTML (e.g. item description from DDragon). Use only with sanitized content. */
   bodyHtml?: boolean;
+  /** Optional icon URL shown next to the title */
+  icon?: string;
+  /** Accent color for the border and title. Defaults to gold (#d4af37). */
+  accentColor?: string;
+  /** Optional subtitle rendered in bold below the header (e.g. rune shortDesc) */
+  subtitle?: string;
   children: React.ReactElement;
 };
 
-export function LeagueTooltip({ title, body, bodyHtml, children }: Props) {
+export function LeagueTooltip({ title, body, bodyHtml, icon, accentColor, subtitle, children }: Props) {
   const [visible, setVisible] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [position, setPosition] = React.useState({ top: 0, left: 0 });
@@ -84,6 +90,8 @@ export function LeagueTooltip({ title, body, bodyHtml, children }: Props) {
     };
   }, []);
 
+  const accent = accentColor || "#d4af37";
+
   const tooltipContent =
     visible && title ? (
       <div
@@ -93,11 +101,21 @@ export function LeagueTooltip({ title, body, bodyHtml, children }: Props) {
           left: position.left,
           top: position.top,
           transform: placeAbove ? "translate(-50%, -100%)" : "translate(-50%, 0)",
+          borderColor: accent,
         }}
         onMouseEnter={cancelHide}
         onMouseLeave={hide}
       >
-        <div className="league-tooltip-title">{title}</div>
+        <div className="league-tooltip-header">
+          {icon && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={icon} alt="" className="league-tooltip-icon" />
+          )}
+          <span className="league-tooltip-title" style={{ color: accent }}>{title}</span>
+        </div>
+        {subtitle && (
+          <div className="league-tooltip-subtitle">{subtitle}</div>
+        )}
         {body ? (
           <div
             className="league-tooltip-body"

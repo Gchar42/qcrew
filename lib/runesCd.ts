@@ -6,7 +6,7 @@
 const CD_BASE =
   "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default";
 
-export type PerkEntry = { id: number; iconPath: string; name?: string; shortDesc?: string };
+export type PerkEntry = { id: number; iconPath: string; name?: string; shortDesc?: string; longDesc?: string };
 
 /** Convert CommunityDragon iconPath to full URL */
 export function perkIconPathToUrl(iconPath: string): string {
@@ -56,12 +56,14 @@ export async function fetchPerksCd(): Promise<PerkEntry[] | null> {
       iconPath: string;
       name?: string;
       shortDesc?: string;
+      longDesc?: string;
     }>;
-    return data.map(({ id, iconPath, name, shortDesc }) => ({
+    return data.map(({ id, iconPath, name, shortDesc, longDesc }) => ({
       id,
       iconPath,
       name,
       shortDesc,
+      longDesc,
     }));
   } catch {
     return null;

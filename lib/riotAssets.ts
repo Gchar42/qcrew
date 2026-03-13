@@ -115,6 +115,21 @@ export function getSummonerSpellIconUrl(
   return `https://ddragon.leagueoflegends.com/cdn/${v}/img/spell/${key}.png`;
 }
 
+/* ── Summoner spell tooltips ───────────────────────────────── */
+
+export type SummonerSpellData = Record<number, { name: string; description: string; key: string }>;
+
+export function getSummonerSpellTooltip(
+  spellDataById: SummonerSpellData | undefined,
+  spellId: number | undefined
+): { title: string; body?: string; icon?: string } | null {
+  if (spellId == null) return null;
+  const data = spellDataById?.[spellId];
+  if (!data) return null;
+  const icon = getSummonerSpellIconUrl(spellId);
+  return { title: data.name, body: data.description, icon };
+}
+
 /** Ranked tier emblem via official CommunityDragon assets. tier e.g. "EMERALD", "PLATINUM". */
 const RANKED_EMBLEM_CDN = "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem";
 export function getRankEmblemUrl(tier: string): string {
@@ -134,13 +149,14 @@ export type ItemTooltipData = Record<number, {
 export function getItemTooltip(
   itemDataById: ItemTooltipData | undefined,
   itemId: number | string
-): { title: string; body?: string; bodyHtml?: boolean } {
+): { title: string; body?: string; bodyHtml?: boolean; icon?: string } {
   const numId = typeof itemId === "string" ? parseInt(itemId, 10) : itemId;
   const id = Number.isFinite(numId) ? numId : itemId;
   const data =
     itemDataById?.[id as number] ??
     (itemDataById as Record<string, { name: string; plaintext?: string; description?: string; gold?: number }> | undefined)?.[String(itemId)];
   const title = (data?.name || `Item ${itemId}`).trim() || `Item ${itemId}`;
+  const icon = typeof id === "number" && id > 0 ? getItemIconUrl(id) : undefined;
 
   if (data?.description) {
     let html = data.description
@@ -151,8 +167,8 @@ export function getItemTooltip(
     if (data.gold) {
       html += `<div class="tt-cost">Cost:<span class="tt-gold">${data.gold.toLocaleString()}</span></div>`;
     }
-    return { title, body: html, bodyHtml: true };
+    return { title, body: html, bodyHtml: true, icon };
   }
 
-  return { title, body: data?.plaintext };
+  return { title, body: data?.plaintext, icon };
 }

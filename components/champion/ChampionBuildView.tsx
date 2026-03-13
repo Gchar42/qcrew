@@ -230,7 +230,7 @@ export default function ChampionBuildView({
   getPerkIcon: (id: number) => string;
   getStyleIcon: (id: number) => string;
   itemData: ItemTooltipData;
-  perkNamesById: Map<number, { name: string; desc: string }>;
+  perkNamesById: Map<number, { name: string; desc: string; shortDesc?: string }>;
 }) {
   const [samples, setSamples] = useState<MatchSample[]>([]);
   const [loading, setLoading] = useState(true);
@@ -285,7 +285,7 @@ export default function ChampionBuildView({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const p of perksRes) {
           if (p.id && !perkNamesById.has(p.id)) {
-            perkNamesById.set(p.id, { name: p.name ?? `Rune ${p.id}`, desc: p.longDesc ?? p.shortDesc ?? "" });
+            perkNamesById.set(p.id, { name: p.name ?? `Rune ${p.id}`, desc: p.longDesc ?? p.shortDesc ?? "", shortDesc: p.shortDesc });
           }
         }
       }
@@ -347,6 +347,7 @@ export default function ChampionBuildView({
 
   const perkName = (id: number) => perkNamesById.get(id)?.name ?? `Rune ${id}`;
   const perkDesc = (id: number) => perkNamesById.get(id)?.desc;
+  const perkShortDesc = (id: number) => perkNamesById.get(id)?.shortDesc;
 
   const priAccent = TREE_ACCENT[topTreeCombo.pri] ?? "#6366f1";
   const secAccent = TREE_ACCENT[topTreeCombo.sec] ?? "#6366f1";
@@ -479,7 +480,7 @@ export default function ChampionBuildView({
                   <div key={si} className="flex items-center gap-2 py-1.5">
                     {slot.perks.map(pid => (
                       <RuneCell key={pid} id={pid} icon={getPerkIcon(pid)}
-                        name={perkName(pid)} desc={perkDesc(pid)}
+                        name={perkName(pid)} shortDesc={perkShortDesc(pid)} desc={perkDesc(pid)}
                         pickRate={aggMap.get(pid)?.pickRate ?? 0}
                         winRate={aggMap.get(pid)?.winRate ?? 0}
                         games={aggMap.get(pid)?.games ?? 0}
@@ -507,7 +508,7 @@ export default function ChampionBuildView({
                   <div key={si} className="flex items-center gap-2 py-1.5">
                     {slot.perks.map(pid => (
                       <RuneCell key={pid} id={pid} icon={getPerkIcon(pid)}
-                        name={perkName(pid)} desc={perkDesc(pid)}
+                        name={perkName(pid)} shortDesc={perkShortDesc(pid)} desc={perkDesc(pid)}
                         pickRate={aggMap.get(pid)?.pickRate ?? 0}
                         winRate={aggMap.get(pid)?.winRate ?? 0}
                         games={aggMap.get(pid)?.games ?? 0}
@@ -591,17 +592,18 @@ export default function ChampionBuildView({
                                   const isTop = pid === topId;
                                   const name = perkName(pid);
                                   const desc = perkDesc(pid);
+                                  const sd = perkShortDesc(pid);
                                   const sz = isKeystone ? 36 : 26;
                                   const pr = a?.pickRate ?? 0;
                                   const wr = a?.winRate ?? 0;
                                   const g = a?.games ?? 0;
-                                  const tooltip = [
-                                    desc ?? "",
+                                  const bodyParts = [
+                                    desc?.replace(/<[^>]*>/g, "") ?? "",
                                     "",
                                     `${pr}% pick · ${wr}% WR · ${g} games`,
                                   ].filter(Boolean).join("\n");
                                   return (
-                                    <LeagueTooltip key={pid} title={name} body={tooltip}>
+                                    <LeagueTooltip key={pid} title={name} icon={getPerkIcon(pid)} accentColor={accent} subtitle={sd?.replace(/<[^>]*>/g, "")} body={bodyParts}>
                                       <div className="flex flex-col items-center gap-0.5 cursor-default"
                                         style={{ opacity: isTop ? 1 : 0.4, transition: "opacity 0.2s" }}>
                                         <img src={getPerkIcon(pid)} alt={name}
@@ -710,23 +712,24 @@ function TreeLabel({ iconPath, name, accent }: { iconPath: string; name: string;
 }
 
 function RuneCell({
-  id, icon, name, desc, pickRate, winRate, games, isTop, size, accent,
+  id, icon, name, shortDesc, desc, pickRate, winRate, games, isTop, size, accent,
 }: {
-  id: number; icon: string; name: string; desc?: string;
+  id: number; icon: string; name: string; shortDesc?: string; desc?: string;
   pickRate: number; winRate: number; games: number;
   isTop: boolean; size: number; accent: string;
 }) {
   const s = `${size}px`;
   const lowSample = games < LOW_SAMPLE && games > 0;
-  const tooltipBody = [
-    desc ?? "",
+  const statsLine = `${pickRate}% pick rate \u00b7 ${winRate}% win rate \u00b7 ${games} games`;
+  const bodyParts = [
+    desc?.replace(/<[^>]*>/g, "") ?? "",
     "",
-    `${pickRate}% pick rate \u00b7 ${winRate}% win rate \u00b7 ${games} games`,
+    statsLine,
     lowSample ? "\u26a0 Low sample size" : "",
   ].filter(Boolean).join("\n");
 
   return (
-    <LeagueTooltip title={name} body={tooltipBody}>
+    <LeagueTooltip title={name} icon={icon} accentColor={accent} subtitle={shortDesc?.replace(/<[^>]*>/g, "")} body={bodyParts}>
       <div className="flex flex-col items-center gap-0.5 cursor-default"
         style={{ opacity: isTop ? 1 : 0.4, transition: "opacity 0.2s" }}>
         {icon ? (
@@ -766,7 +769,7 @@ function ItemRowGroup({
         onClick={expandable ? onToggle : undefined}>
         <td className="py-2.5 px-2 text-zinc-500 font-medium text-[11px] align-middle whitespace-nowrap">{slot}</td>
         <td className="py-2.5 px-2 align-middle">
-          <LeagueTooltip title={tip.title} body={tip.body} bodyHtml={tip.bodyHtml}>
+          <LeagueTooltip title={tip.title} body={tip.body} bodyHtml={tip.bodyHtml} icon={tip.icon}>
             <div className="flex items-center gap-2 cursor-default">
               <img src={getItemIconUrl(item.id)} alt={itemName} className="w-8 h-8 rounded-lg border border-white/10" />
               <div className="flex flex-col">
@@ -818,7 +821,7 @@ function ItemRowGroup({
               <tr key={si.id} className="bg-white/[0.01] border-b border-white/[0.02] hover:bg-white/[0.03]">
                 <td className="py-2 px-2" />
                 <td className="py-2 px-2 align-middle">
-                  <LeagueTooltip title={siTip.title} body={siTip.body} bodyHtml={siTip.bodyHtml}>
+                  <LeagueTooltip title={siTip.title} body={siTip.body} bodyHtml={siTip.bodyHtml} icon={siTip.icon}>
                     <div className="flex items-center gap-2 cursor-default pl-2">
                       <img src={getItemIconUrl(si.id)} alt={siName} className="w-6 h-6 rounded-md border border-white/10" />
                       <div className="flex flex-col">

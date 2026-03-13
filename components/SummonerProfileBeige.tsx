@@ -26,9 +26,11 @@ import {
   getProfileIconUrl,
   getRankEmblemUrl,
   getSummonerSpellIconUrl,
+  getSummonerSpellTooltip,
   isValidItemId,
   getItemTooltip,
   DEFAULT_DDRAGON_VERSION,
+  type SummonerSpellData,
 } from "@/lib/riotAssets";
 import {
   getPerkIconUrl,
@@ -497,10 +499,11 @@ export default function SummonerProfileBeige({
 
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
   const [perkNamesById, setPerkNamesById] = useState<Map<number, string>>(new Map());
-  const [perkDataById, setPerkDataById] = useState<Map<number, { name?: string; shortDesc?: string }>>(new Map());
+  const [perkDataById, setPerkDataById] = useState<Map<number, { name?: string; shortDesc?: string; longDesc?: string; iconPath?: string }>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
   const [styleNamesById, setStyleNamesById] = useState<Map<number, string>>(new Map());
   const [itemDataById, setItemDataById] = useState<Record<number, { name: string; plaintext?: string }>>({});
+  const [summonerSpellData, setSummonerSpellData] = useState<SummonerSpellData>({});
   const initialTab = searchParams.get("tab") === "champion-pool" ? "champion-pool" : "overview";
   const [mainTab, setMainTab] = useState<"overview" | "champion-pool">(initialTab);
   const lastChampionStatsRefreshTrigger = useRef<Map<string, number>>(new Map());
@@ -734,11 +737,11 @@ export default function SummonerProfileBeige({
         const list = data.perks ?? [];
         const iconMap = new Map<number, string>();
         const nameMap = new Map<number, string>();
-        const dataMap = new Map<number, { name?: string; shortDesc?: string }>();
+        const dataMap = new Map<number, { name?: string; shortDesc?: string; longDesc?: string; iconPath?: string }>();
         list.forEach((p) => {
           iconMap.set(p.id, p.iconPath);
           if (p.name) nameMap.set(p.id, p.name);
-          dataMap.set(p.id, { name: p.name, shortDesc: p.shortDesc });
+          dataMap.set(p.id, { name: p.name, shortDesc: p.shortDesc, longDesc: p.longDesc, iconPath: p.iconPath });
         });
         setPerksById(iconMap);
         setPerkNamesById(nameMap);
@@ -760,6 +763,20 @@ export default function SummonerProfileBeige({
         });
         setStylesById(iconMap);
         setStyleNamesById(nameMap);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/ddragon/summoner-spells")
+      .then((r) => r.json())
+      .then((data: { spells?: Record<string, { name: string; description: string; key: string }> }) => {
+        const byId: SummonerSpellData = {};
+        for (const spell of Object.values(data.spells ?? {})) {
+          const numKey = Number(spell.key);
+          if (Number.isFinite(numKey)) byId[numKey] = { name: spell.name, description: spell.description, key: spell.key };
+        }
+        setSummonerSpellData(byId);
       })
       .catch(() => {});
   }, []);
@@ -1562,29 +1579,59 @@ export default function SummonerProfileBeige({
                         const imgStyle = { width: 18, height: 18, objectFit: "contain" as const, imageRendering: "auto" as const };
                         return (
                           <>
-                            {spell1Src && (
-                              <span className="profile-match-spell-slot-inline">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={spell1Src} alt="" width={18} height={18} loading={isFirstRow ? "eager" : "lazy"} fetchPriority={isFirstRow ? "high" : undefined} style={imgStyle} />
-                              </span>
-                            )}
+                            {spell1Src && (() => {
+                              const st = getSummonerSpellTooltip(summonerSpellData, p.summoner1Id);
+                              return (
+                                <span className="profile-match-spell-slot-inline">
+                                  {st ? (
+                                    <LeagueTooltip title={st.title} body={st.body} icon={st.icon} accentColor="#5b9bd5">
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img src={spell1Src} alt="" width={18} height={18} loading={isFirstRow ? "eager" : "lazy"} fetchPriority={isFirstRow ? "high" : undefined} style={imgStyle} />
+                                    </LeagueTooltip>
+                                  ) : (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={spell1Src} alt="" width={18} height={18} loading={isFirstRow ? "eager" : "lazy"} fetchPriority={isFirstRow ? "high" : undefined} style={imgStyle} />
+                                  )}
+                                </span>
+                              );
+                            })()}
                             {keystoneSrc && (
                               <span className="profile-match-rune-slot-inline">
-                                <LeagueTooltip title={((keystoneId != null ? perkDataById.get(keystoneId)?.name : undefined) || `Rune ${keystoneId ?? ""}`).trim() || `Rune ${keystoneId ?? ""}`} body={keystoneId != null ? perkDataById.get(keystoneId)?.shortDesc : undefined}>
+                                <LeagueTooltip
+                                  title={((keystoneId != null ? perkDataById.get(keystoneId)?.name : undefined) || `Rune ${keystoneId ?? ""}`).trim() || `Rune ${keystoneId ?? ""}`}
+                                  icon={keystoneSrc}
+                                  accentColor="#a78bfa"
+                                  subtitle={keystoneId != null ? perkDataById.get(keystoneId)?.shortDesc?.replace(/<[^>]*>/g, "") : undefined}
+                                  body={keystoneId != null ? perkDataById.get(keystoneId)?.longDesc?.replace(/<[^>]*>/g, "") : undefined}
+                                >
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img src={keystoneSrc} alt="" width={18} height={18} loading={isFirstRow ? "eager" : "lazy"} fetchPriority={isFirstRow ? "high" : undefined} style={imgStyle} />
                                 </LeagueTooltip>
                               </span>
                             )}
-                            {spell2Src && (
-                              <span className="profile-match-spell-slot-inline">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={spell2Src} alt="" width={18} height={18} loading={isFirstRow ? "eager" : "lazy"} fetchPriority={isFirstRow ? "high" : undefined} style={imgStyle} />
-                              </span>
-                            )}
+                            {spell2Src && (() => {
+                              const st = getSummonerSpellTooltip(summonerSpellData, p.summoner2Id);
+                              return (
+                                <span className="profile-match-spell-slot-inline">
+                                  {st ? (
+                                    <LeagueTooltip title={st.title} body={st.body} icon={st.icon} accentColor="#5b9bd5">
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img src={spell2Src} alt="" width={18} height={18} loading={isFirstRow ? "eager" : "lazy"} fetchPriority={isFirstRow ? "high" : undefined} style={imgStyle} />
+                                    </LeagueTooltip>
+                                  ) : (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={spell2Src} alt="" width={18} height={18} loading={isFirstRow ? "eager" : "lazy"} fetchPriority={isFirstRow ? "high" : undefined} style={imgStyle} />
+                                  )}
+                                </span>
+                              );
+                            })()}
                             {secondarySrc && (
                               <span className="profile-match-rune-slot-inline">
-                                <LeagueTooltip title={((secondaryStyleId != null ? styleNamesById.get(secondaryStyleId) : undefined) || `Style ${secondaryStyleId ?? ""}`).trim() || `Style ${secondaryStyleId ?? ""}`}>
+                                <LeagueTooltip
+                                  title={((secondaryStyleId != null ? styleNamesById.get(secondaryStyleId) : undefined) || `Style ${secondaryStyleId ?? ""}`).trim() || `Style ${secondaryStyleId ?? ""}`}
+                                  icon={secondarySrc}
+                                  accentColor="#a78bfa"
+                                >
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img src={secondarySrc} alt="" width={18} height={18} loading={isFirstRow ? "eager" : "lazy"} fetchPriority={isFirstRow ? "high" : undefined} style={imgStyle} />
                                 </LeagueTooltip>
@@ -1663,9 +1710,9 @@ export default function SummonerProfileBeige({
                           <span className="profile-match-item">
                             {isValidItemId(itemId) ? (
                               (() => {
-                                const { title, body } = getItemTooltip(itemDataById, itemId);
+                                const { title, body, bodyHtml, icon } = getItemTooltip(itemDataById, itemId);
                                 return (
-                                  <LeagueTooltip title={title} body={body}>
+                                  <LeagueTooltip title={title} body={body} bodyHtml={bodyHtml} icon={icon}>
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                       src={`https://ddragon.leagueoflegends.com/cdn/${itemVersion}/img/item/${itemId}.png`}
@@ -1695,10 +1742,10 @@ export default function SummonerProfileBeige({
                     })}
                     {isValidItemId(p.item6) ? (
                       (() => {
-                        const { title, body } = getItemTooltip(itemDataById, p.item6);
+                        const { title, body, bodyHtml, icon } = getItemTooltip(itemDataById, p.item6);
                         return (
                           <span className="profile-match-item profile-match-item-trinket">
-                            <LeagueTooltip title={title} body={body}>
+                            <LeagueTooltip title={title} body={body} bodyHtml={bodyHtml} icon={icon}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={`https://ddragon.leagueoflegends.com/cdn/${effectiveDdragonVersion ?? DEFAULT_DDRAGON_VERSION}/img/item/${p.item6}.png`}
@@ -1887,6 +1934,7 @@ export default function SummonerProfileBeige({
                     itemDataById={itemDataById}
                     perkDataById={perkDataById}
                     styleNamesById={styleNamesById}
+                    summonerSpellData={summonerSpellData}
                     rankBadgesByPuuid={rankBadgesByPuuid}
                     rankTierByPuuid={rankTierByPuuid}
                   />

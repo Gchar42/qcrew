@@ -7,9 +7,11 @@ import { LeagueTooltip } from "@/components/LeagueTooltip";
 import {
   getChampionSquareUrl,
   getSummonerSpellIconUrl,
+  getSummonerSpellTooltip,
   isValidItemId,
   getItemTooltip,
   DEFAULT_DDRAGON_VERSION,
+  type SummonerSpellData,
 } from "@/lib/riotAssets";
 import { getPerkIconUrl, getStyleIconUrlCd } from "@/lib/runesCd";
 import { computeImpactScore } from "@/lib/impactScore";
@@ -82,6 +84,7 @@ export function MatchDetails({
   itemDataById = {},
   perkDataById,
   styleNamesById,
+  summonerSpellData,
 }: {
   match: MatchDto;
   puuidOfSearchedPlayer: string;
@@ -93,8 +96,9 @@ export function MatchDetails({
   rankBadgesByPuuid?: Record<string, string>;
   rankTierByPuuid?: Record<string, string>;
   itemDataById?: Record<number, { name: string; plaintext?: string }>;
-  perkDataById?: Map<number, { name?: string; shortDesc?: string }>;
+  perkDataById?: Map<number, { name?: string; shortDesc?: string; longDesc?: string; iconPath?: string }>;
   styleNamesById?: Map<number, string>;
+  summonerSpellData?: SummonerSpellData;
 }) {
   const parts = match.info?.participants ?? [];
   const team100 = parts.filter((p) => p.teamId === 100);
@@ -295,29 +299,54 @@ export function MatchDetails({
                         )}
                       </span>
                       <div className="md-spells-runes-grid">
-                        {spell1Src && (
-                          <span className="md-spell-slot">
-                            <img src={spell1Src} alt="" width={16} height={16} className="md-spell-icon spell-icon" />
-                          </span>
-                        )}
+                        {spell1Src && (() => {
+                          const st = getSummonerSpellTooltip(summonerSpellData, p.summoner1Id);
+                          return (
+                            <span className="md-spell-slot">
+                              {st ? (
+                                <LeagueTooltip title={st.title} body={st.body} icon={st.icon} accentColor="#5b9bd5">
+                                  <img src={spell1Src} alt="" width={16} height={16} className="md-spell-icon spell-icon" />
+                                </LeagueTooltip>
+                              ) : (
+                                <img src={spell1Src} alt="" width={16} height={16} className="md-spell-icon spell-icon" />
+                              )}
+                            </span>
+                          );
+                        })()}
                         {keystoneSrc && (
                           <span className="md-rune-slot">
                             <LeagueTooltip
                               title={(primaryKeystoneId != null ? (perkDataById?.get(primaryKeystoneId)?.name || `Rune ${primaryKeystoneId}`) : "Rune").trim() || `Rune ${primaryKeystoneId ?? ""}`}
-                              body={primaryKeystoneId != null ? perkDataById?.get(primaryKeystoneId)?.shortDesc : undefined}
+                              icon={keystoneSrc}
+                              accentColor="#a78bfa"
+                              subtitle={primaryKeystoneId != null ? perkDataById?.get(primaryKeystoneId)?.shortDesc?.replace(/<[^>]*>/g, "") : undefined}
+                              body={primaryKeystoneId != null ? perkDataById?.get(primaryKeystoneId)?.longDesc?.replace(/<[^>]*>/g, "") : undefined}
                             >
                               <img src={keystoneSrc} alt="" width={16} height={16} className="md-rune-icon rune-icon" />
                             </LeagueTooltip>
                           </span>
                         )}
-                        {spell2Src && (
-                          <span className="md-spell-slot">
-                            <img src={spell2Src} alt="" width={16} height={16} className="md-spell-icon spell-icon" />
-                          </span>
-                        )}
+                        {spell2Src && (() => {
+                          const st = getSummonerSpellTooltip(summonerSpellData, p.summoner2Id);
+                          return (
+                            <span className="md-spell-slot">
+                              {st ? (
+                                <LeagueTooltip title={st.title} body={st.body} icon={st.icon} accentColor="#5b9bd5">
+                                  <img src={spell2Src} alt="" width={16} height={16} className="md-spell-icon spell-icon" />
+                                </LeagueTooltip>
+                              ) : (
+                                <img src={spell2Src} alt="" width={16} height={16} className="md-spell-icon spell-icon" />
+                              )}
+                            </span>
+                          );
+                        })()}
                         {secondarySrc && (
                           <span className="md-rune-slot">
-                            <LeagueTooltip title={(secondaryStyleId != null ? (styleNamesById?.get(secondaryStyleId) || `Style ${secondaryStyleId}`) : "Style").trim() || `Style ${secondaryStyleId ?? ""}`}>
+                            <LeagueTooltip
+                              title={(secondaryStyleId != null ? (styleNamesById?.get(secondaryStyleId) || `Style ${secondaryStyleId}`) : "Style").trim() || `Style ${secondaryStyleId ?? ""}`}
+                              icon={secondarySrc}
+                              accentColor="#a78bfa"
+                            >
                               <img src={secondarySrc} alt="" width={16} height={16} className="md-rune-icon rune-icon" />
                             </LeagueTooltip>
                           </span>
@@ -401,9 +430,9 @@ export function MatchDetails({
                           (itemId, i) =>
                             isValidItemId(itemId) ? (
                               (() => {
-                                const { title, body } = getItemTooltip(itemDataById, itemId);
+                                const { title, body, bodyHtml, icon } = getItemTooltip(itemDataById, itemId);
                                 return (
-                                  <LeagueTooltip key={`${p.puuid}-item-${i}`} title={title} body={body}>
+                                  <LeagueTooltip key={`${p.puuid}-item-${i}`} title={title} body={body} bodyHtml={bodyHtml} icon={icon}>
                                     <img
                                       src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`}
                                       alt=""
@@ -420,10 +449,10 @@ export function MatchDetails({
                       </div>
                       {isValidItemId(p.item6) ? (
                         (() => {
-                          const { title, body } = getItemTooltip(itemDataById, p.item6);
+                          const { title, body, bodyHtml, icon } = getItemTooltip(itemDataById, p.item6);
                           return (
                             <div className="md-trinket">
-                              <LeagueTooltip title={title} body={body}>
+                              <LeagueTooltip title={title} body={body} bodyHtml={bodyHtml} icon={icon}>
                                 <img
                                   src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${p.item6}.png`}
                                   alt=""

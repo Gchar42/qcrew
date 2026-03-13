@@ -6,9 +6,11 @@ import type { ChampionBuild } from "@/lib/sampleChampionBuilds";
 import {
   getItemIconUrl,
   getSummonerSpellIconUrl,
+  getSummonerSpellTooltip,
   getChampionSquareUrl,
   getItemTooltip,
   type ItemTooltipData,
+  type SummonerSpellData,
 } from "@/lib/riotAssets";
 import { perkIconPathToUrl } from "@/lib/runesCd";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
@@ -192,9 +194,10 @@ export default function ChampionDetailClient({ championId }: { championId: strin
   const [loading, setLoading] = useState(true);
   const [patchLoading, setPatchLoading] = useState(false);
   const [perksById, setPerksById] = useState<Map<number, string>>(new Map());
-  const [perkNamesById, setPerkNamesById] = useState<Map<number, { name: string; desc: string }>>(new Map());
+  const [perkNamesById, setPerkNamesById] = useState<Map<number, { name: string; desc: string; shortDesc?: string }>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
   const [itemData, setItemData] = useState<ItemTooltipData>({});
+  const [summonerSpellData, setSummonerSpellData] = useState<SummonerSpellData>({});
 
   const build = builds[selectedRole] ?? null;
 
@@ -217,10 +220,10 @@ export default function ChampionDetailClient({ championId }: { championId: strin
         if (!infoData.error) setInfo(infoData);
         if (perksData.perks) {
           const iconMap = new Map<number, string>();
-          const nameMap = new Map<number, { name: string; desc: string }>();
+          const nameMap = new Map<number, { name: string; desc: string; shortDesc?: string }>();
           for (const p of perksData.perks) {
             iconMap.set(p.id, p.iconPath);
-            nameMap.set(p.id, { name: p.name ?? `Rune ${p.id}`, desc: p.shortDesc ?? "" });
+            nameMap.set(p.id, { name: p.name ?? `Rune ${p.id}`, desc: p.longDesc ?? p.shortDesc ?? "", shortDesc: p.shortDesc });
           }
           setPerksById(iconMap);
           setPerkNamesById(nameMap);
@@ -242,6 +245,20 @@ export default function ChampionDetailClient({ championId }: { championId: strin
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [championId]);
+
+  useEffect(() => {
+    fetch("/api/ddragon/summoner-spells")
+      .then((r) => r.json())
+      .then((data: { spells?: Record<string, { name: string; description: string; key: string }> }) => {
+        const byId: SummonerSpellData = {};
+        for (const spell of Object.values(data.spells ?? {})) {
+          const numKey = Number(spell.key);
+          if (Number.isFinite(numKey)) byId[numKey] = { name: spell.name, description: spell.description, key: spell.key };
+        }
+        setSummonerSpellData(byId);
+      })
+      .catch(() => {});
+  }, []);
 
   const loadPatches = useCallback(() => {
     if (patches.length > 0 || patchLoading) return;
@@ -449,7 +466,7 @@ export default function ChampionDetailClient({ championId }: { championId: strin
 
       {/* Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-        {tab === "build" && build && <BuildTab build={build} info={info} getPerkIcon={getPerkIcon} getStyleIcon={getStyleIcon} itemData={itemData} perkNamesById={perkNamesById} />}
+        {tab === "build" && build && <BuildTab build={build} info={info} getPerkIcon={getPerkIcon} getStyleIcon={getStyleIcon} itemData={itemData} perkNamesById={perkNamesById} summonerSpellData={summonerSpellData} />}
         {tab === "build" && !build && (
           <EmptyState text="No build data available yet" sub="Build data is populated from one-trick and high-elo player matches." />
         )}
@@ -503,19 +520,20 @@ function EmptyState({ text, sub }: { text: string; sub?: string }) {
 
 /* ═══════════════ BUILD TAB ═══════════════ */
 
-function BuildTab({ build, info, getPerkIcon, getStyleIcon, itemData, perkNamesById }: {
+function BuildTab({ build, info, getPerkIcon, getStyleIcon, itemData, perkNamesById, summonerSpellData }: {
   build: ChampionBuild;
   info: ChampionInfo | null;
   getPerkIcon: (id: number) => string;
   getStyleIcon: (id: number) => string;
   itemData: ItemTooltipData;
-  perkNamesById: Map<number, { name: string; desc: string }>;
+  perkNamesById: Map<number, { name: string; desc: string; shortDesc?: string }>;
+  summonerSpellData: SummonerSpellData;
 }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
       <div className="lg:col-span-5 flex flex-col gap-5">
         <RunesCard build={build} getPerkIcon={getPerkIcon} getStyleIcon={getStyleIcon} perkNamesById={perkNamesById} />
-        <SummonerSpellsCard build={build} />
+        <SummonerSpellsCard build={build} summonerSpellData={summonerSpellData} />
         <CountersCard build={build} />
       </div>
       <div className="lg:col-span-7 flex flex-col gap-5">
@@ -531,7 +549,7 @@ function RunesCard({ build, getPerkIcon, getStyleIcon, perkNamesById }: {
   build: ChampionBuild;
   getPerkIcon: (id: number) => string;
   getStyleIcon: (id: number) => string;
-  perkNamesById: Map<number, { name: string; desc: string }>;
+  perkNamesById: Map<number, { name: string; desc: string; shortDesc?: string }>;
 }) {
   const { runes_primary: p, runes_secondary: s, rune_shards } = build;
   const perkTip = (id: number, fallbackName: string) => {
@@ -622,18 +640,28 @@ function RuneIcon({ url, size, glow }: { url: string; size: number; glow?: boole
 }
 
 /* ── Summoner Spells ── */
-function SummonerSpellsCard({ build }: { build: ChampionBuild }) {
+function SummonerSpellsCard({ build, summonerSpellData }: { build: ChampionBuild; summonerSpellData: SummonerSpellData }) {
   const { summoner_spells: ss } = build;
   return (
     <GlassCard>
       <CardHeader title="Summoner Spells" meta={`${ss.winRate.toFixed(1)}% WR`} />
       <div className="flex items-center gap-4 mt-3">
-        {ss.spells.map((s) => (
-          <div key={s.id} className="flex items-center gap-2.5">
-            <img src={getSummonerSpellIconUrl(s.id)} alt={s.name} className="w-11 h-11 rounded-xl border border-white/10" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }} />
-            <span className="text-xs text-zinc-300 font-medium">{s.name}</span>
-          </div>
-        ))}
+        {ss.spells.map((s) => {
+          const st = getSummonerSpellTooltip(summonerSpellData, s.id);
+          const iconUrl = getSummonerSpellIconUrl(s.id);
+          return (
+            <div key={s.id} className="flex items-center gap-2.5">
+              {st ? (
+                <LeagueTooltip title={st.title} body={st.body} icon={st.icon} accentColor="#5b9bd5">
+                  <img src={iconUrl} alt={s.name} className="w-11 h-11 rounded-xl border border-white/10" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }} />
+                </LeagueTooltip>
+              ) : (
+                <img src={iconUrl} alt={s.name} className="w-11 h-11 rounded-xl border border-white/10" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }} />
+              )}
+              <span className="text-xs text-zinc-300 font-medium">{s.name}</span>
+            </div>
+          );
+        })}
       </div>
     </GlassCard>
   );
@@ -1102,7 +1130,7 @@ function CardHeader({ title, meta, compact }: { title: string; meta?: string; co
 function ItemIcon({ id, name, itemData }: { id: number; name: string; itemData: ItemTooltipData }) {
   const tip = getItemTooltip(itemData, id);
   return (
-    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml={tip.bodyHtml}>
+    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml={tip.bodyHtml} icon={tip.icon}>
       <div className="flex flex-col items-center gap-1 cursor-default">
         <img src={getItemIconUrl(id)} alt={name} className="w-11 h-11 rounded-xl border border-white/10" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }} />
         <span className="text-[10px] text-zinc-500 text-center max-w-[64px] truncate">{name}</span>
@@ -1114,7 +1142,7 @@ function ItemIcon({ id, name, itemData }: { id: number; name: string; itemData: 
 function ItemWithStat({ id, name, winRate, matches, itemData }: { id: number; name: string; winRate: number; matches: number; itemData: ItemTooltipData }) {
   const tip = getItemTooltip(itemData, id);
   return (
-    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml={tip.bodyHtml}>
+    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml={tip.bodyHtml} icon={tip.icon}>
       <div className="flex flex-col items-center gap-1 cursor-default">
         <img src={getItemIconUrl(id)} alt={name} className="w-13 h-13 rounded-xl border border-white/10" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }} />
         <span className="text-[10px] text-zinc-300 text-center max-w-[72px] truncate font-medium">{name}</span>
@@ -1130,7 +1158,7 @@ function ItemWithStat({ id, name, winRate, matches, itemData }: { id: number; na
 function ItemRow({ id, name, winRate, matches, itemData }: { id: number; name: string; winRate: number; matches: number; itemData: ItemTooltipData }) {
   const tip = getItemTooltip(itemData, id);
   return (
-    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml={tip.bodyHtml}>
+    <LeagueTooltip title={tip.title} body={tip.body} bodyHtml={tip.bodyHtml} icon={tip.icon}>
       <div className="flex items-center gap-2.5 py-0.5 cursor-default">
         <img src={getItemIconUrl(id)} alt={name} className="w-9 h-9 rounded-lg border border-white/10" />
         <span className="flex-1 text-xs text-zinc-300 truncate">{name}</span>

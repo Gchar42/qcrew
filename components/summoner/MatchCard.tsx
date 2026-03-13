@@ -101,9 +101,9 @@ export function MatchCard({
           {items.slice(0, 6).map((id, idx) =>
             isValidItemId(id) ? (
               (() => {
-                const { title, body } = getItemTooltip(itemDataById, id);
+                const { title, body, bodyHtml, icon } = getItemTooltip(itemDataById, id);
                 return (
-                  <LeagueTooltip key={id} title={title} body={body}>
+                  <LeagueTooltip key={id} title={title} body={body} bodyHtml={bodyHtml} icon={icon}>
                     <img
                       src={`https://ddragon.leagueoflegends.com/cdn/${DEFAULT_DDRAGON_VERSION}/img/item/${id}.png`}
                       alt={`Item ${id}`}

@@ -88,9 +88,9 @@ export function MatchDetailSlideOver({
                 {itemSlots.map((itemId, idx) =>
                   isValidItemId(itemId) ? (
                     (() => {
-                      const { title, body } = getItemTooltip(itemDataById, itemId);
+                      const { title, body, bodyHtml, icon } = getItemTooltip(itemDataById, itemId);
                       return (
-                        <LeagueTooltip key={itemId} title={title} body={body}>
+                        <LeagueTooltip key={itemId} title={title} body={body} bodyHtml={bodyHtml} icon={icon}>
                           <img
                             src={`https://ddragon.leagueoflegends.com/cdn/${ddragonVersion ?? DEFAULT_DDRAGON_VERSION}/img/item/${itemId}.png`}
                             alt={`Item ${itemId}`}
