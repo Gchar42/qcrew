@@ -979,14 +979,14 @@ export default function SummonerProfileBeige({
           </div>
           <div className="card-body" style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 6, minWidth: 0 }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0, minWidth: 104, width: 104 }}>
-              <div style={{ minWidth: 96, minHeight: 96, width: 96, height: 96, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible" }}>
+              <div style={{ width: 96, height: 96, flexShrink: 0 }}>
                 {tier ? (
                   <Image
                     src={getRankEmblemUrl(tier)}
                     width={96}
                     height={96}
                     alt={tier}
-                    style={{ objectFit: "contain" }}
+                    style={{ width: 96, height: 96, maxWidth: 96, minWidth: 96, display: "block", objectFit: "contain" }}
                     unoptimized
                   />
                 ) : null}
