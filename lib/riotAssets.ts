@@ -40,13 +40,6 @@ function championDisplayNameToKey(displayName: string): string {
     .replace(/&/g, "");
 }
 
-/** Loading screen portrait (preferred for match row) */
-export function getChampionLoadingUrl(championName: string): string {
-  if (!championName) return "";
-  const key = championDisplayNameToKey(championName);
-  return `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${key}_0.jpg`;
-}
-
 /**
  * Champion square icon URL.
  * Uses participant.championName (display name) converted to Data Dragon key.
@@ -122,44 +115,11 @@ export function getSummonerSpellIconUrl(
   return `https://ddragon.leagueoflegends.com/cdn/${v}/img/spell/${key}.png`;
 }
 
-/** Rune style ID (8000 Precision, 8100 Domination, etc.) to Data Dragon perk style icon path */
-const RUNE_STYLE_ICON: Record<number, string> = {
-  8000: "perk-images/Styles/7201_Precision.png",
-  8100: "perk-images/Styles/7200_Domination.png",
-  8200: "perk-images/Styles/7202_Sorcery.png",
-  8300: "perk-images/Styles/7203_Whimsy.png",
-  8400: "perk-images/Styles/7204_Resolve.png",
-};
-
-export function getRuneStyleIconUrl(
-  styleId: number | undefined,
-  version?: string | null
-): string {
-  if (styleId == null) return "";
-  const path = RUNE_STYLE_ICON[styleId];
-  if (!path) return "";
-  const v = version || DDragonVersion;
-  return `https://ddragon.leagueoflegends.com/cdn/${v}/img/${path}`;
-}
-
-/** Ranked tier emblem. Uses jsDelivr CDN (reliable); tier e.g. "EMERALD", "PLATINUM". */
-const RANKED_EMBLEM_CDN = "https://cdn.jsdelivr.net/gh/magisteriis/lol-icons-and-emblems@master/ranked-emblems";
-const TIER_TO_EMBLEM: Record<string, string> = {
-  iron: "Emblem_Iron",
-  bronze: "Emblem_Bronze",
-  silver: "Emblem_Silver",
-  gold: "Emblem_Gold",
-  platinum: "Emblem_Platinum",
-  emerald: "Emblem_Emerald",
-  diamond: "Emblem_Diamond",
-  master: "Emblem_Master",
-  grandmaster: "Emblem_Grandmaster",
-  challenger: "Emblem_Challenger",
-};
+/** Ranked tier emblem via official CommunityDragon assets. tier e.g. "EMERALD", "PLATINUM". */
+const RANKED_EMBLEM_CDN = "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem";
 export function getRankEmblemUrl(tier: string): string {
   const key = tier.toLowerCase();
-  const file = TIER_TO_EMBLEM[key] ?? `Emblem_${key.charAt(0).toUpperCase()}${key.slice(1)}`;
-  return `${RANKED_EMBLEM_CDN}/${file}.png`;
+  return `${RANKED_EMBLEM_CDN}/emblem-${key}.png`;
 }
 
 /* ── Item tooltips ──────────────────────────────────────────── */

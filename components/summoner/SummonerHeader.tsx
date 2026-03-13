@@ -1,6 +1,5 @@
 import type { AccountDto, SummonerDto } from "@/types/riot";
-
-const PROFILE_ICON_BASE = "https://ddragon.leagueoflegends.com/cdn/14.6.1/img/profileicon";
+import { getProfileIconUrl } from "@/lib/riotAssets";
 
 export function SummonerHeader({
   account,
@@ -23,7 +22,7 @@ export function SummonerHeader({
       <div className="flex items-center gap-4">
         <div className="relative">
           <img
-            src={`${PROFILE_ICON_BASE}/${iconId}.png`}
+            src={getProfileIconUrl(iconId)}
             alt=""
             className="w-20 h-20 rounded-xl object-cover bg-white/5"
           />

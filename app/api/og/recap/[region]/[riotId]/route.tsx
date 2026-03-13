@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { DEFAULT_DDRAGON_VERSION } from "@/lib/riotAssets";
 
 export const runtime = "edge";
 
@@ -33,7 +34,7 @@ function splashUrl(champion: string): string {
 }
 
 function squareUrl(champion: string): string {
-  return `https://ddragon.leagueoflegends.com/cdn/15.5.1/img/champion/${champion}.png`;
+  return `https://ddragon.leagueoflegends.com/cdn/${DEFAULT_DDRAGON_VERSION}/img/champion/${champion}.png`;
 }
 
 type RecapSample = {

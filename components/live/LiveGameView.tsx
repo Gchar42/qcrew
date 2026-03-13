@@ -2,21 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getChampionSquareUrl, getRankEmblemUrl, getSummonerSpellIconUrl } from "@/lib/riotAssets";
-
-/** Data Dragon splash URL for team card backgrounds */
-function getDataDragonSplashUrl(championName: string): string {
-  const specialKeys: Record<string, string> = {
-    "Dr. Mundo": "DrMundo", "Lee Sin": "LeeSin", "Jarvan IV": "JarvanIV",
-    "Xin Zhao": "XinZhao", "Master Yi": "MasterYi", "Miss Fortune": "MissFortune",
-    "Twisted Fate": "TwistedFate", "Tahm Kench": "TahmKench", "Renata Glasc": "Renata",
-    "Kai'Sa": "Kaisa", "Rek'Sai": "RekSai", "Cho'Gath": "Chogath", "Kha'Zix": "Khazix",
-    "Vel'Koz": "Velkoz", "Kog'Maw": "KogMaw", "LeBlanc": "Leblanc",
-    "Nunu & Willump": "Nunu", "Bel'Veth": "Belveth",
-  };
-  const key = specialKeys[championName] ?? championName.replace(/\s+/g, "").replace(/'/g, "").replace(/\./g, "");
-  return `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${key}_0.jpg`;
-}
+import { getChampionSquareUrl, getChampionSplashUrl, getRankEmblemUrl, getSummonerSpellIconUrl } from "@/lib/riotAssets";
 
 /** Data Dragon keystone rune icon URL */
 function getKeystoneRuneUrl(path: string, runeName: string): string {
@@ -427,7 +413,7 @@ export default function LiveGameView({
               inset: 0,
               zIndex: 0,
               opacity: 0.12,
-              backgroundImage: `url(${getDataDragonSplashUrl(blueSplashChamp)})`,
+              backgroundImage: `url(${getChampionSplashUrl(blueSplashChamp)})`,
               backgroundSize: "cover",
               backgroundPosition: "center top",
             }}
@@ -517,7 +503,7 @@ export default function LiveGameView({
               inset: 0,
               zIndex: 0,
               opacity: 0.12,
-              backgroundImage: `url(${getDataDragonSplashUrl(redSplashChamp)})`,
+              backgroundImage: `url(${getChampionSplashUrl(redSplashChamp)})`,
               backgroundSize: "cover",
               backgroundPosition: "center top",
             }}
