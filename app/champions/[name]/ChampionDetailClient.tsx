@@ -14,6 +14,9 @@ import { perkIconPathToUrl } from "@/lib/runesCd";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
 import ChampionBuildView from "@/components/champion/ChampionBuildView";
 import MatchupsTab from "@/components/champion/MatchupsTab";
+import PatchChangeBanner from "@/components/champion/PatchChangeBanner";
+import WinRateTrend from "@/components/champion/WinRateTrend";
+import PatchWinRateGraph from "@/components/champion/PatchWinRateGraph";
 
 type Tab = "build" | "builds" | "abilities" | "matchups" | "patches" | "guides";
 
@@ -179,8 +182,8 @@ export default function ChampionDetailClient({ championId }: { championId: strin
   }, [info, championId, patches.length, patchLoading]);
 
   useEffect(() => {
-    if (tab === "patches") loadPatches();
-  }, [tab, loadPatches]);
+    loadPatches();
+  }, [loadPatches]);
 
   const getPerkIcon = (id: number) => {
     const path = perksById.get(id);
@@ -258,6 +261,22 @@ export default function ChampionDetailClient({ championId }: { championId: strin
             )}
           </div>
 
+          {/* Patch change banner */}
+          {(patches.length > 0 || name.toLowerCase() === "ahri") && (
+            <div className="mb-4">
+              <PatchChangeBanner
+                championName={name}
+                patches={patches}
+                onClickBanner={() => {
+                  setTab("patches");
+                  setTimeout(() => {
+                    document.querySelector('[data-section="patches-content"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }, 50);
+                }}
+              />
+            </div>
+          )}
+
           {/* Role selector */}
           {availableRoles.length > 0 && (
             <div className="flex items-center gap-1 mb-4">
@@ -299,6 +318,7 @@ export default function ChampionDetailClient({ championId }: { championId: strin
                 <span className={`text-sm font-bold ${build.win_rate >= 52 ? "text-emerald-400" : build.win_rate >= 50 ? "text-white" : "text-red-400"}`}>
                   {build.win_rate.toFixed(1)}%
                 </span>
+                <WinRateTrend championName={name} currentWinRate={build.win_rate} />
               </GlassPill>
               <GlassPill>
                 <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Pick</span>
@@ -360,7 +380,12 @@ export default function ChampionDetailClient({ championId }: { championId: strin
             patch={build?.patch ?? "16.5"}
           />
         )}
-        {tab === "patches" && <PatchesTab patches={patches} loading={patchLoading} />}
+        {tab === "patches" && (
+          <div data-section="patches-content">
+            <PatchWinRateGraph championName={info?.name ?? championId} patches={patches} />
+            <PatchesTab patches={patches} loading={patchLoading} />
+          </div>
+        )}
         {tab === "guides" && <GuidesTab championName={info?.name ?? championId} />}
       </div>
     </div>
