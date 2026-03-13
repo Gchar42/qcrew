@@ -980,16 +980,32 @@ export default function SummonerProfileBeige({
           <div className="card-body" style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 6 }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
               {tier ? (
-                <div style={{
-                  width: 96,
-                  height: 96,
-                  flexShrink: 0,
-                  backgroundImage: `url(${getRankEmblemUrl(tier)})`,
-                  backgroundSize: "contain",
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "center",
-                  filter: "drop-shadow(0 3px 8px rgba(0,0,0,0.6))",
-                }} />
+                <div
+                  ref={(el) => {
+                    if (el) {
+                      const rect = el.getBoundingClientRect();
+                      console.log(`[rank-emblem] ${title} tier=${tier} rendered: ${rect.width}x${rect.height}`, { rect, computedStyle: { width: getComputedStyle(el).width, height: getComputedStyle(el).height, maxWidth: getComputedStyle(el).maxWidth, maxHeight: getComputedStyle(el).maxHeight } });
+                      let parent = el.parentElement;
+                      let depth = 0;
+                      while (parent && depth < 5) {
+                        const pr = parent.getBoundingClientRect();
+                        console.log(`[rank-emblem]   parent[${depth}] class="${parent.className}" rendered: ${pr.width}x${pr.height}`, { width: getComputedStyle(parent).width, height: getComputedStyle(parent).height, overflow: getComputedStyle(parent).overflow, maxWidth: getComputedStyle(parent).maxWidth });
+                        parent = parent.parentElement;
+                        depth++;
+                      }
+                    }
+                  }}
+                  style={{
+                    width: 96,
+                    height: 96,
+                    flexShrink: 0,
+                    backgroundImage: `url(${getRankEmblemUrl(tier)})`,
+                    backgroundSize: "contain",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "center",
+                    filter: "drop-shadow(0 3px 8px rgba(0,0,0,0.6))",
+                  }}
+                />
               ) : <div style={{ width: 96, height: 96 }} />}
               <span className="rank-name">{formatRankTier(tier, entry.rank ?? "")}</span>
             </div>
