@@ -1422,11 +1422,11 @@ export default function SummonerProfileBeige({
                       fontFamily: "var(--font-geist-mono), monospace",
                       lineHeight: 1,
                     }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.02em" }}>
-                        {win ? "▲" : "▼"}{" "}
+                      <span style={{ fontSize: 13, fontWeight: 700 }}>
                         {(() => {
                           const seed = (m.info?.gameId ?? matchIndex) % 15;
-                          return win ? `+${14 + seed}` : `-${14 + (seed % 9)}`;
+                          const num = win ? `+${14 + seed}` : `-${14 + (seed % 9)}`;
+                          return `${win ? "▲" : "▼"}${num}`;
                         })()}
                       </span>
                       <span style={{ fontSize: 10, fontWeight: 500, opacity: 0.75, marginLeft: 2 }}>LP</span>
