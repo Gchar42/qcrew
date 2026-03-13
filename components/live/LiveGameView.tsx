@@ -24,23 +24,31 @@ function getKeystoneRuneUrl(path: string, runeName: string): string {
   return `https://ddragon.leagueoflegends.com/cdn/img/perk-images/Styles/${path}/${key}/${key}.png`;
 }
 
-/** Role icon SVG (Top/Jungle/Mid/ADC/Support) */
-function RoleIcon({ role, size = 14 }: { role: string; size?: number }) {
-  const s = { width: size, height: size, fill: "currentColor" };
-  switch (role) {
-    case "top":
-      return <svg viewBox="0 0 24 24" {...s}><path d="M4 4h7v2H6v5H4V4zm16 10h-2v5h-5v2h7v-7z" /><path d="M4 20l7-7 2 2-7 7-2-2zM13 9l7-7 2 2-7 7-2-2z" opacity=".4" /></svg>;
-    case "jungle":
-      return <svg viewBox="0 0 24 24" {...s}><path d="M12 2C9 6 4 9 4 14a8 8 0 0016 0c0-5-5-8-8-12zm0 18a6 6 0 01-6-6c0-3.5 3-6 6-9 3 3 6 5.5 6 9a6 6 0 01-6 6z" /></svg>;
-    case "mid":
-      return <svg viewBox="0 0 24 24" {...s}><path d="M4 20l4-4m0 0l8-8m-8 8h6m2-8h-6m8-4L14 8m0 0L6 16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" /></svg>;
-    case "bot":
-      return <svg viewBox="0 0 24 24" {...s}><circle cx="12" cy="12" r="3" /><path d="M12 2v4m0 12v4M2 12h4m12 0h4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M19.07 4.93l-2.83 2.83M7.76 16.24l-2.83 2.83" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" /></svg>;
-    case "support":
-      return <svg viewBox="0 0 24 24" {...s}><path d="M12 3L4 9v6l8 6 8-6V9l-8-6zm0 2.5L18 10v4.5L12 19 6 14.5V10l6-4.5z" /><path d="M12 8v8M8 12h8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" /></svg>;
-    default:
-      return null;
-  }
+/** Role badge label and color (Top/Jungle/Mid/ADC/Support) */
+const ROLE_BADGE: Record<string, { label: string; color: string }> = {
+  top: { label: "Top", color: "#8B4513" },
+  jungle: { label: "Jungle", color: "#228B22" },
+  mid: { label: "Mid", color: "#4169E1" },
+  bot: { label: "ADC", color: "#DC143C" },
+  support: { label: "Support", color: "#9370DB" },
+};
+
+function RoleBadge({ role }: { role: string }) {
+  const cfg = ROLE_BADGE[role] ?? { label: role, color: "#888" };
+  return (
+    <span
+      style={{
+        fontSize: 14,
+        padding: "2px 6px",
+        borderRadius: 9999,
+        background: `${cfg.color}33`,
+        color: cfg.color,
+        fontWeight: 600,
+      }}
+    >
+      {cfg.label}
+    </span>
+  );
 }
 
 import { useFollowing } from "@/components/following/useFollowing";
@@ -183,9 +191,7 @@ function PlayerRow({
             className="live-page-champ-icon"
           />
           <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <span style={{ color: "rgba(255,255,255,0.8)", display: "flex" }} title={role}>
-              <RoleIcon role={role} size={iconSize} />
-            </span>
+            <RoleBadge role={role} />
             <img src={getSummonerSpellIconUrl(spell1)} alt="" width={iconSize} height={iconSize} style={{ borderRadius: 2 }} />
             <img src={getSummonerSpellIconUrl(spell2)} alt="" width={iconSize} height={iconSize} style={{ borderRadius: 2 }} />
             <img src={getKeystoneRuneUrl(keystonePath, keystoneName)} alt="" width={iconSize} height={iconSize} style={{ borderRadius: 2 }} />
