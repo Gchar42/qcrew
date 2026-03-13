@@ -216,13 +216,13 @@ export function WinRateBreakdowns({ matches }: Props) {
     daysWithGames.length > 0
       ? daysWithGames.reduce((a, b) => (b.wr < a.wr ? b : a)).wr
       : 0;
-  const bestDay =
+  const bestDay: (typeof DAYS)[number] | "" =
     daysWithGames.length > 0
-      ? DAYS[daysWithGames.reduce((a, b) => (b.wr > a.wr ? b : a)).i]
+      ? DAYS[daysWithGames.reduce((a, b) => (b.wr > a.wr ? b : a)).i] ?? ""
       : "";
-  const worstDay =
+  const worstDay: (typeof DAYS)[number] | "" =
     daysWithGames.length > 0
-      ? DAYS[daysWithGames.reduce((a, b) => (b.wr < a.wr ? b : a)).i]
+      ? DAYS[daysWithGames.reduce((a, b) => (b.wr < a.wr ? b : a)).i] ?? ""
       : "";
 
   return (
@@ -282,9 +282,9 @@ export function WinRateBreakdowns({ matches }: Props) {
         </div>
         {bestDay && (
           <p className="text-xs text-white/50 mt-3">
-            Your best day is {DAY_FULL[bestDay]} ({dayWrs[DAYS.indexOf(bestDay)]}
+            Your best day is {DAY_FULL[bestDay]} ({dayWrs[DAYS.indexOf(bestDay as typeof DAYS[number])]}
             % WR). Avoid ranked on {DAY_FULL[worstDay]} (
-            {dayWrs[DAYS.indexOf(worstDay)]}% WR).
+            {dayWrs[DAYS.indexOf(worstDay as typeof DAYS[number])]}% WR).
           </p>
         )}
       </section>
