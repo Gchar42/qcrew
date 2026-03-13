@@ -3,12 +3,13 @@
 import { useEffect, useState, useMemo } from "react";
 import {
   getItemIconUrl,
+  getItemTooltip,
   type ItemTooltipData,
 } from "@/lib/riotAssets";
 import { perkIconPathToUrl } from "@/lib/runesCd";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
 
-/* ── Demo accounts to aggregate from ───────────────────── */
+/* ── Demo accounts ──────────────────────────────────────── */
 
 const DEMO_ACCOUNTS = [
   { riotId: "Demo#NA1", region: "na1" },
@@ -20,6 +21,39 @@ const BOOT_IDS = new Set([
   1001, 2422, 3006, 3009, 3020, 3047, 3111, 3117, 3158,
 ]);
 const MIN_COMPLETED_GOLD = 1300;
+
+const PERKSTYLES_URL =
+  "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perkstyles.json";
+
+const SHARD_ROWS: number[][] = [
+  [5008, 5005, 5007],
+  [5008, 5002, 5003],
+  [5001, 5002, 5003],
+];
+const SHARD_ICONS: Record<number, string> = {
+  5008: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodsadaptiveforceicon.png",
+  5005: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodsattackspeedicon.png",
+  5007: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodscdrscalingicon.png",
+  5002: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodsarmoricon.png",
+  5003: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodsmagicresicon.png",
+  5001: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodshealthscalingicon.png",
+};
+const SHARD_NAMES: Record<number, string> = {
+  5008: "Adaptive",
+  5005: "Atk Spd",
+  5007: "Haste",
+  5002: "Armor",
+  5003: "MR",
+  5001: "Health",
+};
+
+const RANK_FILTERS: { key: string; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "low", label: "Iron–Silver" },
+  { key: "mid", label: "Gold–Plat" },
+  { key: "high", label: "Emerald–Diamond" },
+  { key: "elite", label: "Master+" },
+];
 
 /* ── Types ──────────────────────────────────────────────── */
 
@@ -39,287 +73,109 @@ type MatchSample = {
   gameEnd: number;
 };
 
-type RuneSlotAgg = {
-  id: number;
-  games: number;
-  wins: number;
-  winRate: number;
-  pickRate: number;
-};
-
-type ItemSlotAgg = {
-  id: number;
-  games: number;
-  wins: number;
-  winRate: number;
-  pickRate: number;
-};
+type TreeSlot = { type: string; perks: number[] };
+type TreeDef = { id: number; name: string; iconPath: string; slots: TreeSlot[] };
 
 type BuildTab = "popular" | "winrate";
 
-/* ── Data extraction ────────────────────────────────────── */
+type RuneAgg = { id: number; games: number; wins: number; pickRate: number; winRate: number };
+type ItemAgg = { id: number; games: number; wins: number; pickRate: number; winRate: number };
 
-function extractSamples(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  bundles: any[],
-  championName: string,
-): MatchSample[] {
-  const samples: MatchSample[] = [];
+/* ── Extraction ─────────────────────────────────────────── */
 
-  for (const bundle of bundles) {
-    if (!bundle?.profile?.account) continue;
-    const puuid = bundle.profile.account.puuid;
-
-    for (const match of bundle.matches ?? []) {
-      const p = match.info?.participants?.find(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (x: any) =>
-          x.puuid === puuid &&
-          x.championName?.toLowerCase() === championName.toLowerCase(),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractSamples(bundles: any[], championName: string): MatchSample[] {
+  const out: MatchSample[] = [];
+  for (const b of bundles) {
+    if (!b?.profile?.account) continue;
+    const puuid = b.profile.account.puuid;
+    for (const m of b.matches ?? []) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const p = m.info?.participants?.find((x: any) =>
+        x.puuid === puuid && x.championName?.toLowerCase() === championName.toLowerCase(),
       );
       if (!p) continue;
-
-      const rawItems = [
-        p.item0 ?? 0,
-        p.item1 ?? 0,
-        p.item2 ?? 0,
-        p.item3 ?? 0,
-        p.item4 ?? 0,
-        p.item5 ?? 0,
-      ];
-      const bootId = rawItems.find((id: number) => BOOT_IDS.has(id)) ?? 0;
-      const items = rawItems.filter(
-        (id: number) => id > 0 && !BOOT_IDS.has(id),
-      );
-
+      const raw = [p.item0 ?? 0, p.item1 ?? 0, p.item2 ?? 0, p.item3 ?? 0, p.item4 ?? 0, p.item5 ?? 0];
+      const bootId = raw.find((id: number) => BOOT_IDS.has(id)) ?? 0;
+      const items = raw.filter((id: number) => id > 0 && !BOOT_IDS.has(id));
       const styles = p.perks?.styles ?? [];
-      const primary = styles[0];
-      const secondary = styles[1];
-      const primarySels =
-        primary?.selections?.map((s: { perk: number }) => s.perk) ?? [];
-      const secondarySels =
-        secondary?.selections?.map((s: { perk: number }) => s.perk) ?? [];
-
-      const allPerkIds = p.perks?.perkIds ?? [];
-      const styleRunes = new Set([...primarySels, ...secondarySels]);
-      const shardIds = allPerkIds.filter(
-        (id: number) => id >= 5000 && id < 6000 && !styleRunes.has(id),
-      );
-
-      samples.push({
-        win: p.win,
-        kills: p.kills ?? 0,
-        deaths: p.deaths ?? 0,
-        assists: p.assists ?? 0,
-        items,
-        bootId,
-        primaryTree: primary?.style ?? 0,
-        secondaryTree: secondary?.style ?? 0,
-        keystoneId: primarySels[0] ?? 0,
-        primarySlots: primarySels.slice(1),
-        secondarySlots: secondarySels,
-        shardIds,
-        gameEnd: match.info?.gameEndTimestamp ?? 0,
+      const pri = styles[0];
+      const sec = styles[1];
+      const priSels = pri?.selections?.map((s: { perk: number }) => s.perk) ?? [];
+      const secSels = sec?.selections?.map((s: { perk: number }) => s.perk) ?? [];
+      const allIds: number[] = p.perks?.perkIds ?? [];
+      const used = new Set([...priSels, ...secSels]);
+      const shards = allIds.filter((id: number) => id >= 5000 && id < 6000 && !used.has(id));
+      out.push({
+        win: p.win, kills: p.kills ?? 0, deaths: p.deaths ?? 0, assists: p.assists ?? 0,
+        items, bootId,
+        primaryTree: pri?.style ?? 0, secondaryTree: sec?.style ?? 0,
+        keystoneId: priSels[0] ?? 0, primarySlots: priSels.slice(1), secondarySlots: secSels,
+        shardIds: shards, gameEnd: m.info?.gameEndTimestamp ?? 0,
       });
     }
   }
-
-  return samples;
+  return out;
 }
 
-/* ── Aggregation helpers ────────────────────────────────── */
+/* ── Aggregation ────────────────────────────────────────── */
 
-function computeOverview(samples: MatchSample[]) {
-  const games = samples.length;
-  const wins = samples.filter((s) => s.win).length;
-  let totalK = 0,
-    totalD = 0,
-    totalA = 0;
-  for (const s of samples) {
-    totalK += s.kills;
-    totalD += s.deaths;
-    totalA += s.assists;
-  }
-  return {
-    games,
-    wins,
-    winRate: games > 0 ? Math.round((wins / games) * 1000) / 10 : 0,
-    avgKills: games > 0 ? Math.round((totalK / games) * 10) / 10 : 0,
-    avgDeaths: games > 0 ? Math.round((totalD / games) * 10) / 10 : 0,
-    avgAssists: games > 0 ? Math.round((totalA / games) * 10) / 10 : 0,
-    kda:
-      games > 0
-        ? Math.round(((totalK + totalA) / Math.max(1, totalD)) * 100) / 100
-        : 0,
-  };
-}
-
-function aggregateRuneSlots(
-  samples: MatchSample[],
-  tab: BuildTab,
-): {
-  primaryTree: number;
-  secondaryTree: number;
-  keystone: RuneSlotAgg[];
-  primary: RuneSlotAgg[][];
-  secondary: RuneSlotAgg[][];
-  shards: RuneSlotAgg[][];
-} {
+function aggSlotRunes(samples: MatchSample[], extractor: (s: MatchSample) => number | undefined, tab: BuildTab): RuneAgg[] {
   const total = samples.length || 1;
-
-  const treeCount = new Map<string, number>();
+  const map = new Map<number, { g: number; w: number }>();
   for (const s of samples) {
-    const key = `${s.primaryTree}:${s.secondaryTree}`;
-    treeCount.set(key, (treeCount.get(key) ?? 0) + 1);
+    const id = extractor(s);
+    if (!id) continue;
+    const e = map.get(id) ?? { g: 0, w: 0 };
+    e.g++;
+    if (s.win) e.w++;
+    map.set(id, e);
   }
-  const topTreeKey = [...treeCount.entries()].sort(
-    (a, b) => b[1] - a[1],
-  )[0]?.[0] ?? "0:0";
-  const [primaryTree, secondaryTree] = topTreeKey.split(":").map(Number);
-
-  function aggSlot(
-    extractor: (s: MatchSample) => number | undefined,
-  ): RuneSlotAgg[] {
-    const map = new Map<number, { games: number; wins: number }>();
-    for (const s of samples) {
-      const id = extractor(s);
-      if (!id) continue;
-      const entry = map.get(id) ?? { games: 0, wins: 0 };
-      entry.games++;
-      if (s.win) entry.wins++;
-      map.set(id, entry);
-    }
-    const arr = [...map.entries()].map(([id, { games, wins }]) => ({
-      id,
-      games,
-      wins,
-      winRate: games > 0 ? Math.round((wins / games) * 1000) / 10 : 0,
-      pickRate: Math.round((games / total) * 1000) / 10,
-    }));
-
-    return arr.sort((a, b) =>
-      tab === "winrate" ? b.winRate - a.winRate : b.games - a.games,
-    );
-  }
-
-  return {
-    primaryTree,
-    secondaryTree,
-    keystone: aggSlot((s) => s.keystoneId),
-    primary: [
-      aggSlot((s) => s.primarySlots[0]),
-      aggSlot((s) => s.primarySlots[1]),
-      aggSlot((s) => s.primarySlots[2]),
-    ],
-    secondary: [
-      aggSlot((s) => s.secondarySlots[0]),
-      aggSlot((s) => s.secondarySlots[1]),
-    ],
-    shards: [
-      aggSlot((s) => s.shardIds[0]),
-      aggSlot((s) => s.shardIds[1]),
-      aggSlot((s) => s.shardIds[2]),
-    ],
-  };
+  return [...map.entries()]
+    .map(([id, { g, w }]) => ({
+      id, games: g, wins: w,
+      pickRate: Math.round((g / total) * 1000) / 10,
+      winRate: g > 0 ? Math.round((w / g) * 1000) / 10 : 0,
+    }))
+    .sort((a, b) => tab === "winrate" ? b.winRate - a.winRate : b.games - a.games);
 }
 
-function aggregateItems(
-  samples: MatchSample[],
-  tab: BuildTab,
-  itemData: ItemTooltipData,
-): { slot: string; items: ItemSlotAgg[] }[] {
+function aggItemSlot(samples: MatchSample[], extractor: (s: MatchSample) => number, tab: BuildTab): ItemAgg[] {
   const total = samples.length || 1;
-
-  function aggItemGroup(
-    extractor: (s: MatchSample) => number,
-  ): ItemSlotAgg[] {
-    const map = new Map<number, { games: number; wins: number }>();
-    for (const s of samples) {
-      const id = extractor(s);
-      if (!id) continue;
-      const entry = map.get(id) ?? { games: 0, wins: 0 };
-      entry.games++;
-      if (s.win) entry.wins++;
-      map.set(id, entry);
-    }
-    return [...map.entries()]
-      .map(([id, { games, wins }]) => ({
-        id,
-        games,
-        wins,
-        winRate: games > 0 ? Math.round((wins / games) * 1000) / 10 : 0,
-        pickRate: Math.round((games / total) * 1000) / 10,
-      }))
-      .filter((i) => i.games >= 1)
-      .sort((a, b) =>
-        tab === "winrate" ? b.winRate - a.winRate : b.games - a.games,
-      )
-      .slice(0, 3);
+  const map = new Map<number, { g: number; w: number }>();
+  for (const s of samples) {
+    const id = extractor(s);
+    if (!id) continue;
+    const e = map.get(id) ?? { g: 0, w: 0 };
+    e.g++;
+    if (s.win) e.w++;
+    map.set(id, e);
   }
-
-  function sortItemsByGold(items: number[]): number[] {
-    return [...items]
-      .filter((id) => id > 0)
-      .sort((a, b) => {
-        const ga = itemData[a]?.gold ?? 9999;
-        const gb = itemData[b]?.gold ?? 9999;
-        return ga - gb;
-      })
-      .filter((id) => (itemData[id]?.gold ?? 0) >= MIN_COMPLETED_GOLD);
-  }
-
-  const slots: { slot: string; items: ItemSlotAgg[] }[] = [];
-
-  for (let pos = 0; pos < 3; pos++) {
-    slots.push({
-      slot: `${pos + 1}${pos === 0 ? "st" : pos === 1 ? "nd" : "rd"} Item`,
-      items: aggItemGroup((s) => {
-        const sorted = sortItemsByGold(s.items);
-        return sorted[pos] ?? 0;
-      }),
-    });
-  }
-
-  slots.push({
-    slot: "Boots",
-    items: aggItemGroup((s) => s.bootId),
-  });
-
-  return slots;
+  return [...map.entries()]
+    .map(([id, { g, w }]) => ({
+      id, games: g, wins: w,
+      pickRate: Math.round((g / total) * 1000) / 10,
+      winRate: g > 0 ? Math.round((w / g) * 1000) / 10 : 0,
+    }))
+    .filter(i => i.games >= 1)
+    .sort((a, b) => tab === "winrate" ? b.winRate - a.winRate : b.games - a.games)
+    .slice(0, 4);
 }
 
-/* ── Stat shard icons ───────────────────────────────────── */
+function sortByGold(items: number[], itemData: ItemTooltipData): number[] {
+  return [...items]
+    .filter(id => id > 0 && (itemData[id]?.gold ?? 0) >= MIN_COMPLETED_GOLD)
+    .sort((a, b) => (itemData[a]?.gold ?? 9999) - (itemData[b]?.gold ?? 9999));
+}
 
-const STAT_SHARD_ICONS: Record<number, string> = {
-  5008: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodsadaptiveforceicon.png",
-  5005: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodsattackspeedicon.png",
-  5007: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodscdrscalingicon.png",
-  5002: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodsarmoricon.png",
-  5003: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodsmagicresicon.png",
-  5001: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodshealthscalingicon.png",
-};
-
-const STAT_SHARD_NAMES: Record<number, string> = {
-  5008: "Adaptive Force",
-  5005: "Attack Speed",
-  5007: "Ability Haste",
-  5002: "Armor",
-  5003: "Magic Resist",
-  5001: "Health Scaling",
-};
-
-/* ── Time formatting ────────────────────────────────────── */
-
-function timeAgo(timestamp: number): string {
-  if (!timestamp) return "Unknown";
-  const diff = Date.now() - timestamp;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+function timeAgo(ts: number): string {
+  if (!ts) return "Unknown";
+  const m = Math.floor((Date.now() - ts) / 60000);
+  if (m < 1) return "Just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
 /* ── Component ──────────────────────────────────────────── */
@@ -339,6 +195,7 @@ export default function ChampionBuildView({
 }) {
   const [samples, setSamples] = useState<MatchSample[]>([]);
   const [loading, setLoading] = useState(true);
+  const [trees, setTrees] = useState<TreeDef[]>([]);
   const [buildTab, setBuildTab] = useState<BuildTab>("popular");
   const [rankFilter, setRankFilter] = useState("all");
   const [playerCount, setPlayerCount] = useState(0);
@@ -346,57 +203,101 @@ export default function ChampionBuildView({
 
   useEffect(() => {
     let cancelled = false;
-    async function load() {
+    (async () => {
       setLoading(true);
-      const results = await Promise.allSettled(
-        DEMO_ACCOUNTS.map(async ({ riotId, region }) => {
-          const url = `/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}&queue=solo`;
-          const res = await fetch(url, { cache: "no-store" });
-          if (!res.ok) return null;
-          return res.json();
-        }),
-      );
+      const [bundleResults, treesRes] = await Promise.all([
+        Promise.allSettled(
+          DEMO_ACCOUNTS.map(async ({ riotId, region }) => {
+            const url = `/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}&queue=solo`;
+            const r = await fetch(url, { cache: "no-store" });
+            return r.ok ? r.json() : null;
+          }),
+        ),
+        fetch(PERKSTYLES_URL).then(r => r.ok ? r.json() : null).catch(() => null),
+      ]);
       if (cancelled) return;
 
-      const bundles = results
-        .filter(
-          (r): r is PromiseFulfilledResult<unknown> =>
-            r.status === "fulfilled" && r.value != null,
-        )
-        .map((r) => r.value);
+      const bundles = bundleResults
+        .filter((r): r is PromiseFulfilledResult<unknown> => r.status === "fulfilled" && r.value != null)
+        .map(r => r.value);
 
-      const extracted = extractSamples(bundles, championName);
-      setSamples(extracted);
+      if (treesRes?.styles) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setTrees(treesRes.styles.map((s: any) => ({
+          id: s.id,
+          name: s.name ?? "",
+          iconPath: s.iconPath ?? "",
+          slots: (s.slots ?? []).map((sl: { type?: string; perks?: number[] }) => ({
+            type: sl.type ?? "",
+            perks: sl.perks ?? [],
+          })),
+        })));
+      }
+
+      const ext = extractSamples(bundles, championName);
+      setSamples(ext);
       setPlayerCount(bundles.length);
-      setLastUpdate(
-        extracted.reduce((max, s) => Math.max(max, s.gameEnd), 0),
-      );
+      setLastUpdate(ext.reduce((mx, s) => Math.max(mx, s.gameEnd), 0));
       setLoading(false);
-    }
-    load();
-    return () => {
-      cancelled = true;
-    };
+    })();
+    return () => { cancelled = true; };
   }, [championName]);
 
-  const overview = useMemo(() => computeOverview(samples), [samples]);
-  const runes = useMemo(
-    () => aggregateRuneSlots(samples, buildTab),
-    [samples, buildTab],
-  );
-  const itemSlots = useMemo(
-    () => aggregateItems(samples, buildTab, itemData),
-    [samples, buildTab, itemData],
-  );
+  /* Determine primary & secondary tree from data */
+  const topTreeCombo = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const s of samples) {
+      const k = `${s.primaryTree}:${s.secondaryTree}`;
+      counts.set(k, (counts.get(k) ?? 0) + 1);
+    }
+    const best = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+    if (!best) return { pri: 0, sec: 0 };
+    const [p, s] = best[0].split(":").map(Number);
+    return { pri: p, sec: s };
+  }, [samples]);
+
+  const priTree = useMemo(() => trees.find(t => t.id === topTreeCombo.pri), [trees, topTreeCombo.pri]);
+  const secTree = useMemo(() => trees.find(t => t.id === topTreeCombo.sec), [trees, topTreeCombo.sec]);
+
+  /* Rune aggregation per slot */
+  const keystoneAgg = useMemo(() => aggSlotRunes(samples, s => s.keystoneId, buildTab), [samples, buildTab]);
+  const priSlotAggs = useMemo(() => [
+    aggSlotRunes(samples, s => s.primarySlots[0], buildTab),
+    aggSlotRunes(samples, s => s.primarySlots[1], buildTab),
+    aggSlotRunes(samples, s => s.primarySlots[2], buildTab),
+  ], [samples, buildTab]);
+  const secSlotAggs = useMemo(() => [
+    aggSlotRunes(samples, s => s.secondarySlots[0], buildTab),
+    aggSlotRunes(samples, s => s.secondarySlots[1], buildTab),
+  ], [samples, buildTab]);
+  const shardAggs = useMemo(() => [
+    aggSlotRunes(samples, s => s.shardIds[0], buildTab),
+    aggSlotRunes(samples, s => s.shardIds[1], buildTab),
+    aggSlotRunes(samples, s => s.shardIds[2], buildTab),
+  ], [samples, buildTab]);
+
+  /* Item aggregation */
+  const itemSlots = useMemo(() => {
+    const labels = ["1st Item", "2nd Item", "3rd Item"];
+    const slots = labels.map((label, pos) => ({
+      label,
+      items: aggItemSlot(samples, s => { const sorted = sortByGold(s.items, itemData); return sorted[pos] ?? 0; }, buildTab),
+    }));
+    slots.push({
+      label: "Boots",
+      items: aggItemSlot(samples, s => s.bootId, buildTab),
+    });
+    return slots;
+  }, [samples, buildTab, itemData]);
+
+  const perkName = (id: number) => perkNamesById.get(id)?.name ?? `Rune ${id}`;
+  const perkDesc = (id: number) => perkNamesById.get(id)?.desc;
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20 gap-3 text-zinc-500 text-sm">
-        <div
-          className="w-5 h-5 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin"
-          style={{ boxShadow: "0 0 12px rgba(99,102,241,0.2)" }}
-        />
-        Aggregating build data...
+        <div className="w-5 h-5 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" style={{ boxShadow: "0 0 12px rgba(99,102,241,0.2)" }} />
+        Aggregating build data…
       </div>
     );
   }
@@ -404,254 +305,205 @@ export default function ChampionBuildView({
   if (samples.length === 0) {
     return (
       <div className="text-center py-16">
-        <p className="text-zinc-400">
-          No match data found for {championName}
-        </p>
-        <p className="text-zinc-600 text-sm mt-1">
-          Play games on a tracked account to populate build data.
-        </p>
+        <p className="text-zinc-400">No match data found for {championName}</p>
+        <p className="text-zinc-600 text-sm mt-1">Play games on a tracked account to populate build data.</p>
       </div>
     );
   }
 
-  const perkName = (id: number) =>
-    perkNamesById.get(id)?.name ?? `Rune ${id}`;
-  const perkDesc = (id: number) => perkNamesById.get(id)?.desc;
-
   return (
-    <div className="space-y-6">
-      {/* ── Overview Stats ─────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Pill label="WR" value={`${overview.winRate}%`} color={overview.winRate >= 52 ? "text-emerald-400" : overview.winRate >= 50 ? "text-white" : "text-red-400"} />
-        <Pill label="KDA" value={overview.kda.toFixed(2)} color="text-zinc-300" />
-        <Pill
-          label="Avg"
-          value={`${overview.avgKills}/${overview.avgDeaths}/${overview.avgAssists}`}
-          color="text-zinc-300"
-        />
-        <Pill label="Games" value={String(overview.games)} color="text-zinc-300" />
+    <div className="flex flex-col gap-5">
+      {/* ── Rank filter row ─────────────────────── */}
+      <div className="flex gap-1 flex-wrap">
+        {RANK_FILTERS.map(rf => (
+          <button
+            key={rf.key}
+            onClick={() => setRankFilter(rf.key)}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+              rankFilter === rf.key
+                ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30"
+                : "text-zinc-500 hover:text-zinc-300 border border-transparent hover:border-white/10 hover:bg-white/[0.03]"
+            }`}
+          >
+            {rf.label}
+          </button>
+        ))}
       </div>
 
-      {/* ── Build Tabs + Rank Filter ──────────────── */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex gap-1">
-          {(["popular", "winrate"] as BuildTab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setBuildTab(t)}
-              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
-                buildTab === t
-                  ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30"
-                  : "text-zinc-500 hover:text-zinc-300 border border-transparent hover:border-white/10 hover:bg-white/[0.03]"
-              }`}
-            >
-              {t === "popular" ? "Most Popular" : "Highest Win Rate"}
-            </button>
-          ))}
-        </div>
-        <select
-          value={rankFilter}
-          onChange={(e) => setRankFilter(e.target.value)}
-          className="px-3 py-2 rounded-lg text-xs text-zinc-300 border border-zinc-700/50 focus:outline-none focus:border-indigo-500/50"
-          style={{ background: "rgba(24, 24, 32, 0.7)" }}
-        >
-          <option value="all">All Ranks</option>
-          <option value="diamond">Diamond+</option>
-          <option value="master">Master+</option>
-          <option value="challenger">Challenger</option>
-        </select>
+      {/* ── Sub-tabs ────────────────────────────── */}
+      <div className="flex gap-1">
+        {(["popular", "winrate"] as BuildTab[]).map(t => (
+          <button
+            key={t}
+            onClick={() => setBuildTab(t)}
+            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+              buildTab === t
+                ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30"
+                : "text-zinc-500 hover:text-zinc-300 border border-transparent hover:border-white/10 hover:bg-white/[0.03]"
+            }`}
+          >
+            {t === "popular" ? "Most Popular" : "Highest Win Rate"}
+          </button>
+        ))}
       </div>
 
-      {/* ── Two-column layout ─────────────────────── */}
+      {/* ── Two-column ──────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* ── Left: Runes ──────────────────────────── */}
+
+        {/* ── Left: Rune Grid ────────────────────── */}
         <div className="lg:col-span-5">
-          <GlassCard>
-            <div className="flex items-baseline justify-between mb-4">
-              <h3 className="text-sm font-bold text-zinc-100">
-                Rune Configuration
-              </h3>
-              <span className="text-[10px] text-zinc-500">
-                {overview.games} games
-              </span>
-            </div>
+          <Card>
+            <CardHead title="Rune Configuration" meta={`${samples.length} games`} />
 
             {/* Primary tree */}
-            <div className="mb-5">
-              <div className="flex items-center gap-2 mb-3">
-                <TreeIcon url={getStyleIcon(runes.primaryTree)} />
-                <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
-                  Primary
-                </span>
-              </div>
-
-              {/* Keystone */}
-              {runes.keystone[0] && (
-                <RuneRow
-                  id={runes.keystone[0].id}
-                  icon={getPerkIcon(runes.keystone[0].id)}
-                  name={perkName(runes.keystone[0].id)}
-                  desc={perkDesc(runes.keystone[0].id)}
-                  pickRate={runes.keystone[0].pickRate}
-                  winRate={runes.keystone[0].winRate}
-                  size={40}
-                  glow
-                />
-              )}
-
-              {/* Primary slots */}
-              {runes.primary.map((slot, i) =>
-                slot[0] ? (
-                  <RuneRow
-                    key={i}
-                    id={slot[0].id}
-                    icon={getPerkIcon(slot[0].id)}
-                    name={perkName(slot[0].id)}
-                    desc={perkDesc(slot[0].id)}
-                    pickRate={slot[0].pickRate}
-                    winRate={slot[0].winRate}
-                    size={30}
-                  />
-                ) : (
-                  <PlaceholderRuneRow key={i} />
-                ),
-              )}
-            </div>
-
-            {/* Secondary tree */}
-            <div className="mb-5">
-              <div className="flex items-center gap-2 mb-3">
-                <TreeIcon url={getStyleIcon(runes.secondaryTree)} />
-                <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
-                  Secondary
-                </span>
-              </div>
-              {runes.secondary.map((slot, i) =>
-                slot[0] ? (
-                  <RuneRow
-                    key={i}
-                    id={slot[0].id}
-                    icon={getPerkIcon(slot[0].id)}
-                    name={perkName(slot[0].id)}
-                    desc={perkDesc(slot[0].id)}
-                    pickRate={slot[0].pickRate}
-                    winRate={slot[0].winRate}
-                    size={30}
-                  />
-                ) : (
-                  <PlaceholderRuneRow key={i} />
-                ),
-              )}
-            </div>
-
-            {/* Stat shards */}
-            <div className="pt-4 border-t border-white/5">
-              <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-2">
-                Stat Shards
-              </p>
-              <div className="flex gap-2 flex-wrap">
-                {runes.shards.map((slot, i) => {
-                  const top = slot[0];
-                  if (!top)
-                    return (
-                      <ShardPill key={i} icon="" name="\u2014" rate="\u2014" />
-                    );
+            {priTree && (
+              <div className="mt-4 mb-5">
+                <TreeLabel iconPath={priTree.iconPath} name={priTree.name} />
+                {priTree.slots.map((slot, si) => {
+                  const agg = si === 0 ? keystoneAgg : priSlotAggs[si - 1] ?? [];
+                  const aggMap = new Map(agg.map(r => [r.id, r]));
+                  const topId = agg[0]?.id;
+                  const isKeystone = si === 0;
                   return (
-                    <ShardPill
-                      key={i}
-                      icon={STAT_SHARD_ICONS[top.id] ?? ""}
-                      name={STAT_SHARD_NAMES[top.id] ?? `Shard ${top.id}`}
-                      rate={`${top.pickRate}%`}
-                    />
+                    <div key={si} className="flex items-center gap-2 py-1.5">
+                      {slot.perks.map(pid => {
+                        const a = aggMap.get(pid);
+                        const isTop = pid === topId;
+                        return (
+                          <RuneCell
+                            key={pid}
+                            id={pid}
+                            icon={getPerkIcon(pid)}
+                            name={perkName(pid)}
+                            desc={perkDesc(pid)}
+                            pickRate={a?.pickRate ?? 0}
+                            winRate={a?.winRate ?? 0}
+                            isTop={isTop}
+                            size={isKeystone ? 40 : 30}
+                          />
+                        );
+                      })}
+                    </div>
                   );
                 })}
               </div>
+            )}
+
+            {/* Secondary tree */}
+            {secTree && (
+              <div className="mb-5">
+                <TreeLabel iconPath={secTree.iconPath} name={secTree.name} />
+                {secTree.slots.slice(1).map((slot, si) => {
+                  const agg = secSlotAggs[si] ?? [];
+                  const aggMap = new Map(agg.map(r => [r.id, r]));
+                  const topId = agg[0]?.id;
+                  return (
+                    <div key={si} className="flex items-center gap-2 py-1.5">
+                      {slot.perks.map(pid => {
+                        const a = aggMap.get(pid);
+                        const isTop = pid === topId;
+                        return (
+                          <RuneCell
+                            key={pid}
+                            id={pid}
+                            icon={getPerkIcon(pid)}
+                            name={perkName(pid)}
+                            desc={perkDesc(pid)}
+                            pickRate={a?.pickRate ?? 0}
+                            winRate={a?.winRate ?? 0}
+                            isTop={isTop}
+                            size={30}
+                          />
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Stat shards */}
+            <div className="pt-4 border-t border-white/5">
+              <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-2">Stat Shards</p>
+              {SHARD_ROWS.map((row, ri) => {
+                const agg = shardAggs[ri] ?? [];
+                const aggMap = new Map(agg.map(r => [r.id, r]));
+                const topId = agg[0]?.id;
+                return (
+                  <div key={ri} className="flex items-center gap-3 py-1">
+                    {row.map(sid => {
+                      const a = aggMap.get(sid);
+                      const isTop = sid === topId;
+                      return (
+                        <div
+                          key={`${ri}-${sid}`}
+                          className="flex flex-col items-center gap-0.5"
+                          style={{ opacity: isTop ? 1 : 0.4 }}
+                        >
+                          <img src={SHARD_ICONS[sid] ?? ""} alt="" className="w-5 h-5" />
+                          <span className="text-[9px] text-zinc-500">{SHARD_NAMES[sid] ?? sid}</span>
+                          <span className="text-[9px] text-zinc-600">{a ? `${a.pickRate}%` : "\u2014"}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
-          </GlassCard>
+          </Card>
         </div>
 
-        {/* ── Right: Item Paths ────────────────────── */}
+        {/* ── Right: Item Build Path ─────────────── */}
         <div className="lg:col-span-7">
-          <GlassCard>
-            <div className="flex items-baseline justify-between mb-4">
-              <h3 className="text-sm font-bold text-zinc-100">
-                Item Build Path
-              </h3>
-              <span className="text-[10px] text-zinc-500">
-                sorted by{" "}
-                {buildTab === "popular" ? "pick rate" : "win rate"}
-              </span>
-            </div>
-
-            <div className="overflow-x-auto -mx-1 px-1">
+          <Card>
+            <CardHead title="Item Build Path" meta={buildTab === "popular" ? "by pick rate" : "by win rate"} />
+            <div className="overflow-x-auto -mx-1 px-1 mt-3">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-white/5">
-                    <th className="text-left text-[10px] text-zinc-600 uppercase tracking-wider py-2 px-2 font-semibold">
-                      Slot
-                    </th>
-                    <th className="text-left text-[10px] text-zinc-600 uppercase tracking-wider py-2 px-2 font-semibold">
-                      Item
-                    </th>
-                    <th className="text-right text-[10px] text-zinc-600 uppercase tracking-wider py-2 px-2 font-semibold">
-                      WR
-                    </th>
-                    <th className="text-right text-[10px] text-zinc-600 uppercase tracking-wider py-2 px-2 font-semibold">
-                      Pick
-                    </th>
-                    <th className="text-right text-[10px] text-zinc-600 uppercase tracking-wider py-2 px-2 font-semibold">
-                      Games
-                    </th>
+                    <Th align="left">Slot</Th>
+                    <Th align="left">Item</Th>
+                    <Th align="right">WR</Th>
+                    <Th align="right">Pick</Th>
+                    <Th align="right">Games</Th>
                   </tr>
                 </thead>
                 <tbody>
-                  {itemSlots.map((group) =>
+                  {itemSlots.map(group =>
                     group.items.length > 0 ? (
                       group.items.map((item, j) => (
-                        <ItemPathRow
-                          key={`${group.slot}-${item.id}`}
-                          slot={j === 0 ? group.slot : ""}
+                        <ItemRow
+                          key={`${group.label}-${item.id}`}
+                          slot={j === 0 ? group.label : ""}
                           itemId={item.id}
-                          itemName={
-                            itemData[item.id]?.name ?? `Item ${item.id}`
-                          }
+                          itemName={itemData[item.id]?.name ?? `Item ${item.id}`}
                           winRate={item.winRate}
                           pickRate={item.pickRate}
                           games={item.games}
-                          slotLabel={`${item.winRate}% as ${group.slot}`}
+                          slotLabel={`${item.winRate}% as ${group.label}`}
                           itemData={itemData}
                         />
                       ))
                     ) : (
-                      <tr
-                        key={group.slot}
-                        className="border-b border-white/[0.03]"
-                      >
-                        <td className="py-2 px-2 text-zinc-500 font-medium">
-                          {group.slot}
-                        </td>
-                        <td
-                          className="py-2 px-2 text-zinc-600"
-                          colSpan={4}
-                        >
-                          &mdash;
-                        </td>
+                      <tr key={group.label} className="border-b border-white/[0.03]">
+                        <td className="py-2 px-2 text-zinc-500 font-medium text-[11px]">{group.label}</td>
+                        <td className="py-2 px-2 text-zinc-600" colSpan={4}>&mdash;</td>
                       </tr>
                     ),
                   )}
                 </tbody>
               </table>
             </div>
-          </GlassCard>
+          </Card>
         </div>
       </div>
 
-      {/* ── Data Freshness ────────────────────────── */}
+      {/* ── Data Freshness ──────────────────────── */}
       <div className="text-center text-[11px] text-zinc-600 py-2">
-        {lastUpdate > 0 ? `Updated ${timeAgo(lastUpdate)}` : "No timestamp"}{" "}
-        &middot; Source: {playerCount} player{playerCount !== 1 ? "s" : ""}{" "}
-        &middot; {overview.games} game{overview.games !== 1 ? "s" : ""}{" "}
-        &middot; Rank filter: {rankFilter === "all" ? "All Ranks" : rankFilter}
+        {lastUpdate > 0 ? `Updated ${timeAgo(lastUpdate)}` : "No timestamp"}
+        {" · "}Source: {playerCount} player{playerCount !== 1 ? "s" : ""}
+        {" · "}{samples.length} game{samples.length !== 1 ? "s" : ""}
+        {rankFilter !== "all" && <> · Rank filter: {RANK_FILTERS.find(r => r.key === rankFilter)?.label}</>}
       </div>
     </div>
   );
@@ -659,204 +511,106 @@ export default function ChampionBuildView({
 
 /* ── Sub-components ─────────────────────────────────────── */
 
-function Pill({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: string;
-  color: string;
-}) {
+function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
-      style={{
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.06)",
-      }}
-    >
-      <span className="text-[10px] text-zinc-500 uppercase tracking-wider">
-        {label}
-      </span>
-      <span className={`text-sm font-bold ${color}`}>{value}</span>
-    </div>
-  );
-}
-
-function GlassCard({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="rounded-2xl p-5"
-      style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        backdropFilter: "blur(12px)",
-      }}
-    >
+    <div className="rounded-2xl p-5" style={{
+      background: "rgba(255,255,255,0.03)",
+      border: "1px solid rgba(255,255,255,0.06)",
+      backdropFilter: "blur(12px)",
+    }}>
       {children}
     </div>
   );
 }
 
-function TreeIcon({ url }: { url: string }) {
-  if (!url)
-    return <div className="w-6 h-6 rounded-full bg-zinc-800" />;
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={url} alt="" className="w-6 h-6" />;
+function CardHead({ title, meta }: { title: string; meta?: string }) {
+  return (
+    <div className="flex items-baseline justify-between">
+      <h3 className="text-sm font-bold text-zinc-100">{title}</h3>
+      {meta && <span className="text-[10px] text-zinc-500">{meta}</span>}
+    </div>
+  );
 }
 
-function RuneRow({
-  id,
-  icon,
-  name,
-  desc,
-  pickRate,
-  winRate,
-  size,
-  glow,
+function Th({ children, align }: { children: React.ReactNode; align: "left" | "right" }) {
+  return (
+    <th className={`text-${align} text-[10px] text-zinc-600 uppercase tracking-wider py-2 px-2 font-semibold`}>
+      {children}
+    </th>
+  );
+}
+
+function TreeLabel({ iconPath, name }: { iconPath: string; name: string }) {
+  const url = iconPath ? perkIconPathToUrl(iconPath) : "";
+  return (
+    <div className="flex items-center gap-2 mb-2">
+      {url ? <img src={url} alt="" className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full bg-zinc-800" />}
+      <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">{name}</span>
+    </div>
+  );
+}
+
+function RuneCell({
+  id, icon, name, desc, pickRate, winRate, isTop, size,
 }: {
-  id: number;
-  icon: string;
-  name: string;
-  desc?: string;
-  pickRate: number;
-  winRate: number;
-  size: number;
-  glow?: boolean;
+  id: number; icon: string; name: string; desc?: string;
+  pickRate: number; winRate: number; isTop: boolean; size: number;
 }) {
   const s = `${size}px`;
   return (
-    <LeagueTooltip title={name} body={desc}>
-      <div className="flex items-center gap-3 py-1.5 cursor-default group">
+    <LeagueTooltip title={name} body={desc ? `${desc}\n\n${pickRate}% pick · ${winRate}% WR` : `${pickRate}% pick · ${winRate}% WR`}>
+      <div
+        className="flex flex-col items-center gap-0.5 cursor-default"
+        style={{ opacity: isTop ? 1 : 0.4, transition: "opacity 0.2s" }}
+      >
         {icon ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={icon}
             alt={name}
-            className="rounded-full flex-shrink-0"
+            className="rounded-full"
             style={{
-              width: s,
-              height: s,
-              boxShadow: glow
-                ? "0 0 12px rgba(99, 102, 241, 0.25)"
-                : undefined,
+              width: s, height: s,
+              boxShadow: isTop ? "0 0 10px rgba(99,102,241,0.3)" : undefined,
             }}
           />
         ) : (
-          <div
-            className="rounded-full bg-zinc-800 border border-zinc-700/50 flex-shrink-0"
-            style={{ width: s, height: s }}
-          />
+          <div className="rounded-full bg-zinc-800 border border-zinc-700/50" style={{ width: s, height: s }} />
         )}
-        <span className="text-xs text-zinc-400 flex-1 truncate">{name}</span>
-        <span className="text-[10px] text-zinc-500 font-medium tabular-nums">
-          {pickRate}% PR
-        </span>
-        <span className="text-[10px] text-emerald-400/70 font-medium tabular-nums">
-          {winRate}% WR
-        </span>
+        <span className="text-[9px] text-zinc-500 tabular-nums">{pickRate > 0 ? `${pickRate}%` : "\u2014"}</span>
       </div>
     </LeagueTooltip>
   );
 }
 
-function PlaceholderRuneRow() {
-  return (
-    <div className="flex items-center gap-3 py-1.5">
-      <div className="w-[30px] h-[30px] rounded-full bg-zinc-800 border border-zinc-700/50" />
-      <span className="text-xs text-zinc-600">&mdash;</span>
-      <span className="text-[10px] text-zinc-700 ml-auto">&mdash;</span>
-    </div>
-  );
-}
-
-function ShardPill({
-  icon,
-  name,
-  rate,
+function ItemRow({
+  slot, itemId, itemName, winRate, pickRate, games, slotLabel, itemData,
 }: {
-  icon: string;
-  name: string;
-  rate: string;
-}) {
-  return (
-    <div
-      className="flex items-center gap-1.5 px-2 py-1 rounded-md"
-      style={{ background: "rgba(255,255,255,0.04)" }}
-    >
-      {icon ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={icon} alt={name} className="w-3.5 h-3.5" />
-      ) : (
-        <div className="w-3.5 h-3.5 rounded bg-zinc-700" />
-      )}
-      <span className="text-[10px] text-zinc-500">{name}</span>
-      <span className="text-[9px] text-zinc-600">{rate}</span>
-    </div>
-  );
-}
-
-function ItemPathRow({
-  slot,
-  itemId,
-  itemName,
-  winRate,
-  pickRate,
-  games,
-  slotLabel,
-  itemData,
-}: {
-  slot: string;
-  itemId: number;
-  itemName: string;
-  winRate: number;
-  pickRate: number;
-  games: number;
-  slotLabel: string;
+  slot: string; itemId: number; itemName: string;
+  winRate: number; pickRate: number; games: number; slotLabel: string;
   itemData: ItemTooltipData;
 }) {
-  const tip = itemData[itemId];
+  const tip = getItemTooltip(itemData, itemId);
   return (
     <tr className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
-      <td className="py-2.5 px-2 text-zinc-500 font-medium text-[11px] align-middle whitespace-nowrap">
-        {slot}
-      </td>
+      <td className="py-2.5 px-2 text-zinc-500 font-medium text-[11px] align-middle whitespace-nowrap">{slot}</td>
       <td className="py-2.5 px-2 align-middle">
-        <LeagueTooltip
-          title={tip?.name ?? itemName}
-          body={tip?.plaintext}
-          bodyHtml={false}
-        >
+        <LeagueTooltip title={tip.title} body={tip.body} bodyHtml={tip.bodyHtml}>
           <div className="flex items-center gap-2 cursor-default">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={getItemIconUrl(itemId)}
-              alt={itemName}
-              className="w-8 h-8 rounded-lg border border-white/10"
-            />
+            <img src={getItemIconUrl(itemId)} alt={itemName} className="w-8 h-8 rounded-lg border border-white/10" />
             <div className="flex flex-col">
-              <span className="text-xs text-zinc-200 font-medium truncate max-w-[140px]">
-                {itemName}
-              </span>
+              <span className="text-xs text-zinc-200 font-medium truncate max-w-[140px]">{itemName}</span>
               <span className="text-[9px] text-zinc-600">{slotLabel}</span>
             </div>
           </div>
         </LeagueTooltip>
       </td>
       <td className="py-2.5 px-2 text-right align-middle">
-        <span
-          className={`text-xs font-bold ${winRate >= 52 ? "text-emerald-400" : winRate >= 50 ? "text-zinc-300" : "text-red-400"}`}
-        >
+        <span className={`text-xs font-bold ${winRate >= 52 ? "text-emerald-400" : winRate >= 50 ? "text-zinc-300" : "text-red-400"}`}>
           {winRate}%
         </span>
       </td>
-      <td className="py-2.5 px-2 text-right align-middle text-xs text-zinc-400">
-        {pickRate}%
-      </td>
-      <td className="py-2.5 px-2 text-right align-middle text-xs text-zinc-600">
-        {games}
-      </td>
+      <td className="py-2.5 px-2 text-right align-middle text-xs text-zinc-400">{pickRate}%</td>
+      <td className="py-2.5 px-2 text-right align-middle text-xs text-zinc-600">{games}</td>
     </tr>
   );
 }
