@@ -1228,6 +1228,18 @@ export default function SummonerProfileBeige({
                 {refreshError}
               </span>
             )}
+            <Link
+              href={`/recap/${encodeURIComponent(regionVal)}/${encodeURIComponent(riotIdParam ?? "")}`}
+              className="profile-badge border-white/20 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white cursor-pointer"
+            >
+              Season Recap
+            </Link>
+            <Link
+              href={`/badge/${encodeURIComponent(regionVal)}/${encodeURIComponent(riotIdParam ?? "")}`}
+              className="profile-badge border-white/20 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white cursor-pointer"
+            >
+              Get Badge
+            </Link>
           </div>
           </div>
         </div>
