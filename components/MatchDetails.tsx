@@ -12,6 +12,7 @@ import {
   getItemTooltip,
   DEFAULT_DDRAGON_VERSION,
   type SummonerSpellData,
+  type ItemTooltipData,
 } from "@/lib/riotAssets";
 import { getPerkIconUrl, getStyleIconUrlCd } from "@/lib/runesCd";
 import { computeImpactScore } from "@/lib/impactScore";
@@ -95,7 +96,7 @@ export function MatchDetails({
   stylesById: Map<number, string>;
   rankBadgesByPuuid?: Record<string, string>;
   rankTierByPuuid?: Record<string, string>;
-  itemDataById?: Record<number, { name: string; plaintext?: string }>;
+  itemDataById?: ItemTooltipData;
   perkDataById?: Map<number, { name?: string; shortDesc?: string; longDesc?: string; iconPath?: string }>;
   styleNamesById?: Map<number, string>;
   summonerSpellData?: SummonerSpellData;
@@ -319,8 +320,10 @@ export function MatchDetails({
                               title={(primaryKeystoneId != null ? (perkDataById?.get(primaryKeystoneId)?.name || `Rune ${primaryKeystoneId}`) : "Rune").trim() || `Rune ${primaryKeystoneId ?? ""}`}
                               icon={keystoneSrc}
                               accentColor="#a78bfa"
-                              subtitle={primaryKeystoneId != null ? perkDataById?.get(primaryKeystoneId)?.shortDesc?.replace(/<[^>]*>/g, "") : undefined}
-                              body={primaryKeystoneId != null ? perkDataById?.get(primaryKeystoneId)?.longDesc?.replace(/<[^>]*>/g, "") : undefined}
+                              subtitle={primaryKeystoneId != null ? perkDataById?.get(primaryKeystoneId)?.shortDesc : undefined}
+                              subtitleHtml
+                              body={primaryKeystoneId != null ? perkDataById?.get(primaryKeystoneId)?.longDesc : undefined}
+                              bodyHtml
                             >
                               <img src={keystoneSrc} alt="" width={16} height={16} className="md-rune-icon rune-icon" />
                             </LeagueTooltip>

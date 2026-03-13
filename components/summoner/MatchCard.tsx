@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { getChampionSplashUrl, isValidItemId, getItemTooltip, DEFAULT_DDRAGON_VERSION } from "@/lib/riotAssets";
+import { getChampionSplashUrl, isValidItemId, getItemTooltip, DEFAULT_DDRAGON_VERSION, type ItemTooltipData } from "@/lib/riotAssets";
 import { getBadgeCategory } from "@/lib/matchBadges";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
 
@@ -44,7 +44,7 @@ export function MatchCard({
   badge?: string;
   badgeReason?: string;
   onClick: () => void;
-  itemDataById?: Record<number, { name: string; plaintext?: string }>;
+  itemDataById?: ItemTooltipData;
 }) {
   const splash = getChampionSplashUrl(champion);
 

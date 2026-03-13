@@ -202,13 +202,19 @@ select {
 
 .league-tooltip-body {
   color: #a0a0a8;
-  white-space: normal;
+  white-space: pre-line;
+  word-wrap: break-word;
 }
 
-.league-tooltip-body br {
+.league-tooltip-body[data-html] br {
   display: block;
   content: "";
   margin-top: 2px;
+}
+
+/* When body is rendered as HTML, use normal whitespace so tags control layout */
+.league-tooltip-body[data-html] {
+  white-space: normal;
 }
 
 /* DDragon rich item tooltip styles */
@@ -277,6 +283,69 @@ select {
 
 .league-tooltip-body shield {
   color: #c8c8e0;
+}
+
+.league-tooltip-body scaleAP,
+.league-tooltip-body scaleap {
+  color: #7b8cde;
+}
+
+.league-tooltip-body scaleAD,
+.league-tooltip-body scalead {
+  color: #e08060;
+}
+
+.league-tooltip-body scaleMana,
+.league-tooltip-body scalemana {
+  color: #5b97d0;
+}
+
+.league-tooltip-body scaleHealth,
+.league-tooltip-body scalehealth {
+  color: #c44040;
+}
+
+.league-tooltip-body scaleArmor,
+.league-tooltip-body scalearmor {
+  color: #dba040;
+}
+
+.league-tooltip-body scaleMR,
+.league-tooltip-body scalemr {
+  color: #9b7bcf;
+}
+
+.league-tooltip-body scaleLethality,
+.league-tooltip-body scalelethality {
+  color: #e04040;
+}
+
+.league-tooltip-body rarityMythic,
+.league-tooltip-body raritymythic {
+  color: #d4af37;
+  font-weight: 600;
+}
+
+.league-tooltip-body rarityLegendary,
+.league-tooltip-body raritylegendary {
+  color: #e08060;
+  font-weight: 600;
+}
+
+.league-tooltip-body rarityGeneric,
+.league-tooltip-body raritygeneric {
+  color: #c8c8d0;
+}
+
+.league-tooltip-body status,
+.league-tooltip-body Status {
+  color: #c8aa6e;
+}
+
+.league-tooltip-body li {
+  color: #a0a0a8;
+  margin-left: 12px;
+  list-style: disc;
 }
 
 .league-tooltip-body .tt-cost {

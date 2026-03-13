@@ -8,6 +8,25 @@ const HOVER_DELAY_MS = 200;
 const HIDE_DELAY_MS = 350;
 const TOOLTIP_MAX_HEIGHT = 280;
 
+/**
+ * Sanitize CommunityDragon / DDragon tooltip HTML.
+ * - Strips <lol-uikit-tooltipped-keyword ...>...</lol-uikit-tooltipped-keyword> wrapper tags
+ *   (keeps the inner text content)
+ * - Converts <font color='#xxx'>text</font> → <span style="color:#xxx">text</span>
+ * - Keeps standard HTML: <b>, <i>, <br>, <span>, etc.
+ */
+function sanitizeGameHtml(raw: string): string {
+  return raw
+    .replace(/<lol-uikit-tooltipped-keyword[^>]*>([\s\S]*?)<\/lol-uikit-tooltipped-keyword>/gi, "$1")
+    .replace(/<keywordMajor[^>]*>([\s\S]*?)<\/keywordMajor>/gi, "<b>$1</b>")
+    .replace(/<keywordStealth[^>]*>([\s\S]*?)<\/keywordStealth>/gi, "<b>$1</b>")
+    .replace(/<font\s+color=['"](#?[a-fA-F0-9]+)['"]>([\s\S]*?)<\/font>/gi,
+      '<span style="color:$1">$2</span>')
+    .replace(/<br\s*\/?>/gi, "<br>")
+    .replace(/<\/?mainText>/g, "")
+    .replace(/<\/?rules>/gi, "<br>");
+}
+
 type Props = {
   title: string;
   body?: string;
@@ -19,10 +38,12 @@ type Props = {
   accentColor?: string;
   /** Optional subtitle rendered in bold below the header (e.g. rune shortDesc) */
   subtitle?: string;
+  /** If true, render subtitle as sanitized HTML */
+  subtitleHtml?: boolean;
   children: React.ReactElement;
 };
 
-export function LeagueTooltip({ title, body, bodyHtml, icon, accentColor, subtitle, children }: Props) {
+export function LeagueTooltip({ title, body, bodyHtml, icon, accentColor, subtitle, subtitleHtml, children }: Props) {
   const [visible, setVisible] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [position, setPosition] = React.useState({ top: 0, left: 0 });
@@ -114,15 +135,20 @@ export function LeagueTooltip({ title, body, bodyHtml, icon, accentColor, subtit
           <span className="league-tooltip-title" style={{ color: accent }}>{title}</span>
         </div>
         {subtitle && (
-          <div className="league-tooltip-subtitle">{subtitle}</div>
+          subtitleHtml
+            ? <div className="league-tooltip-subtitle" dangerouslySetInnerHTML={{ __html: sanitizeGameHtml(subtitle) }} />
+            : <div className="league-tooltip-subtitle">{subtitle}</div>
         )}
         {body ? (
-          <div
-            className="league-tooltip-body"
-            {...(bodyHtml ? { dangerouslySetInnerHTML: { __html: body } } : {})}
-          >
-            {bodyHtml ? null : body}
-          </div>
+          bodyHtml ? (
+            <div
+              className="league-tooltip-body"
+              data-html=""
+              dangerouslySetInnerHTML={{ __html: sanitizeGameHtml(body) }}
+            />
+          ) : (
+            <div className="league-tooltip-body">{body}</div>
+          )
         ) : null}
       </div>
     ) : null;

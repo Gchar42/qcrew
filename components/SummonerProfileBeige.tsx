@@ -31,6 +31,7 @@ import {
   getItemTooltip,
   DEFAULT_DDRAGON_VERSION,
   type SummonerSpellData,
+  type ItemTooltipData,
 } from "@/lib/riotAssets";
 import {
   getPerkIconUrl,
@@ -502,7 +503,7 @@ export default function SummonerProfileBeige({
   const [perkDataById, setPerkDataById] = useState<Map<number, { name?: string; shortDesc?: string; longDesc?: string; iconPath?: string }>>(new Map());
   const [stylesById, setStylesById] = useState<Map<number, string>>(new Map());
   const [styleNamesById, setStyleNamesById] = useState<Map<number, string>>(new Map());
-  const [itemDataById, setItemDataById] = useState<Record<number, { name: string; plaintext?: string }>>({});
+  const [itemDataById, setItemDataById] = useState<ItemTooltipData>({});
   const [summonerSpellData, setSummonerSpellData] = useState<SummonerSpellData>({});
   const initialTab = searchParams.get("tab") === "champion-pool" ? "champion-pool" : "overview";
   const [mainTab, setMainTab] = useState<"overview" | "champion-pool">(initialTab);
@@ -785,14 +786,14 @@ export default function SummonerProfileBeige({
     const version = ddragonVersion ?? DEFAULT_DDRAGON_VERSION;
     fetch(`/api/ddragon/items?version=${encodeURIComponent(version)}`)
       .then((r) => r.json())
-      .then((data: { items?: Record<string, { name?: string; plaintext?: string }> }) => {
+      .then((data: { items?: Record<string, { name?: string; plaintext?: string; description?: string; gold?: number }> }) => {
         const items = data.items ?? {};
-        const byId: Record<number, { name: string; plaintext?: string }> = {};
+        const byId: ItemTooltipData = {};
         Object.entries(items).forEach(([id, entry]) => {
           const num = Number(id);
           if (!Number.isFinite(num) || num <= 0) return;
           const name = (entry?.name ?? "").trim() || `Item ${id}`;
-          byId[num] = { name, plaintext: entry?.plaintext };
+          byId[num] = { name, plaintext: entry?.plaintext, description: entry?.description, gold: entry?.gold };
         });
         setItemDataById(byId);
       })
@@ -1601,8 +1602,10 @@ export default function SummonerProfileBeige({
                                   title={((keystoneId != null ? perkDataById.get(keystoneId)?.name : undefined) || `Rune ${keystoneId ?? ""}`).trim() || `Rune ${keystoneId ?? ""}`}
                                   icon={keystoneSrc}
                                   accentColor="#a78bfa"
-                                  subtitle={keystoneId != null ? perkDataById.get(keystoneId)?.shortDesc?.replace(/<[^>]*>/g, "") : undefined}
-                                  body={keystoneId != null ? perkDataById.get(keystoneId)?.longDesc?.replace(/<[^>]*>/g, "") : undefined}
+                                  subtitle={keystoneId != null ? perkDataById.get(keystoneId)?.shortDesc : undefined}
+                                  subtitleHtml
+                                  body={keystoneId != null ? perkDataById.get(keystoneId)?.longDesc : undefined}
+                                  bodyHtml
                                 >
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img src={keystoneSrc} alt="" width={18} height={18} loading={isFirstRow ? "eager" : "lazy"} fetchPriority={isFirstRow ? "high" : undefined} style={imgStyle} />

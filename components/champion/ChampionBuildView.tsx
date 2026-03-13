@@ -597,13 +597,12 @@ export default function ChampionBuildView({
                                   const pr = a?.pickRate ?? 0;
                                   const wr = a?.winRate ?? 0;
                                   const g = a?.games ?? 0;
-                                  const bodyParts = [
-                                    desc?.replace(/<[^>]*>/g, "") ?? "",
-                                    "",
-                                    `${pr}% pick · ${wr}% WR · ${g} games`,
-                                  ].filter(Boolean).join("\n");
+                                  const bodyHtml = [
+                                    desc ?? "",
+                                    `<br><span style="color:#8a8a90;font-size:10px">${pr}% pick · ${wr}% WR · ${g} games</span>`,
+                                  ].filter(Boolean).join("");
                                   return (
-                                    <LeagueTooltip key={pid} title={name} icon={getPerkIcon(pid)} accentColor={accent} subtitle={sd?.replace(/<[^>]*>/g, "")} body={bodyParts}>
+                                    <LeagueTooltip key={pid} title={name} icon={getPerkIcon(pid)} accentColor={accent} subtitle={sd} subtitleHtml body={bodyHtml} bodyHtml>
                                       <div className="flex flex-col items-center gap-0.5 cursor-default"
                                         style={{ opacity: isTop ? 1 : 0.4, transition: "opacity 0.2s" }}>
                                         <img src={getPerkIcon(pid)} alt={name}
@@ -721,15 +720,13 @@ function RuneCell({
   const s = `${size}px`;
   const lowSample = games < LOW_SAMPLE && games > 0;
   const statsLine = `${pickRate}% pick rate \u00b7 ${winRate}% win rate \u00b7 ${games} games`;
-  const bodyParts = [
-    desc?.replace(/<[^>]*>/g, "") ?? "",
-    "",
-    statsLine,
-    lowSample ? "\u26a0 Low sample size" : "",
-  ].filter(Boolean).join("\n");
+  const bodyHtml = [
+    desc ?? "",
+    `<br><span style="color:#8a8a90;font-size:10px">${statsLine}${lowSample ? "<br>\u26a0 Low sample size" : ""}</span>`,
+  ].filter(Boolean).join("");
 
   return (
-    <LeagueTooltip title={name} icon={icon} accentColor={accent} subtitle={shortDesc?.replace(/<[^>]*>/g, "")} body={bodyParts}>
+    <LeagueTooltip title={name} icon={icon} accentColor={accent} subtitle={shortDesc} subtitleHtml body={bodyHtml} bodyHtml>
       <div className="flex flex-col items-center gap-0.5 cursor-default"
         style={{ opacity: isTop ? 1 : 0.4, transition: "opacity 0.2s" }}>
         {icon ? (

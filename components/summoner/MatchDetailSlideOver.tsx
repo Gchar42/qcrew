@@ -1,7 +1,7 @@
 "use client";
 
 import type { MatchDto } from "@/types/riot";
-import { isValidItemId, getItemTooltip, DEFAULT_DDRAGON_VERSION } from "@/lib/riotAssets";
+import { isValidItemId, getItemTooltip, DEFAULT_DDRAGON_VERSION, type ItemTooltipData } from "@/lib/riotAssets";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
 
 function formatDuration(seconds: number) {
@@ -20,7 +20,7 @@ export function MatchDetailSlideOver({
   match: MatchDto;
   puuid: string;
   onClose: () => void;
-  itemDataById?: Record<number, { name: string; plaintext?: string }>;
+  itemDataById?: ItemTooltipData;
   ddragonVersion?: string | null;
 }) {
   const p = match.info?.participants?.find((x) => x.puuid === puuid);
