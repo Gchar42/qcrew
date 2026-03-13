@@ -172,27 +172,24 @@ function PlayerRow({
   const spell2 = p.spell2Id ?? 14;
   const keystonePath = p.keystonePath ?? "Precision";
   const keystoneName = p.keystoneName ?? "Conqueror";
+  const iconSize = 20;
   return (
     <div className="live-page-player">
       <div className="live-page-player-champ">
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
           <img
             src={getChampionSquareUrl(p.championName)}
             alt={p.championName}
             className="live-page-champ-icon"
           />
-          <span style={{ color: "rgba(255,255,255,0.7)", flexShrink: 0 }} title={role}>
-            <RoleIcon role={role} size={14} />
-          </span>
-          <div style={{ display: "flex", gap: 2 }}>
-            <img src={getSummonerSpellIconUrl(spell1)} alt="" style={{ width: 18, height: 18, borderRadius: 2 }} />
-            <img src={getSummonerSpellIconUrl(spell2)} alt="" style={{ width: 18, height: 18, borderRadius: 2 }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <span style={{ color: "rgba(255,255,255,0.8)", display: "flex" }} title={role}>
+              <RoleIcon role={role} size={iconSize} />
+            </span>
+            <img src={getSummonerSpellIconUrl(spell1)} alt="" width={iconSize} height={iconSize} style={{ borderRadius: 2 }} />
+            <img src={getSummonerSpellIconUrl(spell2)} alt="" width={iconSize} height={iconSize} style={{ borderRadius: 2 }} />
+            <img src={getKeystoneRuneUrl(keystonePath, keystoneName)} alt="" width={iconSize} height={iconSize} style={{ borderRadius: 2 }} />
           </div>
-          <img
-            src={getKeystoneRuneUrl(keystonePath, keystoneName)}
-            alt=""
-            style={{ width: 18, height: 18, borderRadius: 2 }}
-          />
         </div>
         <div>
           <div className="live-page-champ-name">{p.championName}</div>
@@ -380,10 +377,11 @@ export default function LiveGameView({
         </div>
       </div>
 
-      <div className="live-page-teams" style={{ alignItems: "stretch" }}>
+      <div className="live-page-teams">
         <div
           className="live-page-team live-page-team--blue"
           style={{
+            alignSelf: "stretch",
             position: "relative",
             overflow: "hidden",
             borderLeft: `4px solid ${TEAM_BLUE}`,
@@ -433,6 +431,7 @@ export default function LiveGameView({
         <div
           className="live-page-verdict"
           style={{
+            alignSelf: "center",
             background: isEven ? "#1a1a1a" : `linear-gradient(135deg, ${verdictColor}1a 0%, ${verdictColor}0d 100%)`,
             border: isEven ? "1px solid rgba(255,255,255,0.15)" : `2px solid ${verdictColor}44`,
             borderRadius: 12,
@@ -471,6 +470,7 @@ export default function LiveGameView({
         <div
           className="live-page-team live-page-team--red"
           style={{
+            alignSelf: "stretch",
             position: "relative",
             overflow: "hidden",
             borderLeft: `4px solid ${TEAM_RED}`,
