@@ -109,6 +109,79 @@ function RoleIcon({ role, size = 16 }: { role: string; size?: number }) {
   }
 }
 
+function AbilityTooltip({
+  label,
+  name,
+  description,
+  cooldown,
+  cost,
+  iconUrl,
+  accentColor,
+  children,
+}: {
+  label: string;
+  name: string;
+  description: string;
+  cooldown?: string;
+  cost?: string;
+  iconUrl: string;
+  accentColor?: string;
+  children: React.ReactNode;
+}) {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+      {show && (
+        <div
+          className="absolute z-50 top-full mt-2 right-0 w-[320px] rounded-xl border border-white/10 shadow-2xl pointer-events-none"
+          style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16162a 100%)" }}
+        >
+          <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+            <img src={iconUrl} alt={label} className="w-10 h-10 rounded-lg border border-white/10" />
+            <div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-[11px] font-bold px-1.5 py-0.5 rounded"
+                  style={{
+                    background: accentColor ? `${accentColor}20` : "rgba(255,255,255,0.08)",
+                    color: accentColor ?? "#a78bfa",
+                  }}
+                >
+                  {label}
+                </span>
+                <span className="text-sm font-bold" style={{ color: "#e8c56d" }}>{name}</span>
+              </div>
+            </div>
+          </div>
+          <div className="px-4 pb-2">
+            <p className="text-xs text-white/80 leading-relaxed whitespace-pre-line">{description}</p>
+          </div>
+          {(cooldown || cost) && (
+            <div className="flex gap-4 px-4 pb-3 pt-1 border-t border-white/5">
+              {cooldown && cooldown !== "0" && (
+                <span className="text-[11px] text-zinc-500">
+                  <span className="text-zinc-400 font-medium">Cooldown:</span> {cooldown}s
+                </span>
+              )}
+              {cost && cost !== "0" && (
+                <span className="text-[11px] text-zinc-500">
+                  <span className="text-zinc-400 font-medium">Cost:</span> {cost}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ChampionDetailClient({ championId }: { championId: string }) {
   const [tab, setTab] = useState<Tab>("build");
   const [builds, setBuilds] = useState<Record<string, ChampionBuild>>({});
@@ -249,13 +322,32 @@ export default function ChampionDetailClient({ championId }: { championId: strin
             </div>
             {info && (
               <div className="hidden md:flex items-center gap-2">
-                <div className="p-1 rounded-lg glass">
-                  <img src={info.passive.iconUrl} alt="P" className="w-8 h-8 rounded" title={info.passive.name} />
-                </div>
-                {info.abilities.map((a, i) => (
-                  <div key={a.key} className="p-1 rounded-lg" style={{ background: `${SKILL_ACCENTS[i]}15`, border: `1px solid ${SKILL_ACCENTS[i]}30` }}>
-                    <img src={a.iconUrl} alt={a.key} className="w-8 h-8 rounded" title={a.name} />
+                <AbilityTooltip
+                  label="Passive"
+                  name={info.passive.name}
+                  description={info.passive.description}
+                  iconUrl={info.passive.iconUrl}
+                  accentColor="#a78bfa"
+                >
+                  <div className="p-1 rounded-lg glass cursor-help">
+                    <img src={info.passive.iconUrl} alt="P" className="w-8 h-8 rounded" />
                   </div>
+                </AbilityTooltip>
+                {info.abilities.map((a, i) => (
+                  <AbilityTooltip
+                    key={a.key}
+                    label={SKILL_LABELS[i] ?? a.key}
+                    name={a.name}
+                    description={a.description}
+                    cooldown={a.cooldown}
+                    cost={a.cost}
+                    iconUrl={a.iconUrl}
+                    accentColor={SKILL_ACCENTS[i]}
+                  >
+                    <div className="p-1 rounded-lg cursor-help" style={{ background: `${SKILL_ACCENTS[i]}15`, border: `1px solid ${SKILL_ACCENTS[i]}30` }}>
+                      <img src={a.iconUrl} alt={a.key} className="w-8 h-8 rounded" />
+                    </div>
+                  </AbilityTooltip>
                 ))}
               </div>
             )}
