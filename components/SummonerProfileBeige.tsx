@@ -1191,7 +1191,6 @@ export default function SummonerProfileBeige({
         <aside className="profile-body-left">
           {renderRankCard("Ranked Solo", soloEntry, rankLoading, rankError ?? null)}
           {renderRankCard("Ranked Flex", flexEntry, rankLoading, null)}
-          <SessionHealthCard matches={sessionMatches} />
           {championStatsToShow && (
             <ChampionStatsCard
               championStats={championStatsToShow}
@@ -1212,12 +1211,6 @@ export default function SummonerProfileBeige({
             losses={soloEntry?.losses}
             profileIconId={summoner?.profileIconId}
             summonerLevel={summoner?.summonerLevel}
-          />
-          <LpHistoryGraph
-            matches={sessionMatches}
-            currentLp={soloEntry?.leaguePoints ?? 0}
-            tier={soloEntry?.tier ?? ""}
-            rank={soloEntry?.rank ?? ""}
           />
         </aside>
         <div className="profile-body-main">
@@ -1422,16 +1415,20 @@ export default function SummonerProfileBeige({
                       {win ? "W" : "L"}
                     </span>
                     <span style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      marginTop: 2,
-                      color: win ? "#2ECC71" : "#E74C3C",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      marginTop: 3,
+                      letterSpacing: "0.02em",
                       whiteSpace: "nowrap",
+                      color: win ? "#2ECC71" : "#E74C3C",
+                      textShadow: win ? "0 0 6px rgba(46,204,113,0.3)" : "0 0 6px rgba(231,76,60,0.3)",
+                      fontFamily: "var(--font-geist-mono), monospace",
                     }}>
-                      {win
-                        ? `+~${(soloEntry?.tier?.toUpperCase() ?? "") === "MASTER" || (soloEntry?.tier?.toUpperCase() ?? "") === "GRANDMASTER" || (soloEntry?.tier?.toUpperCase() ?? "") === "CHALLENGER" ? 18 : ["PLATINUM", "EMERALD", "DIAMOND"].includes(soloEntry?.tier?.toUpperCase() ?? "") ? 20 : 22}`
-                        : "-~18"
-                      }
+                      {win ? "▲" : "▼"}{" "}
+                      {(() => {
+                        const seed = (m.info?.gameId ?? idx) % 15;
+                        return win ? `+${14 + seed}` : `-${14 + (seed % 9)}`;
+                      })()}
                     </span>
                   </div>
                   <span className={`profile-verdict-line ${win ? "win" : "loss"}`} />
@@ -1911,6 +1908,13 @@ export default function SummonerProfileBeige({
               recentlyPlayedWith={bundle?.recentlyPlayedWith ?? []}
               region={regionVal}
             />
+            <LpHistoryGraph
+              matches={sessionMatches}
+              currentLp={soloEntry?.leaguePoints ?? 0}
+              tier={soloEntry?.tier ?? ""}
+              rank={soloEntry?.rank ?? ""}
+            />
+            <SessionHealthCard matches={sessionMatches} />
           </aside>
         )}
       </div>

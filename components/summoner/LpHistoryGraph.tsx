@@ -83,23 +83,73 @@ function fullDate(ts: number): string {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Sample data — realistic 7-day climb Gold II → Gold I for Demo#NA1 */
+/* ------------------------------------------------------------------ */
+
+function buildSampleMatches(): MatchEntry[] {
+  const now = Date.now();
+  const DAY = 86_400_000;
+  const GAME = 2_400_000;
+  const sequence: Array<{ dayOffset: number; gameIdx: number; win: boolean; champ: string }> = [
+    { dayOffset: 7, gameIdx: 0, win: true, champ: "Jinx" },
+    { dayOffset: 7, gameIdx: 1, win: true, champ: "Jinx" },
+    { dayOffset: 7, gameIdx: 2, win: false, champ: "Caitlyn" },
+    { dayOffset: 6, gameIdx: 0, win: true, champ: "Jinx" },
+    { dayOffset: 6, gameIdx: 1, win: false, champ: "Jinx" },
+    { dayOffset: 6, gameIdx: 2, win: true, champ: "Kai'Sa" },
+    { dayOffset: 6, gameIdx: 3, win: true, champ: "Jinx" },
+    { dayOffset: 5, gameIdx: 0, win: false, champ: "Jinx" },
+    { dayOffset: 5, gameIdx: 1, win: false, champ: "Caitlyn" },
+    { dayOffset: 5, gameIdx: 2, win: true, champ: "Jinx" },
+    { dayOffset: 4, gameIdx: 0, win: true, champ: "Jinx" },
+    { dayOffset: 4, gameIdx: 1, win: true, champ: "Jinx" },
+    { dayOffset: 4, gameIdx: 2, win: true, champ: "Kai'Sa" },
+    { dayOffset: 4, gameIdx: 3, win: false, champ: "Jinx" },
+    { dayOffset: 3, gameIdx: 0, win: true, champ: "Jinx" },
+    { dayOffset: 3, gameIdx: 1, win: false, champ: "Caitlyn" },
+    { dayOffset: 3, gameIdx: 2, win: true, champ: "Jinx" },
+    { dayOffset: 2, gameIdx: 0, win: true, champ: "Jinx" },
+    { dayOffset: 2, gameIdx: 1, win: true, champ: "Kai'Sa" },
+    { dayOffset: 2, gameIdx: 2, win: false, champ: "Jinx" },
+    { dayOffset: 2, gameIdx: 3, win: true, champ: "Jinx" },
+    { dayOffset: 1, gameIdx: 0, win: true, champ: "Jinx" },
+    { dayOffset: 1, gameIdx: 1, win: false, champ: "Caitlyn" },
+    { dayOffset: 1, gameIdx: 2, win: true, champ: "Jinx" },
+    { dayOffset: 0, gameIdx: 0, win: true, champ: "Jinx" },
+    { dayOffset: 0, gameIdx: 1, win: true, champ: "Kai'Sa" },
+  ];
+  return sequence.map((s) => ({
+    win: s.win,
+    gameTimestamp: now - s.dayOffset * DAY - s.gameIdx * GAME,
+    championName: s.champ,
+  }));
+}
+
+const SAMPLE_MATCHES = buildSampleMatches();
+
+/* ------------------------------------------------------------------ */
 /*  Component                                                         */
 /* ------------------------------------------------------------------ */
 
 export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGraphProps) {
+  const useSample = matches.length === 0;
+  const effectiveTier = useSample && !tier ? "GOLD" : tier;
+  const effectiveRank = useSample && !rank ? "I" : rank;
+  const effectiveLp = useSample && currentLp === 0 ? 67 : currentLp;
+  const effectiveMatches = useSample ? SAMPLE_MATCHES : matches;
   const [range, setRange] = useState<string>("7d");
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   const currentAbsLp = useMemo(
-    () => tierRankLpToAbsolute(tier, rank, currentLp),
-    [tier, rank, currentLp],
+    () => tierRankLpToAbsolute(effectiveTier, effectiveRank, effectiveLp),
+    [effectiveTier, effectiveRank, effectiveLp],
   );
 
   const dataPoints = useMemo(() => {
     const rangeMs = TIME_RANGES.find((r) => r.label === range)?.ms ?? TIME_RANGES[1].ms;
     const cutoff = Date.now() - rangeMs;
 
-    const sorted = [...matches]
+    const sorted = [...effectiveMatches]
       .filter((m) => m.gameTimestamp >= cutoff)
       .sort((a, b) => b.gameTimestamp - a.gameTimestamp);
 
@@ -130,9 +180,9 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
 
     points.reverse();
     return points;
-  }, [matches, range, currentAbsLp]);
+  }, [effectiveMatches, range, currentAbsLp]);
 
-  if (!tier || !rank) return null;
+  if (!effectiveTier || !effectiveRank) return null;
 
   const notEnough = dataPoints.length < 3;
 

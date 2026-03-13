@@ -26,6 +26,17 @@ const HIDE_THRESHOLD = 200;
 
 const PERKSTYLES_URL =
   "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perkstyles.json";
+const PERKS_URL =
+  "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perks.json";
+const REF_TREE_ORDER = [8000, 8100, 8200, 8300, 8400];
+const REF_TREE_NAME: Record<number, string> = {
+  8000: "Precision", 8100: "Domination", 8200: "Sorcery", 8300: "Inspiration", 8400: "Resolve",
+};
+const REF_SHARD_ROWS: { label: string; shards: number[] }[] = [
+  { label: "Offense", shards: [5008, 5005, 5007] },
+  { label: "Flex", shards: [5008, 5002, 5003] },
+  { label: "Defense", shards: [5001, 5002, 5003] },
+];
 
 const TREE_ACCENT: Record<number, string> = {
   8000: "#c8aa6e",
@@ -224,6 +235,7 @@ export default function ChampionBuildView({
   const [samples, setSamples] = useState<MatchSample[]>([]);
   const [loading, setLoading] = useState(true);
   const [trees, setTrees] = useState<TreeDef[]>([]);
+  const [allTrees, setAllTrees] = useState<TreeDef[]>([]);
   const [buildTab, setBuildTab] = useState<BuildTab>("popular");
   const [rankFilter, setRankFilter] = useState("all");
   const [playerCount, setPlayerCount] = useState(0);
@@ -234,7 +246,7 @@ export default function ChampionBuildView({
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [bundleResults, treesRes] = await Promise.all([
+      const [bundleResults, treesRes, perksRes] = await Promise.all([
         Promise.allSettled(
           DEMO_ACCOUNTS.map(async ({ riotId, region }) => {
             const url = `/api/riot/profileBundle?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}&queue=solo`;
@@ -243,6 +255,7 @@ export default function ChampionBuildView({
           }),
         ),
         fetch(PERKSTYLES_URL).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(PERKS_URL).then(r => r.ok ? r.json() : null).catch(() => null),
       ]);
       if (cancelled) return;
 
@@ -252,12 +265,29 @@ export default function ChampionBuildView({
 
       if (treesRes?.styles) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setTrees(treesRes.styles.map((s: any) => ({
-          id: s.id, name: s.name ?? "", iconPath: s.iconPath ?? "",
+        const allParsed: TreeDef[] = treesRes.styles.map((s: any) => ({
+          id: s.id, name: s.name ?? REF_TREE_NAME[s.id] ?? "", iconPath: s.iconPath ?? "",
           slots: (s.slots ?? []).map((sl: { type?: string; perks?: number[] }) => ({
             type: sl.type ?? "", perks: sl.perks ?? [],
           })),
-        })));
+        }));
+        setTrees(allParsed);
+        const ordered: TreeDef[] = [];
+        const byId = new Map(allParsed.map(t => [t.id, t]));
+        for (const id of REF_TREE_ORDER) {
+          const t = byId.get(id);
+          if (t) ordered.push(t);
+        }
+        setAllTrees(ordered);
+      }
+
+      if (Array.isArray(perksRes)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const p of perksRes) {
+          if (p.id && !perkNamesById.has(p.id)) {
+            perkNamesById.set(p.id, { name: p.name ?? `Rune ${p.id}`, desc: p.longDesc ?? p.shortDesc ?? "" });
+          }
+        }
       }
 
       const ext = extractSamples(bundles, championName);
@@ -518,6 +548,126 @@ export default function ChampionBuildView({
           </Card>
         </div>
       </div>
+
+      {/* ── Rune Trees Reference ─────────────────── */}
+      {allTrees.length > 0 && (
+        <div className="mt-6">
+          <Card>
+            <CardHead title="Rune Trees Reference" meta="All trees · pick rates" />
+            <div className="overflow-x-auto -mx-1 px-1 mt-4">
+              <div className="flex gap-4 min-w-max lg:min-w-0 lg:grid lg:grid-cols-5">
+                {allTrees.map(tree => {
+                  const accent = TREE_ACCENT[tree.id] ?? "#6366f1";
+                  const treeUrl = tree.iconPath ? perkIconPathToUrl(tree.iconPath) : "";
+                  return (
+                    <div key={tree.id}
+                      className="min-w-[180px] flex-1 rounded-xl bg-[#12131d] border border-white/10 overflow-hidden"
+                      style={{ borderTopColor: accent, borderTopWidth: 3 }}>
+                      <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+                        {treeUrl ? <img src={treeUrl} alt="" className="w-6 h-6" /> :
+                          <div className="w-6 h-6 rounded-full bg-zinc-800" />}
+                        <span className="text-[10px] font-bold uppercase tracking-wider"
+                          style={{ color: accent }}>{tree.name}</span>
+                      </div>
+                      <div className="px-3 pb-2">
+                        {tree.slots.map((slot, si) => {
+                          const isKeystone = si === 0;
+                          const aggs = aggSlotRunes(
+                            samples.filter(s => s.primaryTree === tree.id || s.secondaryTree === tree.id),
+                            s => {
+                              if (isKeystone) return s.keystoneId;
+                              if (s.primaryTree === tree.id) return s.primarySlots[si - 1];
+                              const secIdx = si - 1;
+                              return s.secondarySlots[secIdx];
+                            },
+                            buildTab,
+                          );
+                          const aggMap = new Map(aggs.map(r => [r.id, r]));
+                          const topId = aggs[0]?.id;
+                          return (
+                            <div key={si}>
+                              {si > 0 && <div className="border-t border-white/5 my-1.5" />}
+                              <div className={`flex items-start justify-center gap-${isKeystone ? "3" : "2"} py-1.5`}>
+                                {slot.perks.map(pid => {
+                                  const a = aggMap.get(pid);
+                                  const isTop = pid === topId;
+                                  const name = perkName(pid);
+                                  const desc = perkDesc(pid);
+                                  const sz = isKeystone ? 36 : 26;
+                                  const pr = a?.pickRate ?? 0;
+                                  const wr = a?.winRate ?? 0;
+                                  const g = a?.games ?? 0;
+                                  const tooltip = [
+                                    desc ?? "",
+                                    "",
+                                    `${pr}% pick · ${wr}% WR · ${g} games`,
+                                  ].filter(Boolean).join("\n");
+                                  return (
+                                    <LeagueTooltip key={pid} title={name} body={tooltip}>
+                                      <div className="flex flex-col items-center gap-0.5 cursor-default"
+                                        style={{ opacity: isTop ? 1 : 0.4, transition: "opacity 0.2s" }}>
+                                        <img src={getPerkIcon(pid)} alt={name}
+                                          className="rounded-full"
+                                          style={{
+                                            width: sz, height: sz,
+                                            border: isTop ? `2px solid ${accent}` : "2px solid transparent",
+                                            boxShadow: isTop ? `0 0 8px ${accent}55` : undefined,
+                                          }} />
+                                        <span className="text-[8px] text-zinc-500 tabular-nums">
+                                          {pr > 0 ? `${pr}%` : "\u2014"}
+                                        </span>
+                                      </div>
+                                    </LeagueTooltip>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="px-3 pb-3 pt-1 border-t border-white/5">
+                        <p className="text-[9px] text-zinc-600 uppercase tracking-widest mb-1.5 font-semibold">Shards</p>
+                        {REF_SHARD_ROWS.map((row) => {
+                          const shardAgg = aggSlotRunes(
+                            samples.filter(s => s.primaryTree === tree.id),
+                            s => {
+                              const idx = REF_SHARD_ROWS.indexOf(row);
+                              return s.shardIds[idx];
+                            },
+                            buildTab,
+                          );
+                          const shardMap = new Map(shardAgg.map(r => [r.id, r]));
+                          const topShard = shardAgg[0]?.id;
+                          return (
+                            <div key={row.label} className="mb-1.5">
+                              <p className="text-[8px] text-zinc-600 mb-0.5">{row.label}</p>
+                              <div className="flex items-center gap-2">
+                                {row.shards.map(sid => {
+                                  const a = shardMap.get(sid);
+                                  const isTop = sid === topShard;
+                                  return (
+                                    <div key={`${row.label}-${sid}`}
+                                      className="flex flex-col items-center gap-0"
+                                      style={{ opacity: isTop ? 1 : 0.4 }}>
+                                      <img src={SHARD_ICONS[sid] ?? ""} alt="" className="w-4 h-4" />
+                                      <span className="text-[8px] text-zinc-500">{SHARD_NAMES[sid] ?? sid}</span>
+                                      <span className="text-[8px] text-zinc-600">{a ? `${a.pickRate}%` : "\u2014"}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

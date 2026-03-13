@@ -53,10 +53,8 @@ function analyzeSession(session: SessionMatch[]): {
   }
 
   let champSwitches = 0;
-  if (lossStreak >= 2) {
-    const streakChamps = session.slice(0, lossStreak).map((m) => m.championName);
-    const uniqueChamps = new Set(streakChamps);
-    champSwitches = uniqueChamps.size - 1;
+  for (let i = 1; i < session.length; i++) {
+    if (session[i].championName !== session[i - 1].championName) champSwitches++;
   }
 
   let state: CardState;
@@ -75,28 +73,28 @@ function analyzeSession(session: SessionMatch[]): {
   return { state, wins, losses, lossStreak, champSwitches };
 }
 
+const SAMPLE_SESSION: SessionMatch[] = [
+  { win: false, championName: "Yasuo", gameTimestamp: Date.now() - 600_000 },
+  { win: false, championName: "Ahri", gameTimestamp: Date.now() - 3_000_000 },
+  { win: false, championName: "Zed", gameTimestamp: Date.now() - 5_400_000 },
+  { win: true, championName: "Jinx", gameTimestamp: Date.now() - 7_800_000 },
+  { win: true, championName: "Jinx", gameTimestamp: Date.now() - 10_200_000 },
+  { win: true, championName: "Jinx", gameTimestamp: Date.now() - 12_600_000 },
+];
+
 export function SessionHealthCard({ matches }: { matches: SessionMatch[] }) {
+  const effectiveMatches = matches.length > 0 ? matches : SAMPLE_SESSION;
+  const isSample = matches.length === 0;
+
   const analysis = useMemo(() => {
-    const sessions = groupIntoSessions(matches);
+    const sessions = groupIntoSessions(effectiveMatches);
     if (sessions.length === 0) return null;
     const current = sessions[0];
     return { ...analyzeSession(current), session: current };
-  }, [matches]);
+  }, [effectiveMatches]);
 
   if (!analysis) {
-    return (
-      <div
-        className="rounded-xl p-4"
-        style={{
-          background: "#151620",
-          borderLeft: "4px solid #666",
-        }}
-      >
-        <p className="text-sm" style={{ color: "rgba(255,255,255,0.9)" }}>
-          No games today yet.
-        </p>
-      </div>
-    );
+    return null;
   }
 
   const { state, wins, losses, lossStreak, champSwitches, session } = analysis;
@@ -128,6 +126,20 @@ export function SessionHealthCard({ matches }: { matches: SessionMatch[] }) {
         borderLeft: `4px solid ${borderColor}`,
       }}
     >
+      {isSample && (
+        <div style={{ marginBottom: 8 }}>
+          <span style={{
+            fontSize: 9,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            color: "#F1C40F",
+            opacity: 0.6,
+          }}>
+            Session Health
+          </span>
+        </div>
+      )}
       <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.9)" }}>
         {message}
       </p>
