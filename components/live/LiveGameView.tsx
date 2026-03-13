@@ -24,31 +24,38 @@ function getKeystoneRuneUrl(path: string, runeName: string): string {
   return `https://ddragon.leagueoflegends.com/cdn/img/perk-images/Styles/${path}/${key}/${key}.png`;
 }
 
-/** Role badge label and color (Top/Jungle/Mid/ADC/Support) */
-const ROLE_BADGE: Record<string, { label: string; color: string }> = {
-  top: { label: "Top", color: "#8B4513" },
-  jungle: { label: "Jungle", color: "#228B22" },
-  mid: { label: "Mid", color: "#4169E1" },
-  bot: { label: "ADC", color: "#DC143C" },
-  support: { label: "Support", color: "#9370DB" },
+/** Official Riot role icon URLs (CommunityDragon) */
+const ROLE_ICON_URL: Record<string, string> = {
+  top: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-top.png",
+  jungle: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-jungle.png",
+  mid: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-middle.png",
+  bot: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-bottom.png",
+  support: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-utility.png",
 };
 
-function RoleBadge({ role }: { role: string }) {
-  const cfg = ROLE_BADGE[role] ?? { label: role, color: "#888" };
+const ICON_FALLBACK_STYLE = { width: 20, height: 20, background: "#555", borderRadius: 2 };
+
+function IconWithFallback({ src, alt, size = 20 }: { src: string; alt?: string; size?: number }) {
   return (
-    <span
-      style={{
-        fontSize: 14,
-        padding: "2px 6px",
-        borderRadius: 9999,
-        background: `${cfg.color}33`,
-        color: cfg.color,
-        fontWeight: 600,
-      }}
-    >
-      {cfg.label}
-    </span>
+    <div style={{ ...ICON_FALLBACK_STYLE, width: size, height: size, overflow: "hidden", flexShrink: 0 }}>
+      <img
+        src={src}
+        alt={alt ?? ""}
+        width={size}
+        height={size}
+        style={{ borderRadius: 2, display: "block" }}
+        onError={(e) => {
+          e.currentTarget.style.display = "none";
+        }}
+      />
+    </div>
   );
+}
+
+function RoleIcon({ role, size = 20 }: { role: string; size?: number }) {
+  const url = ROLE_ICON_URL[role];
+  if (!url) return <div style={{ ...ICON_FALLBACK_STYLE, width: size, height: size }} />;
+  return <IconWithFallback src={url} size={size} />;
 }
 
 import { useFollowing } from "@/components/following/useFollowing";
@@ -191,10 +198,10 @@ function PlayerRow({
             className="live-page-champ-icon"
           />
           <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <RoleBadge role={role} />
-            <img src={getSummonerSpellIconUrl(spell1)} alt="" width={iconSize} height={iconSize} style={{ borderRadius: 2 }} />
-            <img src={getSummonerSpellIconUrl(spell2)} alt="" width={iconSize} height={iconSize} style={{ borderRadius: 2 }} />
-            <img src={getKeystoneRuneUrl(keystonePath, keystoneName)} alt="" width={iconSize} height={iconSize} style={{ borderRadius: 2 }} />
+            <RoleIcon role={role} size={iconSize} />
+            <IconWithFallback src={getSummonerSpellIconUrl(spell1)} size={iconSize} />
+            <IconWithFallback src={getSummonerSpellIconUrl(spell2)} size={iconSize} />
+            <IconWithFallback src={getKeystoneRuneUrl(keystonePath, keystoneName)} size={iconSize} />
           </div>
         </div>
         <div>
