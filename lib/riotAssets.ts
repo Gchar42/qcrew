@@ -162,7 +162,8 @@ export function getItemTooltip(
     let html = data.description
       .replace(/<mainText>|<\/mainText>/g, "")
       .replace(/<stats>([\s\S]*?)<\/stats>/g, '<div class="tt-stats">$1</div>')
-      .replace(/<br\s*\/?>/g, "<br>");
+      .replace(/<br\s*\/?>/g, "<br>")
+      .replace(/<\/div>(<br>)+/g, "</div>");
 
     if (data.gold) {
       html += `<div class="tt-cost">Cost:<span class="tt-gold">${data.gold.toLocaleString()}</span></div>`;
