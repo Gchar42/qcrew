@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   getRankEmblemUrl,
   getChampionSquareUrl,
+  getChampionSplashUrl,
   getProfileIconUrl,
 } from "@/lib/riotAssets";
 
@@ -93,6 +94,10 @@ function tierScore(tier: string, rank: string, lp: number): number {
 type VerdictCategory = {
   label: string;
   winner: 0 | 1 | 2;
+  v1: number;
+  v2: number;
+  d1: string;
+  d2: string;
 };
 
 function computeVerdict(
@@ -107,33 +112,86 @@ function computeVerdict(
   const recent1 = s1.recentForm.slice(0, 10).filter(Boolean).length;
   const recent2 = s2.recentForm.slice(0, 10).filter(Boolean).length;
 
-  const pairs: [string, number, number][] = [
-    ["Rank", tierScore(q1.tier, q1.rank, q1.lp), tierScore(q2.tier, q2.rank, q2.lp)],
-    ["Win Rate", q1.wr, q2.wr],
-    ["KDA", kda1.ratio, kda2.ratio],
-    ["CS/min", s1.csPerMin, s2.csPerMin],
-    ["Damage", s1.avgDamage, s2.avgDamage],
-    ["Vision", s1.avgVision, s2.avgVision],
-    ["Form", recent1, recent2],
-    ["Gold", s1.avgGold, s2.avgGold],
+  const pairs: [string, number, number, string, string][] = [
+    ["Rank", tierScore(q1.tier, q1.rank, q1.lp), tierScore(q2.tier, q2.rank, q2.lp), formatTier(q1.tier, q1.rank), formatTier(q2.tier, q2.rank)],
+    ["Win Rate", q1.wr, q2.wr, `${q1.wr}%`, `${q2.wr}%`],
+    ["KDA", kda1.ratio, kda2.ratio, kda1.ratio.toFixed(2), kda2.ratio.toFixed(2)],
+    ["CS/min", s1.csPerMin, s2.csPerMin, s1.csPerMin.toFixed(1), s2.csPerMin.toFixed(1)],
+    ["Damage", s1.avgDamage, s2.avgDamage, s1.avgDamage > 0 ? `${(s1.avgDamage / 1000).toFixed(1)}k` : "\u2014", s2.avgDamage > 0 ? `${(s2.avgDamage / 1000).toFixed(1)}k` : "\u2014"],
+    ["Vision", s1.avgVision, s2.avgVision, s1.avgVision.toFixed(1), s2.avgVision.toFixed(1)],
+    ["Form", recent1, recent2, `${recent1}/10`, `${recent2}/10`],
+    ["Gold", s1.avgGold, s2.avgGold, s1.avgGold > 0 ? `${(s1.avgGold / 1000).toFixed(1)}k` : "\u2014", s2.avgGold > 0 ? `${(s2.avgGold / 1000).toFixed(1)}k` : "\u2014"],
   ];
 
   let p1Score = 0;
   let p2Score = 0;
-  const categories: VerdictCategory[] = pairs.map(([label, v1, v2]) => {
+  const categories: VerdictCategory[] = pairs.map(([label, v1, v2, d1, d2]) => {
     const winner: 0 | 1 | 2 = v1 > v2 ? 1 : v2 > v1 ? 2 : 0;
     if (winner === 1) p1Score++;
     if (winner === 2) p2Score++;
-    return { label, winner };
+    return { label, winner, v1, v2, d1, d2 };
   });
 
   return { categories, p1Score, p2Score };
+}
+
+function generateVerdictSentence(
+  categories: VerdictCategory[],
+  name1: string,
+  name2: string,
+): string {
+  const withGap = categories
+    .filter((c) => c.winner !== 0)
+    .map((c) => {
+      const avg = (c.v1 + c.v2) / 2;
+      const relGap = avg > 0 ? Math.abs(c.v1 - c.v2) / avg : 0;
+      return { ...c, relGap };
+    })
+    .sort((a, b) => b.relGap - a.relGap);
+
+  if (withGap.length === 0) {
+    return "Statistically identical \u2014 nothing separates these two.";
+  }
+
+  const top = withGap[0];
+  const topWinner = top.winner === 1 ? name1 : name2;
+  const topBetter = top.winner === 1 ? top.d1 : top.d2;
+  const topWorse = top.winner === 1 ? top.d2 : top.d1;
+
+  if (withGap.length === 1) {
+    return `Nearly identical stats \u2014 the gap is in ${top.label}: ${topBetter} vs ${topWorse}.`;
+  }
+
+  const second = withGap[1];
+  const secondWinner = second.winner === 1 ? name1 : name2;
+  const secondBetter = second.winner === 1 ? second.d1 : second.d2;
+  const secondWorse = second.winner === 1 ? second.d2 : second.d1;
+
+  if (top.winner === second.winner) {
+    return `${topWinner} pulls ahead in ${top.label} (${topBetter} vs ${topWorse}) and ${second.label} (${secondBetter} vs ${secondWorse}).`;
+  }
+
+  return `${topWinner} has better ${top.label} (${topBetter} vs ${topWorse}) but ${secondWinner} edges in ${second.label} (${secondBetter} vs ${secondWorse}).`;
 }
 
 function activityDotColor(pct: number): string {
   if (pct >= 50) return "#22c55e";
   if (pct >= 30) return "#facc15";
   return "#6b7a90";
+}
+
+function getViewerInfo(): { riotId: string; region: string } | null {
+  try {
+    const raw = localStorage.getItem("statgap_recent");
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    if (Array.isArray(arr) && arr.length > 0 && arr[0].riotId && arr[0].region) {
+      return { riotId: arr[0].riotId, region: arr[0].region };
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
 }
 
 /* ── Sub-Components ─────────────────────────────────────── */
@@ -322,6 +380,14 @@ export default function CompareResults({
 }) {
   const [queue, setQueue] = useState<"solo" | "flex">("solo");
   const [copied, setCopied] = useState(false);
+  const [viewerInfo, setViewerInfo] = useState<{
+    riotId: string;
+    region: string;
+  } | null>(null);
+
+  useEffect(() => {
+    setViewerInfo(getViewerInfo());
+  }, []);
 
   const q1 = stats1[queue];
   const q2 = stats2[queue];
@@ -355,12 +421,15 @@ export default function CompareResults({
     });
   }, [stats1, stats2]);
 
-  const verdictText =
-    verdict.p1Score > verdict.p2Score
-      ? `${stats1.name} leads ${verdict.p1Score}\u2013${verdict.p2Score} across key stats`
-      : verdict.p2Score > verdict.p1Score
-        ? `${stats2.name} leads ${verdict.p2Score}\u2013${verdict.p1Score} across key stats`
-        : "It\u2019s dead even \u2014 both players are neck and neck";
+  const verdictSentence = useMemo(
+    () =>
+      generateVerdictSentence(
+        verdict.categories,
+        `${stats1.name}#${stats1.tag}`,
+        `${stats2.name}#${stats2.tag}`,
+      ),
+    [verdict.categories, stats1.name, stats1.tag, stats2.name, stats2.tag],
+  );
 
   const winnerSide =
     verdict.p1Score > verdict.p2Score
@@ -368,6 +437,26 @@ export default function CompareResults({
       : verdict.p2Score > verdict.p1Score
         ? "right"
         : "tie";
+
+  const tierColor1 = TIER_COLORS[q1.tier.toUpperCase()] ?? "#2a3345";
+  const tierColor2 = TIER_COLORS[q2.tier.toUpperCase()] ?? "#2a3345";
+  const splash1 = q1.topChamps[0]?.name
+    ? getChampionSplashUrl(q1.topChamps[0].name)
+    : null;
+  const splash2 = q2.topChamps[0]?.name
+    ? getChampionSplashUrl(q2.topChamps[0].name)
+    : null;
+
+  const p1Full = `${stats1.name}#${stats1.tag}`.toLowerCase();
+  const p2Full = `${stats2.name}#${stats2.tag}`.toLowerCase();
+  const viewerAlreadyIn =
+    viewerInfo &&
+    (viewerInfo.riotId.toLowerCase() === p1Full ||
+      viewerInfo.riotId.toLowerCase() === p2Full);
+  const challengeUrl =
+    viewerInfo && !viewerAlreadyIn
+      ? `/compare?summoner1=${encodeURIComponent(viewerInfo.riotId)}&region1=${encodeURIComponent(viewerInfo.region)}&summoner2=${encodeURIComponent(`${stats2.name}#${stats2.tag}`)}&region2=${encodeURIComponent(stats2.region)}`
+      : null;
 
   return (
     <div className="cr-results">
@@ -387,11 +476,47 @@ export default function CompareResults({
         </button>
       </div>
 
-      {/* ── Player Headers ───────────────────────────── */}
+      {/* ── Player Headers with splash backgrounds ──── */}
       <div className="cr-header-row">
-        <PlayerHeader stats={stats1} />
+        <div
+          className="cr-player-col"
+          style={{
+            borderLeftColor: tierColor1,
+            boxShadow: `inset 4px 0 12px -4px ${tierColor1}44`,
+          }}
+        >
+          {splash1 && (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <div
+                className="cr-header-splash"
+                style={{ backgroundImage: `url(${splash1})` }}
+              />
+              <div className="cr-header-overlay" />
+            </>
+          )}
+          <PlayerHeader stats={stats1} />
+        </div>
         <div className="cr-vs-badge">VS</div>
-        <PlayerHeader stats={stats2} />
+        <div
+          className="cr-player-col"
+          style={{
+            borderLeftColor: tierColor2,
+            boxShadow: `inset 4px 0 12px -4px ${tierColor2}44`,
+          }}
+        >
+          {splash2 && (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <div
+                className="cr-header-splash"
+                style={{ backgroundImage: `url(${splash2})` }}
+              />
+              <div className="cr-header-overlay" />
+            </>
+          )}
+          <PlayerHeader stats={stats2} />
+        </div>
       </div>
 
       {/* ── Verdict Banner ───────────────────────────── */}
@@ -399,7 +524,7 @@ export default function CompareResults({
         <div className="cr-verdict-icon">
           {winnerSide === "tie" ? "🤝" : "🏆"}
         </div>
-        <div className="cr-verdict-text">{verdictText}</div>
+        <div className="cr-verdict-text">{verdictSentence}</div>
         <div className="cr-verdict-chips">
           {verdict.categories.map((c) => (
             <span
@@ -594,12 +719,20 @@ export default function CompareResults({
         </div>
       </div>
 
-      {/* ── Share ────────────────────────────────────── */}
+      {/* ── Share + Challenge ────────────────────────── */}
       <div className="cr-share-row">
         <button className="cr-share-btn" onClick={handleShare}>
           {copied ? "Link Copied!" : "Share Comparison"}
         </button>
       </div>
+      {challengeUrl && (
+        <div className="cr-challenge-line">
+          Think you can do better?{" "}
+          <a href={challengeUrl} className="cr-challenge-link">
+            Search yourself vs {stats2.name}
+          </a>
+        </div>
+      )}
     </div>
   );
 }

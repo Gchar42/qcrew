@@ -263,8 +263,36 @@
   padding: 0;
 }
 
-.cr-player-header {
+.cr-player-col {
   flex: 1;
+  position: relative;
+  overflow: hidden;
+  border-left: 4px solid transparent;
+  transition: border-color 0.3s;
+}
+
+.cr-header-splash {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 20%;
+  opacity: 0.18;
+}
+
+.cr-header-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(22, 27, 37, 0.88) 0%,
+    rgba(22, 27, 37, 0.55) 50%,
+    rgba(22, 27, 37, 0.85) 100%
+  );
+}
+
+.cr-player-header {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -705,6 +733,27 @@
   transform: translateY(-1px);
 }
 
+/* ── Challenge Line ────────────────────────────────────── */
+
+.cr-challenge-line {
+  text-align: center;
+  padding: 12px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.cr-challenge-link {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.cr-challenge-link:hover {
+  color: #93bbfc;
+  text-decoration: underline;
+}
+
 /* ── Responsive ─────────────────────────────────────────── */
 
 @media (max-width: 700px) {
@@ -713,6 +762,9 @@
   .compare-picker-group input { width: 150px; }
 
   .cr-header-row { flex-direction: column; }
+  .cr-player-col {
+    border-left-width: 3px;
+  }
   .cr-vs-badge {
     padding: 8px 0;
     min-width: auto;
