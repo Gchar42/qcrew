@@ -978,8 +978,8 @@ export default function SummonerProfileBeige({
             <span className="season-tag">S15</span>
           </div>
           <div className="card-body">
-            <div className="rank-emblem">
-              <div className="emblem-icon">
+            <div className="rank-emblem" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0, minWidth: 88 }}>
+              <div className="emblem-icon" style={{ width: 84, height: 84, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {tier ? (
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -987,9 +987,11 @@ export default function SummonerProfileBeige({
                       className="emblem-img"
                       src={getRankEmblemUrl(tier)}
                       alt=""
-                      width={90}
-                      height={90}
+                      width={80}
+                      height={80}
+                      style={{ width: 80, height: 80, objectFit: "contain", filter: "drop-shadow(0 3px 8px rgba(0,0,0,0.6))" }}
                       onError={(e) => {
+                        console.error("[rank-emblem] Failed to load:", e.currentTarget.src);
                         e.currentTarget.style.display = "none";
                         const fallback = e.currentTarget.nextElementSibling;
                         if (fallback) (fallback as HTMLElement).style.display = "flex";
