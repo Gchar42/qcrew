@@ -1,7 +1,7 @@
 /* Following Feed */
 
 .ff-container {
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 32px 16px 64px;
   font-family: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
@@ -11,14 +11,7 @@
 /* ── Header ──────────────────────────────────────────────── */
 
 .ff-header {
-  margin-bottom: 24px;
-}
-
-.ff-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
+  margin-bottom: 0;
 }
 
 .ff-title {
@@ -51,6 +44,55 @@
 .ff-share-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(191, 148, 255, 0.4);
+}
+
+/* ── Tabs ────────────────────────────────────────────────── */
+
+.ff-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 20px 0 20px;
+}
+
+.ff-tab {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.ff-tab:hover {
+  color: #adadb8;
+}
+
+.ff-tab-active {
+  color: #efeff1;
+  border-bottom-color: #bf94ff;
+}
+
+/* ── Overview toolbar ────────────────────────────────────── */
+
+.ff-overview-toolbar {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ff-overview-toolbar .ff-add-section {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.ff-overview-toolbar .ff-share-btn {
+  margin-top: 0;
+  flex-shrink: 0;
 }
 
 /* ── Add form ────────────────────────────────────────────── */
@@ -432,4 +474,200 @@
   max-width: 360px;
   margin-inline: auto;
   line-height: 1.5;
+}
+
+/* ── Leaderboard ─────────────────────────────────────────── */
+
+.ff-lb {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ff-lb-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ff-lb-count {
+  font-size: 13px;
+  color: #adadb8;
+  font-weight: 500;
+}
+
+.ff-lb-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 0;
+  font-size: 14px;
+  color: #adadb8;
+}
+
+.ff-lb-table-wrap {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.ff-lb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ff-lb-th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ff-lb-row {
+  transition: background 0.12s;
+}
+
+.ff-lb-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ff-lb-row:not(:last-child) .ff-lb-td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ff-lb-row-viewer {
+  border-left: 3px solid #bf94ff;
+  background: rgba(191, 148, 255, 0.05);
+}
+
+.ff-lb-td {
+  padding: 10px 12px;
+  vertical-align: middle;
+}
+
+/* Position column */
+.ff-lb-col-pos {
+  width: 44px;
+  text-align: center;
+}
+
+.ff-lb-medal {
+  font-size: 16px;
+}
+
+.ff-lb-num {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+/* Player column */
+.ff-lb-col-player {
+  min-width: 120px;
+}
+
+.ff-lb-player-link {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  text-decoration: none;
+  transition: opacity 0.12s;
+}
+
+.ff-lb-player-link:hover {
+  opacity: 0.8;
+}
+
+.ff-lb-player-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #efeff1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+}
+
+.ff-lb-player-region {
+  font-size: 10px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+/* Rank column */
+.ff-lb-col-rank {
+  min-width: 140px;
+}
+
+.ff-lb-rank-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ff-lb-rank-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.ff-lb-rank-text {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ff-lb-rank-lp {
+  font-size: 11px;
+  color: #adadb8;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* WR column */
+.ff-lb-col-wr {
+  width: 56px;
+  text-align: right;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* Games column */
+.ff-lb-col-games {
+  width: 52px;
+  text-align: right;
+  font-size: 12px;
+  color: #adadb8;
+}
+
+/* LP Today column */
+.ff-lb-col-lp {
+  width: 72px;
+  text-align: right;
+  font-size: 12px;
+}
+
+.ff-lb-lp-up {
+  color: #34d399;
+  font-weight: 600;
+}
+
+.ff-lb-lp-down {
+  color: #f87171;
+  font-weight: 600;
+}
+
+.ff-lb-muted {
+  color: #3a3a3d;
 }
