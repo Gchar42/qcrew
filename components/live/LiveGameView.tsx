@@ -26,11 +26,11 @@ function getKeystoneRuneUrl(path: string, runeName: string): string {
 
 /** Official Riot position icon URLs (CommunityDragon) */
 const ROLE_ICON_URL: Record<string, string> = {
-  top: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/top.png",
-  jungle: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/jungle.png",
-  mid: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/middle.png",
-  bot: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/bottom.png",
-  support: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/utility.png",
+  top: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-top.png",
+  jungle: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-jungle.png",
+  mid: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-middle.png",
+  bot: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-bottom.png",
+  support: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-utility.png",
 };
 
 function RoleIcon({ role, size = 20 }: { role: string; size?: number }) {
