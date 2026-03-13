@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { getRankEmblemUrl } from "@/lib/riotAssets";
 import type { FollowEntry } from "./useFollowing";
 
@@ -45,6 +45,10 @@ const REGION_LABELS: Record<string, string> = {
 };
 
 const MEDALS = ["🥇", "🥈", "🥉"];
+const AVG_LP_PER_WIN = 22;
+const AVG_LP_PER_LOSS = 18;
+
+type Streak = { type: "win" | "loss"; count: number };
 
 type LeaderboardRow = {
   riotId: string;
@@ -56,16 +60,22 @@ type LeaderboardRow = {
   wins: number;
   losses: number;
   gamesThisWeek: number;
+  winsThisWeek: number;
+  lossesThisWeek: number;
   lpChangeToday: number | null;
+  streak: Streak | null;
+  lastMatchTimestamp: number | null;
 };
 
-function getViewerRiotId(): string | null {
+type ViewerInfo = { riotId: string; region: string } | null;
+
+function getViewerInfo(): ViewerInfo {
   try {
     const raw = localStorage.getItem("statgap_recent");
     if (!raw) return null;
     const arr = JSON.parse(raw);
-    if (Array.isArray(arr) && arr.length > 0 && arr[0].riotId) {
-      return arr[0].riotId.toLowerCase();
+    if (Array.isArray(arr) && arr.length > 0 && arr[0].riotId && arr[0].region) {
+      return { riotId: arr[0].riotId, region: arr[0].region };
     }
   } catch {
     /* ignore */
@@ -73,9 +83,49 @@ function getViewerRiotId(): string | null {
   return null;
 }
 
-async function fetchRow(
-  entry: FollowEntry,
-): Promise<LeaderboardRow | null> {
+type MatchParticipant = {
+  puuid: string;
+  win: boolean;
+};
+
+type MatchEntry = {
+  info: {
+    queueId?: number;
+    gameEndTimestamp?: number;
+    participants: MatchParticipant[];
+  };
+  metadata: { participants?: string[] };
+};
+
+function computeStreak(
+  matches: MatchEntry[],
+  playerPuuid: string,
+): Streak | null {
+  let type: "win" | "loss" | null = null;
+  let count = 0;
+
+  for (const m of matches) {
+    if (m.info?.queueId !== 420) continue;
+    const me = m.info.participants?.find((p) => p.puuid === playerPuuid);
+    if (!me) continue;
+
+    if (type === null) {
+      type = me.win ? "win" : "loss";
+      count = 1;
+    } else if ((me.win && type === "win") || (!me.win && type === "loss")) {
+      count++;
+    } else {
+      break;
+    }
+  }
+
+  if (!type) return null;
+  if (type === "win" && count >= 5) return { type, count };
+  if (type === "loss" && count >= 3) return { type, count };
+  return null;
+}
+
+async function fetchRow(entry: FollowEntry): Promise<LeaderboardRow | null> {
   try {
     const url = `/api/riot/profileBundle?riotId=${encodeURIComponent(entry.riotId)}&region=${encodeURIComponent(entry.region)}&queue=solo`;
     const res = await fetch(url, { cache: "no-store" });
@@ -87,7 +137,9 @@ async function fetchRow(
 
     const now = Date.now();
     const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
-    let gamesThisWeek = 0;
+    let winsThisWeek = 0;
+    let lossesThisWeek = 0;
+    let lastMatchTimestamp: number | null = null;
 
     let playerPuuid = "";
     for (const m of bundle.matches ?? []) {
@@ -108,8 +160,19 @@ async function fetchRow(
       const me = m.info.participants?.find(
         (p: { puuid: string }) => p.puuid === playerPuuid,
       );
-      if (me && gameEnd > oneWeekAgo) gamesThisWeek++;
+      if (!me) continue;
+
+      if (lastMatchTimestamp === null || gameEnd > lastMatchTimestamp) {
+        lastMatchTimestamp = gameEnd;
+      }
+
+      if (gameEnd > oneWeekAgo) {
+        if (me.win) winsThisWeek++;
+        else lossesThisWeek++;
+      }
     }
+
+    const streak = computeStreak(bundle.matches ?? [], playerPuuid);
 
     return {
       riotId: entry.riotId,
@@ -120,8 +183,12 @@ async function fetchRow(
       lp: solo?.leaguePoints ?? null,
       wins: solo?.wins ?? 0,
       losses: solo?.losses ?? 0,
-      gamesThisWeek,
+      gamesThisWeek: winsThisWeek + lossesThisWeek,
+      winsThisWeek,
+      lossesThisWeek,
       lpChangeToday: null,
+      streak,
+      lastMatchTimestamp,
     };
   } catch {
     return null;
@@ -137,6 +204,57 @@ function sortRows(rows: LeaderboardRow[]): LeaderboardRow[] {
   });
 }
 
+function generateTrashTalk(
+  rows: LeaderboardRow[],
+  viewerIdx: number,
+): string | null {
+  if (viewerIdx < 0 || rows.length < 2) return null;
+  const viewer = rows[viewerIdx];
+
+  if (viewerIdx === 0) {
+    return "You\u2019re leading the leaderboard. Don\u2019t slip up.";
+  }
+
+  if (viewerIdx === rows.length - 1) {
+    return "You\u2019re at the bottom. Everyone above you is beatable.";
+  }
+
+  const above = rows[viewerIdx - 1];
+  const aboveLp = above.lp ?? 0;
+  const viewerLp = viewer.lp ?? 0;
+  const lpGap = aboveLp - viewerLp;
+
+  if (lpGap === 0) {
+    return `You and ${above.name} are tied. Someone has to blink first.`;
+  }
+
+  return `${above.name} is ${lpGap} LP ahead of you. Time to grind.`;
+}
+
+function activityColor(timestamp: number | null): string {
+  if (!timestamp) return "#3a3a3d";
+  const hours = (Date.now() - timestamp) / (1000 * 60 * 60);
+  if (hours <= 2) return "#34d399";
+  if (hours <= 24) return "#facc15";
+  return "#3a3a3d";
+}
+
+function findMostImproved(rows: LeaderboardRow[]): number {
+  let bestIdx = -1;
+  let bestScore = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    if (r.gamesThisWeek === 0) continue;
+    const score =
+      r.winsThisWeek * AVG_LP_PER_WIN - r.lossesThisWeek * AVG_LP_PER_LOSS;
+    if (score > bestScore) {
+      bestScore = score;
+      bestIdx = i;
+    }
+  }
+  return bestIdx;
+}
+
 export default function FollowLeaderboard({
   follows,
 }: {
@@ -145,10 +263,10 @@ export default function FollowLeaderboard({
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [viewerRiotId, setViewerRiotId] = useState<string | null>(null);
+  const [viewer, setViewer] = useState<ViewerInfo>(null);
 
   useEffect(() => {
-    setViewerRiotId(getViewerRiotId());
+    setViewer(getViewerInfo());
   }, []);
 
   useEffect(() => {
@@ -186,6 +304,20 @@ export default function FollowLeaderboard({
     });
   }, [follows]);
 
+  const viewerIdx = useMemo(() => {
+    if (!viewer) return -1;
+    return rows.findIndex(
+      (r) => r.name.toLowerCase() === viewer.riotId.toLowerCase(),
+    );
+  }, [rows, viewer]);
+
+  const trashTalk = useMemo(
+    () => generateTrashTalk(rows, viewerIdx),
+    [rows, viewerIdx],
+  );
+
+  const mostImprovedIdx = useMemo(() => findMostImproved(rows), [rows]);
+
   if (follows.length === 0) {
     return (
       <div className="ff-empty">
@@ -200,6 +332,10 @@ export default function FollowLeaderboard({
 
   return (
     <div className="ff-lb">
+      {trashTalk && (
+        <div className="ff-lb-trashtalk">{trashTalk}</div>
+      )}
+
       <div className="ff-lb-toolbar">
         <span className="ff-lb-count">{rows.length} players ranked</span>
         <button className="ff-share-btn" onClick={handleShare}>
@@ -223,6 +359,7 @@ export default function FollowLeaderboard({
                 <th className="ff-lb-th ff-lb-col-wr">WR</th>
                 <th className="ff-lb-th ff-lb-col-games">Week</th>
                 <th className="ff-lb-th ff-lb-col-lp">LP Today</th>
+                <th className="ff-lb-th ff-lb-col-action" />
               </tr>
             </thead>
             <tbody>
@@ -242,31 +379,76 @@ export default function FollowLeaderboard({
                 const regionLabel =
                   REGION_LABELS[row.region.toLowerCase()] ??
                   row.region.toUpperCase();
-                const isViewer =
-                  viewerRiotId &&
-                  row.name.toLowerCase() === viewerRiotId;
+                const isViewer = i === viewerIdx;
                 const profileUrl = `/summoner?riotId=${encodeURIComponent(row.riotId)}&region=${encodeURIComponent(row.region)}`;
+                const dotColor = activityColor(row.lastMatchTimestamp);
+                const isMostImproved = i === mostImprovedIdx;
+
+                const challengeUrl =
+                  viewer && !isViewer
+                    ? `/compare?p1=${encodeURIComponent(viewer.riotId)}&p2=${encodeURIComponent(row.riotId)}&r1=${encodeURIComponent(viewer.region)}&r2=${encodeURIComponent(row.region)}`
+                    : null;
 
                 return (
                   <tr
                     key={`${row.riotId}:${row.region}`}
                     className={`ff-lb-row${isViewer ? " ff-lb-row-viewer" : ""}`}
                   >
+                    {/* Position */}
                     <td className="ff-lb-td ff-lb-col-pos">
-                      {i < 3 ? (
-                        <span className="ff-lb-medal">{MEDALS[i]}</span>
-                      ) : (
-                        <span className="ff-lb-num">{i + 1}</span>
-                      )}
+                      <div className="ff-lb-pos-cell">
+                        {i < 3 ? (
+                          <span className="ff-lb-medal">{MEDALS[i]}</span>
+                        ) : (
+                          <span className="ff-lb-num">{i + 1}</span>
+                        )}
+                        {isMostImproved && (
+                          <span
+                            className="ff-lb-improved"
+                            title="Most Improved"
+                          >
+                            ⭐
+                          </span>
+                        )}
+                      </div>
                     </td>
+
+                    {/* Player */}
                     <td className="ff-lb-td ff-lb-col-player">
-                      <a href={profileUrl} className="ff-lb-player-link">
-                        <span className="ff-lb-player-name">{row.name}</span>
-                        <span className="ff-lb-player-region">
-                          {regionLabel}
-                        </span>
-                      </a>
+                      <div className="ff-lb-player-cell">
+                        <span
+                          className="ff-lb-activity-dot"
+                          style={{ background: dotColor }}
+                          title={
+                            dotColor === "#34d399"
+                              ? "Active now"
+                              : dotColor === "#facc15"
+                                ? "Played today"
+                                : "Inactive"
+                          }
+                        />
+                        <a href={profileUrl} className="ff-lb-player-link">
+                          <span className="ff-lb-player-name">
+                            {row.name}
+                          </span>
+                          <span className="ff-lb-player-region">
+                            {regionLabel}
+                          </span>
+                        </a>
+                        {row.streak && row.streak.type === "win" && (
+                          <span className="ff-lb-streak ff-lb-streak-win">
+                            🔥{row.streak.count}
+                          </span>
+                        )}
+                        {row.streak && row.streak.type === "loss" && (
+                          <span className="ff-lb-streak ff-lb-streak-loss">
+                            💀{row.streak.count}
+                          </span>
+                        )}
+                      </div>
                     </td>
+
+                    {/* Rank */}
                     <td className="ff-lb-td ff-lb-col-rank">
                       <div className="ff-lb-rank-cell">
                         {row.tier && (
@@ -289,6 +471,8 @@ export default function FollowLeaderboard({
                         )}
                       </div>
                     </td>
+
+                    {/* WR */}
                     <td className="ff-lb-td ff-lb-col-wr">
                       <span
                         className={
@@ -298,6 +482,8 @@ export default function FollowLeaderboard({
                         {winRate}%
                       </span>
                     </td>
+
+                    {/* Games this week */}
                     <td className="ff-lb-td ff-lb-col-games">
                       {row.gamesThisWeek > 0 ? (
                         <span>{row.gamesThisWeek}G</span>
@@ -305,6 +491,8 @@ export default function FollowLeaderboard({
                         <span className="ff-lb-muted">—</span>
                       )}
                     </td>
+
+                    {/* LP Today */}
                     <td className="ff-lb-td ff-lb-col-lp">
                       {row.lpChangeToday != null ? (
                         <span
@@ -324,6 +512,15 @@ export default function FollowLeaderboard({
                         </span>
                       ) : (
                         <span className="ff-lb-muted">—</span>
+                      )}
+                    </td>
+
+                    {/* Challenge */}
+                    <td className="ff-lb-td ff-lb-col-action">
+                      {challengeUrl && (
+                        <a href={challengeUrl} className="ff-lb-challenge-btn">
+                          Challenge
+                        </a>
                       )}
                     </td>
                   </tr>
