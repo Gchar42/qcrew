@@ -13,8 +13,9 @@ import {
 import { perkIconPathToUrl } from "@/lib/runesCd";
 import { LeagueTooltip } from "@/components/LeagueTooltip";
 import ChampionBuildView from "@/components/champion/ChampionBuildView";
+import MatchupsTab from "@/components/champion/MatchupsTab";
 
-type Tab = "build" | "builds" | "abilities" | "patches" | "guides";
+type Tab = "build" | "builds" | "abilities" | "matchups" | "patches" | "guides";
 
 interface AbilityData {
   key: string;
@@ -316,8 +317,8 @@ export default function ChampionDetailClient({ championId }: { championId: strin
 
           {/* Tabs */}
           <div className="flex gap-0.5 border-b border-white/5">
-            {(["build", "builds", "abilities", "patches", "guides"] as Tab[]).map((t) => {
-              const labels: Record<Tab, string> = { build: "Build", builds: "Builds", abilities: "Abilities", patches: "Patch History", guides: "Guides" };
+            {(["build", "builds", "abilities", "matchups", "patches", "guides"] as Tab[]).map((t) => {
+              const labels: Record<Tab, string> = { build: "Build", builds: "Builds", abilities: "Abilities", matchups: "Matchups", patches: "Patch History", guides: "Guides" };
               const active = tab === t;
               return (
                 <button
@@ -351,6 +352,14 @@ export default function ChampionDetailClient({ championId }: { championId: strin
         )}
         {tab === "abilities" && info && <AbilitiesTab info={info} />}
         {tab === "abilities" && !info && <EmptyState text="Ability data unavailable" />}
+        {tab === "matchups" && (
+          <MatchupsTab
+            championId={championId}
+            championName={info?.name ?? championId}
+            role={selectedRole || "mid"}
+            patch={build?.patch ?? "16.5"}
+          />
+        )}
         {tab === "patches" && <PatchesTab patches={patches} loading={patchLoading} />}
         {tab === "guides" && <GuidesTab championName={info?.name ?? championId} />}
       </div>
