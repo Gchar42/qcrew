@@ -21,9 +21,19 @@ const BOOT_IDS = new Set([
   1001, 2422, 3006, 3009, 3020, 3047, 3111, 3117, 3158,
 ]);
 const MIN_COMPLETED_GOLD = 1300;
+const LOW_SAMPLE = 500;
+const HIDE_THRESHOLD = 200;
 
 const PERKSTYLES_URL =
   "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perkstyles.json";
+
+const TREE_ACCENT: Record<number, string> = {
+  8000: "#c8aa6e",
+  8100: "#d44242",
+  8200: "#9faafc",
+  8300: "#a1d586",
+  8400: "#49aab9",
+};
 
 const SHARD_ROWS: number[][] = [
   [5008, 5005, 5007],
@@ -39,19 +49,15 @@ const SHARD_ICONS: Record<number, string> = {
   5001: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/statmods/statmodshealthscalingicon.png",
 };
 const SHARD_NAMES: Record<number, string> = {
-  5008: "Adaptive",
-  5005: "Atk Spd",
-  5007: "Haste",
-  5002: "Armor",
-  5003: "MR",
-  5001: "Health",
+  5008: "Adaptive", 5005: "Atk Spd", 5007: "Haste",
+  5002: "Armor", 5003: "MR", 5001: "Health",
 };
 
 const RANK_FILTERS: { key: string; label: string }[] = [
   { key: "all", label: "All" },
-  { key: "low", label: "Iron–Silver" },
-  { key: "mid", label: "Gold–Plat" },
-  { key: "high", label: "Emerald–Diamond" },
+  { key: "low", label: "Iron\u2013Silver" },
+  { key: "mid", label: "Gold\u2013Plat" },
+  { key: "high", label: "Emerald\u2013Diamond" },
   { key: "elite", label: "Master+" },
 ];
 
@@ -59,25 +65,18 @@ const RANK_FILTERS: { key: string; label: string }[] = [
 
 type MatchSample = {
   win: boolean;
-  kills: number;
-  deaths: number;
-  assists: number;
+  kills: number; deaths: number; assists: number;
   items: number[];
   bootId: number;
-  primaryTree: number;
-  secondaryTree: number;
-  keystoneId: number;
-  primarySlots: number[];
-  secondarySlots: number[];
-  shardIds: number[];
+  primaryTree: number; secondaryTree: number;
+  keystoneId: number; primarySlots: number[];
+  secondarySlots: number[]; shardIds: number[];
   gameEnd: number;
 };
 
 type TreeSlot = { type: string; perks: number[] };
 type TreeDef = { id: number; name: string; iconPath: string; slots: TreeSlot[] };
-
 type BuildTab = "popular" | "winrate";
-
 type RuneAgg = { id: number; games: number; wins: number; pickRate: number; winRate: number };
 type ItemAgg = { id: number; games: number; wins: number; pickRate: number; winRate: number };
 
@@ -127,8 +126,7 @@ function aggSlotRunes(samples: MatchSample[], extractor: (s: MatchSample) => num
     const id = extractor(s);
     if (!id) continue;
     const e = map.get(id) ?? { g: 0, w: 0 };
-    e.g++;
-    if (s.win) e.w++;
+    e.g++; if (s.win) e.w++;
     map.set(id, e);
   }
   return [...map.entries()]
@@ -147,8 +145,7 @@ function aggItemSlot(samples: MatchSample[], extractor: (s: MatchSample) => numb
     const id = extractor(s);
     if (!id) continue;
     const e = map.get(id) ?? { g: 0, w: 0 };
-    e.g++;
-    if (s.win) e.w++;
+    e.g++; if (s.win) e.w++;
     map.set(id, e);
   }
   return [...map.entries()]
@@ -159,13 +156,44 @@ function aggItemSlot(samples: MatchSample[], extractor: (s: MatchSample) => numb
     }))
     .filter(i => i.games >= 1)
     .sort((a, b) => tab === "winrate" ? b.winRate - a.winRate : b.games - a.games)
-    .slice(0, 4);
+    .slice(0, 5);
 }
 
 function sortByGold(items: number[], itemData: ItemTooltipData): number[] {
   return [...items]
     .filter(id => id > 0 && (itemData[id]?.gold ?? 0) >= MIN_COMPLETED_GOLD)
     .sort((a, b) => (itemData[a]?.gold ?? 9999) - (itemData[b]?.gold ?? 9999));
+}
+
+function aggSecondItems(
+  samples: MatchSample[],
+  firstItemId: number,
+  itemData: ItemTooltipData,
+  tab: BuildTab,
+): ItemAgg[] {
+  const matching = samples.filter(s => {
+    const sorted = sortByGold(s.items, itemData);
+    return sorted[0] === firstItemId;
+  });
+  const total = matching.length || 1;
+  const map = new Map<number, { g: number; w: number }>();
+  for (const s of matching) {
+    const sorted = sortByGold(s.items, itemData);
+    const secondId = sorted[1];
+    if (!secondId) continue;
+    const e = map.get(secondId) ?? { g: 0, w: 0 };
+    e.g++; if (s.win) e.w++;
+    map.set(secondId, e);
+  }
+  return [...map.entries()]
+    .map(([id, { g, w }]) => ({
+      id, games: g, wins: w,
+      pickRate: Math.round((g / total) * 1000) / 10,
+      winRate: g > 0 ? Math.round((w / g) * 1000) / 10 : 0,
+    }))
+    .filter(i => i.games >= 1)
+    .sort((a, b) => tab === "winrate" ? b.winRate - a.winRate : b.games - a.games)
+    .slice(0, 4);
 }
 
 function timeAgo(ts: number): string {
@@ -200,6 +228,7 @@ export default function ChampionBuildView({
   const [rankFilter, setRankFilter] = useState("all");
   const [playerCount, setPlayerCount] = useState(0);
   const [lastUpdate, setLastUpdate] = useState(0);
+  const [expandedFirstItem, setExpandedFirstItem] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -224,12 +253,9 @@ export default function ChampionBuildView({
       if (treesRes?.styles) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setTrees(treesRes.styles.map((s: any) => ({
-          id: s.id,
-          name: s.name ?? "",
-          iconPath: s.iconPath ?? "",
+          id: s.id, name: s.name ?? "", iconPath: s.iconPath ?? "",
           slots: (s.slots ?? []).map((sl: { type?: string; perks?: number[] }) => ({
-            type: sl.type ?? "",
-            perks: sl.perks ?? [],
+            type: sl.type ?? "", perks: sl.perks ?? [],
           })),
         })));
       }
@@ -243,7 +269,6 @@ export default function ChampionBuildView({
     return () => { cancelled = true; };
   }, [championName]);
 
-  /* Determine primary & secondary tree from data */
   const topTreeCombo = useMemo(() => {
     const counts = new Map<string, number>();
     for (const s of samples) {
@@ -259,7 +284,6 @@ export default function ChampionBuildView({
   const priTree = useMemo(() => trees.find(t => t.id === topTreeCombo.pri), [trees, topTreeCombo.pri]);
   const secTree = useMemo(() => trees.find(t => t.id === topTreeCombo.sec), [trees, topTreeCombo.sec]);
 
-  /* Rune aggregation per slot */
   const keystoneAgg = useMemo(() => aggSlotRunes(samples, s => s.keystoneId, buildTab), [samples, buildTab]);
   const priSlotAggs = useMemo(() => [
     aggSlotRunes(samples, s => s.primarySlots[0], buildTab),
@@ -276,28 +300,32 @@ export default function ChampionBuildView({
     aggSlotRunes(samples, s => s.shardIds[2], buildTab),
   ], [samples, buildTab]);
 
-  /* Item aggregation */
   const itemSlots = useMemo(() => {
     const labels = ["1st Item", "2nd Item", "3rd Item"];
     const slots = labels.map((label, pos) => ({
       label,
       items: aggItemSlot(samples, s => { const sorted = sortByGold(s.items, itemData); return sorted[pos] ?? 0; }, buildTab),
     }));
-    slots.push({
-      label: "Boots",
-      items: aggItemSlot(samples, s => s.bootId, buildTab),
-    });
+    slots.push({ label: "Boots", items: aggItemSlot(samples, s => s.bootId, buildTab) });
     return slots;
   }, [samples, buildTab, itemData]);
 
+  const secondItemsForExpanded = useMemo(() => {
+    if (expandedFirstItem == null) return [];
+    return aggSecondItems(samples, expandedFirstItem, itemData, buildTab);
+  }, [samples, expandedFirstItem, itemData, buildTab]);
+
   const perkName = (id: number) => perkNamesById.get(id)?.name ?? `Rune ${id}`;
   const perkDesc = (id: number) => perkNamesById.get(id)?.desc;
+
+  const priAccent = TREE_ACCENT[topTreeCombo.pri] ?? "#6366f1";
+  const secAccent = TREE_ACCENT[topTreeCombo.sec] ?? "#6366f1";
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20 gap-3 text-zinc-500 text-sm">
         <div className="w-5 h-5 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" style={{ boxShadow: "0 0 12px rgba(99,102,241,0.2)" }} />
-        Aggregating build data…
+        Aggregating build data\u2026
       </div>
     );
   }
@@ -311,39 +339,39 @@ export default function ChampionBuildView({
     );
   }
 
+  const firstItemGroup = itemSlots[0];
+  const topFirstWr = firstItemGroup?.items[0]?.winRate ?? 0;
+
   return (
     <div className="flex flex-col gap-5">
-      {/* ── Rank filter row ─────────────────────── */}
+      {/* ── Rank filter ─────────────────────────── */}
       <div className="flex gap-1 flex-wrap">
         {RANK_FILTERS.map(rf => (
-          <button
-            key={rf.key}
-            onClick={() => setRankFilter(rf.key)}
+          <button key={rf.key} onClick={() => setRankFilter(rf.key)}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               rankFilter === rf.key
                 ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30"
                 : "text-zinc-500 hover:text-zinc-300 border border-transparent hover:border-white/10 hover:bg-white/[0.03]"
-            }`}
-          >
-            {rf.label}
-          </button>
+            }`}>{rf.label}</button>
         ))}
+      </div>
+
+      {/* ── Data freshness ──────────────────────── */}
+      <div className="text-[11px] text-zinc-500">
+        Based on {samples.length} game{samples.length !== 1 ? "s" : ""}
+        {" \u00b7 "}Patch 16.5
+        {" \u00b7 "}Updated {lastUpdate > 0 ? timeAgo(lastUpdate) : "unknown"}
       </div>
 
       {/* ── Sub-tabs ────────────────────────────── */}
       <div className="flex gap-1">
         {(["popular", "winrate"] as BuildTab[]).map(t => (
-          <button
-            key={t}
-            onClick={() => setBuildTab(t)}
+          <button key={t} onClick={() => { setBuildTab(t); setExpandedFirstItem(null); }}
             className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
               buildTab === t
                 ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30"
                 : "text-zinc-500 hover:text-zinc-300 border border-transparent hover:border-white/10 hover:bg-white/[0.03]"
-            }`}
-          >
-            {t === "popular" ? "Most Popular" : "Highest Win Rate"}
-          </button>
+            }`}>{t === "popular" ? "Most Popular" : "Highest Win Rate"}</button>
         ))}
       </div>
 
@@ -355,10 +383,9 @@ export default function ChampionBuildView({
           <Card>
             <CardHead title="Rune Configuration" meta={`${samples.length} games`} />
 
-            {/* Primary tree */}
             {priTree && (
               <div className="mt-4 mb-5">
-                <TreeLabel iconPath={priTree.iconPath} name={priTree.name} />
+                <TreeLabel iconPath={priTree.iconPath} name={priTree.name} accent={priAccent} />
                 {priTree.slots.map((slot, si) => {
                   const agg = si === 0 ? keystoneAgg : priSlotAggs[si - 1] ?? [];
                   const aggMap = new Map(agg.map(r => [r.id, r]));
@@ -366,63 +393,45 @@ export default function ChampionBuildView({
                   const isKeystone = si === 0;
                   return (
                     <div key={si} className="flex items-center gap-2 py-1.5">
-                      {slot.perks.map(pid => {
-                        const a = aggMap.get(pid);
-                        const isTop = pid === topId;
-                        return (
-                          <RuneCell
-                            key={pid}
-                            id={pid}
-                            icon={getPerkIcon(pid)}
-                            name={perkName(pid)}
-                            desc={perkDesc(pid)}
-                            pickRate={a?.pickRate ?? 0}
-                            winRate={a?.winRate ?? 0}
-                            isTop={isTop}
-                            size={isKeystone ? 40 : 30}
-                          />
-                        );
-                      })}
+                      {slot.perks.map(pid => (
+                        <RuneCell key={pid} id={pid} icon={getPerkIcon(pid)}
+                          name={perkName(pid)} desc={perkDesc(pid)}
+                          pickRate={aggMap.get(pid)?.pickRate ?? 0}
+                          winRate={aggMap.get(pid)?.winRate ?? 0}
+                          games={aggMap.get(pid)?.games ?? 0}
+                          isTop={pid === topId} size={isKeystone ? 40 : 30}
+                          accent={priAccent} />
+                      ))}
                     </div>
                   );
                 })}
               </div>
             )}
 
-            {/* Secondary tree */}
             {secTree && (
               <div className="mb-5">
-                <TreeLabel iconPath={secTree.iconPath} name={secTree.name} />
+                <TreeLabel iconPath={secTree.iconPath} name={secTree.name} accent={secAccent} />
                 {secTree.slots.slice(1).map((slot, si) => {
                   const agg = secSlotAggs[si] ?? [];
                   const aggMap = new Map(agg.map(r => [r.id, r]));
                   const topId = agg[0]?.id;
                   return (
                     <div key={si} className="flex items-center gap-2 py-1.5">
-                      {slot.perks.map(pid => {
-                        const a = aggMap.get(pid);
-                        const isTop = pid === topId;
-                        return (
-                          <RuneCell
-                            key={pid}
-                            id={pid}
-                            icon={getPerkIcon(pid)}
-                            name={perkName(pid)}
-                            desc={perkDesc(pid)}
-                            pickRate={a?.pickRate ?? 0}
-                            winRate={a?.winRate ?? 0}
-                            isTop={isTop}
-                            size={30}
-                          />
-                        );
-                      })}
+                      {slot.perks.map(pid => (
+                        <RuneCell key={pid} id={pid} icon={getPerkIcon(pid)}
+                          name={perkName(pid)} desc={perkDesc(pid)}
+                          pickRate={aggMap.get(pid)?.pickRate ?? 0}
+                          winRate={aggMap.get(pid)?.winRate ?? 0}
+                          games={aggMap.get(pid)?.games ?? 0}
+                          isTop={pid === topId} size={30}
+                          accent={secAccent} />
+                      ))}
                     </div>
                   );
                 })}
               </div>
             )}
 
-            {/* Stat shards */}
             <div className="pt-4 border-t border-white/5">
               <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-2">Stat Shards</p>
               {SHARD_ROWS.map((row, ri) => {
@@ -435,11 +444,8 @@ export default function ChampionBuildView({
                       const a = aggMap.get(sid);
                       const isTop = sid === topId;
                       return (
-                        <div
-                          key={`${ri}-${sid}`}
-                          className="flex flex-col items-center gap-0.5"
-                          style={{ opacity: isTop ? 1 : 0.4 }}
-                        >
+                        <div key={`${ri}-${sid}`} className="flex flex-col items-center gap-0.5"
+                          style={{ opacity: isTop ? 1 : 0.4 }}>
                           <img src={SHARD_ICONS[sid] ?? ""} alt="" className="w-5 h-5" />
                           <span className="text-[9px] text-zinc-500">{SHARD_NAMES[sid] ?? sid}</span>
                           <span className="text-[9px] text-zinc-600">{a ? `${a.pickRate}%` : "\u2014"}</span>
@@ -456,7 +462,7 @@ export default function ChampionBuildView({
         {/* ── Right: Item Build Path ─────────────── */}
         <div className="lg:col-span-7">
           <Card>
-            <CardHead title="Item Build Path" meta={buildTab === "popular" ? "by pick rate" : "by win rate"} />
+            <CardHead title="First Item Win Rates" meta={buildTab === "popular" ? "by pick rate" : "by win rate"} />
             <div className="overflow-x-auto -mx-1 px-1 mt-3">
               <table className="w-full text-xs">
                 <thead>
@@ -466,44 +472,51 @@ export default function ChampionBuildView({
                     <Th align="right">WR</Th>
                     <Th align="right">Pick</Th>
                     <Th align="right">Games</Th>
+                    <Th align="right">Diff</Th>
                   </tr>
                 </thead>
                 <tbody>
-                  {itemSlots.map(group =>
-                    group.items.length > 0 ? (
-                      group.items.map((item, j) => (
-                        <ItemRow
-                          key={`${group.label}-${item.id}`}
+                  {itemSlots.map(group => {
+                    const isFirstSlot = group.label === "1st Item";
+                    const visible = group.items.filter(i => i.games >= HIDE_THRESHOLD);
+                    const hidden = group.items.length - visible.length;
+
+                    if (visible.length === 0) {
+                      return (
+                        <tr key={group.label} className="border-b border-white/[0.03]">
+                          <td className="py-2 px-2 text-zinc-500 font-medium text-[11px]">{group.label}</td>
+                          <td className="py-2 px-2 text-zinc-600 text-[10px]" colSpan={5}>
+                            {hidden > 0 ? "Not enough data" : "\u2014"}
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return visible.map((item, j) => {
+                      const isExpanded = isFirstSlot && expandedFirstItem === item.id;
+                      const diff = isFirstSlot && j > 0 ? Math.round((item.winRate - topFirstWr) * 10) / 10 : null;
+                      return (
+                        <ItemRowGroup key={`${group.label}-${item.id}`}
                           slot={j === 0 ? group.label : ""}
-                          itemId={item.id}
-                          itemName={itemData[item.id]?.name ?? `Item ${item.id}`}
-                          winRate={item.winRate}
-                          pickRate={item.pickRate}
-                          games={item.games}
+                          item={item}
                           slotLabel={`${item.winRate}% as ${group.label}`}
+                          diff={diff}
+                          lowSample={item.games < LOW_SAMPLE}
+                          expandable={isFirstSlot}
+                          isExpanded={isExpanded}
+                          onToggle={() => setExpandedFirstItem(isExpanded ? null : item.id)}
+                          secondItems={isExpanded ? secondItemsForExpanded : []}
+                          firstItemName={itemData[item.id]?.name ?? ""}
                           itemData={itemData}
                         />
-                      ))
-                    ) : (
-                      <tr key={group.label} className="border-b border-white/[0.03]">
-                        <td className="py-2 px-2 text-zinc-500 font-medium text-[11px]">{group.label}</td>
-                        <td className="py-2 px-2 text-zinc-600" colSpan={4}>&mdash;</td>
-                      </tr>
-                    ),
-                  )}
+                      );
+                    });
+                  })}
                 </tbody>
               </table>
             </div>
           </Card>
         </div>
-      </div>
-
-      {/* ── Data Freshness ──────────────────────── */}
-      <div className="text-center text-[11px] text-zinc-600 py-2">
-        {lastUpdate > 0 ? `Updated ${timeAgo(lastUpdate)}` : "No timestamp"}
-        {" · "}Source: {playerCount} player{playerCount !== 1 ? "s" : ""}
-        {" · "}{samples.length} game{samples.length !== 1 ? "s" : ""}
-        {rankFilter !== "all" && <> · Rank filter: {RANK_FILTERS.find(r => r.key === rankFilter)?.label}</>}
       </div>
     </div>
   );
@@ -517,9 +530,7 @@ function Card({ children }: { children: React.ReactNode }) {
       background: "rgba(255,255,255,0.03)",
       border: "1px solid rgba(255,255,255,0.06)",
       backdropFilter: "blur(12px)",
-    }}>
-      {children}
-    </div>
+    }}>{children}</div>
   );
 }
 
@@ -540,77 +551,155 @@ function Th({ children, align }: { children: React.ReactNode; align: "left" | "r
   );
 }
 
-function TreeLabel({ iconPath, name }: { iconPath: string; name: string }) {
+function TreeLabel({ iconPath, name, accent }: { iconPath: string; name: string; accent: string }) {
   const url = iconPath ? perkIconPathToUrl(iconPath) : "";
   return (
     <div className="flex items-center gap-2 mb-2">
       {url ? <img src={url} alt="" className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full bg-zinc-800" />}
-      <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">{name}</span>
+      <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: accent }}>{name}</span>
     </div>
   );
 }
 
 function RuneCell({
-  id, icon, name, desc, pickRate, winRate, isTop, size,
+  id, icon, name, desc, pickRate, winRate, games, isTop, size, accent,
 }: {
   id: number; icon: string; name: string; desc?: string;
-  pickRate: number; winRate: number; isTop: boolean; size: number;
+  pickRate: number; winRate: number; games: number;
+  isTop: boolean; size: number; accent: string;
 }) {
   const s = `${size}px`;
+  const lowSample = games < LOW_SAMPLE && games > 0;
+  const tooltipBody = [
+    desc ?? "",
+    "",
+    `${pickRate}% pick rate \u00b7 ${winRate}% win rate \u00b7 ${games} games`,
+    lowSample ? "\u26a0 Low sample size" : "",
+  ].filter(Boolean).join("\n");
+
   return (
-    <LeagueTooltip title={name} body={desc ? `${desc}\n\n${pickRate}% pick · ${winRate}% WR` : `${pickRate}% pick · ${winRate}% WR`}>
-      <div
-        className="flex flex-col items-center gap-0.5 cursor-default"
-        style={{ opacity: isTop ? 1 : 0.4, transition: "opacity 0.2s" }}
-      >
+    <LeagueTooltip title={name} body={tooltipBody}>
+      <div className="flex flex-col items-center gap-0.5 cursor-default"
+        style={{ opacity: isTop ? 1 : 0.4, transition: "opacity 0.2s" }}>
         {icon ? (
-          <img
-            src={icon}
-            alt={name}
-            className="rounded-full"
+          <img src={icon} alt={name} className="rounded-full"
             style={{
               width: s, height: s,
-              boxShadow: isTop ? "0 0 10px rgba(99,102,241,0.3)" : undefined,
-            }}
-          />
+              border: isTop ? `2px solid ${accent}` : "2px solid transparent",
+              boxShadow: isTop ? `0 0 8px ${accent}55` : undefined,
+            }} />
         ) : (
           <div className="rounded-full bg-zinc-800 border border-zinc-700/50" style={{ width: s, height: s }} />
         )}
-        <span className="text-[9px] text-zinc-500 tabular-nums">{pickRate > 0 ? `${pickRate}%` : "\u2014"}</span>
+        <span className="text-[9px] text-zinc-500 tabular-nums">
+          {pickRate > 0 ? `${pickRate}%` : "\u2014"}
+          {lowSample && " \u26a0"}
+        </span>
       </div>
     </LeagueTooltip>
   );
 }
 
-function ItemRow({
-  slot, itemId, itemName, winRate, pickRate, games, slotLabel, itemData,
+function ItemRowGroup({
+  slot, item, slotLabel, diff, lowSample, expandable, isExpanded,
+  onToggle, secondItems, firstItemName, itemData,
 }: {
-  slot: string; itemId: number; itemName: string;
-  winRate: number; pickRate: number; games: number; slotLabel: string;
+  slot: string; item: ItemAgg; slotLabel: string; diff: number | null;
+  lowSample: boolean; expandable: boolean; isExpanded: boolean;
+  onToggle: () => void; secondItems: ItemAgg[]; firstItemName: string;
   itemData: ItemTooltipData;
 }) {
-  const tip = getItemTooltip(itemData, itemId);
+  const tip = getItemTooltip(itemData, item.id);
+  const itemName = itemData[item.id]?.name ?? `Item ${item.id}`;
+
   return (
-    <tr className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
-      <td className="py-2.5 px-2 text-zinc-500 font-medium text-[11px] align-middle whitespace-nowrap">{slot}</td>
-      <td className="py-2.5 px-2 align-middle">
-        <LeagueTooltip title={tip.title} body={tip.body} bodyHtml={tip.bodyHtml}>
-          <div className="flex items-center gap-2 cursor-default">
-            <img src={getItemIconUrl(itemId)} alt={itemName} className="w-8 h-8 rounded-lg border border-white/10" />
-            <div className="flex flex-col">
-              <span className="text-xs text-zinc-200 font-medium truncate max-w-[140px]">{itemName}</span>
-              <span className="text-[9px] text-zinc-600">{slotLabel}</span>
+    <>
+      <tr className={`border-b border-white/[0.03] transition-colors ${expandable ? "cursor-pointer hover:bg-white/[0.03]" : "hover:bg-white/[0.02]"}`}
+        onClick={expandable ? onToggle : undefined}>
+        <td className="py-2.5 px-2 text-zinc-500 font-medium text-[11px] align-middle whitespace-nowrap">{slot}</td>
+        <td className="py-2.5 px-2 align-middle">
+          <LeagueTooltip title={tip.title} body={tip.body} bodyHtml={tip.bodyHtml}>
+            <div className="flex items-center gap-2 cursor-default">
+              <img src={getItemIconUrl(item.id)} alt={itemName} className="w-8 h-8 rounded-lg border border-white/10" />
+              <div className="flex flex-col">
+                <span className="text-xs text-zinc-200 font-medium truncate max-w-[140px]">
+                  {itemName}
+                  {lowSample && <span className="text-amber-400 ml-1" title="Low sample size">{"\u26a0"}</span>}
+                </span>
+                <span className="text-[9px] text-zinc-600">{slotLabel}</span>
+              </div>
+              {expandable && (
+                <svg className={`w-3 h-3 text-zinc-600 ml-auto transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              )}
             </div>
-          </div>
-        </LeagueTooltip>
-      </td>
-      <td className="py-2.5 px-2 text-right align-middle">
-        <span className={`text-xs font-bold ${winRate >= 52 ? "text-emerald-400" : winRate >= 50 ? "text-zinc-300" : "text-red-400"}`}>
-          {winRate}%
-        </span>
-      </td>
-      <td className="py-2.5 px-2 text-right align-middle text-xs text-zinc-400">{pickRate}%</td>
-      <td className="py-2.5 px-2 text-right align-middle text-xs text-zinc-600">{games}</td>
-    </tr>
+          </LeagueTooltip>
+        </td>
+        <td className="py-2.5 px-2 text-right align-middle">
+          <span className={`text-xs font-bold ${item.winRate >= 52 ? "text-emerald-400" : item.winRate >= 50 ? "text-zinc-300" : "text-red-400"}`}>
+            {item.winRate}%
+          </span>
+        </td>
+        <td className="py-2.5 px-2 text-right align-middle text-xs text-zinc-400">{item.pickRate}%</td>
+        <td className="py-2.5 px-2 text-right align-middle text-xs text-zinc-600">{item.games}</td>
+        <td className="py-2.5 px-2 text-right align-middle text-[10px]">
+          {diff != null ? (
+            <span className={diff > 0 ? "text-emerald-400" : diff < 0 ? "text-red-400" : "text-zinc-600"}>
+              {diff > 0 ? "+" : ""}{diff}%
+            </span>
+          ) : (
+            <span className="text-zinc-700">\u2014</span>
+          )}
+        </td>
+      </tr>
+
+      {isExpanded && (
+        <>
+          <tr className="bg-white/[0.01]">
+            <td colSpan={6} className="py-1.5 px-4 text-[10px] text-indigo-400 font-semibold">
+              Then built 2nd after {firstItemName}:
+            </td>
+          </tr>
+          {secondItems.length > 0 ? secondItems.map(si => {
+            const siName = itemData[si.id]?.name ?? `Item ${si.id}`;
+            const siTip = getItemTooltip(itemData, si.id);
+            const siLow = si.games < LOW_SAMPLE;
+            return (
+              <tr key={si.id} className="bg-white/[0.01] border-b border-white/[0.02] hover:bg-white/[0.03]">
+                <td className="py-2 px-2" />
+                <td className="py-2 px-2 align-middle">
+                  <LeagueTooltip title={siTip.title} body={siTip.body} bodyHtml={siTip.bodyHtml}>
+                    <div className="flex items-center gap-2 cursor-default pl-2">
+                      <img src={getItemIconUrl(si.id)} alt={siName} className="w-6 h-6 rounded-md border border-white/10" />
+                      <div className="flex flex-col">
+                        <span className="text-[11px] text-zinc-300 truncate max-w-[130px]">
+                          {siName}
+                          {siLow && <span className="text-amber-400 ml-1">{"\u26a0"}</span>}
+                        </span>
+                        <span className="text-[8px] text-zinc-600">{si.winRate}% as 2nd after {firstItemName}</span>
+                      </div>
+                    </div>
+                  </LeagueTooltip>
+                </td>
+                <td className="py-2 px-2 text-right align-middle">
+                  <span className={`text-[11px] font-bold ${si.winRate >= 52 ? "text-emerald-400" : si.winRate >= 50 ? "text-zinc-300" : "text-red-400"}`}>
+                    {si.winRate}%
+                  </span>
+                </td>
+                <td className="py-2 px-2 text-right align-middle text-[11px] text-zinc-400">{si.pickRate}%</td>
+                <td className="py-2 px-2 text-right align-middle text-[11px] text-zinc-600">{si.games}</td>
+                <td className="py-2 px-2" />
+              </tr>
+            );
+          }) : (
+            <tr className="bg-white/[0.01]">
+              <td colSpan={6} className="py-2 px-4 text-[10px] text-zinc-600">Not enough data for second items</td>
+            </tr>
+          )}
+        </>
+      )}
+    </>
   );
 }
