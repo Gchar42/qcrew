@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { getMatch, getMatchIds, getSummoner } from "@/lib/riot-api";
+import { getMatch, getMatchIds, getSummoner, getMatchTimeline } from "@/lib/riot-api";
 import { setCached } from "@/lib/sharedCache";
 import type { MatchDto, LeagueEntryDto } from "@/types/riot";
+import {
+  extractJungleClearData,
+  aggregateJungleClearStats,
+  pruneOldRawData,
+} from "@/lib/jungleClearCompute";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -226,6 +231,29 @@ async function processSummoner(
 
       if (!count || count === 0) {
         await db.from("match_participants").insert(rows);
+      }
+
+      // Jungle clear extraction for ranked matches
+      const isRanked = queueId === 420 || queueId === 440;
+      const hasJungler = match.info.participants.some(
+        (p) => extractRole(p) === "JUNGLE",
+      );
+      if (isRanked && hasJungler) {
+        try {
+          const timeline = await getMatchTimeline(region, matchId);
+          if (timeline) {
+            const rankTier = summoner.rank_solo ?? "ALL";
+            const clearRows = extractJungleClearData(timeline, match, rankTier);
+            for (const row of clearRows) {
+              await db.from("jungle_clear_raw").upsert(row, {
+                onConflict: "match_id,puuid",
+              });
+            }
+          }
+        } catch (tlErr) {
+          // Timeline fetch failure should not block match ingestion
+          errors.push(`timeline ${matchId}: ${tlErr}`);
+        }
       }
 
       ingested++;
@@ -732,6 +760,46 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Jungle clear aggregation
+  let jungleClearRows = 0;
+  if (patches.length > 0) {
+    for (const patch of patches) {
+      try {
+        const rows = await aggregateJungleClearStats(db, patch);
+        jungleClearRows += rows;
+      } catch (err) {
+        log.push(`jungle clear aggregate error (${patch}): ${err}`);
+      }
+    }
+
+    // Warm jungle clear Redis keys
+    try {
+      const { data: clearStats } = await db
+        .from("jungle_clear_stats")
+        .select("*")
+        .in("patch", patches);
+      if (clearStats) {
+        for (const row of clearStats) {
+          const key = `jungle:clearstats:${row.champion_id}:${row.patch}:${row.rank_tier}`;
+          await setCached(key, row, STATS_TTL);
+        }
+      }
+    } catch (err) {
+      log.push(`jungle clear redis warming error: ${err}`);
+    }
+
+    // Prune old raw data
+    try {
+      const latestPatch = patches.sort().pop();
+      if (latestPatch) {
+        const pruned = await pruneOldRawData(db, latestPatch);
+        if (pruned > 0) log.push(`pruned ${pruned} old jungle_clear_raw rows`);
+      }
+    } catch (err) {
+      log.push(`jungle clear prune error: ${err}`);
+    }
+  }
+
   // Warm Redis
   let redisKeys = 0;
   if (patches.length > 0) {
@@ -748,6 +816,7 @@ export async function GET(req: NextRequest) {
     matchesIngested: totalIngested,
     patches,
     stats: statsResult,
+    jungleClearRows,
     redisKeysWarmed: redisKeys,
     log: log.length > 0 ? log : undefined,
   });

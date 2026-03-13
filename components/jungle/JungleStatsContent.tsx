@@ -4,12 +4,12 @@ import { useState, useMemo } from "react";
 import { getChampionSquareUrl } from "@/lib/riotAssets";
 import {
   JUNGLERS,
-  CLEAR_SPEEDS,
   OBJECTIVES,
   GANK_TIMING,
   SCUTTLE_DATA,
   MATCHUP_DATA,
   type JunglerTier,
+  type ClearSpeedEntry,
 } from "./jungleSampleData";
 
 /* ── Shared UI ── */
@@ -104,17 +104,36 @@ function JungleTierList() {
    SECTION 2 — First Clear Speed Rankings
    ════════════════════════════════════════════════ */
 
-function ClearSpeedRankings() {
+function ClearSpeedRankings({ data, source, loading }: { data: ClearSpeedEntry[]; source: string; loading: boolean }) {
   const [expanded, setExpanded] = useState<string | null>(null);
-  const sorted = useMemo(() => [...CLEAR_SPEEDS].sort((a, b) => {
+  const sorted = useMemo(() => [...data].sort((a, b) => {
     const toSec = (t: string) => { const [m, s] = t.split(":").map(Number); return m * 60 + s; };
     return toSec(a.avgClearTime) - toSec(b.avgClearTime);
-  }), []);
+  }), [data]);
+
+  const isSeed = source === "seed";
 
   return (
     <SectionCard>
-      <SectionTitle title="First Clear Speed Rankings" subtitle="Average time to clear 6 camps. Sorted fastest first." />
+      <SectionTitle
+        title="First Clear Speed Rankings"
+        subtitle={
+          isSeed
+            ? "Estimated p5 clear times — updates automatically when data pipeline runs."
+            : "p5 (5th percentile) time to clear 6 camps from ranked games. Sorted fastest first."
+        }
+      />
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-indigo-500" />
+        </div>
+      ) : (
       <div className="overflow-x-auto">
+        {isSeed && (
+          <div className="px-4 py-2 bg-amber-500/[0.05] border-b border-amber-500/10">
+            <p className="text-[10px] text-amber-400/70">Estimated — updates automatically when data pipeline runs</p>
+          </div>
+        )}
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[10px] text-white/35 uppercase tracking-wider border-b border-white/[0.06]">
@@ -123,7 +142,7 @@ function ClearSpeedRankings() {
               <th className="text-right px-3 py-3">Clear Time</th>
               <th className="text-right px-3 py-3">HP After</th>
               <th className="text-left px-3 py-3">Most Common Path</th>
-              <th className="text-right px-3 py-3">Games</th>
+              {!isSeed && <th className="text-right px-3 py-3">Games</th>}
             </tr>
           </thead>
           <tbody>
@@ -148,14 +167,16 @@ function ClearSpeedRankings() {
                     </span>
                   </td>
                   <td className="px-3 py-2.5 text-xs text-white/50 max-w-[240px] truncate">{entry.paths[0]?.icons ?? "—"}</td>
-                  <td className="text-right px-3 py-2.5 text-xs text-white/30 tabular-nums">
-                    {formatGames(entry.games)}
-                    {entry.games < 30000 && <span className="ml-1 text-yellow-400">⚠</span>}
-                  </td>
+                  {!isSeed && (
+                    <td className="text-right px-3 py-2.5 text-xs text-white/30 tabular-nums">
+                      {formatGames(entry.games)}
+                      {entry.games > 0 && entry.games < 500 && <span className="ml-1 text-yellow-400">⚠</span>}
+                    </td>
+                  )}
                 </tr>
                 {expanded === entry.id && (
                   <tr key={`${entry.id}-paths`}>
-                    <td colSpan={6} className="bg-white/[0.015] px-6 py-3 border-b border-white/[0.04]">
+                    <td colSpan={isSeed ? 5 : 6} className="bg-white/[0.015] px-6 py-3 border-b border-white/[0.04]">
                       <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2">All Paths ({entry.paths.length})</p>
                       <div className="space-y-1.5">
                         {entry.paths.map((p, pi) => (
@@ -165,6 +186,11 @@ function ClearSpeedRankings() {
                           </div>
                         ))}
                       </div>
+                      {entry.note && (
+                        <p className="text-[10px] text-white/25 mt-2 italic">
+                          {entry.note}
+                        </p>
+                      )}
                     </td>
                   </tr>
                 )}
@@ -173,6 +199,7 @@ function ClearSpeedRankings() {
           </tbody>
         </table>
       </div>
+      )}
     </SectionCard>
   );
 }
@@ -446,8 +473,25 @@ function JungleMatchupTable() {
    MAIN EXPORT — Full Jungle Stats Content
    ════════════════════════════════════════════════ */
 
-export default function JungleStatsContent() {
+export interface JungleStatsProps {
+  clearSpeeds?: ClearSpeedEntry[];
+  clearSpeedSource?: string;
+  clearSpeedLoading?: boolean;
+  onRankChange?: (rank: string) => void;
+}
+
+export default function JungleStatsContent({
+  clearSpeeds = [],
+  clearSpeedSource = "seed",
+  clearSpeedLoading = false,
+  onRankChange,
+}: JungleStatsProps) {
   const [rank, setRank] = useState("emerald-diamond");
+
+  const handleRankChange = (r: string) => {
+    setRank(r);
+    onRankChange?.(r);
+  };
 
   return (
     <main className="min-h-screen bg-[#0E0F15] text-[#E8E9F0]">
@@ -465,7 +509,7 @@ export default function JungleStatsContent() {
             {RANK_FILTERS.map((f) => (
               <button
                 key={f.key}
-                onClick={() => setRank(f.key)}
+                onClick={() => handleRankChange(f.key)}
                 className={`px-3 py-1.5 text-sm rounded-lg transition font-medium ${
                   rank === f.key
                     ? "bg-indigo-500/15 text-indigo-300 border border-indigo-500/30"
@@ -481,7 +525,7 @@ export default function JungleStatsContent() {
         {/* Sections */}
         <div className="space-y-8 mt-6">
           <JungleTierList />
-          <ClearSpeedRankings />
+          <ClearSpeedRankings data={clearSpeeds} source={clearSpeedSource} loading={clearSpeedLoading} />
           <ObjectiveWinRate />
           <GankTimingData />
           <ScuttleCounterJungle />

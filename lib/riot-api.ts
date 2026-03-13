@@ -83,3 +83,52 @@ export async function getMatch(
   await setCache(cacheKey, data);
   return data;
 }
+
+export interface MatchTimelineDto {
+  metadata: { matchId: string; participants: string[] };
+  info: {
+    frameInterval: number;
+    frames: {
+      timestamp: number;
+      participantFrames: Record<
+        string,
+        {
+          participantId: number;
+          jungleMinionsKilled: number;
+          currentGold: number;
+          totalGold: number;
+          position: { x: number; y: number };
+          currentHealth?: number;
+          maxHealth?: number;
+        }
+      >;
+      events: {
+        type: string;
+        timestamp: number;
+        killerId?: number;
+        monsterType?: string;
+        monsterSubType?: string;
+        position?: { x: number; y: number };
+        [k: string]: unknown;
+      }[];
+    }[];
+  };
+}
+
+export async function getMatchTimeline(
+  region: string,
+  matchId: string,
+): Promise<MatchTimelineDto | null> {
+  const cacheKey = `timeline:${region}:${matchId}`;
+  const cached = await getCached<MatchTimelineDto>(cacheKey);
+  if (cached) return cached;
+
+  const routing = getRoutingRegion(region);
+  const url = `https://${routing}.api.riotgames.com/lol/match/v5/matches/${encodeURIComponent(matchId)}/timeline`;
+  const res = await riotFetch(url);
+  if (res.status === 404) return null;
+  await throwIfNotOk(res);
+  const data = (await res.json()) as MatchTimelineDto;
+  await setCache(cacheKey, data);
+  return data;
+}

@@ -19,6 +19,8 @@ export interface ClearSpeedEntry {
   avgHpAfterClear: number;
   paths: { icons: string; label: string }[];
   games: number;
+  source?: string;
+  note?: string;
 }
 
 export interface ObjectiveEntry {
@@ -75,63 +77,6 @@ export const JUNGLERS: JunglerStats[] = [
   { id: "Amumu", name: "Amumu", winRate: 52.8, pickRate: 3.6, banRate: 1.9, tier: "C", games: 36100 },
   { id: "Evelynn", name: "Evelynn", winRate: 50.4, pickRate: 4.1, banRate: 6.7, tier: "C", games: 41300 },
   { id: "Nidalee", name: "Nidalee", winRate: 48.2, pickRate: 3.8, banRate: 1.1, tier: "D", games: 38200 },
-];
-
-export const CLEAR_SPEEDS: ClearSpeedEntry[] = [
-  { id: "Shaco", name: "Shaco", avgClearTime: "3:05", avgHpAfterClear: 78, paths: [
-    { icons: "🔴→🐦→🐺→🔵→🪨→🐸", label: "Red start (standard)" },
-    { icons: "🔵→🐸→🐺→🐦→🔴→🪨", label: "Blue start invade" },
-  ], games: 48200 },
-  { id: "Graves", name: "Graves", avgClearTime: "3:08", avgHpAfterClear: 92, paths: [
-    { icons: "🔴→🪨→🐦→🐺→🔵→🐸", label: "Red leashless full" },
-    { icons: "🔵→🐸→🐺→🐦→🔴→🪨", label: "Blue start full" },
-  ], games: 86400 },
-  { id: "Kayn", name: "Kayn", avgClearTime: "3:10", avgHpAfterClear: 85, paths: [
-    { icons: "🔴→🐦→🐺→🔵→🐸→🪨", label: "Red start raptor prio" },
-    { icons: "🔵→🐸→🐺→🐦→🔴→🪨", label: "Blue start standard" },
-  ], games: 94300 },
-  { id: "Viego", name: "Viego", avgClearTime: "3:12", avgHpAfterClear: 74, paths: [
-    { icons: "🔵→🐸→🐺→🐦→🔴→🪨", label: "Blue side full clear" },
-  ], games: 108200 },
-  { id: "Hecarim", name: "Hecarim", avgClearTime: "3:14", avgHpAfterClear: 68, paths: [
-    { icons: "🔵→🐸→🐺→🐦→🔴→🪨", label: "Blue side speed clear" },
-    { icons: "🔴→🪨→🐦→🐺→🔵→🐸", label: "Red leashless" },
-  ], games: 55100 },
-  { id: "Khazix", name: "Kha'Zix", avgClearTime: "3:16", avgHpAfterClear: 71, paths: [
-    { icons: "🔴→🐦→🐺→🔵→🐸→🪨", label: "Red start standard" },
-  ], games: 71200 },
-  { id: "Amumu", name: "Amumu", avgClearTime: "3:18", avgHpAfterClear: 82, paths: [
-    { icons: "🔵→🐸→🐺→🐦→🔴→🪨", label: "Blue start AOE clear" },
-  ], games: 36100 },
-  { id: "Vi", name: "Vi", avgClearTime: "3:20", avgHpAfterClear: 76, paths: [
-    { icons: "🔴→🪨→🐦→🐺→🔵→🐸", label: "Red side full" },
-    { icons: "🔴→🐦→ GANK MID", label: "Red into gank (3 camp)" },
-  ], games: 62300 },
-  { id: "JarvanIV", name: "Jarvan IV", avgClearTime: "3:22", avgHpAfterClear: 64, paths: [
-    { icons: "🔴→🐦→🐺→🔵→🐸→🪨", label: "Red start standard" },
-    { icons: "🔴→🔵→ GANK", label: "Double buff gank (aggressive)" },
-  ], games: 58100 },
-  { id: "Warwick", name: "Warwick", avgClearTime: "3:24", avgHpAfterClear: 95, paths: [
-    { icons: "🔵→🐸→🐺→🐦→🔴→🪨", label: "Blue start sustain" },
-  ], games: 42100 },
-  { id: "LeeSin", name: "Lee Sin", avgClearTime: "3:26", avgHpAfterClear: 70, paths: [
-    { icons: "🔴→🐦→🐺→ GANK", label: "Red 3-camp gank" },
-    { icons: "🔴→🪨→🐦→🐺→🔵→🐸", label: "Red full clear" },
-  ], games: 142300 },
-  { id: "RekSai", name: "Rek'Sai", avgClearTime: "3:28", avgHpAfterClear: 73, paths: [
-    { icons: "🔴→🐦→🐺→ GANK", label: "Red 3-camp gank" },
-  ], games: 31200 },
-  { id: "Elise", name: "Elise", avgClearTime: "3:30", avgHpAfterClear: 66, paths: [
-    { icons: "🔴→🐦→ GANK MID", label: "Red 2-camp gank" },
-    { icons: "🔵→🐸→🐺→🐦→🔴→🪨", label: "Blue full clear (rare)" },
-  ], games: 54100 },
-  { id: "Evelynn", name: "Evelynn", avgClearTime: "3:32", avgHpAfterClear: 58, paths: [
-    { icons: "🔵→🐸→🐺→🐦→🔴→🪨", label: "Blue start full (always)" },
-  ], games: 41300 },
-  { id: "Nidalee", name: "Nidalee", avgClearTime: "3:06", avgHpAfterClear: 62, paths: [
-    { icons: "🔵→🐸→🐺→🐦→🔴→🪨", label: "Blue leashless kite" },
-    { icons: "🔴→🐦→🐺→ INVADE", label: "Red into invade" },
-  ], games: 38200 },
 ];
 
 export const OBJECTIVES: ObjectiveEntry[] = [
