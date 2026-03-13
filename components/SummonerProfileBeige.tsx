@@ -981,24 +981,14 @@ export default function SummonerProfileBeige({
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0, minWidth: 104, width: 104 }}>
               <div style={{ minWidth: 96, minHeight: 96, width: 96, height: 96, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible" }}>
                 {tier ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      className="rank-emblem-img"
-                      src={getRankEmblemUrl(tier)}
-                      alt={tier}
-                      width={96}
-                      height={96}
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                        const fb = e.currentTarget.nextElementSibling;
-                        if (fb) (fb as HTMLElement).style.display = "flex";
-                      }}
-                    />
-                    <div style={{ display: "none", width: 96, height: 96, alignItems: "center", justifyContent: "center", fontSize: 9, letterSpacing: "0.5px", textTransform: "uppercase", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.4)" }}>
-                      {tier}
-                    </div>
-                  </>
+                  <Image
+                    src={getRankEmblemUrl(tier)}
+                    width={96}
+                    height={96}
+                    alt={tier}
+                    style={{ objectFit: "contain" }}
+                    unoptimized
+                  />
                 ) : null}
               </div>
               <span className="rank-name">{formatRankTier(tier, entry.rank ?? "")}</span>
