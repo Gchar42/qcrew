@@ -43,15 +43,14 @@ export default function RecentlyPlayedWithCard({
   return (
     <div className="profile-rank-card recently-played-with-card">
       <div className="profile-rank-card-title">
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <div
-            style={{
-              display: "flex",
-              gap: 4,
-              borderBottom: "1px solid rgba(255,255,255,0.08)",
-            }}
-          >
-            <button
+        <div
+          style={{
+            display: "flex",
+            gap: 4,
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          <button
               type="button"
               onClick={() => setActiveTab("played")}
               className={activeTab === "played" ? "profile-queue-tab profile-queue-tab-active" : "profile-queue-tab"}
@@ -87,15 +86,17 @@ export default function RecentlyPlayedWithCard({
             >
               Best Duos
             </button>
-          </div>
-          {activeTab === "played" && (
-            <Link href="/friends" className="recently-played-with-view-all">
-              View tracked
-            </Link>
-          )}
         </div>
       </div>
-      <div className="profile-rank-card-content" style={{ minHeight: 200, flexDirection: "column", alignItems: "stretch" }}>
+      <div
+        className="profile-rank-card-content"
+        style={{
+          height: 340,
+          overflowY: "auto",
+          flexDirection: "column",
+          alignItems: "stretch",
+        }}
+      >
         {activeTab === "played" && (
           <>
             {!hasEntries ? (
