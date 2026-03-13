@@ -24,14 +24,20 @@ function getKeystoneRuneUrl(path: string, runeName: string): string {
   return `https://ddragon.leagueoflegends.com/cdn/img/perk-images/Styles/${path}/${key}/${key}.png`;
 }
 
-/** Official Riot role icon URLs (CommunityDragon) */
+/** Official Riot position icon URLs (CommunityDragon) */
 const ROLE_ICON_URL: Record<string, string> = {
-  top: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-top.png",
-  jungle: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-jungle.png",
-  mid: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-middle.png",
-  bot: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-bottom.png",
-  support: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-utility.png",
+  top: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/top.png",
+  jungle: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/jungle.png",
+  mid: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/middle.png",
+  bot: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/bottom.png",
+  support: "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/utility.png",
 };
+
+function RoleIcon({ role, size = 20 }: { role: string; size?: number }) {
+  const url = ROLE_ICON_URL[role];
+  if (!url) return <div style={{ width: size, height: size, background: "#555", borderRadius: 2 }} />;
+  return <IconWithFallback src={url} size={size} />;
+}
 
 const ICON_FALLBACK_STYLE = { width: 20, height: 20, background: "#555", borderRadius: 2 };
 
@@ -50,12 +56,6 @@ function IconWithFallback({ src, alt, size = 20 }: { src: string; alt?: string; 
       />
     </div>
   );
-}
-
-function RoleIcon({ role, size = 20 }: { role: string; size?: number }) {
-  const url = ROLE_ICON_URL[role];
-  if (!url) return <div style={{ ...ICON_FALLBACK_STYLE, width: size, height: size }} />;
-  return <IconWithFallback src={url} size={size} />;
 }
 
 import { useFollowing } from "@/components/following/useFollowing";
@@ -222,7 +222,17 @@ function PlayerRow({
             {p.summonerName}
           </Link>
           {p.mostPlayedChampion && p.mostPlayedChampion !== p.championName && (
-            <span style={{ fontSize: 12, opacity: 0.6 }}>
+            <span
+              style={{
+                fontSize: 12,
+                opacity: 0.6,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: 120,
+              }}
+              title={`Main: ${p.mostPlayedChampion}`}
+            >
               · Main: {p.mostPlayedChampion}
             </span>
           )}
@@ -453,8 +463,9 @@ export default function LiveGameView({
           className="live-page-verdict"
           style={{
             alignSelf: "center",
+            width: 180,
             background: isEven ? "#1a1a1a" : `linear-gradient(135deg, ${verdictColor}1a 0%, ${verdictColor}0d 100%)`,
-            border: isEven ? "1px solid rgba(255,255,255,0.15)" : `2px solid ${verdictColor}44`,
+            border: isEven ? "1px solid rgba(255,255,255,0.08)" : `2px solid ${verdictColor}44`,
             borderRadius: 12,
             padding: 24,
           }}
