@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getChampionSquareUrl, getRankEmblemUrl } from "@/lib/riotAssets";
+import { getChampionSquareUrl, getChampionSplashUrl, getRankEmblemUrl } from "@/lib/riotAssets";
+import { useFollowing } from "@/components/following/useFollowing";
 
 /* ── Sample data for Demo#NA1 ───────────────────────────────────────────── */
 
@@ -26,12 +27,18 @@ type LiveGameData = {
   gameStartTime: number;
   mapName: string;
   participants: LivePlayer[];
+  platformId?: string;
+  encryptedSummonerId?: string;
+  encryptionKey?: string;
 };
 
 const SAMPLE_LIVE_GAME: LiveGameData = {
   gameMode: "Ranked Solo/Duo",
   gameStartTime: Date.now() - 8 * 60 * 1000,
   mapName: "Summoner's Rift",
+  platformId: "na1",
+  encryptedSummonerId: "DEMO_PLACEHOLDER",
+  encryptionKey: "DEMO_KEY",
   participants: [
     {
       summonerName: "Demo#NA1",
@@ -207,6 +214,89 @@ function avgChampWr(players: LivePlayer[]): number {
   return Math.round(total / players.length);
 }
 
+function getSpectatorUrl(game: LiveGameData, region: string): string {
+  const platform = game.platformId ?? region.toLowerCase();
+  const enc = game.encryptedSummonerId ?? "";
+  const key = game.encryptionKey ?? "";
+  if (!enc) return "#";
+  return `leagueoflegends://spectator/${platform}/${enc}${key ? `/${key}` : ""}`;
+}
+
+const TEAM_BLUE = "#4FC3F7";
+const TEAM_RED = "#FF4444";
+
+function PlayerRow({
+  p,
+  region,
+  profileUrl,
+  addFollow,
+  isFollowing,
+}: {
+  p: LivePlayer;
+  region: string;
+  profileUrl: (id: string) => string;
+  addFollow: (riotId: string, region: string) => void;
+  isFollowing: (riotId: string, region: string) => boolean;
+}) {
+  const following = isFollowing(p.summonerName, region);
+  return (
+    <div className="live-page-player">
+      <div className="live-page-player-champ">
+        <img
+          src={getChampionSquareUrl(p.championName)}
+          alt={p.championName}
+          className="live-page-champ-icon"
+        />
+        <div>
+          <div className="live-page-champ-name">{p.championName}</div>
+          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
+            <Link href={profileUrl(p.summonerName)} className="live-page-summoner-link">
+              {p.summonerName}
+            </Link>
+            <button
+              type="button"
+              onClick={() => addFollow(p.summonerName, region)}
+              disabled={following}
+              title={following ? "Following" : "Follow"}
+              style={{
+                marginLeft: 6,
+                padding: "2px 6px",
+                fontSize: 10,
+                fontWeight: 600,
+                border: "1px solid rgba(255,255,255,0.2)",
+                borderRadius: 4,
+                background: following ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.06)",
+                color: following ? "#22c55e" : "rgba(255,255,255,0.8)",
+                cursor: following ? "default" : "pointer",
+              }}
+            >
+              {following ? "Following ✓" : "+ Follow"}
+            </button>
+          </div>
+        </div>
+      </div>
+      <div className="live-page-player-stats">
+        <div className="live-page-player-rank">
+          <img src={getRankEmblemUrl(p.rank.split(" ")[0])} alt="" className="live-page-rank-icon" />
+          {p.rank} {p.lp} LP
+        </div>
+        <div className="live-page-player-champ-stats">
+          {p.champWinRate}% WR · {p.champKda.toFixed(1)} KDA ({p.champGames} games)
+        </div>
+        {p.mostPlayedChampion && p.mostPlayedChampion !== p.championName && (
+          <div className="live-page-player-main">
+            <img src={getChampionSquareUrl(p.mostPlayedChampion)} alt="" className="live-page-main-icon" />
+            Main: {p.mostPlayedChampion}
+          </div>
+        )}
+        <div className="live-page-player-today">
+          {p.winsToday}W {p.lossesToday}L today
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LiveGameView({
   region,
   riotId,
@@ -219,6 +309,7 @@ export default function LiveGameView({
   const [gameData, setGameData] = useState<LiveGameData | null>(null);
   const [lastSeen, setLastSeen] = useState<number | null>(null);
   const [gameTimer, setGameTimer] = useState("0:00");
+  const { addFollow, isFollowing } = useFollowing();
 
   const isDemo = riotId.toLowerCase().includes("demo") && region.toLowerCase() === "na1";
 
@@ -273,27 +364,48 @@ export default function LiveGameView({
   const totalWr = blueAvgWr + redAvgWr;
   const bluePct = totalWr > 0 ? Math.round((blueAvgWr / totalWr) * 100) : 50;
   const redPct = totalWr > 0 ? Math.round((redAvgWr / totalWr) * 100) : 50;
-  const favored =
-    Math.abs(bluePct - redPct) < 5
-      ? "Even matchup"
-      : bluePct > redPct
-        ? "Blue team favored"
-        : "Red team favored";
-  const confidence =
-    Math.abs(bluePct - redPct) < 5 ? 50 : Math.max(bluePct, redPct);
+  const isEven = Math.abs(bluePct - redPct) < 5;
+  const favored = isEven
+    ? "Even Matchup"
+    : bluePct > redPct
+      ? "Blue Team Favored"
+      : "Red Team Favored";
+  const confidence = isEven ? 50 : Math.max(bluePct, redPct);
+  const verdictColor = isEven ? "#888" : bluePct > redPct ? TEAM_BLUE : TEAM_RED;
 
   const profileUrl = (riotIdDisplay: string) =>
     `/summoner?riotId=${encodeURIComponent(riotIdDisplay)}&region=${encodeURIComponent(region)}`;
+
+  const blueCarry = blueTeam.find((p) => p.championName === "Jinx") ?? blueTeam[0];
+  const redCarry = redTeam.find((p) => p.championName === "Caitlyn") ?? redTeam[0];
 
   return (
     <div className="live-page live-page--in-game">
       <div className="live-page-header">
         <div className="live-page-header-top">
           <h1 className="live-page-title">Live Game</h1>
-          <div className="live-page-live-badge">
-            <span className="live-page-live-dot" />
-            <span>Live</span>
-            <span className="live-page-live-muted">Updates every 30s</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <a
+              href={getSpectatorUrl(gameData, region)}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: "8px 16px",
+                fontSize: 14,
+                fontWeight: 600,
+                background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                color: "#fff",
+                borderRadius: 8,
+                textDecoration: "none",
+              }}
+            >
+              Watch Live
+            </a>
+            <div className="live-page-live-badge">
+              <span className="live-page-live-dot" />
+              <span>Live</span>
+              <span className="live-page-live-muted">Updates every 30s</span>
+            </div>
           </div>
         </div>
         <div className="live-page-meta">
@@ -304,117 +416,137 @@ export default function LiveGameView({
       </div>
 
       <div className="live-page-teams">
-        <div className="live-page-team live-page-team--blue">
-          <h2 className="live-page-team-title">Blue Team</h2>
-          {blueTeam.map((p) => (
-            <div key={p.summonerName} className="live-page-player">
-              <div className="live-page-player-champ">
-                <img
-                  src={getChampionSquareUrl(p.championName)}
-                  alt={p.championName}
-                  className="live-page-champ-icon"
-                />
-                <div>
-                  <div className="live-page-champ-name">{p.championName}</div>
-                  <Link
-                    href={profileUrl(p.summonerName)}
-                    className="live-page-summoner-link"
-                  >
-                    {p.summonerName}
-                  </Link>
-                </div>
-              </div>
-              <div className="live-page-player-stats">
-                <div className="live-page-player-rank">
-                  <img
-                    src={getRankEmblemUrl(p.rank.split(" ")[0])}
-                    alt=""
-                    className="live-page-rank-icon"
-                  />
-                  {p.rank} {p.lp} LP
-                </div>
-                <div className="live-page-player-champ-stats">
-                  {p.champWinRate}% WR · {p.champKda.toFixed(1)} KDA ({p.champGames} games)
-                </div>
-                {p.mostPlayedChampion && p.mostPlayedChampion !== p.championName && (
-                  <div className="live-page-player-main">
-                    <img
-                      src={getChampionSquareUrl(p.mostPlayedChampion)}
-                      alt=""
-                      className="live-page-main-icon"
-                    />
-                    Main: {p.mostPlayedChampion}
-                  </div>
-                )}
-                <div className="live-page-player-today">
-                  {p.winsToday}W {p.lossesToday}L today
-                </div>
-              </div>
+        <div
+          className="live-page-team live-page-team--blue"
+          style={{
+            position: "relative",
+            overflow: "hidden",
+            borderLeft: `4px solid ${TEAM_BLUE}`,
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            borderRight: "1px solid rgba(255,255,255,0.08)",
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          <div
+            className="live-page-team-splash"
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: `url(${getChampionSplashUrl(blueCarry.championName)})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center 20%",
+              opacity: 0.2,
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(to bottom, rgba(21,22,32,0.85) 0%, rgba(21,22,32,0.95) 50%, rgba(21,22,32,0.98) 100%)",
+              pointerEvents: "none",
+            }}
+          />
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <h2 className="live-page-team-title">Blue Team</h2>
+            {blueTeam.map((p) => (
+              <PlayerRow
+                key={p.summonerName}
+                p={p}
+                region={region}
+                profileUrl={profileUrl}
+                addFollow={addFollow}
+                isFollowing={isFollowing}
+              />
+            ))}
+            <div className="live-page-team-footer">
+              Avg rank: {avgRank(blueTeam)} · Avg WR on picks: {blueAvgWr}%
             </div>
-          ))}
-          <div className="live-page-team-footer">
-            Avg rank: {avgRank(blueTeam)} · Avg WR on picks: {blueAvgWr}%
           </div>
         </div>
 
-        <div className="live-page-verdict">
-          <div className="live-page-verdict-banner">{favored}</div>
-          <div className="live-page-verdict-confidence">{confidence}% likely</div>
+        <div
+          className="live-page-verdict"
+          style={{
+            background: isEven ? "rgba(255,255,255,0.04)" : `linear-gradient(135deg, ${verdictColor}22 0%, ${verdictColor}08 100%)`,
+            border: `2px solid ${verdictColor}44`,
+            borderRadius: 12,
+            padding: 24,
+          }}
+        >
+          <div
+            className="live-page-verdict-banner"
+            style={{
+              fontSize: "1.35rem",
+              fontWeight: 800,
+              color: verdictColor,
+              marginBottom: 4,
+            }}
+          >
+            {favored}
+          </div>
+          {!isEven && (
+            <div
+              className="live-page-verdict-confidence"
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: 700,
+                color: verdictColor,
+                marginBottom: 8,
+              }}
+            >
+              {confidence}% likely
+            </div>
+          )}
           <p className="live-page-verdict-caveat">
             Based on champion win rates only — individual performance varies
           </p>
         </div>
 
-        <div className="live-page-team live-page-team--red">
-          <h2 className="live-page-team-title">Red Team</h2>
-          {redTeam.map((p) => (
-            <div key={p.summonerName} className="live-page-player">
-              <div className="live-page-player-champ">
-                <img
-                  src={getChampionSquareUrl(p.championName)}
-                  alt={p.championName}
-                  className="live-page-champ-icon"
-                />
-                <div>
-                  <div className="live-page-champ-name">{p.championName}</div>
-                  <Link
-                    href={profileUrl(p.summonerName)}
-                    className="live-page-summoner-link"
-                  >
-                    {p.summonerName}
-                  </Link>
-                </div>
-              </div>
-              <div className="live-page-player-stats">
-                <div className="live-page-player-rank">
-                  <img
-                    src={getRankEmblemUrl(p.rank.split(" ")[0])}
-                    alt=""
-                    className="live-page-rank-icon"
-                  />
-                  {p.rank} {p.lp} LP
-                </div>
-                <div className="live-page-player-champ-stats">
-                  {p.champWinRate}% WR · {p.champKda.toFixed(1)} KDA ({p.champGames} games)
-                </div>
-                {p.mostPlayedChampion && p.mostPlayedChampion !== p.championName && (
-                  <div className="live-page-player-main">
-                    <img
-                      src={getChampionSquareUrl(p.mostPlayedChampion)}
-                      alt=""
-                      className="live-page-main-icon"
-                    />
-                    Main: {p.mostPlayedChampion}
-                  </div>
-                )}
-                <div className="live-page-player-today">
-                  {p.winsToday}W {p.lossesToday}L today
-                </div>
-              </div>
+        <div
+          className="live-page-team live-page-team--red"
+          style={{
+            position: "relative",
+            overflow: "hidden",
+            borderLeft: `4px solid ${TEAM_RED}`,
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            borderRight: "1px solid rgba(255,255,255,0.08)",
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          <div
+            className="live-page-team-splash"
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: `url(${getChampionSplashUrl(redCarry.championName)})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center 20%",
+              opacity: 0.2,
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(to bottom, rgba(21,22,32,0.85) 0%, rgba(21,22,32,0.95) 50%, rgba(21,22,32,0.98) 100%)",
+              pointerEvents: "none",
+            }}
+          />
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <h2 className="live-page-team-title">Red Team</h2>
+            {redTeam.map((p) => (
+              <PlayerRow
+                key={p.summonerName}
+                p={p}
+                region={region}
+                profileUrl={profileUrl}
+                addFollow={addFollow}
+                isFollowing={isFollowing}
+              />
+            ))}
+            <div className="live-page-team-footer">
+              Avg rank: {avgRank(redTeam)} · Avg WR on picks: {redAvgWr}%
             </div>
-          ))}
-          <div className="live-page-team-footer">
-            Avg rank: {avgRank(redTeam)} · Avg WR on picks: {redAvgWr}%
           </div>
         </div>
       </div>
