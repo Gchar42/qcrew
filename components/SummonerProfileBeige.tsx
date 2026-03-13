@@ -12,7 +12,6 @@ import { MatchDetails } from "@/components/MatchDetails";
 import PostGameBreakdown from "@/components/PostGameBreakdown";
 import ChampionStatsCard from "@/components/ChampionStatsCard";
 import RecentlyPlayedWithCard from "@/components/RecentlyPlayedWithCard";
-import BestDuosCard from "@/components/summoner/BestDuosCard";
 import { ChampionFirePortrait } from "@/components/ChampionFirePortrait";
 import { ChampionIcePortrait } from "@/components/ChampionIcePortrait";
 import { SessionHealthCard } from "@/components/summoner/SessionHealthCard";
@@ -1961,15 +1960,12 @@ export default function SummonerProfileBeige({
         </div>
         </div>
           <aside className="profile-body-right">
-            <BestDuosCard
-              riotId={riotIdParam ?? ""}
-              region={regionVal}
-              soloWinRate={winRate}
-              duos={undefined}
-            />
             <RecentlyPlayedWithCard
               recentlyPlayedWith={bundle?.recentlyPlayedWith ?? []}
               region={regionVal}
+              riotId={riotIdParam ?? ""}
+              soloWinRate={winRate}
+              duos={undefined}
             />
             <LpHistoryGraph
               matches={sessionMatches}
