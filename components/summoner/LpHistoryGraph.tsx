@@ -227,14 +227,14 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
       padding: 16,
       marginTop: 12,
     }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.7 }}>
             <polyline points="1,14 5,8 9,10 15,2" stroke="#5865F2" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span style={{ fontSize: 14, fontWeight: 600, color: "#e0e0e0" }}>LP History</span>
         </div>
-        <div style={{ display: "flex", gap: 4 }}>
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
           {TIME_RANGES.map((r) => (
             <button
               key={r.label}
@@ -242,7 +242,7 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
               onClick={() => setRange(r.label)}
               style={{
                 fontSize: 11,
-                padding: "2px 8px",
+                padding: "4px 8px",
                 borderRadius: 9999,
                 border: "none",
                 cursor: "pointer",
