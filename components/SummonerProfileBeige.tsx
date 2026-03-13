@@ -1965,7 +1965,7 @@ export default function SummonerProfileBeige({
               riotId={riotIdParam ?? ""}
               region={regionVal}
               soloWinRate={winRate}
-              duos={bundle?.duoStats}
+              duos={undefined}
             />
             <RecentlyPlayedWithCard
               recentlyPlayedWith={bundle?.recentlyPlayedWith ?? []}
