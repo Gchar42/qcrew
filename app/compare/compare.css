@@ -162,218 +162,21 @@
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
-/* === Comparison Grid === */
-.compare-grid {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 0;
-  align-items: center;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 8px 0;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.3);
-  overflow: hidden;
-}
-
-/* === Player Headers === */
-.compare-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-  width: 100%;
-}
-
-.compare-player-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 28px 16px 20px;
-}
-
-.compare-player-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  border: 3px solid var(--border);
-  box-shadow: 0 0 20px rgba(0,0,0,0.4);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.compare-player-icon:hover {
-  transform: scale(1.08);
-  box-shadow: 0 0 24px var(--accent-glow);
-  border-color: var(--accent);
-}
-
-.compare-player-name {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.3px;
-}
-
-.compare-player-tag {
-  color: var(--muted);
-  font-weight: 500;
-  font-size: 16px;
-}
-
-.compare-player-level {
-  font-size: 12px;
-  color: var(--muted);
+/* === Autocomplete input override === */
+.compare-input {
   background: var(--surface2);
-  padding: 2px 10px;
-  border-radius: 99px;
-  font-weight: 600;
-}
-
-/* === Section Titles === */
-.compare-section-title {
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--accent);
-  padding: 20px 0 8px;
-  text-align: center;
-  grid-column: 1 / -1;
-  border-top: 1px solid var(--border);
-  margin-top: 4px;
-  background: linear-gradient(180deg, rgba(59,130,246,0.04) 0%, transparent 100%);
-}
-
-/* === Stat Rows === */
-.compare-stat-value {
-  font-size: 15px;
-  font-weight: 700;
-  padding: 10px 24px;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  transition: background 0.15s;
-}
-
-.compare-stat-value:hover {
-  background: rgba(255,255,255,0.02);
-}
-
-.compare-stat-left { justify-content: flex-start; text-align: left; }
-.compare-stat-right { justify-content: flex-end; text-align: right; }
-
-.compare-stat-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  padding: 10px 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40px;
-  text-align: center;
-  min-width: 130px;
-}
-
-.compare-stat-value.better {
-  color: var(--win);
-  text-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
-}
-
-.compare-stat-value.worse {
-  color: var(--loss);
-}
-
-.compare-stat-value.neutral {
+  border: 1px solid var(--border);
   color: var(--ink);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 200px;
 }
-
-/* === Rank Display === */
-.compare-rank {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 12px 0;
-}
-
-.compare-rank-emblem {
-  width: 56px;
-  height: 56px;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
-  transition: transform 0.2s;
-}
-
-.compare-rank-emblem:hover {
-  transform: scale(1.12);
-}
-
-.compare-rank-tier {
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: -0.2px;
-}
-
-.compare-rank-lp {
-  font-size: 13px;
-  color: var(--muted);
-  font-weight: 600;
-}
-
-/* === Champion Icons === */
-.compare-champs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-  padding: 12px 0 20px;
-}
-
-.compare-champ-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 2px solid var(--border);
-  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
-  cursor: pointer;
-}
-
-.compare-champ-icon:hover {
-  transform: scale(1.15);
+.compare-input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 12px var(--accent-glow);
-}
-
-/* === Labels column === */
-.compare-labels {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-  padding: 0;
-  min-width: 130px;
-}
-
-/* === Alternating row stripes via nth-child on grid direct children === */
-.compare-grid > .compare-stat-value:nth-child(6n+4),
-.compare-grid > .compare-stat-label:nth-child(6n+5),
-.compare-grid > .compare-stat-value:nth-child(6n+6) {
-  background: rgba(255,255,255,0.015);
-}
-
-/* === Responsive === */
-@media (max-width: 700px) {
-  .compare-page { padding: 24px 8px 48px; }
-  .compare-grid { border-radius: 12px; }
-  .compare-stat-value { font-size: 13px; padding: 8px 12px; }
-  .compare-stat-label { font-size: 10px; min-width: 90px; }
-  .compare-player-icon { width: 52px; height: 52px; }
-  .compare-player-name { font-size: 16px; }
-  .compare-picker { padding: 16px; gap: 8px; }
-  .compare-picker-group input { width: 150px; }
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 /* === Profile badge (shared with profile page) === */
@@ -389,17 +192,28 @@
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
 }
-
 .profile-badge-compare:hover {
   background: rgba(59,130,246,0.25);
   color: #fff;
 }
-/* === Queue Tabs === */
-.compare-tabs {
+
+
+/* ════════════════════════════════════════════════════════════
+   CompareResults (cr-*) component styles
+   ════════════════════════════════════════════════════════════ */
+
+.cr-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Queue Tabs ─────────────────────────────────────────── */
+
+.cr-tabs {
   display: flex;
   justify-content: center;
   gap: 4px;
-  margin-bottom: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-bottom: none;
@@ -408,7 +222,7 @@
   box-shadow: 0 -2px 24px rgba(0,0,0,0.15);
 }
 
-.compare-tab {
+.cr-tab {
   background: transparent;
   border: none;
   color: var(--muted);
@@ -422,17 +236,11 @@
   position: relative;
 }
 
-.compare-tab:hover {
-  color: var(--ink);
-  background: rgba(255,255,255,0.03);
-}
+.cr-tab:hover { color: var(--ink); background: rgba(255,255,255,0.03); }
 
-.compare-tab.active {
-  color: var(--accent);
-  background: var(--surface2);
-}
+.cr-tab.active { color: var(--accent); background: var(--surface2); }
 
-.compare-tab.active::after {
+.cr-tab.active::after {
   content: "";
   position: absolute;
   bottom: 0;
@@ -444,23 +252,488 @@
   box-shadow: 0 0 8px var(--accent-glow);
 }
 
-.compare-tabs + .compare-grid {
+/* ── Player Header Row ──────────────────────────────────── */
+
+.cr-header-row {
+  display: flex;
+  align-items: stretch;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  padding: 0;
+}
+
+.cr-player-header {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 16px 20px;
+}
+
+.cr-player-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  box-shadow: 0 0 20px rgba(0,0,0,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.cr-player-icon:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 24px var(--accent-glow);
+  border-color: var(--accent);
+}
+
+.cr-player-name {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  text-align: center;
+}
+
+.cr-player-tag {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.cr-player-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cr-player-level {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--surface2);
+  padding: 2px 10px;
+  border-radius: 99px;
+  font-weight: 600;
+}
+
+.cr-player-region {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 600;
+}
+
+.cr-streak {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+.cr-streak-win {
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+}
+.cr-streak-loss {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.cr-vs-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--accent);
+  text-shadow: 0 0 16px var(--accent-glow);
+  min-width: 56px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+/* ── Verdict Banner ─────────────────────────────────────── */
+
+.cr-verdict {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+}
+
+.cr-verdict-icon { font-size: 28px; }
+
+.cr-verdict-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+  letter-spacing: -0.2px;
+}
+
+.cr-verdict-left .cr-verdict-text { color: var(--accent); }
+.cr-verdict-right .cr-verdict-text { color: var(--gold); }
+
+.cr-verdict-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.cr-chip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+  letter-spacing: 0.3px;
+}
+
+.cr-chip-p1 {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.cr-chip-p2 {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.cr-chip-tie {
+  background: rgba(107, 122, 144, 0.12);
+  color: var(--muted);
+  border: 1px solid rgba(107, 122, 144, 0.2);
+}
+
+/* ── Sections ───────────────────────────────────────────── */
+
+.cr-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  overflow: hidden;
+}
+
+.cr-section:last-of-type {
   border-radius: 0 0 16px 16px;
 }
 
-/* Autocomplete input in compare picker */
-.compare-input {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--ink);
-  border-radius: 10px;
-  padding: 11px 14px;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  width: 200px;
+.cr-section-title {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  padding: 20px 24px 10px;
+  background: linear-gradient(180deg, rgba(59,130,246,0.04) 0%, transparent 100%);
+  border-top: 1px solid var(--border);
 }
-.compare-input:focus {
+
+/* ── Side-by-side layout ────────────────────────────────── */
+
+.cr-side-by-side {
+  display: flex;
+  align-items: stretch;
+  padding: 0 12px 16px;
+}
+
+.cr-side-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  gap: 6px;
+}
+
+.cr-side-divider {
+  width: 1px;
+  background: var(--border);
+  align-self: stretch;
+  margin: 8px 0;
+  flex-shrink: 0;
+}
+
+/* ── Rank Display ───────────────────────────────────────── */
+
+.cr-rank {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.cr-rank-emblem {
+  width: 56px;
+  height: 56px;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+  transition: transform 0.2s;
+}
+.cr-rank-emblem:hover { transform: scale(1.12); }
+
+.cr-rank-tier {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.cr-rank-lp {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ── Stat Rows ──────────────────────────────────────────── */
+
+.cr-stats-block {
+  padding: 0 12px 12px;
+}
+
+.cr-stat-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  min-height: 40px;
+  transition: background 0.12s;
+}
+
+.cr-stat-row:hover { background: rgba(255,255,255,0.02); }
+
+.cr-stat-row:not(:last-child) {
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.cr-stat-value {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+}
+
+.cr-stat-left { justify-content: flex-start; }
+.cr-stat-right { justify-content: flex-end; text-align: right; }
+
+.cr-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 10px 12px;
+  text-align: center;
+  min-width: 120px;
+}
+
+.cr-stat-value.better {
+  color: var(--win);
+  text-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
+}
+.cr-stat-value.worse { color: var(--loss); }
+.cr-stat-value.neutral { color: var(--ink); }
+
+/* ── Recent Form ────────────────────────────────────────── */
+
+.cr-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.cr-form-dots {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.cr-form-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cr-dot-win { background: var(--win); box-shadow: 0 0 4px rgba(34,197,94,0.4); }
+.cr-dot-loss { background: var(--loss); box-shadow: 0 0 4px rgba(239,68,68,0.4); }
+
+.cr-form-summary {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cr-form-wins { color: var(--win); }
+.cr-form-losses { color: var(--loss); }
+
+/* ── Role Distribution ──────────────────────────────────── */
+
+.cr-roles-area { padding-bottom: 20px; }
+
+.cr-role-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 3px 0;
+}
+
+.cr-role-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  min-width: 56px;
+  text-align: right;
+}
+
+.cr-role-track {
+  flex: 1;
+  height: 8px;
+  background: var(--surface2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.cr-role-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+  min-width: 2px;
+}
+
+.cr-role-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  min-width: 32px;
+  text-align: left;
+}
+
+/* ── Champion Rows ──────────────────────────────────────── */
+
+.cr-champs-panel {
+  gap: 4px !important;
+  padding: 8px 12px !important;
+  align-items: stretch !important;
+}
+
+.cr-champ-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.12s;
+}
+.cr-champ-row:hover { background: rgba(255,255,255,0.03); }
+
+.cr-champ-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.cr-champ-icon:hover {
+  transform: scale(1.1);
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.cr-champ-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-champ-wr {
+  font-size: 13px;
+  font-weight: 700;
+}
+.cr-wr-pos { color: var(--win); }
+.cr-wr-neg { color: var(--loss); }
+
+.cr-champ-games {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+  min-width: 28px;
+  text-align: right;
+}
+
+.cr-no-data {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 12px 0;
+}
+
+/* ── Share Row ──────────────────────────────────────────── */
+
+.cr-share-row {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 0;
+}
+
+.cr-share-btn {
+  padding: 10px 28px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  letter-spacing: 0.2px;
+}
+.cr-share-btn:hover {
+  background: var(--surface2);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+
+@media (max-width: 700px) {
+  .compare-page { padding: 24px 8px 48px; }
+  .compare-picker { padding: 16px; gap: 8px; }
+  .compare-picker-group input { width: 150px; }
+
+  .cr-header-row { flex-direction: column; }
+  .cr-vs-badge {
+    padding: 8px 0;
+    min-width: auto;
+  }
+
+  .cr-player-icon { width: 56px; height: 56px; }
+  .cr-player-name { font-size: 16px; }
+
+  .cr-verdict { padding: 16px; }
+  .cr-verdict-text { font-size: 14px; }
+
+  .cr-stat-value { font-size: 13px; padding: 8px 10px; }
+  .cr-stat-label { font-size: 10px; min-width: 90px; padding: 8px 6px; }
+
+  .cr-side-by-side { flex-direction: column; padding: 0 8px 12px; }
+  .cr-side-divider {
+    width: 100%;
+    height: 1px;
+    margin: 4px 0;
+  }
+
+  .cr-rank-emblem { width: 44px; height: 44px; }
+  .cr-rank-tier { font-size: 15px; }
 }
