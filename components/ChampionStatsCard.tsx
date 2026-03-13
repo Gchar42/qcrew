@@ -22,7 +22,7 @@ export default function ChampionStatsCard(props: {
 
   const slice = championStats[queue];
   const champions = slice?.champions ?? [];
-  const top7 = champions.slice(0, 7);
+  const top7 = champions.slice(0, 6);
 
   const handleRefresh = React.useCallback(() => {
     if (!puuid || !onRefresh) return;

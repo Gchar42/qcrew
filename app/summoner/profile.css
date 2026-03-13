@@ -1020,7 +1020,8 @@
 }
 
 .profile-page .champ_row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
   align-items: center;
   gap: 10px;
   padding: 6px 0;
@@ -1089,7 +1090,6 @@
 }
 
 .profile-page .champ_mid {
-  margin-left: auto;
   text-align: right;
 }
 
