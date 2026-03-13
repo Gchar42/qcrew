@@ -23,6 +23,7 @@
   font-family: "Inter", "Segoe UI", system-ui, sans-serif;
   min-height: 100vh;
   position: relative;
+  zoom: 0.80;
 }
 
 .profile-page .profile-container {
