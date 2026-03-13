@@ -565,13 +565,13 @@
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
-  min-width: 76px;
+  min-width: 96px;
 }
 
 .profile-page .rank-card .emblem-icon {
   position: relative;
-  width: 72px;
-  height: 72px;
+  width: 92px;
+  height: 92px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -580,8 +580,8 @@
 .profile-page .rank-card .emblem-img {
   position: relative;
   z-index: 1;
-  width: 70px;
-  height: 70px;
+  width: 90px;
+  height: 90px;
   object-fit: contain;
   filter: drop-shadow(0 3px 8px rgba(0,0,0,0.6));
 }
