@@ -1187,7 +1187,7 @@ export default function SummonerProfileBeige({
       </section>
 
       {mainTab === "overview" ? (
-      <div className={`profile-body${(displayedMatches?.length ?? 0) > 0 ? " profile-body-has-right" : ""}`}>
+      <div className="profile-body profile-body-has-right">
         <aside className="profile-body-left">
           {renderRankCard("Ranked Solo", soloEntry, rankLoading, rankError ?? null)}
           {renderRankCard("Ranked Flex", flexEntry, rankLoading, null)}
@@ -1903,7 +1903,6 @@ export default function SummonerProfileBeige({
         )}
         </div>
         </div>
-        {(displayedMatches?.length ?? 0) > 0 && (
           <aside className="profile-body-right">
             <RecentlyPlayedWithCard
               recentlyPlayedWith={bundle?.recentlyPlayedWith ?? []}
@@ -1917,7 +1916,6 @@ export default function SummonerProfileBeige({
             />
             <SessionHealthCard matches={sessionMatches} />
           </aside>
-        )}
       </div>
       ) : (
       <>
