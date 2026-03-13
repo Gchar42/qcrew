@@ -20,6 +20,19 @@ const TIER_COLORS: Record<string, string> = {
   IRON: "#78716C",
 };
 
+const TIER_BORDER_COLORS: Record<string, string> = {
+  CHALLENGER: "#F4C874",
+  GRANDMASTER: "#FF4444",
+  MASTER: "#9B59B6",
+  DIAMOND: "#4FC3F7",
+  EMERALD: "#2ECC71",
+  PLATINUM: "#1ABC9C",
+  GOLD: "#C89B3C",
+  SILVER: "#AAB8C2",
+  BRONZE: "#CD7F32",
+  IRON: "#8B7355",
+};
+
 const REGION_LABELS: Record<string, string> = {
   na1: "NA",
   euw1: "EUW",
@@ -164,10 +177,24 @@ export default function FollowCard({
       ? `${data.tier} ${data.rank}`
       : (data?.tier ?? "Unranked");
 
+  const borderColor = data?.tier
+    ? (TIER_BORDER_COLORS[data.tier.toUpperCase()] ?? "rgba(255,255,255,0.08)")
+    : "rgba(255,255,255,0.08)";
+
   const profileUrl = `/summoner?riotId=${encodeURIComponent(riotId)}&region=${encodeURIComponent(region)}`;
 
   return (
-    <div className="ff-card">
+    <div
+      className="ff-card"
+      style={{
+        borderLeftWidth: "4px",
+        borderLeftStyle: "solid",
+        borderLeftColor: borderColor,
+        boxShadow: data?.tier
+          ? `inset 4px 0 8px -4px ${borderColor}66`
+          : undefined,
+      }}
+    >
       {data?.topChampion && (
         <div
           className="ff-card-splash"
