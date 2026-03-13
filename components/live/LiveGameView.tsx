@@ -189,56 +189,53 @@ function PlayerRow({
   const keystoneName = p.keystoneName ?? "Conqueror";
   const iconSize = 20;
   return (
-    <div className="live-page-player">
-      <div className="live-page-player-champ">
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
-          <img
-            src={getChampionSquareUrl(p.championName)}
-            alt={p.championName}
-            className="live-page-champ-icon"
-          />
-          <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <RoleIcon role={role} size={iconSize} />
-            <IconWithFallback src={getSummonerSpellIconUrl(spell1)} size={iconSize} />
-            <IconWithFallback src={getSummonerSpellIconUrl(spell2)} size={iconSize} />
-            <IconWithFallback src={getKeystoneRuneUrl(keystonePath, keystoneName)} size={iconSize} />
-          </div>
-        </div>
-        <div>
-          <div className="live-page-champ-name">{p.championName}</div>
-          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
-            <Link href={profileUrl(p.summonerName)} className="live-page-summoner-link">
-              {p.summonerName}
-            </Link>
-            <button
-              type="button"
-              onClick={() => addFollow(p.summonerName, region)}
-              disabled={following}
-              title={following ? "Following" : "Follow"}
-              style={{
-                marginLeft: 6,
-                padding: "2px 6px",
-                fontSize: 10,
-                fontWeight: 600,
-                border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: 4,
-                background: following ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.06)",
-                color: following ? "#22c55e" : "rgba(255,255,255,0.8)",
-                cursor: following ? "default" : "pointer",
-              }}
-            >
-              {following ? "Following ✓" : "+ Follow"}
-            </button>
-          </div>
-        </div>
+    <div
+      className="live-page-player"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "48px 24px 1fr auto",
+        alignItems: "center",
+        gap: 12,
+        minWidth: 0,
+      }}
+    >
+      <img
+        src={getChampionSquareUrl(p.championName)}
+        alt={p.championName}
+        width={48}
+        height={48}
+        style={{ borderRadius: 8, objectFit: "cover" }}
+      />
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+        <RoleIcon role={role} size={iconSize} />
+        <IconWithFallback src={getSummonerSpellIconUrl(spell1)} size={iconSize} />
+        <IconWithFallback src={getSummonerSpellIconUrl(spell2)} size={iconSize} />
+        <IconWithFallback src={getKeystoneRuneUrl(keystonePath, keystoneName)} size={iconSize} />
       </div>
-      <div className="live-page-player-stats">
-        <div className="live-page-player-rank">
-          <img src={getRankEmblemUrl(p.rank.split(" ")[0])} alt="" className="live-page-rank-icon" />
-          {p.rank} {p.lp} LP
-        </div>
-        <div className="live-page-player-champ-stats">
-          {p.champWinRate}% WR · {p.champKda.toFixed(1)} KDA ({p.champGames} games)
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2, minWidth: 0 }}>
+        <div className="live-page-champ-name">{p.championName}</div>
+        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
+          <Link href={profileUrl(p.summonerName)} className="live-page-summoner-link">
+            {p.summonerName}
+          </Link>
+          <button
+            type="button"
+            onClick={() => addFollow(p.summonerName, region)}
+            disabled={following}
+            title={following ? "Following" : "Follow"}
+            style={{
+              padding: "2px 6px",
+              fontSize: 10,
+              fontWeight: 600,
+              border: "1px solid rgba(255,255,255,0.2)",
+              borderRadius: 4,
+              background: following ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.06)",
+              color: following ? "#22c55e" : "rgba(255,255,255,0.8)",
+              cursor: following ? "default" : "pointer",
+            }}
+          >
+            {following ? "Following ✓" : "+ Follow"}
+          </button>
         </div>
         {p.mostPlayedChampion && p.mostPlayedChampion !== p.championName && (
           <div className="live-page-player-main">
@@ -246,6 +243,15 @@ function PlayerRow({
             Main: {p.mostPlayedChampion}
           </div>
         )}
+      </div>
+      <div style={{ textAlign: "right", fontSize: "0.7rem", color: "rgba(255,255,255,0.6)" }}>
+        <div className="live-page-player-rank" style={{ justifyContent: "flex-end" }}>
+          <img src={getRankEmblemUrl(p.rank.split(" ")[0])} alt="" className="live-page-rank-icon" />
+          {p.rank} {p.lp} LP
+        </div>
+        <div className="live-page-player-champ-stats">
+          {p.champWinRate}% WR · {p.champKda.toFixed(1)} KDA ({p.champGames} games)
+        </div>
         <div className="live-page-player-today">
           {p.winsToday}W {p.lossesToday}L today
         </div>
