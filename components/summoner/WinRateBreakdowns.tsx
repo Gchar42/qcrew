@@ -280,11 +280,11 @@ export function WinRateBreakdowns({ matches }: Props) {
             />
           ))}
         </div>
-        {bestDay && (
+        {bestDay && worstDay && (
           <p className="text-xs text-white/50 mt-3">
-            Your best day is {DAY_FULL[bestDay]} ({dayWrs[DAYS.indexOf(bestDay as typeof DAYS[number])]}
+            Your best day is {DAY_FULL[bestDay]} ({dayWrs[(DAYS as readonly string[]).indexOf(bestDay)]}
             % WR). Avoid ranked on {DAY_FULL[worstDay]} (
-            {dayWrs[DAYS.indexOf(worstDay as typeof DAYS[number])]}% WR).
+            {dayWrs[(DAYS as readonly string[]).indexOf(worstDay)]}% WR).
           </p>
         )}
       </section>
