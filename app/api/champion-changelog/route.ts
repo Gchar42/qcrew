@@ -15,13 +15,65 @@ type PatchChange = {
   changes: string;
 };
 
-const PATCH_VERSIONS: string[] = [];
-for (let minor = 5; minor >= 1; minor--) PATCH_VERSIONS.push(`26.${minor}`);
-for (let minor = 24; minor >= 1; minor--) PATCH_VERSIONS.push(`25.${minor}`);
-for (let minor = 24; minor >= 1; minor--) PATCH_VERSIONS.push(`14.${minor}`);
+/**
+ * Dynamically generate patch versions and dates based on Riot's ~2-week cadence.
+ * Anchor: patch 25.1 released 2025-01-14. Each subsequent patch is +14 days.
+ * Season = calendar year; minor resets to 1 each January.
+ */
+const SEASON_ANCHORS: Record<number, { firstPatchDate: Date; maxPatches: number }> = {
+  14: { firstPatchDate: new Date("2024-01-10T00:00:00Z"), maxPatches: 24 },
+  25: { firstPatchDate: new Date("2025-01-14T00:00:00Z"), maxPatches: 24 },
+  26: { firstPatchDate: new Date("2026-01-07T00:00:00Z"), maxPatches: 24 },
+  27: { firstPatchDate: new Date("2027-01-06T00:00:00Z"), maxPatches: 24 },
+};
+
+function getPatchDate(season: number, minor: number): Date {
+  const anchor = SEASON_ANCHORS[season];
+  if (!anchor) return new Date(0);
+  const ms = anchor.firstPatchDate.getTime() + (minor - 1) * 14 * 86400000;
+  return new Date(ms);
+}
+
+function formatDateStr(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function generatePatchVersions(): { versions: string[]; dates: Record<string, string> } {
+  const now = new Date();
+  const versions: string[] = [];
+  const dates: Record<string, string> = {};
+
+  const seasons = Object.keys(SEASON_ANCHORS).map(Number).sort((a, b) => b - a);
+
+  for (const season of seasons) {
+    const anchor = SEASON_ANCHORS[season];
+    for (let minor = anchor.maxPatches; minor >= 1; minor--) {
+      const patchDate = getPatchDate(season, minor);
+      if (patchDate > now) continue;
+      const ver = `${season}.${minor}`;
+      versions.push(ver);
+      dates[ver] = formatDateStr(patchDate);
+    }
+  }
+
+  versions.sort((a, b) => {
+    const [aMaj, aMin] = a.split(".").map(Number);
+    const [bMaj, bMin] = b.split(".").map(Number);
+    return bMaj !== aMaj ? bMaj - aMaj : bMin - aMin;
+  });
+
+  return { versions, dates };
+}
+
+function isRecentPatch(version: string, allVersions: string[]): boolean {
+  const idx = allVersions.indexOf(version);
+  return idx >= 0 && idx < 2;
+}
+
+const CACHE_MAX_AGE_DAYS_OLD = 7;
+const CACHE_MAX_AGE_DAYS_RECENT = 1;
 
 const PATCH_URL_BASE = "https://www.leagueoflegends.com/en-us/news/game-updates";
-const CACHE_MAX_AGE_DAYS = 7;
 
 function patchUrl(version: string): string {
   const slug = version.replace(/\./g, "-");
@@ -133,19 +185,6 @@ function classifyChange(text: string): string {
   return "change";
 }
 
-const PATCH_DATES: Record<string, string> = {
-  "26.5": "2026-03-04", "26.4": "2026-02-18", "26.3": "2026-02-04",
-  "26.2": "2026-01-21", "26.1": "2026-01-07",
-  "25.24": "2025-12-02", "25.23": "2025-11-18", "25.22": "2025-11-04",
-  "25.21": "2025-10-21", "25.20": "2025-10-07", "25.19": "2025-09-23",
-  "25.18": "2025-09-09", "25.17": "2025-08-26", "25.16": "2025-08-12",
-  "25.15": "2025-07-29", "25.14": "2025-07-15", "25.13": "2025-07-01",
-  "25.12": "2025-06-17", "25.11": "2025-06-03", "25.10": "2025-05-20",
-  "25.9": "2025-05-06", "25.8": "2025-04-22", "25.7": "2025-04-08",
-  "25.6": "2025-03-25", "25.5": "2025-03-11", "25.4": "2025-02-25",
-  "25.3": "2025-02-11", "25.2": "2025-01-28", "25.1": "2025-01-14",
-};
-
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const champion = (searchParams.get("champion") || "").trim();
@@ -156,43 +195,65 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "champion param required" }, { status: 400 });
   }
 
+  const { versions: PATCH_VERSIONS, dates: PATCH_DATES } = generatePatchVersions();
   const client = getAdminClient();
 
-  // Check cache: only use entries newer than CACHE_MAX_AGE_DAYS
+  // Check cache with tiered TTL: 1 day for newest 2 patches, 7 days for older
   if (client) {
-    const cutoff = new Date(Date.now() - CACHE_MAX_AGE_DAYS * 86400000).toISOString();
-
     const { data: cached } = await client
       .from("champion_patch_notes")
       .select("patch_version, patch_date, change_type, changes_text, scraped_at")
       .ilike("champion_name", champion)
-      .gte("scraped_at", cutoff)
       .order("patch_version", { ascending: false })
       .limit(limit);
 
     if (cached && cached.length > 0) {
-      // Re-classify on read so cached entries always get correct buff/nerf labels
-      const changes: PatchChange[] = cached.map((r) => ({
-        patchVersion: r.patch_version,
-        patchDate: r.patch_date,
-        changeType: classifyChange(r.changes_text),
-        changes: r.changes_text,
-      }));
-      return NextResponse.json({ champion, changes, cached: true });
-    }
+      const now = Date.now();
+      const fresh: typeof cached = [];
+      const staleVersions: string[] = [];
 
-    // Delete any stale entries for this champion before re-scraping
-    await client
-      .from("champion_patch_notes")
-      .delete()
-      .ilike("champion_name", champion);
+      for (const row of cached) {
+        const maxAge = isRecentPatch(row.patch_version, PATCH_VERSIONS)
+          ? CACHE_MAX_AGE_DAYS_RECENT
+          : CACHE_MAX_AGE_DAYS_OLD;
+        const age = now - new Date(row.scraped_at).getTime();
+        if (age < maxAge * 86400000) {
+          fresh.push(row);
+        } else {
+          staleVersions.push(row.patch_version);
+        }
+      }
+
+      // Delete stale entries so they get re-scraped below
+      if (staleVersions.length > 0) {
+        await client
+          .from("champion_patch_notes")
+          .delete()
+          .ilike("champion_name", champion)
+          .in("patch_version", staleVersions);
+      }
+
+      // If we still have fresh data covering the request, return it
+      if (fresh.length > 0 && staleVersions.length === 0) {
+        const changes: PatchChange[] = fresh.map((r) => ({
+          patchVersion: r.patch_version,
+          patchDate: r.patch_date,
+          changeType: classifyChange(r.changes_text),
+          changes: r.changes_text,
+        }));
+        return NextResponse.json({ champion, changes, cached: true });
+      }
+    }
   }
+
+  // Determine which versions need scraping
+  const versionsToScrape = PATCH_VERSIONS;
 
   // Scrape patch notes
   const changes: PatchChange[] = [];
 
-  for (let i = 0; i < PATCH_VERSIONS.length; i += 5) {
-    const batch = PATCH_VERSIONS.slice(i, i + 5);
+  for (let i = 0; i < versionsToScrape.length; i += 5) {
+    const batch = versionsToScrape.slice(i, i + 5);
     const results = await Promise.allSettled(
       batch.map(async (version) => {
         try {
