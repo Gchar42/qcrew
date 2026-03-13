@@ -1,8 +1,9 @@
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-import { getProfilesViewedSince, upsertProfileCache } from "@/lib/socialCache";
+import { getProfilesViewedSince, upsertProfileCache, getProfileCache } from "@/lib/socialCache";
 import { getRoutingRegion } from "@/lib/riot-regions";
+import { inferDodge } from "@/lib/dodgeDetection";
 
 /**
  * GET /api/cron/profile-refresh
@@ -69,6 +70,33 @@ export async function GET(request: Request) {
       }>;
 
       const solo = entries.find((e) => e.queueType === "RANKED_SOLO_5x5");
+
+      // Dodge detection: compare LP before and after refresh
+      if (solo) {
+        try {
+          const cached = await getProfileCache(riot_id, region);
+          if (cached && cached.league_points > 0) {
+            const oldGames = cached.wins + cached.losses;
+            const newGames = solo.wins + solo.losses;
+            const newMatchesSinceLastCheck = newGames - oldGames;
+
+            const dodge = inferDodge(
+              cached.league_points,
+              solo.leaguePoints,
+              newMatchesSinceLastCheck,
+            );
+            if (dodge) {
+              // TODO: persist to dodges table when available
+              console.log(
+                `[dodge-detect] ${riot_id} (${region}): -${dodge.lpLoss} LP, confidence=${dodge.confidence}`,
+              );
+            }
+          }
+        } catch {
+          /* best effort — don't block refresh */
+        }
+      }
+
       await upsertProfileCache({
         riotId: riot_id,
         region,
