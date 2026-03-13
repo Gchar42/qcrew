@@ -977,26 +977,25 @@ export default function SummonerProfileBeige({
             <span className="queue-label">{title}</span>
             <span className="season-tag">S15</span>
           </div>
-          <div className="card-body">
-            <div className="rank-emblem" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0, minWidth: 88 }}>
-              <div className="emblem-icon" style={{ width: 84, height: 84, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div className="card-body" style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 6 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0, minWidth: 88 }}>
+              <div style={{ width: 80, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {tier ? (
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      className="emblem-img"
                       src={getRankEmblemUrl(tier)}
-                      alt=""
+                      alt={tier}
                       width={80}
                       height={80}
-                      style={{ width: 80, height: 80, objectFit: "contain", filter: "drop-shadow(0 3px 8px rgba(0,0,0,0.6))" }}
+                      style={{ width: "80px", height: "80px", objectFit: "contain", filter: "drop-shadow(0 3px 8px rgba(0,0,0,0.6))", maxWidth: "none" }}
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                         const fb = e.currentTarget.nextElementSibling;
                         if (fb) (fb as HTMLElement).style.display = "flex";
                       }}
                     />
-                    <div className="emblem-img loading-placeholder" style={{ display: "none" }}>
+                    <div style={{ display: "none", width: 80, height: 80, alignItems: "center", justifyContent: "center", fontSize: 9, letterSpacing: "0.5px", textTransform: "uppercase", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.4)" }}>
                       {tier}
                     </div>
                   </>
