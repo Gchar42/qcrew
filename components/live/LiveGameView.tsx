@@ -193,31 +193,39 @@ function PlayerRow({
       className="live-page-player"
       style={{
         display: "grid",
-        gridTemplateColumns: "48px 24px 1fr auto",
+        gridTemplateColumns: "92px 1fr auto",
         alignItems: "center",
         gap: 12,
         minWidth: 0,
+        minHeight: 64,
       }}
     >
-      <img
-        src={getChampionSquareUrl(p.championName)}
-        alt={p.championName}
-        width={48}
-        height={48}
-        style={{ borderRadius: 8, objectFit: "cover" }}
-      />
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-        <RoleIcon role={role} size={iconSize} />
-        <IconWithFallback src={getSummonerSpellIconUrl(spell1)} size={iconSize} />
-        <IconWithFallback src={getSummonerSpellIconUrl(spell2)} size={iconSize} />
-        <IconWithFallback src={getKeystoneRuneUrl(keystonePath, keystoneName)} size={iconSize} />
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+        <img
+          src={getChampionSquareUrl(p.championName)}
+          alt={p.championName}
+          width={48}
+          height={48}
+          style={{ borderRadius: 8, objectFit: "cover" }}
+        />
+        <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+          <RoleIcon role={role} size={iconSize} />
+          <IconWithFallback src={getSummonerSpellIconUrl(spell1)} size={iconSize} />
+          <IconWithFallback src={getSummonerSpellIconUrl(spell2)} size={iconSize} />
+          <IconWithFallback src={getKeystoneRuneUrl(keystonePath, keystoneName)} size={iconSize} />
+        </div>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2, minWidth: 0 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: 2, minWidth: 0 }}>
         <div className="live-page-champ-name">{p.championName}</div>
         <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
           <Link href={profileUrl(p.summonerName)} className="live-page-summoner-link">
             {p.summonerName}
           </Link>
+          {p.mostPlayedChampion && p.mostPlayedChampion !== p.championName && (
+            <span style={{ fontSize: 12, opacity: 0.6 }}>
+              · Main: {p.mostPlayedChampion}
+            </span>
+          )}
           <button
             type="button"
             onClick={() => addFollow(p.summonerName, region)}
@@ -237,12 +245,6 @@ function PlayerRow({
             {following ? "Following ✓" : "+ Follow"}
           </button>
         </div>
-        {p.mostPlayedChampion && p.mostPlayedChampion !== p.championName && (
-          <div className="live-page-player-main">
-            <img src={getChampionSquareUrl(p.mostPlayedChampion)} alt="" className="live-page-main-icon" />
-            Main: {p.mostPlayedChampion}
-          </div>
-        )}
       </div>
       <div style={{ textAlign: "right", fontSize: "0.7rem", color: "rgba(255,255,255,0.6)" }}>
         <div className="live-page-player-rank" style={{ justifyContent: "flex-end" }}>
