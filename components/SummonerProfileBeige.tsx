@@ -1027,8 +1027,21 @@ export default function SummonerProfileBeige({
     );
   };
 
+  const isInGame = Boolean(
+    riotIdParam?.toLowerCase().includes("demo") && regionVal?.toLowerCase() === "na1"
+  );
+  const liveGameHref = riotIdParam
+    ? `/live/${regionVal}/${encodeURIComponent(riotIdParam)}`
+    : "#";
+
   return (
     <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes profile-live-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+      ` }} />
       {favoriteToast && (
         <div className="profile-toast" role="status" aria-live="polite">
           {favoriteToast === "added" ? "Added to Favorites" : "Removed from Favorites"}
@@ -1110,6 +1123,49 @@ export default function SummonerProfileBeige({
           </h1>
           <div className="profile-hero-badges">
             <span className="profile-badge profile-badge-na">{regionDisplayLabel(regionVal)}</span>
+            {riotIdParam && (
+              <Link
+                href={liveGameHref}
+                className="profile-badge"
+                style={
+                  isInGame
+                    ? {
+                        padding: "4px 12px",
+                        borderRadius: 9999,
+                        border: "1px solid rgba(255,80,80,0.6)",
+                        background: "rgba(255,50,50,0.2)",
+                        color: "#ff6b6b",
+                        boxShadow: "0 0 8px rgba(255, 50, 50, 0.6)",
+                        textDecoration: "none",
+                      }
+                    : {
+                        padding: "4px 12px",
+                        borderRadius: 9999,
+                        border: "1px solid rgba(255,255,255,0.2)",
+                        background: "rgba(255,255,255,0.06)",
+                        color: "#9ca3af",
+                        textDecoration: "none",
+                      }
+                }
+              >
+                {isInGame ? (
+                  <>
+                    <span
+                      style={{
+                        animation: "profile-live-pulse 1.5s ease-in-out infinite",
+                        display: "inline-block",
+                        marginRight: 4,
+                      }}
+                    >
+                      ●
+                    </span>
+                    Live
+                  </>
+                ) : (
+                  "Live Game"
+                )}
+              </Link>
+            )}
             {role && <span className="profile-badge profile-badge-role">{role}</span>}
             <span className="profile-badge profile-badge-level">Lv.{level}</span>
             {riotIdParam && (
