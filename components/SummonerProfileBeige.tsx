@@ -978,24 +978,24 @@ export default function SummonerProfileBeige({
             <span className="season-tag">S15</span>
           </div>
           <div className="card-body" style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 6 }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0, minWidth: 88 }}>
-              <div style={{ width: 80, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0, minWidth: 100 }}>
+              <div style={{ width: 100, height: 100, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible" }}>
                 {tier ? (
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
+                      className="rank-emblem-img"
                       src={getRankEmblemUrl(tier)}
                       alt={tier}
-                      width={80}
-                      height={80}
-                      style={{ width: "80px", height: "80px", objectFit: "contain", filter: "drop-shadow(0 3px 8px rgba(0,0,0,0.6))", maxWidth: "none" }}
+                      width={96}
+                      height={96}
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                         const fb = e.currentTarget.nextElementSibling;
                         if (fb) (fb as HTMLElement).style.display = "flex";
                       }}
                     />
-                    <div style={{ display: "none", width: 80, height: 80, alignItems: "center", justifyContent: "center", fontSize: 9, letterSpacing: "0.5px", textTransform: "uppercase", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.4)" }}>
+                    <div style={{ display: "none", width: 96, height: 96, alignItems: "center", justifyContent: "center", fontSize: 9, letterSpacing: "0.5px", textTransform: "uppercase", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.4)" }}>
                       {tier}
                     </div>
                   </>

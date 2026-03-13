@@ -1,6 +1,16 @@
 @import "tailwindcss";
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
+/* Override Tailwind preflight max-width:100% on rank emblem images */
+.rank-emblem-img {
+  width: 96px !important;
+  height: 96px !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.6));
+}
+
 /* Site font: Inter (reduces descender clipping vs display fonts) */
 :root {
   --background: #0c0c0f;
