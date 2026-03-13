@@ -25,6 +25,7 @@ import {
   getChampionSplashUrl,
   getProfileIconUrl,
   getRankEmblemUrl,
+  getRankEmblemFallbackUrl,
   getSummonerSpellIconUrl,
   getSummonerSpellTooltip,
   isValidItemId,
@@ -991,10 +992,18 @@ export default function SummonerProfileBeige({
                       height={80}
                       style={{ width: 80, height: 80, objectFit: "contain", filter: "drop-shadow(0 3px 8px rgba(0,0,0,0.6))" }}
                       onError={(e) => {
-                        console.error("[rank-emblem] Failed to load:", e.currentTarget.src);
-                        e.currentTarget.style.display = "none";
-                        const fallback = e.currentTarget.nextElementSibling;
-                        if (fallback) (fallback as HTMLElement).style.display = "flex";
+                        const img = e.currentTarget;
+                        const fallbackUrl = getRankEmblemFallbackUrl(tier);
+                        if (!img.dataset.triedFallback) {
+                          console.warn("[rank-emblem] Primary failed:", img.src, "— trying fallback:", fallbackUrl);
+                          img.dataset.triedFallback = "1";
+                          img.src = fallbackUrl;
+                        } else {
+                          console.error("[rank-emblem] All URLs failed for tier:", tier);
+                          img.style.display = "none";
+                          const fb = img.nextElementSibling;
+                          if (fb) (fb as HTMLElement).style.display = "flex";
+                        }
                       }}
                     />
                     <div className="emblem-img loading-placeholder" style={{ display: "none" }}>

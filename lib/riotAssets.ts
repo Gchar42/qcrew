@@ -130,11 +130,15 @@ export function getSummonerSpellTooltip(
   return { title: data.name, body: data.description, icon };
 }
 
-/** Ranked tier emblem via official CommunityDragon assets. tier e.g. "EMERALD", "PLATINUM". */
-const RANKED_EMBLEM_CDN = "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem";
+/** Primary rank emblem URL (Data Dragon). Tier must be capitalized, e.g. "Gold". */
 export function getRankEmblemUrl(tier: string): string {
-  const key = tier.toLowerCase();
-  return `${RANKED_EMBLEM_CDN}/emblem-${key}.png`;
+  const capitalised = tier.charAt(0).toUpperCase() + tier.slice(1).toLowerCase();
+  return `https://ddragon.leagueoflegends.com/cdn/14.1.1/img/ranked-emblems/${capitalised}.png`;
+}
+
+/** Fallback rank emblem URL (OPGG static CDN). */
+export function getRankEmblemFallbackUrl(tier: string): string {
+  return `https://opgg-static.akamaized.net/images/medals_new/${tier.toLowerCase()}.png`;
 }
 
 /* ── Item tooltips ──────────────────────────────────────────── */
