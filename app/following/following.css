@@ -1,0 +1,409 @@
+/* Following Feed */
+
+.ff-container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+  font-family: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+  color: #efeff1;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+
+.ff-header {
+  margin-bottom: 24px;
+}
+
+.ff-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: #fff;
+}
+
+.ff-subtitle {
+  font-size: 14px;
+  color: #adadb8;
+  margin: 0;
+}
+
+/* ── Add form ────────────────────────────────────────────── */
+
+.ff-add-section {
+  margin-bottom: 24px;
+}
+
+.ff-add-toggle {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  color: #bf94ff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ff-add-toggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(191, 148, 255, 0.4);
+}
+
+.ff-add-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ff-add-input {
+  flex: 1 1 200px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.ff-add-input::placeholder {
+  color: #6b7280;
+}
+
+.ff-add-input:focus {
+  border-color: rgba(191, 148, 255, 0.5);
+}
+
+.ff-add-select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+}
+
+.ff-add-select option {
+  background: #1a1a2e;
+  color: #fff;
+}
+
+.ff-add-submit {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #6366f1;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ff-add-submit:hover {
+  background: #4f46e5;
+}
+
+.ff-add-cancel {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: #adadb8;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ff-add-cancel:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ── Card list ───────────────────────────────────────────── */
+
+.ff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Follow card ─────────────────────────────────────────── */
+
+.ff-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0e0e10;
+}
+
+.ff-card-splash {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 20%;
+  opacity: 0.3;
+}
+
+.ff-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(14, 14, 16, 0.85) 0%,
+    rgba(14, 14, 16, 0.6) 50%,
+    rgba(14, 14, 16, 0.8) 100%
+  );
+}
+
+.ff-card-content {
+  position: relative;
+  z-index: 1;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Card header ─────────────────────────────────────────── */
+
+.ff-card-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ff-card-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.ff-card-name:hover {
+  color: #bf94ff;
+}
+
+.ff-card-region {
+  font-size: 11px;
+  color: #adadb8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+/* ── Rank row ────────────────────────────────────────────── */
+
+.ff-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ff-rank-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.ff-rank-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+}
+
+.ff-rank-label {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ff-lp {
+  font-size: 12px;
+  color: #d4d4d8;
+  font-weight: 500;
+}
+
+.ff-wr-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.ff-wr {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.ff-wr-pos { color: #34d399; }
+.ff-wr-neg { color: #f87171; }
+
+.ff-games {
+  font-size: 11px;
+  color: #adadb8;
+}
+
+/* ── Last match ──────────────────────────────────────────── */
+
+.ff-last-match {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ff-match-champ {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.ff-match-result {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ff-win { color: #34d399; }
+.ff-loss { color: #f87171; }
+
+.ff-match-kda {
+  font-size: 12px;
+  color: #adadb8;
+  margin-left: auto;
+}
+
+/* ── Card actions ────────────────────────────────────────── */
+
+.ff-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.ff-view-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #efeff1;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ff-view-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ff-remove-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: #adadb8;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.ff-remove-btn:hover {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+/* ── Loading / Error states ──────────────────────────────── */
+
+.ff-card-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.ff-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #3a3a3d;
+  border-top-color: #bf94ff;
+  border-radius: 50%;
+  animation: ff-spin 0.7s linear infinite;
+}
+
+@keyframes ff-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ff-loading-name {
+  font-size: 14px;
+  color: #adadb8;
+}
+
+.ff-card-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.ff-error-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #efeff1;
+}
+
+.ff-error-text {
+  font-size: 12px;
+  color: #f87171;
+  flex: 1;
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+
+.ff-empty {
+  text-align: center;
+  padding: 48px 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ff-empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.ff-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #efeff1;
+  margin: 0 0 8px;
+}
+
+.ff-empty-text {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  max-width: 360px;
+  margin-inline: auto;
+  line-height: 1.5;
+}
