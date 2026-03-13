@@ -2,6 +2,10 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
+const logoData = fetch(new URL("./statgap-logo.png", import.meta.url)).then(
+  (res) => res.arrayBuffer(),
+);
+
 const TIER_COLORS: Record<string, string> = {
   CHALLENGER: "#F59E0B",
   GRANDMASTER: "#EF4444",
@@ -53,9 +57,8 @@ function formatTier(tier: string): string {
 }
 
 export async function GET(request: Request) {
-  const reqUrl = new URL(request.url);
-  const { searchParams } = reqUrl;
-  const logoUrl = `${reqUrl.origin}/logos/statgap-logo-dark-clean.png`;
+  const { searchParams } = new URL(request.url);
+  const logo = await logoData;
 
   const name = searchParams.get("name") ?? "Faker#KR1";
   const region = searchParams.get("region") ?? "kr";
@@ -162,7 +165,7 @@ export async function GET(request: Request) {
             }}
           >
             <img
-              src={logoUrl}
+              src={logo as unknown as string}
               height={40}
               style={{ height: "40px", width: "auto" }}
             />
