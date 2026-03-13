@@ -360,16 +360,12 @@ select {
   margin-left: 4px;
 }
 
-/* Override Tailwind preflight img { max-width:100%; height:auto } for rank emblems.
-   Placed at end of file to guarantee it wins in cascade order. */
 img.rank-emblem-img {
   width: 96px !important;
   height: 96px !important;
+  max-width: 96px !important;
   min-width: 96px !important;
+  max-height: 96px !important;
   min-height: 96px !important;
-  max-width: none !important;
-  max-height: none !important;
-  object-fit: contain !important;
   display: block !important;
-  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.6));
 }

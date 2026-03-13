@@ -977,17 +977,15 @@ export default function SummonerProfileBeige({
             <span className="queue-label">{title}</span>
             <span className="season-tag">S15</span>
           </div>
-          <div className="card-body" style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 6, minWidth: 0 }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0, minWidth: 104, width: 104 }}>
-              <div style={{ width: 96, height: 96, flexShrink: 0 }}>
+          <div className="card-body" style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 6 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+              <div>
                 {tier ? (
-                  <Image
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    className="rank-emblem-img"
                     src={getRankEmblemUrl(tier)}
-                    width={96}
-                    height={96}
                     alt={tier}
-                    style={{ width: 96, height: 96, maxWidth: 96, minWidth: 96, display: "block", objectFit: "contain" }}
-                    unoptimized
                   />
                 ) : null}
               </div>
