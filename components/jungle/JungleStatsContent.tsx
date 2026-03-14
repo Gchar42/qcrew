@@ -217,6 +217,11 @@ function ClearSpeedRankings({ data, source, loading }: { data: ClearSpeedEntry[]
         <div className="flex items-center justify-center py-12">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-indigo-500" />
         </div>
+      ) : sorted.length === 0 ? (
+        <div className="py-12 text-center">
+          <p className="text-sm text-white/40">No clear speed data yet.</p>
+          <p className="text-xs text-white/25 mt-1">The pipeline will populate this once 200+ games per champion are processed.</p>
+        </div>
       ) : (
       <div className="overflow-x-auto">
         {isSeed && (
@@ -315,9 +320,17 @@ function ClearSpeedRankings({ data, source, loading }: { data: ClearSpeedEntry[]
                         <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2">All Paths ({entry.paths.length})</p>
                         <div className="space-y-1.5">
                           {entry.paths.map((p, pi) => (
-                            <div key={pi} className="flex items-center gap-3 text-xs">
+                            <div key={pi} className="flex items-center gap-3 text-xs flex-wrap">
                               <span className="text-white/60">{p.icons}</span>
                               <span className="text-white/40">{p.label}</span>
+                              {p.pct != null && (
+                                <span className="text-white/35">· {p.pct}% of games</span>
+                              )}
+                              {p.winRate != null && (
+                                <span className={p.winRate >= 52 ? "text-green-400" : p.winRate < 48 ? "text-red-400" : "text-white/50"}>
+                                  {p.winRate}% WR
+                                </span>
+                              )}
                             </div>
                           ))}
                         </div>

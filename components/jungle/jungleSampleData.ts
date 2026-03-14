@@ -17,7 +17,7 @@ export interface ClearSpeedEntry {
   name: string;
   avgClearTime: string;
   avgHpAfterClear: number;
-  paths: { icons: string; label: string }[];
+  paths: { icons: string; label: string; pct?: number; winRate?: number }[];
   games: number;
   source?: string;
   note?: string;

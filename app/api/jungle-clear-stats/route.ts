@@ -6,6 +6,13 @@ import { DEFAULT_DDRAGON_VERSION } from "@/lib/riotAssets";
 
 export const dynamic = "force-dynamic";
 
+interface PathEntry {
+  icons: string;
+  label: string;
+  pct?: number;
+  winRate?: number;
+}
+
 interface JungleClearStatsRow {
   champion_id: number;
   patch: string;
@@ -14,9 +21,9 @@ interface JungleClearStatsRow {
   clear_time_p5: number | null;
   clear_time_p50: number | null;
   hp_after_clear_p50: number | null;
-  most_common_path: { icons: string; label: string } | null;
-  second_path: { icons: string; label: string } | null;
-  third_path: { icons: string; label: string } | null;
+  most_common_path: PathEntry | null;
+  second_path: PathEntry | null;
+  third_path: PathEntry | null;
 }
 
 type ChampionMap = Record<string, { key: string; name: string }>;
@@ -47,12 +54,26 @@ function secondsToMSS(totalSeconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-function buildPaths(row: JungleClearStatsRow): { icons: string; label: string }[] {
-  const paths: { icons: string; label: string }[] = [];
+function buildPaths(row: JungleClearStatsRow): PathEntry[] {
+  const paths: PathEntry[] = [];
   if (row.most_common_path) paths.push(row.most_common_path);
   if (row.second_path) paths.push(row.second_path);
   if (row.third_path) paths.push(row.third_path);
   return paths;
+}
+
+const MIN_GAMES_FOR_REAL_DATA = 200;
+
+function filterAndFormat(
+  rows: JungleClearStatsRow[],
+  championMap: ChampionMap,
+  source: "live" | "database",
+): ReturnType<typeof formatRow>[] {
+  const filtered =
+    source === "live" || source === "database"
+      ? rows.filter((r) => r.games >= MIN_GAMES_FOR_REAL_DATA)
+      : rows;
+  return filtered.map((row) => formatRow(row, championMap));
 }
 
 export async function GET(req: NextRequest) {
@@ -88,7 +109,7 @@ export async function GET(req: NextRequest) {
       source: "live",
       patch,
       tier,
-      entries: redisEntries.map((row) => formatRow(row, championMap)),
+      entries: filterAndFormat(redisEntries, championMap, "live"),
     });
   }
 
@@ -106,7 +127,7 @@ export async function GET(req: NextRequest) {
         source: "database",
         patch,
         tier,
-        entries: (dbRows as JungleClearStatsRow[]).map((row) => formatRow(row, championMap)),
+        entries: filterAndFormat(dbRows as JungleClearStatsRow[], championMap, "database"),
       });
     }
   } catch {
@@ -132,7 +153,7 @@ function formatRow(
   avgClearTime: string;
   avgClearTimeP50: string;
   avgHpAfterClear: number;
-  paths: { icons: string; label: string }[];
+  paths: PathEntry[];
   games: number;
   source: string;
 } {

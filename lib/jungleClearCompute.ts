@@ -41,6 +41,7 @@ export interface JungleClearRaw {
   patch: string;
   rank_tier: string;
   game_timestamp: string | null;
+  win: boolean;
 }
 
 /* ── Extraction ── */
@@ -102,6 +103,7 @@ export function extractJungleClearData(
       patch,
       rank_tier: rankTier,
       game_timestamp: gameTimestamp,
+      win: jungler.win ?? false,
     });
   }
 
@@ -142,7 +144,7 @@ export async function aggregateJungleClearStats(
 ): Promise<number> {
   const { data: rawRows, error } = await db
     .from("jungle_clear_raw")
-    .select("champion_id, clear_time_seconds, hp_after_clear, path_order, rank_tier")
+    .select("champion_id, clear_time_seconds, hp_after_clear, path_order, rank_tier, win")
     .eq("patch", patch);
 
   if (error || !rawRows?.length) return 0;
@@ -153,6 +155,7 @@ export async function aggregateJungleClearStats(
     hp_after_clear: number;
     path_order: string[] | null;
     rank_tier: string;
+    win?: boolean;
   };
 
   const grouped = new Map<string, RawRow[]>();
@@ -176,6 +179,11 @@ export async function aggregateJungleClearStats(
     const hpP50 = percentile(hpValues, 50);
 
     const topPaths = computeTopPaths(rows, 3);
+    const pathPopularityMap: Record<string, number> = {};
+    for (const p of topPaths) {
+      const key = p.path.join("→");
+      pathPopularityMap[key] = p.pct / 100;
+    }
 
     upserts.push({
       champion_id: championId,
@@ -185,10 +193,10 @@ export async function aggregateJungleClearStats(
       clear_time_p5: p5,
       clear_time_p50: p50,
       hp_after_clear_p50: hpP50,
-      most_common_path: topPaths[0] ?? null,
-      second_path: topPaths[1] ?? null,
-      third_path: topPaths[2] ?? null,
-      path_popularity: topPaths,
+      most_common_path: topPaths[0] ? { icons: topPaths[0].icons, label: topPaths[0].label, pct: topPaths[0].pct, winRate: topPaths[0].winRate } : null,
+      second_path: topPaths[1] ? { icons: topPaths[1].icons, label: topPaths[1].label, pct: topPaths[1].pct, winRate: topPaths[1].winRate } : null,
+      third_path: topPaths[2] ? { icons: topPaths[2].icons, label: topPaths[2].label, pct: topPaths[2].pct, winRate: topPaths[2].winRate } : null,
+      path_popularity: pathPopularityMap,
       updated_at: new Date().toISOString(),
     });
   }
@@ -210,20 +218,29 @@ function percentile(sorted: number[], p: number): number {
 }
 
 function computeTopPaths(
-  rows: { path_order: string[] | null }[],
+  rows: { path_order: string[] | null; win?: boolean }[],
   topN: number,
-): { path: string[]; icons: string; label: string; count: number; pct: number }[] {
-  const pathCounts = new Map<string, { path: string[]; count: number }>();
+): {
+  path: string[];
+  icons: string;
+  label: string;
+  count: number;
+  pct: number;
+  winRate: number;
+}[] {
+  const pathCounts = new Map<string, { path: string[]; count: number; wins: number }>();
   let total = 0;
 
   for (const row of rows) {
     if (!row.path_order || !Array.isArray(row.path_order) || row.path_order.length < 3) continue;
     const key = row.path_order.join("→");
     const existing = pathCounts.get(key);
+    const won = row.win === true;
     if (existing) {
       existing.count++;
+      if (won) existing.wins++;
     } else {
-      pathCounts.set(key, { path: row.path_order, count: 1 });
+      pathCounts.set(key, { path: row.path_order, count: 1, wins: won ? 1 : 0 });
     }
     total++;
   }
@@ -239,6 +256,7 @@ function computeTopPaths(
       label: entry.path.map((c) => CAMP_NAMES[c] ?? c).join(" → "),
       count: entry.count,
       pct: Math.round((entry.count / total) * 100),
+      winRate: entry.count > 0 ? Math.round((entry.wins / entry.count) * 100) : 0,
     }));
 }
 
@@ -252,19 +270,19 @@ export async function pruneOldRawData(
   const major = Number(majorStr);
   const minor = Number(minorStr);
 
+  // Keep only current and previous patch (2 patches total)
   const keepPatches = new Set<string>();
   keepPatches.add(currentPatch);
-  if (minor >= 2) {
-    keepPatches.add(`${major}.${minor - 1}`);
-    keepPatches.add(`${major}.${minor - 2}`);
-  } else if (minor === 1) {
+  if (minor >= 1) {
     keepPatches.add(`${major}.${minor - 1}`);
   }
 
+  const keepList = Array.from(keepPatches);
+  const inClause = `(${keepList.map((p) => `"${p}"`).join(",")})`;
   const { count, error } = await db
     .from("jungle_clear_raw")
     .delete({ count: "exact" })
-    .not("patch", "in", `(${Array.from(keepPatches).join(",")})`);
+    .not("patch", "in", inClause);
 
   if (error) {
     console.error("[jungle-clear] prune error:", error);
