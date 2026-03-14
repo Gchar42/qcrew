@@ -32,10 +32,9 @@
  * └─────────────────────────────────────────────────────────────────────┘
  */
 
-import { Redis } from "@upstash/redis";
-
 /* ------------------------------------------------------------------ */
-/*  Redis singleton                                                    */
+/*  Redis singleton — dynamic import to avoid build failure when       */
+/*  UPSTASH_REDIS_REST_URL/TOKEN are not set (local dev, CI)           */
 /* ------------------------------------------------------------------ */
 
 const KV_URL =
@@ -43,12 +42,31 @@ const KV_URL =
 const KV_TOKEN =
   process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
 
-let _redis: Redis | null | undefined;
+type RedisClient = { get: (k: string) => Promise<unknown>; set: (k: string, v: unknown, opts?: { ex?: number; nx?: boolean }) => Promise<unknown>; del: (k: string) => Promise<unknown> };
+let _redis: RedisClient | null | undefined = undefined;
+let _redisWarned = false;
 
-function redis(): Redis | null {
+async function loadRedis(): Promise<RedisClient | null> {
+  if (!KV_URL || !KV_TOKEN) {
+    if (!_redisWarned) {
+      _redisWarned = true;
+      if (typeof console !== "undefined") {
+        console.warn("Redis not configured — using mock client");
+      }
+    }
+    return null;
+  }
+  try {
+    const { Redis } = await import("@upstash/redis");
+    return new Redis({ url: KV_URL, token: KV_TOKEN }) as RedisClient;
+  } catch {
+    return null;
+  }
+}
+
+async function redis(): Promise<RedisClient | null> {
   if (_redis !== undefined) return _redis;
-  _redis =
-    KV_URL && KV_TOKEN ? new Redis({ url: KV_URL, token: KV_TOKEN }) : null;
+  _redis = await loadRedis();
   return _redis;
 }
 
@@ -84,10 +102,10 @@ export async function getCached<T = unknown>(
   key: string,
   maxAgeMs?: number,
 ): Promise<T | null> {
-  const r = redis();
+  const r = await redis();
   if (r) {
     try {
-      const v = await r.get<T>(key);
+      const v = (await r.get(key)) as T | null;
       return v ?? null;
     } catch {
       return null;
@@ -118,7 +136,7 @@ export async function setCached(
 ): Promise<void> {
   const effectiveTtl = ttlSec ?? DEFAULT_TTL_SEC;
 
-  const r = redis();
+  const r = await redis();
   if (r) {
     try {
       await r.set(key, value, { ex: effectiveTtl });
@@ -150,7 +168,7 @@ export async function tryAcquireLock(
   lockKey: string,
   ttlSec: number,
 ): Promise<boolean> {
-  const r = redis();
+  const r = await redis();
   if (r) {
     try {
       const ok = await r.set(lockKey, "1", { nx: true, ex: ttlSec });
@@ -166,7 +184,7 @@ export async function tryAcquireLock(
 }
 
 export async function releaseLock(lockKey: string): Promise<void> {
-  const r = redis();
+  const r = await redis();
   if (r) {
     try {
       await r.del(lockKey);
@@ -188,7 +206,7 @@ export async function getRateLimitUntil(
   region: string,
 ): Promise<number | null> {
   const key = RATE_LIMIT_PREFIX + region;
-  const r = redis();
+  const r = await redis();
   if (r) {
     try {
       const v = await r.get(key);
@@ -208,7 +226,7 @@ export async function setRateLimitUntil(
   ttlSec: number,
 ): Promise<void> {
   const key = RATE_LIMIT_PREFIX + region;
-  const r = redis();
+  const r = await redis();
   if (r) {
     try {
       await r.set(key, String(untilMs), { ex: ttlSec });

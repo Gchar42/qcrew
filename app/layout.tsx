@@ -6,6 +6,7 @@ import { Toaster } from "@/components/Toast";
 import { Footer } from "@/components/Footer";
 import SiteHeader from "@/components/SiteHeader";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { StructuredData } from "@/components/StructuredData";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -69,6 +70,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-[var(--background)] text-[var(--foreground)] flex flex-col min-h-screen`}
       >
+        <StructuredData />
         <div className="flex-1 flex flex-col"><SiteHeader />{children}</div>
         <Footer />
         <Toaster />
