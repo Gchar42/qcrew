@@ -343,15 +343,28 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
               />
             ))}
 
-            <text x={52} y={padY + 4} fontSize="10" fill="#888" textAnchor="end">
-              {sortScoreToRankLabel(maxLp)}
-            </text>
-            <text x={52} y={padY + plotH / 2 + 3} fontSize="10" fill="#888" textAnchor="end">
-              {sortScoreToRankLabel(Math.round((maxLp + minLp) / 2))}
-            </text>
-            <text x={52} y={svgH - padY} fontSize="10" fill="#888" textAnchor="end">
-              {sortScoreToRankLabel(minLp)}
-            </text>
+            {(() => {
+              const topLabel = sortScoreToRankLabel(maxLp);
+              const bottomLabel = sortScoreToRankLabel(minLp);
+              const topTier = topLabel.split(" ")[0] ?? "";
+              const bottomTier = bottomLabel.split(" ")[0] ?? "";
+              const showMiddle = topTier !== bottomTier;
+              return (
+                <>
+                  <text x={52} y={padY + 4} fontSize={11} fill="#aaa" textAnchor="end" fontWeight={500} style={{ letterSpacing: "0.02em" }}>
+                    {topLabel}
+                  </text>
+                  {showMiddle && (
+                    <text x={52} y={padY + plotH / 2 + 3} fontSize={11} fill="#aaa" textAnchor="end" fontWeight={500} style={{ letterSpacing: "0.02em" }}>
+                      {sortScoreToRankLabel(Math.round((maxLp + minLp) / 2))}
+                    </text>
+                  )}
+                  <text x={52} y={svgH - padY} fontSize={11} fill="#aaa" textAnchor="end" fontWeight={500} style={{ letterSpacing: "0.02em" }}>
+                    {bottomLabel}
+                  </text>
+                </>
+              );
+            })()}
 
             {xLabels.map((l, i) => (
               <text key={i} x={l.x} y={svgH - 2} fontSize="9" fill="#666" textAnchor="middle">
