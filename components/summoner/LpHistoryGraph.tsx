@@ -219,13 +219,14 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
 
   const svgW = 400;
   const svgH = 160;
-  const padX = 10;
+  const padL = 55;  // left padding (room for Y-axis labels)
+  const padR = 10;  // right padding
   const padY = 16;
-  const plotW = svgW - padX * 2;
+  const plotW = svgW - padL - padR;
   const plotH = svgH - padY * 2;
 
   const coords = dataPoints.map((d, i) => ({
-    x: padX + (dataPoints.length > 1 ? (i / (dataPoints.length - 1)) * plotW : plotW / 2),
+    x: padL + (dataPoints.length > 1 ? (i / (dataPoints.length - 1)) * plotW : plotW / 2),
     y: padY + plotH - ((d.lp - minLp) / lpRange) * plotH,
   }));
 
@@ -294,7 +295,7 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
           Not enough data for this time range
         </div>
       ) : (
-        <div style={{ position: "relative", width: "100%", height: 196, paddingBottom: 4, paddingLeft: 50 }}>
+        <div style={{ position: "relative", width: "100%", height: 196, paddingBottom: 4 }}>
           <svg
             viewBox={`0 0 ${svgW} ${svgH}`}
             preserveAspectRatio="none"
@@ -306,6 +307,10 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
                 <stop offset="100%" stopColor={lineColor} stopOpacity={0} />
               </linearGradient>
             </defs>
+
+            <line x1={padL} y1={padY} x2={svgW - padR} y2={padY} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+            <line x1={padL} y1={padY + plotH / 2} x2={svgW - padR} y2={padY + plotH / 2} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+            <line x1={padL} y1={svgH - padY} x2={svgW - padR} y2={svgH - padY} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
 
             {coords.length > 1 && (
               <polygon
@@ -338,10 +343,13 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
               />
             ))}
 
-            <text x={padX} y={padY - 4} fontSize="10" fill="#888" textAnchor="start">
+            <text x={52} y={padY + 4} fontSize="10" fill="#888" textAnchor="end">
               {sortScoreToRankLabel(maxLp)}
             </text>
-            <text x={padX} y={svgH - padY + 12} fontSize="10" fill="#888" textAnchor="start">
+            <text x={52} y={padY + plotH / 2 + 3} fontSize="10" fill="#888" textAnchor="end">
+              {sortScoreToRankLabel(Math.round((maxLp + minLp) / 2))}
+            </text>
+            <text x={52} y={svgH - padY} fontSize="10" fill="#888" textAnchor="end">
               {sortScoreToRankLabel(minLp)}
             </text>
 
