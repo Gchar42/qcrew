@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { getChampionSquareUrl } from "@/lib/riotAssets";
 import {
   JUNGLERS,
@@ -116,12 +116,90 @@ function JungleTierList() {
    TAB 2 — First Clear Speed Rankings
    ════════════════════════════════════════════════ */
 
+type SortKey = "rank" | "champion" | "clearTime" | "hpAfter" | "games";
+type SortDir = "asc" | "desc";
+
+function toSec(t: string): number {
+  const [m, s] = t.split(":").map(Number);
+  return m * 60 + s;
+}
+
+function SortHeader({
+  label,
+  active,
+  sortDir,
+  onClick,
+  align = "left",
+}: {
+  label: string;
+  active: boolean;
+  sortDir: SortDir;
+  onClick: () => void;
+  align?: "left" | "center" | "right";
+}) {
+  const alignClass = align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start";
+  return (
+    <th
+      className={`px-3 py-3 cursor-pointer text-xs uppercase tracking-wider border-b border-white/[0.06] group transition hover:text-white/60 ${active ? "text-indigo-400" : "text-white/35"}`}
+      onClick={onClick}
+    >
+      <div className={`flex items-center gap-1.5 ${alignClass}`}>
+        {label}
+        {active ? (
+          <span className="text-indigo-400/90">{sortDir === "asc" ? "▲" : "▼"}</span>
+        ) : (
+          <span className="opacity-0 group-hover:opacity-40 transition-opacity text-[10px] leading-none">▲▼</span>
+        )}
+      </div>
+    </th>
+  );
+}
+
 function ClearSpeedRankings({ data, source, loading }: { data: ClearSpeedEntry[]; source: string; loading: boolean }) {
   const [expanded, setExpanded] = useState<string | null>(null);
-  const sorted = useMemo(() => [...data].sort((a, b) => {
-    const toSec = (t: string) => { const [m, s] = t.split(":").map(Number); return m * 60 + s; };
-    return toSec(a.avgClearTime) - toSec(b.avgClearTime);
-  }), [data]);
+  const [sortKey, setSortKey] = useState<SortKey>("clearTime");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+
+  const rankByClearTime = useMemo(() => {
+    const byClearTime = [...data].sort((a, b) => toSec(a.avgClearTime) - toSec(b.avgClearTime));
+    const map: Record<string, number> = {};
+    byClearTime.forEach((e, i) => { map[e.id] = i + 1; });
+    return map;
+  }, [data]);
+
+  const sorted = useMemo(() => {
+    const arr = [...data];
+    switch (sortKey) {
+      case "rank":
+      case "clearTime":
+        return arr.sort((a, b) => {
+          const diff = toSec(a.avgClearTime) - toSec(b.avgClearTime);
+          return sortDir === "asc" ? diff : -diff;
+        });
+      case "champion":
+        return arr.sort((a, b) => {
+          const diff = a.name.localeCompare(b.name);
+          return sortDir === "asc" ? diff : -diff;
+        });
+      case "hpAfter":
+        return arr.sort((a, b) => {
+          const diff = a.avgHpAfterClear - b.avgHpAfterClear;
+          return sortDir === "asc" ? diff : -diff;
+        });
+      case "games":
+        return arr.sort((a, b) => {
+          const diff = a.games - b.games;
+          return sortDir === "asc" ? diff : -diff;
+        });
+      default:
+        return arr.sort((a, b) => toSec(a.avgClearTime) - toSec(b.avgClearTime));
+    }
+  }, [data, sortKey, sortDir]);
+
+  const handleSort = useCallback((key: SortKey) => {
+    setSortKey(key);
+    setSortDir((prev) => (sortKey === key ? (prev === "asc" ? "desc" : "asc") : key === "hpAfter" || key === "games" ? "desc" : "asc"));
+  }, [sortKey]);
 
   const isSeed = source === "seed";
 
@@ -146,66 +224,112 @@ function ClearSpeedRankings({ data, source, loading }: { data: ClearSpeedEntry[]
             <p className="text-[10px] text-amber-400/70">Estimated — updates automatically when data pipeline runs</p>
           </div>
         )}
-        <table className="w-full text-sm">
+        <table className="w-full min-w-full text-sm table-fixed">
+          <colgroup>
+            <col style={{ width: 48 }} />
+            <col /> {/* Champion: takes remaining space */}
+            <col style={{ width: 112 }} />
+            <col style={{ width: 96 }} />
+            <col style={{ width: 256 }} />
+            {!isSeed && <col style={{ width: 96 }} />}
+          </colgroup>
           <thead>
-            <tr className="text-[10px] text-white/35 uppercase tracking-wider border-b border-white/[0.06]">
-              <th className="text-center px-3 py-3 w-10">#</th>
-              <th className="text-left px-3 py-3">Champion</th>
-              <th className="text-right px-3 py-3">Clear Time</th>
-              <th className="text-right px-3 py-3">HP After</th>
-              <th className="text-left px-3 py-3">Most Common Path</th>
-              {!isSeed && <th className="text-right px-3 py-3">Games</th>}
+            <tr>
+              <SortHeader
+                label="#"
+                active={sortKey === "rank" || sortKey === "clearTime"}
+                sortDir={sortKey === "rank" || sortKey === "clearTime" ? sortDir : "asc"}
+                onClick={() => handleSort("rank")}
+                align="center"
+              />
+              <SortHeader
+                label="Champion"
+                active={sortKey === "champion"}
+                sortDir={sortDir}
+                onClick={() => handleSort("champion")}
+              />
+              <SortHeader
+                label="Clear Time"
+                active={sortKey === "clearTime"}
+                sortDir={sortDir}
+                onClick={() => handleSort("clearTime")}
+                align="center"
+              />
+              <SortHeader
+                label="HP After"
+                active={sortKey === "hpAfter"}
+                sortDir={sortDir}
+                onClick={() => handleSort("hpAfter")}
+                align="center"
+              />
+              <th className="text-left px-3 py-3 w-64 text-xs uppercase tracking-wider text-white/35 border-b border-white/[0.06]">
+                Most Common Path
+              </th>
+              {!isSeed && (
+                <SortHeader
+                  label="Games"
+                  active={sortKey === "games"}
+                  sortDir={sortDir}
+                  onClick={() => handleSort("games")}
+                  align="right"
+                />
+              )}
             </tr>
           </thead>
           <tbody>
-            {sorted.map((entry, i) => (
-              <>
-                <tr
-                  key={entry.id}
-                  className="border-b border-white/[0.03] hover:bg-white/[0.02] transition cursor-pointer"
-                  onClick={() => setExpanded(expanded === entry.id ? null : entry.id)}
-                >
-                  <td className={`text-center px-3 py-2.5 tabular-nums font-bold ${i < 3 ? "text-amber-400" : "text-white/30"}`}>{i + 1}</td>
-                  <td className="px-3 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <img src={getChampionSquareUrl(entry.id)} alt={entry.name} className="w-7 h-7 rounded-md" />
-                      <span className="font-medium text-white/90">{entry.name}</span>
-                    </div>
-                  </td>
-                  <td className="text-right px-3 py-2.5 tabular-nums font-bold text-white/80">{entry.avgClearTime}</td>
-                  <td className="text-right px-3 py-2.5">
-                    <span className={`tabular-nums ${entry.avgHpAfterClear >= 80 ? "text-green-400" : entry.avgHpAfterClear >= 60 ? "text-yellow-400" : "text-red-400"}`}>
-                      {entry.avgHpAfterClear}%
-                    </span>
-                  </td>
-                  <td className="px-3 py-2.5 text-xs text-white/50 max-w-[240px] truncate">{entry.paths[0]?.icons ?? "—"}</td>
-                  {!isSeed && (
-                    <td className="text-right px-3 py-2.5 text-xs text-white/30 tabular-nums">
-                      {formatGames(entry.games)}
-                      {entry.games > 0 && entry.games < 500 && <span className="ml-1 text-yellow-400">⚠</span>}
+            {sorted.map((entry) => {
+              const rank = rankByClearTime[entry.id] ?? 0;
+              const isTop3 = rank <= 3;
+              return (
+                <React.Fragment key={entry.id}>
+                  <tr
+                    className="border-b border-white/[0.03] hover:bg-white/[0.02] transition cursor-pointer"
+                    onClick={() => setExpanded(expanded === entry.id ? null : entry.id)}
+                  >
+                    <td className={`text-center px-3 py-2.5 w-12 tabular-nums font-bold ${isTop3 ? "text-green-400" : "text-white/30"}`}>
+                      {rank}
                     </td>
-                  )}
-                </tr>
-                {expanded === entry.id && (
-                  <tr key={`${entry.id}-paths`}>
-                    <td colSpan={isSeed ? 5 : 6} className="bg-white/[0.015] px-6 py-3 border-b border-white/[0.04]">
-                      <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2">All Paths ({entry.paths.length})</p>
-                      <div className="space-y-1.5">
-                        {entry.paths.map((p, pi) => (
-                          <div key={pi} className="flex items-center gap-3 text-xs">
-                            <span className="text-white/60">{p.icons}</span>
-                            <span className="text-white/40">{p.label}</span>
-                          </div>
-                        ))}
+                    <td className="px-3 py-2.5 min-w-[200px]">
+                      <div className="flex items-center gap-2">
+                        <img src={getChampionSquareUrl(entry.id)} alt={entry.name} className="w-7 h-7 rounded-md shrink-0" />
+                        <span className="font-medium text-white/90 truncate">{entry.name}</span>
                       </div>
-                      {entry.note && (
-                        <p className="text-[10px] text-white/25 mt-2 italic">{entry.note}</p>
-                      )}
                     </td>
+                    <td className="text-center px-3 py-2.5 w-28 tabular-nums font-bold text-white/80">{entry.avgClearTime}</td>
+                    <td className="text-center px-3 py-2.5 w-24">
+                      <span className={`tabular-nums ${entry.avgHpAfterClear >= 80 ? "text-green-400" : entry.avgHpAfterClear >= 60 ? "text-yellow-400" : "text-red-400"}`}>
+                        {entry.avgHpAfterClear}%
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5 w-64 text-xs text-white/50 truncate">{entry.paths[0]?.icons ?? "—"}</td>
+                    {!isSeed && (
+                      <td className="text-right px-3 py-2.5 w-24 text-xs text-white/30 tabular-nums">
+                        {formatGames(entry.games)}
+                        {entry.games > 0 && entry.games < 500 && <span className="ml-1 text-yellow-400">⚠</span>}
+                      </td>
+                    )}
                   </tr>
-                )}
-              </>
-            ))}
+                  {expanded === entry.id && (
+                    <tr>
+                      <td colSpan={isSeed ? 5 : 6} className="bg-white/[0.015] px-6 py-3 border-b border-white/[0.04]">
+                        <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2">All Paths ({entry.paths.length})</p>
+                        <div className="space-y-1.5">
+                          {entry.paths.map((p, pi) => (
+                            <div key={pi} className="flex items-center gap-3 text-xs">
+                              <span className="text-white/60">{p.icons}</span>
+                              <span className="text-white/40">{p.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {entry.note && (
+                          <p className="text-[10px] text-white/25 mt-2 italic">{entry.note}</p>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
