@@ -13,11 +13,11 @@ export async function generateMetadata({
   const champ = decodeURIComponent(championName);
 
   return {
-    title: `${name}'s ${champ} Performance Analysis | StatGap.gg`,
-    description: `Deep dive into ${name}'s ${champ} gameplay — stats vs benchmarks, matchup win rates, trend analysis, and AI coaching insights on StatGap.gg`,
-    openGraph: {
-      title: `${name}'s ${champ} Analysis — StatGap.gg`,
-      description: `See how ${name} performs on ${champ} compared to their rank tier`,
+    title: `${name}'s ${champ} Stats — StatGap.gg`,
+    description: `${name}'s performance on ${champ}: win rate, KDA, and personalized improvement insights.`,
+    robots: "noindex, follow",
+    alternates: {
+      canonical: `/profile/${encodeURIComponent(summonerName)}/champion/${encodeURIComponent(championName)}`,
     },
   };
 }

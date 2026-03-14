@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
 import RuneTreesView from "@/components/runes/RuneTreesView";
+import { CURRENT_PATCH } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Rune Trees – StatGap.gg",
+  title: `Rune Trees — Pick Rates & Win Rates for Every Rune — Patch ${CURRENT_PATCH}`,
   description:
-    "Browse all five League of Legends rune trees with pick rates and win rates for every rune, every patch.",
+    "Complete rune reference for League of Legends. Pick rates and win rates for every keystone, rune, and stat shard in Patch " +
+    CURRENT_PATCH +
+    ".",
+  alternates: {
+    canonical: "/runes",
+  },
 };
 
 export default function RunesPage() {

@@ -17,15 +17,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://statgap.gg");
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ??
-      (process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : "https://statgap.gg")
-  ),
-  title: "Statgap.gg - League of Legends stats",
-  description: "Search Riot ID and region. View match history and stats on Statgap.gg.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "StatGap.gg — The Fastest LoL Stats Site",
+    template: "%s | StatGap.gg — League of Legends Stats",
+  },
+  description:
+    "Free League of Legends stats, builds, tier lists, and match history. Faster than any other stats site. No login required.",
+  keywords:
+    "league of legends stats, lol builds, lol tier list, champion win rates, lol match history, league stats",
+  openGraph: {
+    type: "website",
+    siteName: "StatGap.gg",
+    images: [{ url: "/api/og/default", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@statgapgg",
+  },
+  robots: "index, follow",
 };
 
 export const viewport = {

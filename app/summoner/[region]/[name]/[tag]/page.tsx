@@ -31,17 +31,14 @@ export async function generateMetadata({
   const ogUrl = `/api/og?name=${encodeURIComponent(riotId)}`;
 
   return {
-    title: `${riotId} — ${region.toUpperCase()} · Statgap`,
-    description: `View ${riotId}'s League of Legends stats, match history, and ranked data on Statgap.gg`,
+    title: `${riotId} — ${region.toUpperCase()} · StatGap.gg`,
+    description: `${riotId} on ${region.toUpperCase()}. View match history, champion stats, and detailed performance analysis.`,
     openGraph: {
-      title: `${riotId} — Statgap.gg`,
-      description: `League of Legends stats for ${riotId} on ${region.toUpperCase()}`,
       images: [{ url: ogUrl, width: 1200, height: 630 }],
     },
-    twitter: {
-      card: "summary_large_image",
-      title: `${riotId} — Statgap.gg`,
-      images: [ogUrl],
+    robots: "noindex, follow",
+    alternates: {
+      canonical: `/summoner/${encodeURIComponent(region)}/${encodeURIComponent(nameEnc)}/${encodeURIComponent(tagEnc)}`,
     },
   };
 }
