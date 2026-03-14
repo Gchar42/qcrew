@@ -12,7 +12,17 @@ import {
   type ClearSpeedEntry,
 } from "./jungleSampleData";
 
-/* ── Shared UI ── */
+/* ── Tabs ── */
+
+export type JungleTab = "tier-list" | "clear-speeds" | "objectives" | "gank-stats" | "matchups";
+
+const TABS: { key: JungleTab; label: string }[] = [
+  { key: "tier-list", label: "Tier List" },
+  { key: "clear-speeds", label: "Clear Speeds" },
+  { key: "objectives", label: "Objectives" },
+  { key: "gank-stats", label: "Gank Stats" },
+  { key: "matchups", label: "Matchups" },
+];
 
 const RANK_FILTERS = [
   { key: "all", label: "All" },
@@ -22,12 +32,14 @@ const RANK_FILTERS = [
   { key: "master+", label: "Master+" },
 ] as const;
 
-const TIER_COLORS: Record<JunglerTier, { bg: string; border: string; text: string; badge: string }> = {
-  S: { bg: "bg-orange-500/[0.06]", border: "border-orange-500/20", text: "text-orange-400", badge: "bg-orange-500/15 text-orange-400 border-orange-500/30" },
-  A: { bg: "bg-blue-500/[0.04]", border: "border-blue-500/15", text: "text-blue-400", badge: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
-  B: { bg: "bg-emerald-500/[0.04]", border: "border-emerald-500/15", text: "text-emerald-400", badge: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
-  C: { bg: "bg-zinc-500/[0.04]", border: "border-zinc-500/15", text: "text-zinc-400", badge: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30" },
-  D: { bg: "bg-red-500/[0.04]", border: "border-red-500/15", text: "text-red-400", badge: "bg-red-500/15 text-red-400 border-red-500/30" },
+/* ── Shared UI ── */
+
+const TIER_COLORS: Record<JunglerTier, { bg: string; border: string; text: string }> = {
+  S: { bg: "bg-orange-500/[0.06]", border: "border-orange-500/20", text: "text-orange-400" },
+  A: { bg: "bg-blue-500/[0.04]", border: "border-blue-500/15", text: "text-blue-400" },
+  B: { bg: "bg-emerald-500/[0.04]", border: "border-emerald-500/15", text: "text-emerald-400" },
+  C: { bg: "bg-zinc-500/[0.04]", border: "border-zinc-500/15", text: "text-zinc-400" },
+  D: { bg: "bg-red-500/[0.04]", border: "border-red-500/15", text: "text-red-400" },
 };
 
 function SectionCard({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -60,7 +72,7 @@ function StatBar({ value, max, color }: { value: number; max: number; color: str
 }
 
 /* ════════════════════════════════════════════════
-   SECTION 1 — Jungle Tier List
+   TAB 1 — Jungle Tier List
    ════════════════════════════════════════════════ */
 
 function JungleTierList() {
@@ -101,7 +113,7 @@ function JungleTierList() {
 }
 
 /* ════════════════════════════════════════════════
-   SECTION 2 — First Clear Speed Rankings
+   TAB 2 — First Clear Speed Rankings
    ════════════════════════════════════════════════ */
 
 function ClearSpeedRankings({ data, source, loading }: { data: ClearSpeedEntry[]; source: string; loading: boolean }) {
@@ -187,9 +199,7 @@ function ClearSpeedRankings({ data, source, loading }: { data: ClearSpeedEntry[]
                         ))}
                       </div>
                       {entry.note && (
-                        <p className="text-[10px] text-white/25 mt-2 italic">
-                          {entry.note}
-                        </p>
+                        <p className="text-[10px] text-white/25 mt-2 italic">{entry.note}</p>
                       )}
                     </td>
                   </tr>
@@ -205,7 +215,7 @@ function ClearSpeedRankings({ data, source, loading }: { data: ClearSpeedEntry[]
 }
 
 /* ════════════════════════════════════════════════
-   SECTION 3 — Objective Win Rate Impact
+   TAB 3 — Objective Win Rate Impact
    ════════════════════════════════════════════════ */
 
 function ObjectiveWinRate() {
@@ -251,115 +261,108 @@ function ObjectiveWinRate() {
 }
 
 /* ════════════════════════════════════════════════
-   SECTION 4 — Gank Timing Data
+   TAB 4 — Gank Stats (gank timing + scuttle/counter-jungle)
    ════════════════════════════════════════════════ */
 
-function GankTimingData() {
+function GankStatsTab() {
   const sorted = useMemo(() => [...GANK_TIMING].sort((a, b) => b.gankSuccessRate - a.gankSuccessRate), []);
   const maxRate = Math.max(...sorted.map((g) => g.gankSuccessRate));
+  const scuttleSorted = useMemo(() => [...SCUTTLE_DATA].sort((a, b) => b.scuttleContestRate - a.scuttleContestRate), []);
 
   return (
-    <SectionCard>
-      <SectionTitle title="Gank Timing Data" subtitle="First gank timing, success rate, and target lane preferences." />
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-[10px] text-white/35 uppercase tracking-wider border-b border-white/[0.06]">
-              <th className="text-left px-4 py-3">Champion</th>
-              <th className="text-right px-3 py-3">First Gank</th>
-              <th className="text-right px-3 py-3 min-w-[160px]">Success Rate</th>
-              <th className="text-center px-3 py-3">Target Lane</th>
-              <th className="text-right px-3 py-3">Games</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((entry) => (
-              <tr key={entry.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition">
-                <td className="px-4 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <img src={getChampionSquareUrl(entry.id)} alt={entry.name} className="w-7 h-7 rounded-md" />
-                    <span className="font-medium text-white/90">{entry.name}</span>
-                  </div>
-                </td>
-                <td className="text-right px-3 py-2.5 tabular-nums text-white/70">{entry.avgFirstGankTime}</td>
-                <td className="text-right px-3 py-2.5">
-                  <div className="flex items-center gap-2 justify-end">
-                    <StatBar value={entry.gankSuccessRate} max={maxRate} color={entry.gankSuccessRate >= 60 ? "bg-green-500" : entry.gankSuccessRate >= 52 ? "bg-blue-500" : "bg-red-500"} />
-                    <span className={`tabular-nums font-bold text-xs w-12 text-right ${entry.gankSuccessRate >= 60 ? "text-green-400" : entry.gankSuccessRate >= 52 ? "text-white/70" : "text-red-400"}`}>
-                      {entry.gankSuccessRate}%
+    <div className="space-y-6">
+      <SectionCard>
+        <SectionTitle title="Gank Timing Data" subtitle="First gank timing, success rate, and target lane preferences." />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[10px] text-white/35 uppercase tracking-wider border-b border-white/[0.06]">
+                <th className="text-left px-4 py-3">Champion</th>
+                <th className="text-right px-3 py-3">First Gank</th>
+                <th className="text-right px-3 py-3 min-w-[160px]">Success Rate</th>
+                <th className="text-center px-3 py-3">Target Lane</th>
+                <th className="text-right px-3 py-3">Games</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((entry) => (
+                <tr key={entry.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition">
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <img src={getChampionSquareUrl(entry.id)} alt={entry.name} className="w-7 h-7 rounded-md" />
+                      <span className="font-medium text-white/90">{entry.name}</span>
+                    </div>
+                  </td>
+                  <td className="text-right px-3 py-2.5 tabular-nums text-white/70">{entry.avgFirstGankTime}</td>
+                  <td className="text-right px-3 py-2.5">
+                    <div className="flex items-center gap-2 justify-end">
+                      <StatBar value={entry.gankSuccessRate} max={maxRate} color={entry.gankSuccessRate >= 60 ? "bg-green-500" : entry.gankSuccessRate >= 52 ? "bg-blue-500" : "bg-red-500"} />
+                      <span className={`tabular-nums font-bold text-xs w-12 text-right ${entry.gankSuccessRate >= 60 ? "text-green-400" : entry.gankSuccessRate >= 52 ? "text-white/70" : "text-red-400"}`}>
+                        {entry.gankSuccessRate}%
+                      </span>
+                    </div>
+                  </td>
+                  <td className="text-center px-3 py-2.5">
+                    <span className="text-xs text-white/50 bg-white/[0.04] rounded px-2 py-0.5">{entry.mostGankedLane}</span>
+                  </td>
+                  <td className="text-right px-3 py-2.5 text-xs text-white/30 tabular-nums">{formatGames(entry.games)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
+
+      <SectionCard>
+        <SectionTitle title="Scuttle & Counter-Jungle Stats" subtitle="Scuttle crab contest rate, enemy jungle invade frequency, and early kill rate (before 5 min)." />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[10px] text-white/35 uppercase tracking-wider border-b border-white/[0.06]">
+                <th className="text-left px-4 py-3">Champion</th>
+                <th className="text-right px-3 py-3">Scuttle Contest</th>
+                <th className="text-right px-3 py-3">Counter-Jungle</th>
+                <th className="text-right px-3 py-3">Early Kill Rate</th>
+                <th className="text-right px-3 py-3">Games</th>
+              </tr>
+            </thead>
+            <tbody>
+              {scuttleSorted.map((entry) => (
+                <tr key={entry.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition">
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <img src={getChampionSquareUrl(entry.id)} alt={entry.name} className="w-7 h-7 rounded-md" />
+                      <span className="font-medium text-white/90">{entry.name}</span>
+                    </div>
+                  </td>
+                  <td className="text-right px-3 py-2.5">
+                    <span className={`tabular-nums font-bold text-xs ${entry.scuttleContestRate >= 70 ? "text-green-400" : entry.scuttleContestRate >= 50 ? "text-white/70" : "text-red-400"}`}>
+                      {entry.scuttleContestRate}%
                     </span>
-                  </div>
-                </td>
-                <td className="text-center px-3 py-2.5">
-                  <span className="text-xs text-white/50 bg-white/[0.04] rounded px-2 py-0.5">{entry.mostGankedLane}</span>
-                </td>
-                <td className="text-right px-3 py-2.5 text-xs text-white/30 tabular-nums">{formatGames(entry.games)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </SectionCard>
+                  </td>
+                  <td className="text-right px-3 py-2.5">
+                    <span className={`tabular-nums font-bold text-xs ${entry.counterJungleRate >= 30 ? "text-amber-400" : "text-white/50"}`}>
+                      {entry.counterJungleRate}%
+                    </span>
+                  </td>
+                  <td className="text-right px-3 py-2.5">
+                    <span className={`tabular-nums font-bold text-xs ${entry.earlyKillRate >= 35 ? "text-red-400" : "text-white/50"}`}>
+                      {entry.earlyKillRate}%
+                    </span>
+                  </td>
+                  <td className="text-right px-3 py-2.5 text-xs text-white/30 tabular-nums">{formatGames(entry.games)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
+    </div>
   );
 }
 
 /* ════════════════════════════════════════════════
-   SECTION 5 — Scuttle + Counter-Jungle Stats
-   ════════════════════════════════════════════════ */
-
-function ScuttleCounterJungle() {
-  const sorted = useMemo(() => [...SCUTTLE_DATA].sort((a, b) => b.scuttleContestRate - a.scuttleContestRate), []);
-
-  return (
-    <SectionCard>
-      <SectionTitle title="Scuttle & Counter-Jungle Stats" subtitle="Scuttle crab contest rate, enemy jungle invade frequency, and early kill rate (before 5 min)." />
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-[10px] text-white/35 uppercase tracking-wider border-b border-white/[0.06]">
-              <th className="text-left px-4 py-3">Champion</th>
-              <th className="text-right px-3 py-3">Scuttle Contest</th>
-              <th className="text-right px-3 py-3">Counter-Jungle</th>
-              <th className="text-right px-3 py-3">Early Kill Rate</th>
-              <th className="text-right px-3 py-3">Games</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((entry) => (
-              <tr key={entry.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition">
-                <td className="px-4 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <img src={getChampionSquareUrl(entry.id)} alt={entry.name} className="w-7 h-7 rounded-md" />
-                    <span className="font-medium text-white/90">{entry.name}</span>
-                  </div>
-                </td>
-                <td className="text-right px-3 py-2.5">
-                  <span className={`tabular-nums font-bold text-xs ${entry.scuttleContestRate >= 70 ? "text-green-400" : entry.scuttleContestRate >= 50 ? "text-white/70" : "text-red-400"}`}>
-                    {entry.scuttleContestRate}%
-                  </span>
-                </td>
-                <td className="text-right px-3 py-2.5">
-                  <span className={`tabular-nums font-bold text-xs ${entry.counterJungleRate >= 30 ? "text-amber-400" : "text-white/50"}`}>
-                    {entry.counterJungleRate}%
-                  </span>
-                </td>
-                <td className="text-right px-3 py-2.5">
-                  <span className={`tabular-nums font-bold text-xs ${entry.earlyKillRate >= 35 ? "text-red-400" : "text-white/50"}`}>
-                    {entry.earlyKillRate}%
-                  </span>
-                </td>
-                <td className="text-right px-3 py-2.5 text-xs text-white/30 tabular-nums">{formatGames(entry.games)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </SectionCard>
-  );
-}
-
-/* ════════════════════════════════════════════════
-   SECTION 6 — Jungle Matchup Table
+   TAB 5 — Jungle Matchup Table
    ════════════════════════════════════════════════ */
 
 function JungleMatchupTable() {
@@ -393,7 +396,7 @@ function JungleMatchupTable() {
               </button>
             );
           })}
-          {availableChamps.length === 1 && (
+          {availableChamps.length <= 1 && (
             <span className="text-[10px] text-white/25 italic">More matchup data coming soon</span>
           )}
         </div>
@@ -470,29 +473,28 @@ function JungleMatchupTable() {
 }
 
 /* ════════════════════════════════════════════════
-   MAIN EXPORT — Full Jungle Stats Content
+   MAIN EXPORT — Tabbed Layout
    ════════════════════════════════════════════════ */
 
 export interface JungleStatsProps {
+  tab: JungleTab;
+  rank: string;
   clearSpeeds?: ClearSpeedEntry[];
   clearSpeedSource?: string;
   clearSpeedLoading?: boolean;
-  onRankChange?: (rank: string) => void;
+  onTabChange: (tab: JungleTab) => void;
+  onRankChange: (rank: string) => void;
 }
 
 export default function JungleStatsContent({
+  tab,
+  rank,
   clearSpeeds = [],
   clearSpeedSource = "seed",
   clearSpeedLoading = false,
+  onTabChange,
   onRankChange,
 }: JungleStatsProps) {
-  const [rank, setRank] = useState("emerald-diamond");
-
-  const handleRankChange = (r: string) => {
-    setRank(r);
-    onRankChange?.(r);
-  };
-
   return (
     <main className="min-h-screen bg-[#0E0F15] text-[#E8E9F0]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
@@ -503,13 +505,14 @@ export default function JungleStatsContent({
           <p className="text-xs text-white/25 mt-2">Patch 16.5 · Based on 1.2M games · Updated 3h ago</p>
         </div>
 
-        {/* Rank Filter */}
-        <div className="sticky top-0 z-30 bg-[#0E0F15] pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 border-b border-transparent" style={{ borderBottomColor: "rgba(255,255,255,0.04)" }}>
-          <div className="flex flex-wrap gap-2">
+        {/* Sticky: Rank Filter + Tabs */}
+        <div className="sticky top-0 z-30 bg-[#0E0F15] -mx-4 px-4 sm:-mx-6 sm:px-6 pb-0">
+          {/* Rank Filter */}
+          <div className="flex flex-wrap gap-2 pb-3">
             {RANK_FILTERS.map((f) => (
               <button
                 key={f.key}
-                onClick={() => handleRankChange(f.key)}
+                onClick={() => onRankChange(f.key)}
                 className={`px-3 py-1.5 text-sm rounded-lg transition font-medium ${
                   rank === f.key
                     ? "bg-indigo-500/15 text-indigo-300 border border-indigo-500/30"
@@ -520,16 +523,32 @@ export default function JungleStatsContent({
               </button>
             ))}
           </div>
+
+          {/* Tab Navigation */}
+          <div className="flex gap-0.5 border-b border-white/5">
+            {TABS.map((t) => {
+              const active = tab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => onTabChange(t.key)}
+                  className={`relative px-5 py-2.5 text-sm font-medium transition-all ${active ? "text-white" : "text-zinc-500 hover:text-zinc-300"}`}
+                >
+                  {t.label}
+                  {active && <div className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-indigo-500" style={{ boxShadow: "0 0 8px rgba(99, 102, 241, 0.5)" }} />}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Sections */}
-        <div className="space-y-8 mt-6">
-          <JungleTierList />
-          <ClearSpeedRankings data={clearSpeeds} source={clearSpeedSource} loading={clearSpeedLoading} />
-          <ObjectiveWinRate />
-          <GankTimingData />
-          <ScuttleCounterJungle />
-          <JungleMatchupTable />
+        {/* Tab Content */}
+        <div className="mt-6">
+          {tab === "tier-list" && <JungleTierList />}
+          {tab === "clear-speeds" && <ClearSpeedRankings data={clearSpeeds} source={clearSpeedSource} loading={clearSpeedLoading} />}
+          {tab === "objectives" && <ObjectiveWinRate />}
+          {tab === "gank-stats" && <GankStatsTab />}
+          {tab === "matchups" && <JungleMatchupTable />}
         </div>
       </div>
     </main>
