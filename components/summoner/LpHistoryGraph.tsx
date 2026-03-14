@@ -294,7 +294,7 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
           Not enough data for this time range
         </div>
       ) : (
-        <div style={{ position: "relative", width: "100%", height: 196, paddingBottom: 4 }}>
+        <div style={{ position: "relative", width: "100%", height: 196, paddingBottom: 4, paddingLeft: 50 }}>
           <svg
             viewBox={`0 0 ${svgW} ${svgH}`}
             preserveAspectRatio="none"
