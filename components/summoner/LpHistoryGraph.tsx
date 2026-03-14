@@ -34,7 +34,7 @@ const TIME_RANGES = [
 const LP_WIN = 22;
 const LP_LOSS = 18;
 
-const TIER_WEIGHT: Record<string, number> = {
+const TIER_ORDER: Record<string, number> = {
   IRON: 0,
   BRONZE: 1,
   SILVER: 2,
@@ -42,76 +42,56 @@ const TIER_WEIGHT: Record<string, number> = {
   PLATINUM: 4,
   EMERALD: 5,
   DIAMOND: 6,
-  MASTER: 7,
-  GRANDMASTER: 8,
-  CHALLENGER: 9,
 };
 
-const DIVISION_WEIGHT: Record<string, number> = {
-  IV: 1,
-  III: 2,
-  II: 3,
-  I: 4,
-};
+const RANK_OFFSET: Record<string, number> = { IV: 0, III: 100, II: 200, I: 300 };
 
 /* ------------------------------------------------------------------ */
-/*  Sort score helpers (tier_weight × 10000 + division_weight × 1000 + LP) */
+/*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
 
-function tierRankLpToSortScore(tier: string, rank: string, lp: number): number {
+function tierRankLpToAbsolute(tier: string, rank: string, lp: number): number {
   const t = tier.toUpperCase();
-  const tw = TIER_WEIGHT[t] ?? 0;
-  const r = rank?.toUpperCase() ?? "IV";
-  const dw = DIVISION_WEIGHT[r] ?? 1;
-  return tw * 10000 + dw * 1000 + Math.max(0, Math.min(99, lp));
+  if (t === "MASTER") return 7000 + lp;
+  if (t === "GRANDMASTER") return 8000 + lp;
+  if (t === "CHALLENGER") return 9000 + lp;
+  const tierBase = (TIER_ORDER[t] ?? 0) * 400;
+  const rankBase = RANK_OFFSET[rank?.toUpperCase()] ?? 0;
+  return tierBase + rankBase + lp;
 }
 
-/** Convert sort score back to readable string: "Gold II 67 LP" */
-function sortScoreToDisplay(score: number): string {
-  if (score >= 90000) return `Challenger ${score - 90000} LP`;
-  if (score >= 80000) return `Grandmaster ${score - 80000} LP`;
-  if (score >= 70000) return `Master ${score - 70000} LP`;
-
-  const tierIdx = Math.floor(score / 10000);
-  const remainder = score - tierIdx * 10000;
-  const divIdx = Math.floor(remainder / 1000);
-  const lp = Math.min(99, Math.max(0, Math.round(remainder % 1000)));
-
-  const tiers = ["Iron", "Bronze", "Silver", "Gold", "Platinum", "Emerald", "Diamond"];
-  const divisions = ["IV", "III", "II", "I"];
-  const tierName = tiers[tierIdx] ?? "Iron";
-  const divName = divisions[divIdx] ?? "IV";
-
-  return `${tierName} ${divName} ${lp} LP`;
-}
-
-/** Get tier+division only (for boundary labels when LP is 0) */
-function sortScoreToTierDivision(score: number): string {
-  if (score >= 90000) return "Challenger";
-  if (score >= 80000) return "Grandmaster";
-  if (score >= 70000) return "Master";
-
-  const tierIdx = Math.floor(score / 10000);
-  const remainder = score - tierIdx * 10000;
-  const divIdx = Math.floor(remainder / 1000);
+/**
+ * Convert sort score to short rank label for Y-axis.
+ * User formula: tier = floor(score/10000), division = floor((score%10000)/1000)
+ * Division: 1="IV", 2="III", 3="II", 4="I"
+ * Also handles original 0-4000 scale (tier*400 + rank*100 + lp).
+ */
+function sortScoreToRankLabel(score: number): string {
+  if (score >= 9000) return "Challenger";
+  if (score >= 8000) return "Grandmaster";
+  if (score >= 7000) return "Master";
 
   const tiers = ["Iron", "Bronze", "Silver", "Gold", "Platinum", "Emerald", "Diamond"];
-  const divisions = ["IV", "III", "II", "I"];
+  const divisions = ["IV", "III", "II", "I"]; // division 1->IV, 2->III, 3->II, 4->I
+
+  if (score >= 10000) {
+    const tierIdx = Math.floor(score / 10000);
+    const divIdx = Math.floor((score % 10000) / 1000); // 0-9
+    const tierName = tiers[Math.min(tierIdx, tiers.length - 1)] ?? "Iron";
+    const divName = divisions[Math.min(Math.max(0, divIdx - 1), 3)] ?? "IV";
+    return `${tierName} ${divName}`;
+  }
+
+  const tierIdx = Math.min(Math.floor(score / 400), tiers.length - 1);
+  const inTier = score - tierIdx * 400;
+  const divIdx = Math.min(Math.floor(inTier / 100), 3); // 0=IV, 1=III, 2=II, 3=I
   const tierName = tiers[tierIdx] ?? "Iron";
   const divName = divisions[divIdx] ?? "IV";
-
   return `${tierName} ${divName}`;
-}
-
-/** Snap to division boundary (every 1000) */
-function snapToDivisionBoundary(score: number): number {
-  return Math.round(score / 1000) * 1000;
 }
 
 function shortDate(ts: number, range: string): string {
   const d = new Date(ts);
-  const rangeMs = TIME_RANGES.find((r) => r.label === range)?.ms ?? TIME_RANGES[1].ms;
-
   if (range === "24h") {
     return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
   }
@@ -121,9 +101,9 @@ function shortDate(ts: number, range: string): string {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-function tooltipDate(ts: number): string {
+function fullDate(ts: number): string {
   const d = new Date(ts);
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 /* ------------------------------------------------------------------ */
@@ -175,11 +155,6 @@ const SAMPLE_MATCHES = buildSampleMatches();
 /*  Component                                                         */
 /* ------------------------------------------------------------------ */
 
-const PAD_TOP = 20;
-const PAD_RIGHT = 16;
-const PAD_BOTTOM = 40;
-const PAD_LEFT = 60;
-
 export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGraphProps) {
   const useSample = matches.length === 0;
   const effectiveTier = useSample && !tier ? "GOLD" : tier;
@@ -189,8 +164,8 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
   const [range, setRange] = useState<string>("7d");
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
-  const currentSortScore = useMemo(
-    () => tierRankLpToSortScore(effectiveTier, effectiveRank, effectiveLp),
+  const currentAbsLp = useMemo(
+    () => tierRankLpToAbsolute(effectiveTier, effectiveRank, effectiveLp),
     [effectiveTier, effectiveRank, effectiveLp],
   );
 
@@ -212,7 +187,7 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
       lpChange: number;
     }> = [];
 
-    let lp = currentSortScore;
+    let lp = currentAbsLp;
     points.push({ ts: Date.now(), lp, win: true, champion: "", lpChange: 0 });
 
     for (const m of sorted) {
@@ -229,7 +204,7 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
 
     points.reverse();
     return points;
-  }, [effectiveMatches, range, currentSortScore]);
+  }, [effectiveMatches, range, currentAbsLp]);
 
   if (!effectiveTier || !effectiveRank) return null;
 
@@ -243,64 +218,27 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
   const lineColor = trend > 0 ? "#2ECC71" : trend < 0 ? "#E74C3C" : "#666";
 
   const svgW = 400;
-  const svgH = 200;
-  const plotW = svgW - PAD_LEFT - PAD_RIGHT;
-  const plotH = svgH - PAD_TOP - PAD_BOTTOM;
+  const svgH = 160;
+  const padX = 10;
+  const padY = 16;
+  const plotW = svgW - padX * 2;
+  const plotH = svgH - padY * 2;
 
   const coords = dataPoints.map((d, i) => ({
-    x: PAD_LEFT + (dataPoints.length > 1 ? (i / (dataPoints.length - 1)) * plotW : plotW / 2),
-    y: PAD_TOP + plotH - ((d.lp - minLp) / lpRange) * plotH,
+    x: padX + (dataPoints.length > 1 ? (i / (dataPoints.length - 1)) * plotW : plotW / 2),
+    y: padY + plotH - ((d.lp - minLp) / lpRange) * plotH,
   }));
 
   const polylinePoints = coords.map((c) => `${c.x},${c.y}`).join(" ");
 
-  /* Y-axis ticks: 4-5 max, snap to division boundaries or LP within division */
-  const yTicks = useMemo(() => {
-    const minBound = snapToDivisionBoundary(minLp);
-    const maxBound = snapToDivisionBoundary(maxLp);
-    const sameDivision = Math.floor(minLp / 1000) === Math.floor(maxLp / 1000);
-
-    if (sameDivision && maxBound - minBound < 1000) {
-      const base = Math.floor(minLp / 1000) * 1000;
-      const ticks: Array<{ score: number; label: string }> = [];
-      for (const lp of [0, 25, 50, 75, 100]) {
-        const s = base + lp;
-        if (s >= minLp - 50 && s <= maxLp + 50) ticks.push({ score: s, label: `${lp} LP` });
-      }
-      if (ticks.length < 2) {
-        ticks.length = 0;
-        const step = Math.max(1, Math.ceil((maxLp - minLp) / 4));
-        for (let s = minLp; s <= maxLp; s += step) {
-          ticks.push({ score: s, label: `${Math.round(s % 1000)} LP` });
-        }
-      }
-      return ticks.length > 0 ? ticks : [{ score: minLp, label: `${Math.round(minLp % 1000)} LP` }];
-    }
-
-    const spanDivisions = (maxBound - minBound) / 1000;
-    const step = Math.max(1, Math.ceil(spanDivisions / 4));
-    const ticks: Array<{ score: number; label: string }> = [];
-    for (let b = minBound; b <= maxBound; b += step * 1000) {
-      ticks.push({ score: b, label: sortScoreToTierDivision(b) });
-    }
-    return ticks;
-  }, [minLp, maxLp]);
-
-  /* X-axis labels: 4-6 evenly spaced */
   const xLabels = useMemo(() => {
     if (dataPoints.length <= 1) return [];
-    const count = Math.min(6, Math.max(4, Math.floor(dataPoints.length / 4)));
+    const count = Math.min(5, dataPoints.length);
     const step = (dataPoints.length - 1) / (count - 1);
     const labels: Array<{ x: number; label: string }> = [];
-    const seen = new Set<string>();
     for (let i = 0; i < count; i++) {
       const idx = Math.round(i * step);
-      const ts = dataPoints[idx]?.ts ?? 0;
-      const label = shortDate(ts, range);
-      if (!seen.has(label)) {
-        seen.add(label);
-        labels.push({ x: coords[idx]?.x ?? 0, label });
-      }
+      labels.push({ x: coords[idx]?.x ?? 0, label: shortDate(dataPoints[idx]?.ts ?? 0, range) });
     }
     return labels;
   }, [dataPoints, coords, range]);
@@ -346,7 +284,7 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
 
       {notEnough ? (
         <div style={{
-          height: 220,
+          height: 192,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -356,10 +294,10 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
           Not enough data for this time range
         </div>
       ) : (
-        <div style={{ position: "relative", width: "100%", height: 220, overflow: "visible" }}>
+        <div style={{ position: "relative", width: "100%", height: 196, paddingBottom: 4 }}>
           <svg
             viewBox={`0 0 ${svgW} ${svgH}`}
-            preserveAspectRatio="xMidYMid meet"
+            preserveAspectRatio="none"
             style={{ width: "100%", height: "100%", overflow: "visible" }}
           >
             <defs>
@@ -371,7 +309,7 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
 
             {coords.length > 1 && (
               <polygon
-                points={`${coords[0].x},${svgH - PAD_BOTTOM} ${polylinePoints} ${coords[coords.length - 1].x},${svgH - PAD_BOTTOM}`}
+                points={`${coords[0].x},${svgH - padY} ${polylinePoints} ${coords[coords.length - 1].x},${svgH - padY}`}
                 fill="url(#lpFill)"
               />
             )}
@@ -400,44 +338,15 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
               />
             ))}
 
-            {/* Y-axis labels */}
-            {yTicks.map((tick, i) => {
-              const y = PAD_TOP + plotH - ((tick.score - minLp) / lpRange) * plotH;
-              if (y < PAD_TOP - 2 || y > svgH - PAD_BOTTOM + 2) return null;
-              return (
-                <g key={i}>
-                  <line
-                    x1={PAD_LEFT}
-                    y1={y}
-                    x2={PAD_LEFT + plotW}
-                    y2={y}
-                    stroke="rgba(255,255,255,0.06)"
-                    strokeWidth="1"
-                    strokeDasharray="2 2"
-                  />
-                  <text
-                    x={PAD_LEFT - 6}
-                    y={y + 4}
-                    fontSize="10"
-                    fill="#888"
-                    textAnchor="end"
-                  >
-                    {tick.label}
-                  </text>
-                </g>
-              );
-            })}
+            <text x={padX} y={padY - 4} fontSize="10" fill="#888" textAnchor="start">
+              {sortScoreToRankLabel(maxLp)}
+            </text>
+            <text x={padX} y={svgH - padY + 12} fontSize="10" fill="#888" textAnchor="start">
+              {sortScoreToRankLabel(minLp)}
+            </text>
 
-            {/* X-axis labels */}
             {xLabels.map((l, i) => (
-              <text
-                key={i}
-                x={l.x}
-                y={svgH - PAD_BOTTOM + 14}
-                fontSize="9"
-                fill="#666"
-                textAnchor="middle"
-              >
+              <text key={i} x={l.x} y={svgH - 2} fontSize="9" fill="#666" textAnchor="middle">
                 {l.label}
               </text>
             ))}
@@ -447,13 +356,6 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
             const d = dataPoints[hoverIdx];
             const c = coords[hoverIdx];
             const isRightHalf = c.x > svgW / 2;
-            const rankStr = sortScoreToDisplay(d.lp);
-            const wl = d.win ? "W" : "L";
-            const lpStr = d.lpChange > 0 ? `+${d.lpChange} LP` : `${d.lpChange} LP`;
-            const tooltipLine = d.champion
-              ? `${tooltipDate(d.ts)} · ${wl} · ${d.champion} · ${lpStr} · ${rankStr}`
-              : `${tooltipDate(d.ts)} · Current · ${rankStr}`;
-
             return (
               <div
                 style={{
@@ -474,7 +376,21 @@ export function LpHistoryGraph({ matches, currentLp, tier, rank }: LpHistoryGrap
                   whiteSpace: "nowrap",
                 }}
               >
-                {tooltipLine}
+                <div style={{ color: "#999" }}>{fullDate(d.ts)}</div>
+                {d.champion && (
+                  <>
+                    <div>
+                      <span style={{ color: d.win ? "#2ECC71" : "#E74C3C", fontWeight: 600 }}>
+                        {d.win ? "Win" : "Loss"}
+                      </span>
+                      {" — "}{d.champion}
+                    </div>
+                    <div style={{ color: d.lpChange > 0 ? "#2ECC71" : "#E74C3C" }}>
+                      ~{d.lpChange > 0 ? "+" : ""}{d.lpChange} LP
+                    </div>
+                  </>
+                )}
+                {!d.champion && <div style={{ color: "#888" }}>Current</div>}
               </div>
             );
           })()}
